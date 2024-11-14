@@ -1,0 +1,27 @@
+Package: biopipen.utils
+Title: Common Utility Functions for Biopipen
+Version: 0.0.1
+Authors@R:
+    person("Panwen", "Wang", , "pwwang@pwwang.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-4614-8970"))
+Description: Common utility used for biopipen processes to compose bioinformatics pipelines.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends:
+    R (>= 4.0.0)
+Imports:
+    rlang,
+    digest,
+    mygene,
+    tibble,
+    dplyr,
+    tidyr,
+    logger,
+    ggplot2,
+    zip
+Suggests:
+    testthat,
+    covr,
+    gglogger
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
