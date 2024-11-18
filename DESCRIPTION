@@ -32,6 +32,7 @@ Suggests:
     covr,
     gglogger
 Remotes:
-    pwwang/scplotter
+    pwwang/scplotter,
+    wjawaid/enrichR
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
