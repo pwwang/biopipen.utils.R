@@ -1,4 +1,4 @@
-# biopipen-utils.R
+# biopipen.utils.R
 
 Common utility R functions for [`biopipen`](https://github.com/pwwang/biopipen) processes.
 

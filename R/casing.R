@@ -3,12 +3,13 @@
 #'
 #' @param cases A list of cases
 #' @param defaults A list of default values
-#' @param expand A function to expand each case, if NULL, then the `each` key will be ignored.
-#'   The function should take two arguments, `name` and `case`, and return a list of expanded cases.
+#' @param post A function for post-handling each case, returning the a list with the
+#' name and the case. One can also return multiple cases based on the demand.
+#' All cases returned will be finally merged.
 #' @param default_case The name of the default case
 #' @return A list of expanded cases
 #' @export
-expand_cases <- function(cases, defaults, expand = NULL, default_case = "DEFAULT") {
+expand_cases <- function(cases, defaults, post = NULL, default_case = "DEFAULT") {
     if (is.null(cases) || length(cases) == 0) {
         filled_cases <- list(DEFAULT = defaults)
     } else {
@@ -17,16 +18,16 @@ expand_cases <- function(cases, defaults, expand = NULL, default_case = "DEFAULT
         })
     }
 
-    if (is.null(expand)) {
+    if (is.null(post)) {
         return(filled_cases)
     }
 
-    stopifnot("'expand' must be a function" = is.function(expand))
+    stopifnot("'post' must be a function" = is.function(post))
 
     outcases <- list()
     for (name in names(filled_cases)) {
         case <- filled_cases[[name]]
-        each_cases <- expand(name, case)
+        each_cases <- post(name, case)
         outcases <- c(outcases, each_cases)
     }
     outcases

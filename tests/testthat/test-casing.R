@@ -17,17 +17,17 @@ test_that("expand_cases works with no cases", {
     expect_equal(expanded_cases$DEFAULT, defaults)
 })
 
-test_that("expand_cases works with expand function", {
+test_that("expand_cases works with post function", {
     cases <- list(
         case1 = list(a = 1, b = 2)
     )
     defaults <- list(a = 0, b = 0, c = 0)
-    expand_fn <- function(name, case) {
+    post_fn <- function(name, case) {
         out <- list(case, case)
         names(out) <- c(paste0(name, "_1"), paste0(name, "_2"))
         out
     }
-    expanded_cases <- expand_cases(cases, defaults, expand_fn)
+    expanded_cases <- expand_cases(cases, defaults, post_fn)
     expect_equal(expanded_cases$case1_1, list(a = 1, b = 2, c = 0))
     expect_equal(expanded_cases$case1_2, list(a = 1, b = 2, c = 0))
 })
