@@ -26,7 +26,22 @@ Imports:
     tidyseurat,
     enrichR,
     plotthis,
-    scplotter
+    scplotter,
+    ComplexHeatmap,
+    clustree,
+    ggwordcloud,
+    ggalluvial,
+    ggVennDiagram (>= 1.5.0),
+    ggupset,
+    ggpubr,
+    ggforce,
+    ggraph,
+    ggridges,
+    hexbin,
+    igraph,
+    iNEXT,
+    scattermore,
+    concaveman
 Suggests:
     testthat,
     covr,
