@@ -4,6 +4,11 @@
 <url><loc>/LICENSE.html</loc></url>
 <url><loc>/authors.html</loc></url>
 <url><loc>/index.html</loc></url>
+<url><loc>/reference/AddCommand.html</loc></url>
+<url><loc>/reference/RunDEAnalysis.html</loc></url>
+<url><loc>/reference/RunEnrichment.html</loc></url>
+<url><loc>/reference/VizDEGs.html</loc></url>
+<url><loc>/reference/VizEnrich.html</loc></url>
 <url><loc>/reference/bQuote.html</loc></url>
 <url><loc>/reference/case_info.html</loc></url>
 <url><loc>/reference/do_call.html</loc></url>

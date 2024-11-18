@@ -44,7 +44,7 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">expand_cases</span><span class="op">(</span><span class="va">cases</span>, <span class="va">defaults</span>, expand <span class="op">=</span> <span class="cn">NULL</span>, default_case <span class="op">=</span> <span class="st">"DEFAULT"</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">expand_cases</span><span class="op">(</span><span class="va">cases</span>, <span class="va">defaults</span>, post <span class="op">=</span> <span class="cn">NULL</span>, default_case <span class="op">=</span> <span class="st">"DEFAULT"</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -59,9 +59,10 @@
 <dd><p>A list of default values</p></dd>
 
 
-<dt id="arg-expand">expand<a class="anchor" aria-label="anchor" href="#arg-expand"></a></dt>
-<dd><p>A function to expand each case, if NULL, then the <code>each</code> key will be ignored.
-The function should take two arguments, <code>name</code> and <code>case</code>, and return a list of expanded cases.</p></dd>
+<dt id="arg-post">post<a class="anchor" aria-label="anchor" href="#arg-post"></a></dt>
+<dd><p>A function for post-handling each case, returning the a list with the
+name and the case. One can also return multiple cases based on the demand.
+All cases returned will be finally merged.</p></dd>
 
 
 <dt id="arg-default-case">default_case<a class="anchor" aria-label="anchor" href="#arg-default-case"></a></dt>
