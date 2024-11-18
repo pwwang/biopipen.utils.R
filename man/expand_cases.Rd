@@ -4,15 +4,16 @@
 \alias{expand_cases}
 \title{Expand the cases with default values}
 \usage{
-expand_cases(cases, defaults, expand = NULL, default_case = "DEFAULT")
+expand_cases(cases, defaults, post = NULL, default_case = "DEFAULT")
 }
 \arguments{
 \item{cases}{A list of cases}
 
 \item{defaults}{A list of default values}
 
-\item{expand}{A function to expand each case, if NULL, then the \code{each} key will be ignored.
-The function should take two arguments, \code{name} and \code{case}, and return a list of expanded cases.}
+\item{post}{A function for post-handling each case, returning the a list with the
+name and the case. One can also return multiple cases based on the demand.
+All cases returned will be finally merged.}
 
 \item{default_case}{The name of the default case}
 }

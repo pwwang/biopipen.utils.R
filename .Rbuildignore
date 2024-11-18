@@ -2,6 +2,8 @@
 ^CRAN-SUBMISSION$
 ^cran-comments\.md$
 ^_pkgdown\.yml$
+^\.github$
+^\.github\/
 ^\.github\/.*
 ^conda\/.*
 ^docs\/.*
@@ -10,3 +12,4 @@
 ^test\.ipynb$
 ^.+\.Rcheck/.+$
 ^.+\.tar\.gz$
+^Makefile$
