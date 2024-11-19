@@ -12,7 +12,7 @@ Add report to a report.json to pipen-report to build a report
 ## Method `Reporter$image`
 ## ------------------------------------------------
 
-reporter <- Reporter$new()
+reporter <- get_reporter()
 reporter$add(
   reporter$image("image1", "Image 1", "pdf", save_code = TRUE),
   h1 = "Images",
@@ -123,7 +123,7 @@ a list of the report for the image
 }
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
-\preformatted{reporter <- Reporter$new()
+\preformatted{reporter <- get_reporter()
 reporter$add(
   reporter$image("image1", "Image 1", "pdf", save_code = TRUE),
   h1 = "Images",

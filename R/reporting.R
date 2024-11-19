@@ -86,7 +86,7 @@ Reporter <- R6Class(
         #' @param save_code Whether to save the code to reproduce the plot
         #' @return a list of the report for the image
         #' @examples
-        #' reporter <- Reporter$new()
+        #' reporter <- get_reporter()
         #' reporter$add(
         #'   reporter$image("image1", "Image 1", "pdf", save_code = TRUE),
         #'   h1 = "Images",
