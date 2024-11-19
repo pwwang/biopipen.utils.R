@@ -34,7 +34,7 @@
 #' VizDEGs(degs, plot_type = "ridge")
 #' VizDEGs(degs, plot_type = "dim")
 #' # VizDEGs(degs, plot_type = "heatmap")
-#' VizDEGs(degs, plot_type = "dot")
+#' # VizDEGs(degs, plot_type = "dot")
 #' }
 VizDEGs <- function(
     degs, plot_type = c("volcano_pct", "volcano_log2fc", "violin", "box", "bar", "ridge", "dim", "heatmap", "dot"),
