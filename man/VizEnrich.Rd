@@ -40,7 +40,7 @@ VizEnrich(enrich)
 VizEnrich(enrich, plot_type = "dot")
 VizEnrich(enrich, plot_type = "lollipop")
 VizEnrich(enrich, plot_type = "network")
-VizEnrich(enrich, plot_type = "enrichmap")
-VizEnrich(enrich, plot_type = "wordcloud")
+# VizEnrich(enrich, plot_type = "enrichmap")
+# VizEnrich(enrich, plot_type = "wordcloud")
 }
 }
