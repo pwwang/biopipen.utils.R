@@ -44,8 +44,12 @@ expand_cases <- function(cases, defaults, post = NULL, default_case = "DEFAULT")
 #' Otherwise, a prefix will be returned.
 #' @param create Create the directory if not exists when `is_dir` is TRUE, otherwise, create the parent directory
 #' of the prefix.
-#' @return A list of information, including `casedir`, `section`, `case`,
-#'   `section_slug`, `case_slug` and the original `casename`.
+#' @return A list of information, including:
+#' * `name`: The name of the case, without the sections
+#' * `section`: The sections of the case as a vector
+#' * `slug`: The slugified name
+#' * `section_slug`: The slugified sections
+#' * `prefix`: The prefix of the case, either the directory or the file path prefix
 #' @export
 case_info <- function(name, outdir, is_dir = TRUE, create = FALSE) {
     if (!grepl("::", name)) {

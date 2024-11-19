@@ -49,7 +49,7 @@ AddCommand <- function(
 #' @param ident.1 Identity of the first group of cells
 #' @param ident.2 Identity of the second group of cells
 #' @param subset Subset of cells to use for analysis
-#'  It should be a string of expression to pass to `subset` function
+#'  It should be a string of expression to pass to `dplyr::filter` function
 #' @param cache Directory to cache results
 #'  The results of the analysis will be saved in this directory
 #'  Anything changed in the object or arguments will trigger a re-run
@@ -90,9 +90,9 @@ RunDEAnalysis <- function(object, group.by, ident.1 = NULL, ident.2 = NULL, subs
         pct.1 = numeric(),
         pct.2 = numeric(),
         p_val_adj = numeric(),
-        diff_pct = numeric(),
-        group = character()
+        diff_pct = numeric()
     )
+    empty[[group.by]] <- character()
     class(empty) <- c("DEAnalysis", class(empty))
 
     object <- filter(object, !is.na(!!sym(group.by)))
@@ -106,13 +106,13 @@ RunDEAnalysis <- function(object, group.by, ident.1 = NULL, ident.2 = NULL, subs
                 m <- FindMarkers(object, group.by = group.by, ident.1 = ident, recorrect_umi = recorrect_umi, ...)
                 m$gene <- rownames(m)
                 rownames(m) <- NULL
-                m$group <- ident
+                m[[group.by]] <- ident
                 m
             }))
         } else {
             degs <- FindMarkers(object, group.by = group.by, ident.1 = ident.1, ident.2 = ident.2, recorrect_umi = recorrect_umi, ...)
             degs$gene <- rownames(degs)
-            degs$group <- NA
+            degs[[group.by]] <- NA
         }
         class(degs) <- c("DEAnalysis", class(degs))
 
