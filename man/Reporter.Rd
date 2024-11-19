@@ -14,7 +14,7 @@ Add report to a report.json to pipen-report to build a report
 
 reporter <- Reporter$new()
 reporter$add(
-  reporter$image("image1", "Image 1", "pdf", savecode = TRUE),
+  reporter$image("image1", "Image 1", "pdf", save_code = TRUE),
   h1 = "Images",
   h2 = "Image 1"
 )
@@ -33,6 +33,7 @@ reporter$add(
 \item \href{#method-Reporter-add}{\code{Reporter$add()}}
 \item \href{#method-Reporter-add_case}{\code{Reporter$add_case()}}
 \item \href{#method-Reporter-image}{\code{Reporter$image()}}
+\item \href{#method-Reporter-clear}{\code{Reporter$clear()}}
 \item \href{#method-Reporter-save}{\code{Reporter$save()}}
 \item \href{#method-Reporter-clone}{\code{Reporter$clone()}}
 }
@@ -101,7 +102,7 @@ Add a content to the report, but infer the headings from a case info returned by
 \subsection{Method \code{image()}}{
 Generate a report for an image to be added
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Reporter$image(name, prefix, more_formats, savecode)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Reporter$image(name, prefix, more_formats, save_code)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -113,7 +114,7 @@ Generate a report for an image to be added
 
 \item{\code{more_formats}}{More formats of the image available}
 
-\item{\code{savecode}}{Whether to save the code to reproduce the plot}
+\item{\code{save_code}}{Whether to save the code to reproduce the plot}
 }
 \if{html}{\out{</div>}}
 }
@@ -124,13 +125,23 @@ a list of the report for the image
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{reporter <- Reporter$new()
 reporter$add(
-  reporter$image("image1", "Image 1", "pdf", savecode = TRUE),
+  reporter$image("image1", "Image 1", "pdf", save_code = TRUE),
   h1 = "Images",
   h2 = "Image 1"
 )
 }
 \if{html}{\out{</div>}}
 
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Reporter-clear"></a>}}
+\if{latex}{\out{\hypertarget{method-Reporter-clear}{}}}
+\subsection{Method \code{clear()}}{
+Clear the report
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Reporter$clear()}\if{html}{\out{</div>}}
 }
 
 }

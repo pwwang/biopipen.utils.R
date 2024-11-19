@@ -83,16 +83,16 @@ Reporter <- R6Class(
         #' @param name The name of the image
         #' @param prefix The prefix of the image
         #' @param more_formats More formats of the image available
-        #' @param savecode Whether to save the code to reproduce the plot
+        #' @param save_code Whether to save the code to reproduce the plot
         #' @return a list of the report for the image
         #' @examples
         #' reporter <- Reporter$new()
         #' reporter$add(
-        #'   reporter$image("image1", "Image 1", "pdf", savecode = TRUE),
+        #'   reporter$image("image1", "Image 1", "pdf", save_code = TRUE),
         #'   h1 = "Images",
         #'   h2 = "Image 1"
         #' )
-        image = function(name, prefix, more_formats, savecode) {
+        image = function(name, prefix, more_formats, save_code) {
             out <- list(
                 name = name,
                 contents = list(
@@ -102,7 +102,7 @@ Reporter <- R6Class(
                     )
                 )
             )
-            if (length(more_formats) > 0 || savecode) {
+            if (length(more_formats) > 0 || save_code) {
                 out$contents[[1]]$download <- list()
             }
             if (length(more_formats) > 0) {
@@ -113,7 +113,7 @@ Reporter <- R6Class(
                     })
                 )
             }
-            if (savecode) {
+            if (save_code) {
                 out$contents[[1]]$download <- c(
                     out$contents[[1]]$download,
                     list(
