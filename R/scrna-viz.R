@@ -33,7 +33,7 @@
 #' VizDEGs(degs, plot_type = "bar")
 #' VizDEGs(degs, plot_type = "ridge")
 #' VizDEGs(degs, plot_type = "dim")
-#' VizDEGs(degs, plot_type = "heatmap")
+#' # VizDEGs(degs, plot_type = "heatmap")
 #' VizDEGs(degs, plot_type = "dot")
 #' }
 VizDEGs <- function(
