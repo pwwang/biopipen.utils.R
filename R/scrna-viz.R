@@ -25,7 +25,7 @@
 #' @importFrom dplyr slice_head arrange pull filter
 #' @examples
 #' \donttest{
-#' degs <- RunDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2")
+#' degs <- suppressWarnings(RunDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2"))
 #' VizDEGs(degs, plot_type = "volcano_pct")
 #' VizDEGs(degs, plot_type = "volcano_log2fc")
 #' VizDEGs(degs, plot_type = "violin")
@@ -45,8 +45,9 @@ VizDEGs <- function(
     # degs: p_val avg_log2FC pct.1 pct.2 p_val_adj gene group diff_pct
     stopifnot("[VizDEGs] Can only visualize object from RunDEAnalysis" = inherits(degs, "DEAnalysis"))
     stopifnot("[VizDEGs] 'outprefix' must be provided to save code" = !save_code || !is.null(outprefix))
+    group.by <- attr(degs, "group.by")
     plot_type <- match.arg(plot_type)
-    are_allmarkers <- !all(is.na(degs$group))
+    are_allmarkers <- !all(is.na(degs[[group.by]]))
 
     if (plot_type %in% c("volcano_pct", "volcano_log2fc")) {
         if (save_code) {
@@ -55,7 +56,7 @@ VizDEGs <- function(
             VolcanoPlot <- scplotter::VolcanoPlot
         }
 
-        facet_by <- if (are_allmarkers) "group" else NULL
+        facet_by <- if (are_allmarkers) group.by else NULL
         args <- list(data = degs, x = ifelse(plot_type == "volcano_pct", "diff_pct", "avg_log2FC"),
             y = "p_val_adj", ylab = "-log10(p_val_adj)", facet_by = facet_by, ...)
         args$y_cutoff <- args$y_cutoff %||% -log10(0.05)
@@ -63,7 +64,6 @@ VizDEGs <- function(
         p <- do_call(VolcanoPlot, args)
     } else {
         object <- attr(degs, "object")
-        group.by <- attr(degs, "group.by")
         ident.1 <- attr(degs, "ident.1")
         ident.2 <- attr(degs, "ident.2")
         if (!is.null(ident.1)) {
@@ -88,14 +88,14 @@ VizDEGs <- function(
 
         if (is.numeric(genes)) {
             degs <- degs %>%
-                dplyr::group_by(!!sym("group")) %>%
+                dplyr::group_by(!!sym(group.by)) %>%
                 arrange(!!parse_expr(order_by)) %>%
                 slice_head(n = genes) %>%
                 pull("gene") %>%
                 unique()
         } else {
             degs <- degs %>%
-                dplyr::group_by(!!sym("group")) %>%
+                dplyr::group_by(!!sym(group.by)) %>%
                 arrange(!!parse_expr(order_by)) %>%
                 filter(!!parse_expr(genes)) %>%
                 pull("gene") %>%

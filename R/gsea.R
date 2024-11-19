@@ -15,7 +15,7 @@
 #' @importFrom enrichR setEnrichrSite enrichr
 #' @export
 #' @examples
-#' degs <- RunDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2")
+#' degs <- suppressWarnings(RunDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2"))
 #' RunEnrichment(degs, deg = "abs(avg_log2FC) > 1")
 RunEnrichment <- function(
     degs, deg = 'p_val_adj < 0.05', dbs = "KEGG_2021_Human", cache = NULL,
@@ -83,7 +83,7 @@ RunEnrichment <- function(
 #' @importFrom plotthis PrepareEnrichrResult
 #' @examples
 #' \donttest{
-#' degs <- RunDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2")
+#' degs <- suppressWarnings(RunDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2"))
 #' enrich <- RunEnrichment(degs, deg = "abs(avg_log2FC) > 1")
 #' VizEnrich(enrich)
 #' VizEnrich(enrich, plot_type = "dot")
