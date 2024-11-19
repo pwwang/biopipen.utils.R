@@ -89,8 +89,8 @@ RunEnrichment <- function(
 #' VizEnrich(enrich, plot_type = "dot")
 #' VizEnrich(enrich, plot_type = "lollipop")
 #' VizEnrich(enrich, plot_type = "network")
-#' VizEnrich(enrich, plot_type = "enrichmap")
-#' VizEnrich(enrich, plot_type = "wordcloud")
+#' # VizEnrich(enrich, plot_type = "enrichmap")
+#' # VizEnrich(enrich, plot_type = "wordcloud")
 #' }
 VizEnrich <- function(enrich, outprefix = NULL,
     devpars = list(res = 100), more_formats = c(), save_code = FALSE, ...) {
