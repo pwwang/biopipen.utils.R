@@ -6,7 +6,11 @@
 ^\.github\/
 ^\.github\/.*
 ^conda\/.*
+^conda\/$
+^conda$
 ^docs\/.*
+^docs\/$
+^docs$
 ^pkgdown\/.*
 ^vignettes\/.*
 ^test\.ipynb$

@@ -1,0 +1,97 @@
+package:
+  name: r-biopipen.utils
+  version: 0.0.1
+
+source:
+  git_url: https://github.com/pwwang/biopipen.utils.R
+  git_rev: 11324dc7b2f2fc980d1e7466e3e6ff3f7eb2ba0a
+
+build:
+  number: 1
+  rpaths:
+    - lib/R/lib/
+    - lib/
+
+requirements:
+  host:
+    - r-base
+    - r-scales
+    - r-rlang
+    - r-digest
+    - bioconda::bioconductor-mygene
+    - r-tibble
+    - r-dplyr
+    - r-tidyr
+    - r-logger
+    - r-ggplot2
+    - r-zip
+    - r-seurat
+    - r-seuratobject
+    - r-tidyseurat
+    - r-enrichr
+    - pwwang::r-plotthis
+    - pwwang::r-scplotter
+    - bioconda::bioconductor-complexheatmap
+    - r-clustree
+    - r-ggwordcloud
+    - r-ggalluvial
+    - r-ggvenndiagram
+    - r-ggupset
+    - r-ggpubr
+    - r-ggforce
+    - r-ggraph
+    - r-ggridges
+    - r-hexbin
+    - r-igraph
+    - r-inext
+    - r-scattermore
+    - r-concaveman
+    - r-testthat
+    - pwwang::r-gglogger
+
+  run:
+    - r-base
+    - r-scales
+    - r-rlang
+    - r-digest
+    - bioconda::bioconductor-mygene
+    - r-tibble
+    - r-dplyr
+    - r-tidyr
+    - r-logger
+    - r-ggplot2
+    - r-zip
+    - r-seurat
+    - r-seuratobject
+    - r-tidyseurat
+    - r-enrichr
+    - pwwang::r-plotthis
+    - pwwang::r-scplotter
+    - bioconda::bioconductor-complexheatmap
+    - r-clustree
+    - r-ggwordcloud
+    - r-ggalluvial
+    - r-ggvenndiagram
+    - r-ggupset
+    - r-ggpubr
+    - r-ggforce
+    - r-ggraph
+    - r-ggridges
+    - r-hexbin
+    - r-igraph
+    - r-inext
+    - r-scattermore
+    - r-concaveman
+    - r-testthat
+    - pwwang::r-gglogger
+
+test:
+  commands:
+    - $R -e "library('biopipen.utils')"
+
+about:
+  home: https://github.com/pwwang/biopipen.utils.R
+  license: GPL-3
+  summary: Common utility R functions for biopipen processes.
+  license_family: MIT
+  license_file: LICENSE.md

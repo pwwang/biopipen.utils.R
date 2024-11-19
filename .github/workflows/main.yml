@@ -51,7 +51,7 @@ jobs:
         with:
           cache-version: 2
           extra-packages: |
-            any::devtools, any::pkgdown, any::testthat, any::gglogger
+            any::devtools, any::pkgdown, any::testthat, any::gglogger, any::ComplexHeatmap
 
       - uses: r-lib/actions/check-r-package@v2
 
