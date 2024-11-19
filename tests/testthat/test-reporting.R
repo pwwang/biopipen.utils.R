@@ -56,7 +56,7 @@ test_that("Reporter saves report correctly", {
 })
 
 test_that("Reporter clears report after saving if clear is TRUE", {
-    reporter <- Reporter$new()
+    reporter <- get_reporter()
     reporter$add("content1", h1 = "Heading1", h2 = "Subheading1", h3 = "Subsubheading1", ui = "ui1")
     temp_file <- tempfile(fileext = ".json")
     reporter$save(temp_file, clear = TRUE)

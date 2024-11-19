@@ -71,3 +71,14 @@ Reporter <- R6Class(
         }
     )
 )
+
+
+#' Get a reporter object
+#'
+#' A shortcut to create a reporter object `Reporter$new()`
+#'
+#' @return A reporter object
+#' @export
+get_reporter <- function() {
+    Reporter$new()
+}
