@@ -53,6 +53,89 @@ Reporter <- R6Class(
         },
 
         #' @description
+        #' Add a content to the report, but infer the headings from a case info returned by [case_info]
+        #' @param ... The content to add
+        #' @param caseinfo The case info returned by [case_info]
+        #' @param ui The user interface of the report
+        #' @param max_level The maximum level of the headings. Default is 3
+        add_case = function(..., caseinfo, ui = "flat", max_level = 3) {
+            stopifnot("'max_level' must be an integer between 1 than 3" = max_level <= 3 && max_level > 0)
+
+            all_levels <- c(caseinfo$section, caseinfo$name)
+            if (max_level == 1) {
+                h1 <- paste(all_levels, collapse = ": ")
+                h2 <- h3 <- "#"
+            } else if (max_level == 2) {
+                h1 <- all_levels[1]
+                h2 <- ifelse(length(all_levels) > 1, paste(all_levels[-1], collapse = ": "), "#")
+                h3 <- "#"
+            } else {
+                h1 <- all_levels[1]
+                h2 <- ifelse(length(all_levels) > 1, all_levels[2], "#")
+                h3 <- ifelse(length(all_levels) > 2, paste(all_levels[-(1:2)], collapse = ": "), "#")
+            }
+
+            self$add(..., h1 = h1, h2 = h2, h3 = h3, ui = ui)
+        },
+
+        #' @description
+        #' Generate a report for an image to be added
+        #' @param name The name of the image
+        #' @param prefix The prefix of the image
+        #' @param more_formats More formats of the image available
+        #' @param savecode Whether to save the code to reproduce the plot
+        #' @return a list of the report for the image
+        #' @examples
+        #' reporter <- Reporter$new()
+        #' reporter$add(
+        #'   reporter$image("image1", "Image 1", "pdf", savecode = TRUE),
+        #'   h1 = "Images",
+        #'   h2 = "Image 1"
+        #' )
+        image = function(name, prefix, more_formats, savecode) {
+            out <- list(
+                name = name,
+                contents = list(
+                    list(
+                        kind = "image",
+                        src = paste0(prefix, ".png")
+                    )
+                )
+            )
+            if (length(more_formats) > 0 || savecode) {
+                out$contents[[1]]$download <- list()
+            }
+            if (length(more_formats) > 0) {
+                out$contents[[1]]$download <- c(
+                    out$contents[[1]]$download,
+                    lapply(more_formats, function(format) {
+                        paste0(prefix, ".", format)
+                    })
+                )
+            }
+            if (savecode) {
+                out$contents[[1]]$download <- c(
+                    out$contents[[1]]$download,
+                    list(
+                        list(
+                            src = paste0(prefix, ".code.zip"),
+                            tip = "Download the code to reproduce the plot",
+                            icon = "Code"
+                        )
+                    )
+                )
+            }
+
+            out
+        },
+
+        #' @description
+        #' Clear the report
+        clear = function() {
+            self$report <- list()
+        },
+
+        #' @description
         #' Save the report to a file
         #' @param path The path to save the report
         #' If the path is a directory, the report will be saved as `report.json` in the directory
@@ -66,7 +149,7 @@ Reporter <- R6Class(
 
             writeLines(toJSON(self$report, pretty = TRUE, auto_unbox = TRUE), path)
             if (clear) {
-                self$report <- list()
+                self$clear()
             }
         }
     )

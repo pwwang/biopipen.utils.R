@@ -6,6 +6,19 @@
 \description{
 Add report to a report.json to pipen-report to build a report
 }
+\examples{
+
+## ------------------------------------------------
+## Method `Reporter$image`
+## ------------------------------------------------
+
+reporter <- Reporter$new()
+reporter$add(
+  reporter$image("image1", "Image 1", "pdf", savecode = TRUE),
+  h1 = "Images",
+  h2 = "Image 1"
+)
+}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
@@ -18,6 +31,8 @@ Add report to a report.json to pipen-report to build a report
 \itemize{
 \item \href{#method-Reporter-new}{\code{Reporter$new()}}
 \item \href{#method-Reporter-add}{\code{Reporter$add()}}
+\item \href{#method-Reporter-add_case}{\code{Reporter$add_case()}}
+\item \href{#method-Reporter-image}{\code{Reporter$image()}}
 \item \href{#method-Reporter-save}{\code{Reporter$save()}}
 \item \href{#method-Reporter-clone}{\code{Reporter$clone()}}
 }
@@ -56,6 +71,68 @@ Add a content to the report
 }
 \if{html}{\out{</div>}}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Reporter-add_case"></a>}}
+\if{latex}{\out{\hypertarget{method-Reporter-add_case}{}}}
+\subsection{Method \code{add_case()}}{
+Add a content to the report, but infer the headings from a case info returned by \link{case_info}
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Reporter$add_case(..., caseinfo, ui = "flat", max_level = 3)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{The content to add}
+
+\item{\code{caseinfo}}{The case info returned by \link{case_info}}
+
+\item{\code{ui}}{The user interface of the report}
+
+\item{\code{max_level}}{The maximum level of the headings. Default is 3}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Reporter-image"></a>}}
+\if{latex}{\out{\hypertarget{method-Reporter-image}{}}}
+\subsection{Method \code{image()}}{
+Generate a report for an image to be added
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Reporter$image(name, prefix, more_formats, savecode)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{The name of the image}
+
+\item{\code{prefix}}{The prefix of the image}
+
+\item{\code{more_formats}}{More formats of the image available}
+
+\item{\code{savecode}}{Whether to save the code to reproduce the plot}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+a list of the report for the image
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{reporter <- Reporter$new()
+reporter$add(
+  reporter$image("image1", "Image 1", "pdf", savecode = TRUE),
+  h1 = "Images",
+  h2 = "Image 1"
+)
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Reporter-save"></a>}}

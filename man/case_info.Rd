@@ -20,8 +20,14 @@ Otherwise, a prefix will be returned.}
 of the prefix.}
 }
 \value{
-A list of information, including \code{casedir}, \code{section}, \code{case},
-\code{section_slug}, \code{case_slug} and the original \code{casename}.
+A list of information, including:
+\itemize{
+\item \code{name}: The name of the case, without the sections
+\item \code{section}: The sections of the case as a vector
+\item \code{slug}: The slugified name
+\item \code{section_slug}: The slugified sections
+\item \code{prefix}: The prefix of the case, either the directory or the file path prefix
+}
 }
 \description{
 Create information for a casename

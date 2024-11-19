@@ -25,7 +25,7 @@ RunDEAnalysis(
 \item{ident.2}{Identity of the second group of cells}
 
 \item{subset}{Subset of cells to use for analysis
-It should be a string of expression to pass to \code{subset} function}
+It should be a string of expression to pass to \code{dplyr::filter} function}
 
 \item{cache}{Directory to cache results
 The results of the analysis will be saved in this directory

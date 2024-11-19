@@ -57,7 +57,7 @@ Visualize differentially expressed genes
 }
 \examples{
 \donttest{
-degs <- RunDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2")
+degs <- suppressWarnings(RunDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2"))
 VizDEGs(degs, plot_type = "volcano_pct")
 VizDEGs(degs, plot_type = "volcano_log2fc")
 VizDEGs(degs, plot_type = "violin")
