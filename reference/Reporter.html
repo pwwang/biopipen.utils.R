@@ -60,7 +60,7 @@
 
 <ul><li><p><a href="#method-Reporter-new"><code>Reporter$new()</code></a></p></li>
 <li><p><a href="#method-Reporter-add"><code>Reporter$add()</code></a></p></li>
-<li><p><a href="#method-Reporter-add_case"><code>Reporter$add_case()</code></a></p></li>
+<li><p><a href="#method-Reporter-add2"><code>Reporter$add2()</code></a></p></li>
 <li><p><a href="#method-Reporter-image"><code>Reporter$image()</code></a></p></li>
 <li><p><a href="#method-Reporter-clear"><code>Reporter$clear()</code></a></p></li>
 <li><p><a href="#method-Reporter-save"><code>Reporter$save()</code></a></p></li>
@@ -105,11 +105,11 @@
 </dl><p></p></div>
 </div>
 
-</div><p></p><hr><a id="method-Reporter-add_case"></a><div class="section">
-<h3 id="method-add-case-">Method <code>add_case()</code><a class="anchor" aria-label="anchor" href="#method-add-case-"></a></h3>
-<p>Add a content to the report, but infer the headings from a case info returned by <a href="case_info.html">case_info</a></p><div class="section">
+</div><p></p><hr><a id="method-Reporter-add2"></a><div class="section">
+<h3 id="method-add--1">Method <code>add2()</code><a class="anchor" aria-label="anchor" href="#method-add--1"></a></h3>
+<p>Add a content to the report, but infer the headings from headings and sub-headings</p><div class="section">
 <h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Reporter</span><span class="op">$</span><span class="fu">add_case</span><span class="op">(</span><span class="va">...</span>, <span class="va">caseinfo</span>, ui <span class="op">=</span> <span class="st">"flat"</span>, max_level <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Reporter</span><span class="op">$</span><span class="fu">add2</span><span class="op">(</span><span class="va">...</span>, <span class="va">hs</span>, hs2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, ui <span class="op">=</span> <span class="st">"flat"</span>, collapse <span class="op">=</span> <span class="st">": "</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -118,16 +118,19 @@
 <dd><p>The content to add</p></dd>
 
 
-<dt><code>caseinfo</code></dt>
-<dd><p>The case info returned by <a href="case_info.html">case_info</a></p></dd>
+<dt><code>hs</code></dt>
+<dd><p>The headings of the case</p></dd>
+
+
+<dt><code>hs2</code></dt>
+<dd><p>The headings that must be shown.
+When there are more items in <code>hs</code>, they will be concatenated.
+For example, if <code>hs = c("Section1", "Case1")</code>, and <code>hs2 = c("A", "B")</code>, then
+headings will be <code>h1 = "Section1: Case1"</code> and <code>h2 = "A"</code> and <code>h3 = "B"</code>.</p></dd>
 
 
 <dt><code>ui</code></dt>
 <dd><p>The user interface of the report</p></dd>
-
-
-<dt><code>max_level</code></dt>
-<dd><p>The maximum level of the headings. Default is 3</p></dd>
 
 
 </dl><p></p></div>
