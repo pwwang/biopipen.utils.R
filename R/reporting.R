@@ -53,26 +53,45 @@ Reporter <- R6Class(
         },
 
         #' @description
-        #' Add a content to the report, but infer the headings from a case info returned by [case_info]
+        #' Add a content to the report, but infer the headings from headings and sub-headings
         #' @param ... The content to add
-        #' @param caseinfo The case info returned by [case_info]
+        #' @param hs The headings of the case
+        #' @param hs2 The headings that must be shown.
+        #' When there are more items in `hs`, they will be concatenated.
+        #' For example, if `hs = c("Section1", "Case1")`, and `hs2 = c("A", "B")`, then
+        #' headings will be `h1 = "Section1: Case1"` and `h2 = "A"` and `h3 = "B"`.
         #' @param ui The user interface of the report
-        #' @param max_level The maximum level of the headings. Default is 3
-        add_case = function(..., caseinfo, ui = "flat", max_level = 3) {
-            stopifnot("'max_level' must be an integer between 1 than 3" = max_level <= 3 && max_level > 0)
+        add2 = function(..., hs, hs2 = c(), ui = "flat", collapse = ": ") {
+            stopifnot("hs2 must be less than 3" = length(hs2) <= 2)
 
-            all_levels <- c(caseinfo$section, caseinfo$name)
-            if (max_level == 1) {
-                h1 <- paste(all_levels, collapse = ": ")
-                h2 <- h3 <- "#"
-            } else if (max_level == 2) {
-                h1 <- all_levels[1]
-                h2 <- ifelse(length(all_levels) > 1, paste(all_levels[-1], collapse = ": "), "#")
-                h3 <- "#"
-            } else {
-                h1 <- all_levels[1]
-                h2 <- ifelse(length(all_levels) > 1, all_levels[2], "#")
-                h3 <- ifelse(length(all_levels) > 2, paste(all_levels[-(1:2)], collapse = ": "), "#")
+            if (length(hs2) == 2) {
+                h1 <- paste(hs, collapse = collapse)
+                h2 = hs2[1]
+                h3 = hs2[2]
+            } else if (length(hs2) == 1) {
+                h1 <- hs[1]
+                hs <- hs[-1]
+                if (length(hs) > 0) {
+                    h2 <- paste(hs, collapse = collapse)
+                    h3 <- hs2[1]
+                } else {
+                    h2 <- hs2[1]
+                    h3 <- "#"
+                }
+            } else {  # length(hs2) == 0
+                h1 <- hs[1]
+                hs <- hs[-1]
+                if (length(hs) > 0) {
+                    h2 <- hs[1]
+                    hs <- hs[-1]
+                } else {
+                    h2 <- "#"
+                }
+                if (length(hs) > 0) {
+                    h3 <- paste(hs, collapse = collapse)
+                } else {
+                    h3 <- "#"
+                }
             }
 
             self$add(..., h1 = h1, h2 = h2, h3 = h3, ui = ui)

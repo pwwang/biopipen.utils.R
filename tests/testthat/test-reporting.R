@@ -64,53 +64,43 @@ test_that("Reporter clears report after saving if clear is TRUE", {
     unlink(temp_file)
 })
 
-test_that("Reporter adds case content correctly with max_level = 1", {
+test_that("Reporter adds case content correctly", {
     reporter <- Reporter$new()
-    caseinfo <- list(section = NULL, name = "Case1")
-    reporter$add_case("content1", caseinfo = caseinfo, ui = "flat", max_level = 1)
-    expect_equal(reporter$report, list(Case1 = list(`#` = list(`#` = list(flat = list("content1"))))))
-    reporter$clear()
 
-    caseinfo <- list(section = "Section1", name = "Case1")
-    reporter$add_case("content1", caseinfo = caseinfo, ui = "flat", max_level = 1)
-    expect_equal(reporter$report, list(`Section1: Case1` = list(`#` = list(`#` = list(flat = list("content1"))))))
-    reporter$clear()
-
-    caseinfo <- list(section = c("Section1", "Section2"), name = "Case1")
-    reporter$add_case("content1", caseinfo = caseinfo, ui = "flat", max_level = 1)
-    expect_equal(reporter$report, list(`Section1: Section2: Case1` = list(`#` = list(`#` = list(flat = list("content1"))))))
-    reporter$clear()
-
-    caseinfo <- list(section = c("Section1", "Section2", "Section3"), name = "Case1")
-    reporter$add_case("content1", caseinfo = caseinfo, ui = "flat", max_level = 1)
-    expect_equal(reporter$report, list(`Section1: Section2: Section3: Case1` = list(`#` = list(`#` = list(flat = list("content1"))))))
-})
-
-test_that("Reporter adds case content correctly with max_level = 3", {
-    reporter <- Reporter$new()
-    caseinfo <- list(section = NULL, name = "Case1")
-    reporter$add_case("content1", caseinfo = caseinfo, ui = "flat", max_level = 3)
+    reporter$add2("content1", hs = "Case1", ui = "flat")
     expect_equal(reporter$report, list(Case1 = list(`#` = list(`#` = list(flat = list("content1"))))))
     reporter$clear()
     expect_equal(length(reporter$report), 0)
 
-    caseinfo <- list(section = "Section1", name = "Case1")
-    reporter$add_case("content1", caseinfo = caseinfo, ui = "flat", max_level = 3)
+    reporter$add2("content1", hs = "Case1", hs2 = c("A"), ui = "flat")
+    expect_equal(reporter$report, list(Case1 = list(A = list(`#` = list(flat = list("content1"))))))
+    reporter$clear()
+
+    reporter$add2("content1", hs = "Case1", hs2 = c("A", "B"), ui = "flat")
+    expect_equal(reporter$report, list(Case1 = list(A = list(B = list(flat = list("content1"))))))
+    reporter$clear()
+
+    reporter$add2("content1", hs = c("Section1", "Case1"), ui = "flat")
     expect_equal(reporter$report, list(Section1 = list(Case1 = list(`#` = list(flat = list("content1"))))))
     reporter$clear()
 
-    caseinfo <- list(section = c("Section1", "Section2"), name = "Case1")
-    reporter$add_case("content1", caseinfo = caseinfo, ui = "flat", max_level = 3)
+    reporter$add2("content1", hs = c("Section1", "Case1"), hs2 = c("A"), ui = "flat")
+    expect_equal(reporter$report, list(Section1 = list(Case1 = list(A = list(flat = list("content1"))))))
+    reporter$clear()
+
+    reporter$add2("content1", hs = c("Section1", "Case1"), hs2 = c("A", "B"), ui = "flat")
+    expect_equal(reporter$report, list(`Section1: Case1` = list(A = list(B = list(flat = list("content1"))))))
+    reporter$clear()
+
+    reporter$add2("content1", hs = c("Section1", "Section2", "Case1"), ui = "flat")
     expect_equal(reporter$report, list(Section1 = list(Section2 = list(Case1 = list(flat = list("content1"))))))
     reporter$clear()
 
-    caseinfo <- list(section = c("Section1", "Section2", "Section3"), name = "Case1")
-    reporter$add_case("content1", caseinfo = caseinfo, ui = "flat", max_level = 3)
+    reporter$add2("content1", hs = c("Section1", "Section2", "Section3", "Case1"), ui = "flat")
     expect_equal(reporter$report, list(Section1 = list(Section2 = list(`Section3: Case1` = list(flat = list("content1"))))))
     reporter$clear()
 
-    caseinfo <- list(section = c("Section1", "Section2", "Section3", "Section4"), name = "Case1")
-    reporter$add_case("content1", caseinfo = caseinfo, ui = "flat", max_level = 3)
+    reporter$add2("content1", hs = c("Section1", "Section2", "Section3", "Section4", "Case1"), ui = "flat")
     expect_equal(reporter$report, list(Section1 = list(Section2 = list(`Section3: Section4: Case1` = list(flat = list("content1"))))))
 })
 
