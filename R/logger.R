@@ -45,6 +45,7 @@ get_logger <- function(
         info = log_info,
         debug = log_debug,
         warn = log_warn,
+        warning = log_warn,
         error = log_error,
         fatal = log_fatal,
         success = log_success,
