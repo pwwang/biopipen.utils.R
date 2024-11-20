@@ -35,7 +35,18 @@ RunEnrichment <- function(
     suppressMessages(attachEnrichr())
     setEnrichrSite(site)
 
-    empty <- data.frame()
+    empty <- data.frame(
+        Term = character(),
+        Overlap = character(),
+        P.value = numeric(),
+        Adjusted.P.value = numeric(),
+        Old.P.value = numeric(),
+        Old.Adjusted.P.value = numeric(),
+        Odds.Ratio = numeric(),
+        Combined.Score = numeric(),
+        Genes = character(),
+        db = character()
+    )
     class(empty) <- c("Enrichment", "Enrichr", class(empty))
 
     sig_degs <- degs %>% filter(!!parse_expr(deg)) %>% pull("gene") %>% unique()
