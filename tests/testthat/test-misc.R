@@ -122,3 +122,11 @@ test_that("list_update: depth works", {
     expect_equal(list_update(x, y, depth = 1), list(a = list(b = 4, c = 2, e = 5), d = 3, f = 6))
     expect_equal(list_update(x, y, depth = -1), list(a = list(b = 4, c = 2, e = 5), d = 3, f = 6))
 })
+
+test_that("list_update: works with multiple lists", {
+    x <- list(a = 1, b = 2, c = 3)
+    y <- list(c = 4, d = 5)
+    z <- list(d = 6, e = 7)
+
+    expect_equal(list_update(x, y, z), list(a = 1, b = 2, c = 4, d = 6, e = 7))
+})

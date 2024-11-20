@@ -2,14 +2,14 @@
 % Please edit documentation in R/misc.R
 \name{list_update}
 \alias{list_update}
-\title{Update a list with another list}
+\title{Update the first list based on other lists}
 \usage{
-list_update(x, y, depth = -1L)
+list_update(x, ..., depth = -1L)
 }
 \arguments{
-\item{x}{A list}
+\item{x}{The first list}
 
-\item{y}{A list}
+\item{...}{The other lists}
 
 \item{depth}{The depth to update, -1 means update all}
 }
@@ -17,5 +17,5 @@ list_update(x, y, depth = -1L)
 The updated list
 }
 \description{
-Update a list with another list
+Update the first list based on other lists
 }

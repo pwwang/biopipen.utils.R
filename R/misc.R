@@ -172,8 +172,8 @@ extract_vars <- function(x, ..., keep = FALSE, env = parent.frame()) {
 #' @param y A list
 #' @param depth The depth to update, -1 means update all
 #' @return The updated list
-#' @export
-list_update <- function(x, y, depth = -1L) {
+#' @keywords internal
+list_update2 <- function(x, y, depth = -1L) {
     # Update the value in x from y
     x <- x %||% list()
     y <- y %||% list()
@@ -183,10 +183,24 @@ list_update <- function(x, y, depth = -1L) {
             x[[k]] <- NULL
             x <- c(x, y[k])
         } else if (is.list(x[[k]]) && is.list(y[[k]]) && depth != 0L) {
-            x[[k]] <- list_update(x[[k]], y[[k]], depth - 1L)
+            x[[k]] <- list_update2(x[[k]], y[[k]], depth - 1L)
         } else {
             x[[k]] <- y[[k]]
         }
+    }
+    x
+}
+
+#' Update the first list based on other lists
+#'
+#' @param x The first list
+#' @param ... The other lists
+#' @param depth The depth to update, -1 means update all
+#' @return The updated list
+#' @export
+list_update <- function(x, ..., depth = -1L) {
+    for (y in list(...)) {
+        x <- list_update2(x, y, depth)
     }
     x
 }
