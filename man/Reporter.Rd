@@ -31,7 +31,7 @@ reporter$add(
 \itemize{
 \item \href{#method-Reporter-new}{\code{Reporter$new()}}
 \item \href{#method-Reporter-add}{\code{Reporter$add()}}
-\item \href{#method-Reporter-add_case}{\code{Reporter$add_case()}}
+\item \href{#method-Reporter-add2}{\code{Reporter$add2()}}
 \item \href{#method-Reporter-image}{\code{Reporter$image()}}
 \item \href{#method-Reporter-clear}{\code{Reporter$clear()}}
 \item \href{#method-Reporter-save}{\code{Reporter$save()}}
@@ -74,12 +74,12 @@ Add a content to the report
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Reporter-add_case"></a>}}
-\if{latex}{\out{\hypertarget{method-Reporter-add_case}{}}}
-\subsection{Method \code{add_case()}}{
-Add a content to the report, but infer the headings from a case info returned by \link{case_info}
+\if{html}{\out{<a id="method-Reporter-add2"></a>}}
+\if{latex}{\out{\hypertarget{method-Reporter-add2}{}}}
+\subsection{Method \code{add2()}}{
+Add a content to the report, but infer the headings from headings and sub-headings
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Reporter$add_case(..., caseinfo, ui = "flat", max_level = 3)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Reporter$add2(..., hs, hs2 = c(), ui = "flat", collapse = ": ")}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -87,11 +87,16 @@ Add a content to the report, but infer the headings from a case info returned by
 \describe{
 \item{\code{...}}{The content to add}
 
-\item{\code{caseinfo}}{The case info returned by \link{case_info}}
+\item{\code{hs}}{The headings of the case}
+
+\item{\code{hs2}}{The headings that must be shown.
+When there are more items in \code{hs}, they will be concatenated.
+For example, if \code{hs = c("Section1", "Case1")}, and \code{hs2 = c("A", "B")}, then
+headings will be \code{h1 = "Section1: Case1"} and \code{h2 = "A"} and \code{h3 = "B"}.}
 
 \item{\code{ui}}{The user interface of the report}
 
-\item{\code{max_level}}{The maximum level of the headings. Default is 3}
+\item{\code{collapse}}{The separator to concatenate the headings}
 }
 \if{html}{\out{</div>}}
 }

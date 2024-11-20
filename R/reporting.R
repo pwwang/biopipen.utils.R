@@ -60,6 +60,7 @@ Reporter <- R6Class(
         #' When there are more items in `hs`, they will be concatenated.
         #' For example, if `hs = c("Section1", "Case1")`, and `hs2 = c("A", "B")`, then
         #' headings will be `h1 = "Section1: Case1"` and `h2 = "A"` and `h3 = "B"`.
+        #' @param collapse The separator to concatenate the headings
         #' @param ui The user interface of the report
         add2 = function(..., hs, hs2 = c(), ui = "flat", collapse = ": ") {
             stopifnot("hs2 must be less than 3" = length(hs2) <= 2)

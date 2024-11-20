@@ -46,6 +46,7 @@ bQuote <- function(x, force = FALSE) {
 #' @param collapse_replace Collapse consecutive non-alphanumeric character replacements
 #' @param tolower Convert to lowercase
 #' @return slugified strings
+#' @export
 #' @importFrom stats setNames
 slugify <- function(x, non_alphanum_replace = "-", collapse_replace = TRUE, tolower = FALSE) {
     if (length(x) == 0) {
