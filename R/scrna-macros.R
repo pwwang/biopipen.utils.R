@@ -48,6 +48,7 @@ AddCommand <- function(
 #' @param group.by Column name in meta.data to group cells by
 #' @param ident.1 Identity of the first group of cells
 #' @param ident.2 Identity of the second group of cells
+#' @param assay Assay to use for analysis
 #' @param subset Subset of cells to use for analysis
 #'  It should be a string of expression to pass to `dplyr::filter` function
 #' @param cache Directory to cache results
@@ -62,7 +63,8 @@ AddCommand <- function(
 #' @importFrom Seurat DefaultAssay PrepSCTFindMarkers FindMarkers
 #' @examples
 #' RunDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2")
-RunDEAnalysis <- function(object, group.by, ident.1 = NULL, ident.2 = NULL, subset = NULL, cache = NULL, error = TRUE, ...) {
+RunDEAnalysis <- function(
+    object, group.by, ident.1 = NULL, ident.2 = NULL, assay = NULL, subset = NULL, cache = NULL, error = TRUE, ...) {
     if (is.null(cache)) {
         cache <- tempdir()
         # file.remove(cache)
@@ -79,7 +81,9 @@ RunDEAnalysis <- function(object, group.by, ident.1 = NULL, ident.2 = NULL, subs
     stopifnot("'ident.2' is not found in 'group.by'" = is.null(ident.2) || ident.2 %in% all_ident)
     stopifnot("'ident.1' should be provided when 'ident.2' is provided" = is.null(ident.2) || !is.null(ident.1))
 
-    if (DefaultAssay(object) == "SCT" && !"PrepSCTFindMarkers" %in% names(object@commands)) {
+    assay <- assay %||% DefaultAssay(object)
+
+    if (assay == "SCT" && !"PrepSCTFindMarkers" %in% names(object@commands)) {
         object <- PrepSCTFindMarkers(object)
         object <- AddCommand(object, "PrepSCTFindMarkers")
     }
@@ -99,18 +103,21 @@ RunDEAnalysis <- function(object, group.by, ident.1 = NULL, ident.2 = NULL, subs
     if (!is.null(subset)) {
         object <- filter(object, !!parse_expr(subset))
     }
+    # https://satijalab.org/seurat/archive/v4.3/sctransform_v2_vignette#identify-differential-expressed-genes-across-conditions
+    recorrect_umi <- is.null(subset) && assay == "SCT"
 
-    find_markers <- function(recorrect_umi = TRUE) {
+    find_markers <- function(recorrect_umi, ...) {
         if (is.null(ident.1)) {
             degs <- do.call(rbind, lapply(all_ident, function(ident) {
-                m <- FindMarkers(object, group.by = group.by, ident.1 = ident, recorrect_umi = recorrect_umi, ...)
+                m <- FindMarkers(object, group.by = group.by, ident.1 = ident, recorrect_umi = recorrect_umi, assay = assay, ...)
                 m$gene <- rownames(m)
                 rownames(m) <- NULL
                 m[[group.by]] <- ident
                 m
             }))
         } else {
-            degs <- FindMarkers(object, group.by = group.by, ident.1 = ident.1, ident.2 = ident.2, recorrect_umi = recorrect_umi, ...)
+            degs <- FindMarkers(object, group.by = group.by, ident.1 = ident.1, ident.2 = ident.2, recorrect_umi = recorrect_umi,
+                assay = assay, ...)
             degs$gene <- rownames(degs)
             degs[[group.by]] <- NA
         }
@@ -120,29 +127,16 @@ RunDEAnalysis <- function(object, group.by, ident.1 = NULL, ident.2 = NULL, subs
     }
 
     if (!error) {
-        tryCatch({
-            degs <- find_markers()
+        degs <- tryCatch({
+            find_markers(recorrect_umi, ...)
         }, error = function(e) {
             warning("[RunDEAnalysis] Failed to run DE analysis: ", e$message, immediate. = TRUE)
-            degs <- empty
+            empty
         })
     } else {
-        degs <- find_markers()
+        degs <- find_markers(recorrect_umi, ...)
     }
 
-    if (nrow(degs) == 0 && DefaultAssay(object) == "SCT") {
-        warning("[RunDEAnalysis] No DEGs found, trying recorrect_umi = FALSE")
-        if (!error) {
-            tryCatch({
-                degs <- find_markers(recorrect_umi = FALSE)
-            }, error = function(e) {
-                warning("[RunDEAnalysis] Failed to run DE analysis: ", e$message, immediate. = TRUE)
-                degs <- empty
-            })
-        } else {
-            degs <- find_markers(recorrect_umi = FALSE)
-        }
-    }
     degs$diff_pct <- degs$pct.1 - degs$pct.2
     attr(degs, "object") <- object
     attr(degs, "group.by") <- group.by
