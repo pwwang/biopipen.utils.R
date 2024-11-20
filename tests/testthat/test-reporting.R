@@ -106,20 +106,16 @@ test_that("Reporter adds case content correctly", {
 
 test_that("Reporter generates image report correctly", {
     reporter <- Reporter$new()
-    image_report <- reporter$image("Image Name", "prefix", c("pdf", "svg"), TRUE)
+    image_report <- reporter$image("prefix", c("pdf", "svg"), TRUE)
+
     expected <- list(
-        name = "Image Name",
-        contents = list(
-            list(
-                kind = "image",
-                src = "prefix.png",
-                download = list("prefix.pdf", "prefix.svg", list(
-                    src = "prefix.code.zip",
-                    tip = "Download the code to reproduce the plot",
-                    icon = "Code"
-                ))
-            )
-        )
+        kind = "image",
+        src = "prefix.png",
+        download = list("prefix.pdf", "prefix.svg", list(
+            src = "prefix.code.zip",
+            tip = "Download the code to reproduce the plot",
+            icon = "Code"
+        ))
     )
     expect_equal(image_report, expected)
 })

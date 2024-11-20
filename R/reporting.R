@@ -100,7 +100,6 @@ Reporter <- R6Class(
 
         #' @description
         #' Generate a report for an image to be added
-        #' @param name The name of the image
         #' @param prefix The prefix of the image
         #' @param more_formats More formats of the image available
         #' @param save_code Whether to save the code to reproduce the plot
@@ -108,34 +107,30 @@ Reporter <- R6Class(
         #' @examples
         #' reporter <- get_reporter()
         #' reporter$add(
-        #'   reporter$image("image1", "Image 1", "pdf", save_code = TRUE),
+        #'   reporter$image("/path/to/image1", "pdf", save_code = TRUE),
         #'   h1 = "Images",
         #'   h2 = "Image 1"
         #' )
-        image = function(name, prefix, more_formats, save_code) {
+        image = function(prefix, more_formats, save_code) {
             out <- list(
-                name = name,
-                contents = list(
-                    list(
-                        kind = "image",
-                        src = paste0(prefix, ".png")
-                    )
-                )
+                kind = "image",
+                src = paste0(prefix, ".png")
             )
+
             if (length(more_formats) > 0 || save_code) {
-                out$contents[[1]]$download <- list()
+                out$download <- list()
             }
             if (length(more_formats) > 0) {
-                out$contents[[1]]$download <- c(
-                    out$contents[[1]]$download,
+                out$download <- c(
+                    out$download,
                     lapply(more_formats, function(format) {
                         paste0(prefix, ".", format)
                     })
                 )
             }
             if (save_code) {
-                out$contents[[1]]$download <- c(
-                    out$contents[[1]]$download,
+                out$download <- c(
+                    out$download,
                     list(
                         list(
                             src = paste0(prefix, ".code.zip"),
