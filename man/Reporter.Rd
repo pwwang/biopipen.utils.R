@@ -14,7 +14,7 @@ Add report to a report.json to pipen-report to build a report
 
 reporter <- get_reporter()
 reporter$add(
-  reporter$image("image1", "Image 1", "pdf", save_code = TRUE),
+  reporter$image("/path/to/image1", "pdf", save_code = TRUE),
   h1 = "Images",
   h2 = "Image 1"
 )
@@ -107,14 +107,12 @@ headings will be \code{h1 = "Section1: Case1"} and \code{h2 = "A"} and \code{h3 
 \subsection{Method \code{image()}}{
 Generate a report for an image to be added
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Reporter$image(name, prefix, more_formats, save_code)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Reporter$image(prefix, more_formats, save_code)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{name}}{The name of the image}
-
 \item{\code{prefix}}{The prefix of the image}
 
 \item{\code{more_formats}}{More formats of the image available}
@@ -130,7 +128,7 @@ a list of the report for the image
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{reporter <- get_reporter()
 reporter$add(
-  reporter$image("image1", "Image 1", "pdf", save_code = TRUE),
+  reporter$image("/path/to/image1", "pdf", save_code = TRUE),
   h1 = "Images",
   h2 = "Image 1"
 )

@@ -51,16 +51,17 @@ save_plot <- function(plot, prefix, devpars = NULL, bg = "white", formats = c("p
 #' save the files as `/path/to/file.code.zip`.
 #' @param setup The code to setup the environment for the plot generation
 #' @param ... The names of the variables to save from the environment
+#' @param auto_data_setup Whether to automatically save the variables from the environment
 #' @param envir The environment to save the variables from
 #' @export
 #' @importFrom zip zip
 #' @importFrom rlang dots_n
-save_plotcode <- function(plot, prefix, setup = NULL, ..., envir = parent.frame()) {
+save_plotcode <- function(plot, prefix, setup = NULL, ..., auto_data_setup = TRUE, envir = parent.frame()) {
     if (is.null(plot$logs)) {
         stop("The plot object does not have logs, did you use gglogger?")
     }
     dn <- dots_n(...)
-    if (dn > 0) {
+    if (dn > 0 && auto_data_setup) {
         setup <- c(setup, 'load("data.RData")')
     }
     code <- plot$logs$gen_code(setup = setup)

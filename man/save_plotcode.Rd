@@ -4,7 +4,14 @@
 \alias{save_plotcode}
 \title{Save the plot code and data to reproduce the plot}
 \usage{
-save_plotcode(plot, prefix, setup = NULL, ..., envir = parent.frame())
+save_plotcode(
+  plot,
+  prefix,
+  setup = NULL,
+  ...,
+  auto_data_setup = TRUE,
+  envir = parent.frame()
+)
 }
 \arguments{
 \item{plot}{The plot object}
@@ -16,6 +23,8 @@ save the files as \verb{/path/to/file.code.zip}.}
 \item{setup}{The code to setup the environment for the plot generation}
 
 \item{...}{The names of the variables to save from the environment}
+
+\item{auto_data_setup}{Whether to automatically save the variables from the environment}
 
 \item{envir}{The environment to save the variables from}
 }

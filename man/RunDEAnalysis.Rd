@@ -9,6 +9,7 @@ RunDEAnalysis(
   group.by,
   ident.1 = NULL,
   ident.2 = NULL,
+  assay = NULL,
   subset = NULL,
   cache = NULL,
   error = TRUE,
@@ -23,6 +24,8 @@ RunDEAnalysis(
 \item{ident.1}{Identity of the first group of cells}
 
 \item{ident.2}{Identity of the second group of cells}
+
+\item{assay}{Assay to use for analysis}
 
 \item{subset}{Subset of cells to use for analysis
 It should be a string of expression to pass to \code{dplyr::filter} function}
