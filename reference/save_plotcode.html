@@ -44,7 +44,14 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">save_plotcode</span><span class="op">(</span><span class="va">plot</span>, <span class="va">prefix</span>, setup <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span>, envir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sys.parent.html" class="external-link">parent.frame</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">save_plotcode</span><span class="op">(</span></span>
+<span>  <span class="va">plot</span>,</span>
+<span>  <span class="va">prefix</span>,</span>
+<span>  setup <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  auto_data_setup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  envir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sys.parent.html" class="external-link">parent.frame</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -67,6 +74,10 @@ save the files as <code>/path/to/file.code.zip</code>.</p></dd>
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>The names of the variables to save from the environment</p></dd>
+
+
+<dt id="arg-auto-data-setup">auto_data_setup<a class="anchor" aria-label="anchor" href="#arg-auto-data-setup"></a></dt>
+<dd><p>Whether to automatically save the variables from the environment</p></dd>
 
 
 <dt id="arg-envir">envir<a class="anchor" aria-label="anchor" href="#arg-envir"></a></dt>
