@@ -111,7 +111,7 @@ Reporter <- R6Class(
         #' reporter$add(
         #'   list(
         #'      name = "Image 1",
-        #'      contents = list(reporter$image("/path/to/image1", "pdf", save_code = TRUE)),
+        #'      contents = list(reporter$image("/path/to/image1", "pdf", save_code = TRUE))
         #'   ),
         #'   h1 = "Images",
         #'   h2 = "Image 1"
