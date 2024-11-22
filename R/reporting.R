@@ -103,18 +103,24 @@ Reporter <- R6Class(
         #' @param prefix The prefix of the image
         #' @param more_formats More formats of the image available
         #' @param save_code Whether to save the code to reproduce the plot
+        #' @param kind The kind of the report, default is "image"
+        #' @param ... Other arguments to add to the report
         #' @return a list of the report for the image
         #' @examples
         #' reporter <- get_reporter()
         #' reporter$add(
-        #'   reporter$image("/path/to/image1", "pdf", save_code = TRUE),
+        #'   list(
+        #'      name = "Image 1",
+        #'      contents = list(reporter$image("/path/to/image1", "pdf", save_code = TRUE)),
+        #'   ),
         #'   h1 = "Images",
         #'   h2 = "Image 1"
         #' )
-        image = function(prefix, more_formats, save_code) {
+        image = function(prefix, more_formats, save_code, kind = "image", ...) {
             out <- list(
-                kind = "image",
-                src = paste0(prefix, ".png")
+                kind = kind,
+                src = paste0(prefix, ".png"),
+                ...
             )
 
             if (length(more_formats) > 0 || save_code) {

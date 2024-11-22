@@ -119,3 +119,20 @@ test_that("Reporter generates image report correctly", {
     )
     expect_equal(image_report, expected)
 })
+
+test_that("Reporter generates image report works with extra arguments", {
+    reporter <- Reporter$new()
+    image_report <- reporter$image("prefix", c("pdf", "svg"), TRUE, kind = "table_image", descr = "blah")
+
+    expected <- list(
+        kind = "table_image",
+        src = "prefix.png",
+        descr = "blah",
+        download = list("prefix.pdf", "prefix.svg", list(
+            src = "prefix.code.zip",
+            tip = "Download the code to reproduce the plot",
+            icon = "Code"
+        ))
+    )
+    expect_equal(image_report, expected)
+})
