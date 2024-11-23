@@ -144,7 +144,7 @@ headings will be <code>h1 = "Section1: Case1"</code> and <code>h2 = "A"</code> a
 <h3 id="method-image-">Method <code><a href="https://rdrr.io/r/graphics/image.html" class="external-link">image()</a></code><a class="anchor" aria-label="anchor" href="#method-image-"></a></h3>
 <p>Generate a report for an image to be added</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Reporter</span><span class="op">$</span><span class="fu">image</span><span class="op">(</span><span class="va">prefix</span>, <span class="va">more_formats</span>, <span class="va">save_code</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Reporter</span><span class="op">$</span><span class="fu">image</span><span class="op">(</span><span class="va">prefix</span>, <span class="va">more_formats</span>, <span class="va">save_code</span>, kind <span class="op">=</span> <span class="st">"image"</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -161,6 +161,14 @@ headings will be <code>h1 = "Section1: Case1"</code> and <code>h2 = "A"</code> a
 <dd><p>Whether to save the code to reproduce the plot</p></dd>
 
 
+<dt><code>kind</code></dt>
+<dd><p>The kind of the report, default is "image"</p></dd>
+
+
+<dt><code>...</code></dt>
+<dd><p>Other arguments to add to the report</p></dd>
+
+
 </dl><p></p></div>
 </div>
 <div class="section">
@@ -171,7 +179,10 @@ headings will be <code>h1 = "Section1: Case1"</code> and <code>h2 = "A"</code> a
 <h4 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="va">reporter</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_reporter.html">get_reporter</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">reporter</span><span class="op">$</span><span class="fu">add</span><span class="op">(</span></span>
-<span>  <span class="va">reporter</span><span class="op">$</span><span class="fu">image</span><span class="op">(</span><span class="st">"/path/to/image1"</span>, <span class="st">"pdf"</span>, save_code <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>     name <span class="op">=</span> <span class="st">"Image 1"</span>,</span>
+<span>     contents <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">reporter</span><span class="op">$</span><span class="fu">image</span><span class="op">(</span><span class="st">"/path/to/image1"</span>, <span class="st">"pdf"</span>, save_code <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
 <span>  h1 <span class="op">=</span> <span class="st">"Images"</span>,</span>
 <span>  h2 <span class="op">=</span> <span class="st">"Image 1"</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
@@ -237,7 +248,10 @@ Otherwise, the report will be saved to the path</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">reporter</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_reporter.html">get_reporter</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">reporter</span><span class="op">$</span><span class="fu">add</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">reporter</span><span class="op">$</span><span class="fu">image</span><span class="op">(</span><span class="st">"/path/to/image1"</span>, <span class="st">"pdf"</span>, save_code <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>     name <span class="op">=</span> <span class="st">"Image 1"</span>,</span></span>
+<span class="r-in"><span>     contents <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">reporter</span><span class="op">$</span><span class="fu">image</span><span class="op">(</span><span class="st">"/path/to/image1"</span>, <span class="st">"pdf"</span>, save_code <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
 <span class="r-in"><span>  h1 <span class="op">=</span> <span class="st">"Images"</span>,</span></span>
 <span class="r-in"><span>  h2 <span class="op">=</span> <span class="st">"Image 1"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
