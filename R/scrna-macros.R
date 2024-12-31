@@ -326,7 +326,7 @@ LoadSeuratAndPerformQC <- function(
     log$info("Performing gene QC ...")
     genes <- rownames(obj)
     obj@misc$gene_qc <- list(
-        before <- length(genes),
+        before = length(genes),
         criteria = gene_qc,
         ncells = data.frame(Sample = character(), feature = character(), ncells = numeric())
     )
