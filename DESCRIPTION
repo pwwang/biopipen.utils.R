@@ -30,6 +30,7 @@ Imports:
     enrichR,
     plotthis,
     scplotter,
+    DoubletFinder,
     scDblFinder,
     Matrix,
     BiocParallel
