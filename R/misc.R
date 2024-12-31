@@ -204,3 +204,23 @@ list_update <- function(x, ..., depth = -1L) {
     }
     x
 }
+
+
+#' Get the temporary directory, without suffix.
+#' It works like `tempfile.gettempdir()` in Python.
+#'
+#' @return The temporary directory
+#' @export
+gettempdir <- function() {
+    ret <- tempdir()  # get the temporary directory with suffix
+    # file.remove(cache)
+    dirname(ret)
+}
+
+#' Format the arguments for debugging
+#' @param args The arguments to format
+#' @return The formatted arguments
+#' @keywords internal
+format_args <- function(args) {
+    paste(capture.output(str(args)), collapse = ", ")
+}

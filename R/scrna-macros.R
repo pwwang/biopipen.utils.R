@@ -65,12 +65,8 @@ AddCommand <- function(
 #' RunDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2")
 RunDEAnalysis <- function(
     object, group.by, ident.1 = NULL, ident.2 = NULL, assay = NULL, subset = NULL, cache = NULL, error = TRUE, ...) {
-    if (is.null(cache)) {
-        cache <- tempdir()
-        # file.remove(cache)
-        cache <- dirname(cache)  # a better way to get the tmpdir?
-    }
-    cached <- get_cached(list(object, group.by, ident.1, ident.2, subset, ...), "biopipen.utils.RunDEAnalysis", cache)
+    cache <- cache %||% gettempdir()
+    cached <- get_cached(list(object, group.by, ident.1, ident.2, subset, ...), "biopipen.utils.RunSeuratDEAnalysis", cache)
     if (!is.null(cached$data)) {
         return(cached$data)
     }
