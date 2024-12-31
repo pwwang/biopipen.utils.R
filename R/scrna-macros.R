@@ -183,7 +183,7 @@ PerformSeuratCellQC <- function(object, cell_qc) {
 #' The RNAData column should contain the path to the 10X data, either a directory or a file
 #' If the path is a directory, the function will look for barcodes.tsv.gz, features.tsv.gz and matrix.mtx.gz.
 #' The directory should be loaded by [Seurat::Read10X]. Sometimes, there may be prefix in the file names,
-#' e.g. "<prefix>.barcodes.tsv.gz", which is also supported.
+#' e.g. "'prefix'.barcodes.tsv.gz", which is also supported.
 #' If the path is a file, it should be a h5 file that can be loaded by [Seurat::Read10X_h5]
 #' @param samples Samples to load. If NULL, all samples will be loaded
 #' @param per_sample_qc Whether to perform per-sample cell QC
@@ -590,7 +590,6 @@ RunSeuratIntegration <- function(
 #' @param doublets The expected proportion of doublets in the dataset. Default is set to 0.075
 #' @keywords internal
 #' @return The Seurat object with doublet detection results in `@misc$doubletFinder`
-#' @importFrom DoubletFinder doubletFinder find.pK modelHomotypic paramSweep summarizeSweep
 #' @importFrom Seurat FindNeighbors FindClusters DefaultAssay AddMetaData
 #' @importFrom rlang %||%
 #' @importFrom SeuratObject Idents<- Idents
@@ -609,23 +608,23 @@ RunSeuratDoubletFinder <- function(object, ncores = 1, PCs = 30, pN = 0.25, doub
 
     log$info("- pK Indentification ...")
     if (allow_warnings) {
-        sweep.res.list <- paramSweep(
+        sweep.res.list <- DoubletFinder::paramSweep(
             object,
             PCs = 1:PCs,
             sct = identical(DefaultAssay(object), "SCT"),
             num.cores = ncores
         )
     } else {
-        sweep.res.list <- suppressWarnings(paramSweep(
+        sweep.res.list <- suppressWarnings(DoubletFinder::paramSweep(
             object,
             PCs = 1:PCs,
             sct = identical(DefaultAssay(object), "SCT"),
             num.cores = ncores
         ))
     }
-    sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+    sweep.stats <- DoubletFinder::summarizeSweep(sweep.res.list, GT = FALSE)
     pdf(NULL)
-    bcmvn <- find.pK(sweep.stats)
+    bcmvn <- DoubletFinder::find.pK(sweep.stats)
     dev.off()
     bcmvn$Selected <- bcmvn$pK == bcmvn$pK[which.max(bcmvn$BCmetric)[1]]
 
@@ -633,13 +632,13 @@ RunSeuratDoubletFinder <- function(object, ncores = 1, PCs = 30, pN = 0.25, doub
     pK <- as.numeric(as.character(pK))
     log$info("- Homotypic Doublet Proportion Estimate ...")
 
-    homotypic.prop <- modelHomotypic(Idents(object))
+    homotypic.prop <- DoubletFinder::modelHomotypic(Idents(object))
     nExp_poi <- round(nrow(object@meta.data) * doublets)
     nExp_poi.adj <- round(nExp_poi * (1 - homotypic.prop))
 
     log$info("- Running DoubletFinder ...")
     if (allow_warnings) {
-        object <- doubletFinder(
+        object <- DoubletFinder::doubletFinder(
             object,
             PCs = 1:PCs,
             pN = pN,
@@ -649,7 +648,7 @@ RunSeuratDoubletFinder <- function(object, ncores = 1, PCs = 30, pN = 0.25, doub
             sct = identical(DefaultAssay(object), "SCT")
         )
     } else {
-        object <- suppressWarnings(doubletFinder(
+        object <- suppressWarnings(DoubletFinder::doubletFinder(
             object,
             PCs = 1:PCs,
             pN = pN,
@@ -688,7 +687,6 @@ RunSeuratDoubletFinder <- function(object, ncores = 1, PCs = 30, pN = 0.25, doub
 #' @return The Seurat object with doublet detection results in `@misc$scDblFinder`
 #' @keywords internal
 #' @importFrom Seurat GetAssayData AddMetaData
-#' @importFrom scDblFinder scDblFinder
 RunSeuratScDblFinder <- function(object, ncores = 1, ...) {
     args <- list(returnType = "table", ...)
     args$sce <- GetAssayData(object, layer = "counts")
@@ -696,7 +694,7 @@ RunSeuratScDblFinder <- function(object, ncores = 1, ...) {
         args$BPPARAM <- BiocParallel::MulticoreParam(ncores, RNGseed = 8525)
     }
 
-    doublets <- do_call(scDblFinder, args)
+    doublets <- do_call(scDblFinder::scDblFinder, args)
     doublets <- doublets[doublets$type == "real", , drop = FALSE]
     doublets <- doublets[, c("score", "class"), drop = FALSE]
     colnames(doublets) <- c("scDblFinder_score", "scDblFinder_DropletType")
@@ -719,7 +717,7 @@ RunSeuratScDblFinder <- function(object, ncores = 1, ...) {
 #' Then you will need to filter them out manually. For example: `object <- subset(object, subset = DoubletFinder_DropletType != "doublet")`
 #' @param log Logger
 #' @param cache Directory to cache the results. Set to `FALSE` to disable caching
-#' @return The Seurat object with doublet detection results in `@misc$doubletFinder` or `@misc$scDblFinder`
+#' @return The Seurat object with doublet detection results in `@misc$doublets`
 #' @export
 RunSeuratDoubletDetection <- function(
     object,

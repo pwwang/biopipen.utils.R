@@ -1,10 +1,10 @@
 package:
   name: r-biopipen.utils
-  version: 0.0.4
+  version: 0.0.5
 
 source:
   git_url: https://github.com/pwwang/biopipen.utils.R
-  git_rev: 0.0.4
+  git_rev: 0.0.5
 
 build:
   number: 1

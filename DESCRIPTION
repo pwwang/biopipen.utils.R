@@ -23,18 +23,18 @@ Imports:
     ggplot2,
     jsonlite,
     R6,
-    zip,
     Seurat (>= 5.0.0),
     SeuratObject,
     tidyseurat,
-    enrichR,
     plotthis,
-    scplotter,
+    scplotter
+Suggests:
+    zip,
+    enrichR,
     DoubletFinder,
     scDblFinder,
     Matrix,
-    BiocParallel
-Suggests:
+    BiocParallel,
     testthat,
     covr,
     gglogger

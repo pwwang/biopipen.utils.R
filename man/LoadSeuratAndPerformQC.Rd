@@ -21,7 +21,7 @@ Required columns: Sample, RNAData.
 The RNAData column should contain the path to the 10X data, either a directory or a file
 If the path is a directory, the function will look for barcodes.tsv.gz, features.tsv.gz and matrix.mtx.gz.
 The directory should be loaded by \link[Seurat:Read10X]{Seurat::Read10X}. Sometimes, there may be prefix in the file names,
-e.g. "\if{html}{\out{<prefix>}}.barcodes.tsv.gz", which is also supported.
+e.g. "'prefix'.barcodes.tsv.gz", which is also supported.
 If the path is a file, it should be a h5 file that can be loaded by \link[Seurat:Read10X_h5]{Seurat::Read10X_h5}}
 
 \item{samples}{Samples to load. If NULL, all samples will be loaded}

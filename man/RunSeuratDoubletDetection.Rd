@@ -33,7 +33,7 @@ Then you will need to filter them out manually. For example: \code{object <- sub
 \item{cache}{Directory to cache the results. Set to \code{FALSE} to disable caching}
 }
 \value{
-The Seurat object with doublet detection results in \verb{@misc$doubletFinder} or \verb{@misc$scDblFinder}
+The Seurat object with doublet detection results in \verb{@misc$doublets}
 }
 \description{
 Run doublet detection on a Seurat object

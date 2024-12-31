@@ -54,7 +54,6 @@ save_plot <- function(plot, prefix, devpars = NULL, bg = "white", formats = c("p
 #' @param auto_data_setup Whether to automatically save the variables from the environment
 #' @param envir The environment to save the variables from
 #' @export
-#' @importFrom zip zip
 #' @importFrom rlang dots_n
 save_plotcode <- function(plot, prefix, setup = NULL, ..., auto_data_setup = TRUE, envir = parent.frame()) {
     if (is.null(plot$logs)) {
@@ -76,7 +75,7 @@ save_plotcode <- function(plot, prefix, setup = NULL, ..., auto_data_setup = TRU
     }
 
     zip_file <- paste0(prefix, ".code.zip")
-    zip(
+    zip::zip(
         zip_file,
         if (dn > 0) c("plot.R", "data.RData") else "plot.R",
         root = codedir

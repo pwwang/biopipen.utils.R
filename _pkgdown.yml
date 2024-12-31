@@ -1,0 +1,4 @@
+url: https://pwwang.github.io/biopipen.utils.R/
+template:
+  bootstrap: 5
+  bootswatch: lumen

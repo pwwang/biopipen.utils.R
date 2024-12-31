@@ -12,7 +12,6 @@
 #' @param site A string specifying the Enrichr site to use
 #' @param ... Additional arguments to pass to [RunEnrichment]
 #' @importFrom utils getFromNamespace
-#' @importFrom enrichR setEnrichrSite enrichr
 #' @export
 #' @examples
 #' degs <- suppressWarnings(RunSeuratDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2"))
@@ -29,7 +28,7 @@ RunEnrichment <- function(
 
     attachEnrichr <- getFromNamespace(".onAttach", "enrichR")
     suppressMessages(attachEnrichr())
-    setEnrichrSite(site)
+    enrichR::setEnrichrSite(site)
 
     empty <- data.frame(
         Term = character(),
@@ -65,7 +64,7 @@ RunEnrichment <- function(
         }
     }
 
-    enriched <- enrichr(sig_degs, dbs)
+    enriched <- enrichR::enrichr(sig_degs, dbs)
     out <- do.call(rbind, lapply(names(enriched), function(n) {
         enriched[[n]]$db <- n
         enriched[[n]]
