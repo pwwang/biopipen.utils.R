@@ -202,6 +202,7 @@ PerformSeuratCellQC <- function(object, cell_qc) {
 #' @importFrom rlang sym
 #' @importFrom dplyr filter group_by summarise
 #' @importFrom Seurat CreateSeuratObject RenameCells Read10X Read10X_h5
+#' @export
 #' @examples
 #' \donttest{
 #' datadir <- system.file("extdata", "scrna", package = "biopipen.utils")
