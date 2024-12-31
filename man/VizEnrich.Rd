@@ -34,7 +34,7 @@ Visualize enrichment (over-representation) analysis results
 }
 \examples{
 \donttest{
-degs <- suppressWarnings(RunDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2"))
+degs <- suppressWarnings(RunSeuratDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2"))
 enrich <- RunEnrichment(degs, deg = "abs(avg_log2FC) > 1")
 VizEnrich(enrich)
 VizEnrich(enrich, plot_type = "dot")

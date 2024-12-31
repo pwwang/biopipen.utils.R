@@ -20,7 +20,7 @@ VizDEGs(
 )
 }
 \arguments{
-\item{degs}{DEGs from RunDEAnalysis}
+\item{degs}{DEGs from RunSeuratDEAnalysis}
 
 \item{plot_type}{Type of plot to generate
 One of 'volcano_pct', 'volcano_log2fc', 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot'}
@@ -57,7 +57,7 @@ Visualize differentially expressed genes
 }
 \examples{
 \donttest{
-degs <- suppressWarnings(RunDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2"))
+degs <- suppressWarnings(RunSeuratDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2"))
 VizDEGs(degs, plot_type = "volcano_pct")
 VizDEGs(degs, plot_type = "volcano_log2fc")
 VizDEGs(degs, plot_type = "violin")

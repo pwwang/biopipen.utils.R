@@ -15,6 +15,7 @@ Imports:
     rlang,
     digest,
     mygene,
+    bracer,
     tibble,
     dplyr,
     tidyr,
@@ -28,7 +29,11 @@ Imports:
     tidyseurat,
     enrichR,
     plotthis,
-    scplotter
+    scplotter,
+    DoubletFinder,
+    scDblFinder,
+    Matrix,
+    BiocParallel
 Suggests:
     testthat,
     covr,
