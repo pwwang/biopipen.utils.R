@@ -4,12 +4,13 @@
 \alias{VizSeuratGeneQC}
 \title{Visualize gene QC metrics of Seurat object}
 \usage{
-VizSeuratGeneQC(object, max_features = 10, ...)
+VizSeuratGeneQC(object, features = 10, ...)
 }
 \arguments{
 \item{object}{A Seurat object with gene QC metrics}
 
-\item{max_features}{Maximum number of features to visualize}
+\item{features}{Number of features/actual features to visualize
+If actual features are given, they must be the features excluded in gene QC}
 
 \item{...}{Additional arguments to pass to the plot function \link[plotthis:barplot]{plotthis::BarPlot}}
 }

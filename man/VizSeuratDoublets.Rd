@@ -34,3 +34,28 @@ The plot
 \description{
 Visualize detected doublets
 }
+\examples{
+\donttest{
+datadir <- system.file("extdata", "scrna", package = "biopipen.utils")
+meta <- data.frame(
+    Sample = c("Sample1", "Sample2"),
+    RNAData = c(
+        file.path(datadir, "Sample1"),
+        file.path(datadir, "Sample2")
+    )
+)
+
+obj <- LoadSeuratAndPerformQC(meta, cache = FALSE, gene_qc = list(min_cells = 3),
+    cell_qc = "nFeature_RNA > 500")
+VizSeuratCellQC(obj)
+VizSeuratCellQC(obj, plot_type = "scatter")
+VizSeuratCellQC(obj, plot_type = "ridge")
+VizSeuratGeneQC(obj)
+
+obj <- RunSeuratTransformation(obj)
+obj <- RunSeuratIntegration(obj)
+obj <- RunSeuratDoubletDetection(obj, tool = "scDblFinder", filter = FALSE)
+VizSeuratDoublets(obj)
+VizSeuratDoublets(obj, plot_type = "pie")
+}
+}
