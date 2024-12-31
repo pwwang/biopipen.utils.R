@@ -1,4 +1,4 @@
-#' AddCommand
+#' AddSeuratCommand
 #'
 #' Add a command to a Seurat object `@commands` slot
 #'
@@ -16,11 +16,11 @@
 #' object <- SeuratObject::pbmc_small
 #' names(object@commands)
 #'
-#' object <- AddCommand(object, "RunDEAnalysis",
-#'  "RunDEAnalysis(object, group.by = 'groups', ident.1 = 'g1', ident.2 = 'g2')",
+#' object <- AddSeuratCommand(object, "RunSeuratDEAnalysis",
+#'  "RunSeuratDEAnalysis(object, group.by = 'groups', ident.1 = 'g1', ident.2 = 'g2')",
 #'  list(group.by = 'groups', ident.1 = 'g1', ident.2 = 'g2'))
-#' object@commands$RunDEAnalysis
-AddCommand <- function(
+#' object@commands$RunSeuratDEAnalysis
+AddSeuratCommand <- function(
     object, name, call.string = paste0(name, "(object, ...)"),
     params = list(), assay.used = NULL
 ) {
@@ -81,7 +81,7 @@ RunDEAnalysis <- function(
 
     if (assay == "SCT" && !"PrepSCTFindMarkers" %in% names(object@commands)) {
         object <- PrepSCTFindMarkers(object)
-        object <- AddCommand(object, "PrepSCTFindMarkers")
+        object <- AddSeuratCommand(object, "PrepSCTFindMarkers")
     }
     empty <- data.frame(
         gene = character(),
