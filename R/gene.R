@@ -26,7 +26,6 @@
 #' @importFrom utils capture.output
 #' @importFrom rlang sym :=
 #' @importFrom tibble tibble as_tibble
-#' @importFrom mygene queryMany
 #' @importFrom dplyr ungroup slice_max arrange group_by summarise mutate filter coalesce
 #' @importFrom dplyr left_join select slice_min pull everything any_of all_of desc %>%
 gene_name_conversion <- function(
@@ -57,11 +56,11 @@ gene_name_conversion <- function(
         {
             if (suppress_messages) {
                 capture.output(suppressWarnings(suppressMessages({
-                    out <- queryMany(genes, scopes = infmt, fields = outfmt, species = species) %>%
+                    out <- mygene::queryMany(genes, scopes = infmt, fields = outfmt, species = species) %>%
                         as_tibble()
                 })))
             } else {
-                out <- queryMany(genes, scopes = infmt, fields = outfmt, species = species) %>%
+                out <- mygene::queryMany(genes, scopes = infmt, fields = outfmt, species = species) %>%
                     as_tibble()
             }
 

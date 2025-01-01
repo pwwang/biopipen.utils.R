@@ -14,7 +14,6 @@ Imports:
     scales,
     rlang,
     digest,
-    mygene,
     bracer,
     tibble,
     dplyr,
@@ -29,6 +28,7 @@ Imports:
     plotthis,
     scplotter
 Suggests:
+    mygene,
     zip,
     enrichR,
     DoubletFinder,
