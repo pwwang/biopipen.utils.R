@@ -206,6 +206,36 @@ list_update <- function(x, ..., depth = -1L) {
 }
 
 
+#' Rename to names of a list
+#'
+#' @param x A list
+#' @param fn A function to rename the names.
+#' If the function returns NULL or FALSE, the name will be removed.
+#' If the function returns TRUE, the name will be kept.
+#' If the function returns a string, the name will be changed to the string.
+#' The function can take 1 or 2 arguments, the first is the name, the second is the value.
+#' @return The list with renamed names
+#' @export
+list_rename <- function(x, fn) {
+    out <- list()
+    for (k in names(x)) {
+        # based on number of arguments of fn
+        if (length(formals(fn)) == 1) {
+            o <- fn(k)
+        } else {
+            o <- fn(k, x[[k]])
+        }
+        if (is.null(o) || isFALSE(o)) {
+        } else if (isTRUE(o)) {
+            out[[k]] <- x[[k]]
+        } else {
+            out[[o]] <- x[[k]]
+        }
+    }
+    out
+}
+
+
 #' Get the temporary directory, without suffix.
 #' It works like `tempfile.gettempdir()` in Python.
 #'

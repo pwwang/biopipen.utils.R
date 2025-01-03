@@ -11,4 +11,7 @@ check-as-cran:
 	R CMD build .
 	R CMD check --as-cran $(shell ls -1t *.tar.gz | head -n 1)
 
+test:
+	R -e "devtools::test()"
+
 .PHONY: doc check

@@ -130,3 +130,28 @@ test_that("list_update: works with multiple lists", {
 
     expect_equal(list_update(x, y, z), list(a = 1, b = 2, c = 4, d = 6, e = 7))
 })
+
+test_that("list_rename: works with single-argument function", {
+    x <- list(a = 1, b = 2, c = 3)
+    expect_equal(list_rename(x, function(k) paste0(k, "_new")), list(a_new = 1, b_new = 2, c_new = 3))
+})
+
+test_that("list_rename: works with function return TRUE/FALSE/NULL", {
+    x <- list(a = 1, b = 2, c = 3, d = 4)
+    expect_equal(list_rename(x, function(k) {
+        if (k == "a") {
+            "a_new"
+        } else if (k == "b") {
+            TRUE
+        } else if (k == "c") {
+            FALSE
+        } else {
+            NULL
+        }
+    }), list(a_new = 1, b = 2))
+})
+
+test_that("list_rename: works with two-argument function", {
+    x <- list(a = 1, b = 2, c = 3)
+    expect_equal(list_rename(x, function(k, v) paste0(k, "_new")), list(a_new = 1, b_new = 2, c_new = 3))
+})
