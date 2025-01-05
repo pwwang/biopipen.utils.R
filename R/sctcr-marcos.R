@@ -10,7 +10,7 @@
 #' \donttest{
 #' data(contig_list, package = "scRepertoire")
 #' screp <- scRepertoire::combineTCR(contig_list)
-#' ScRepMutate(screp, list(CTaa_len = "nchar(CTaa)"))[[1]] %>% head()
+#' head(ScRepMutate(screp, list(CTaa_len = "nchar(CTaa)"))[[1]])
 #' }
 ScRepMutate <- function(screp, mutaters) {
     if (length(mutaters) == 0 || is.null(mutaters)) {
@@ -45,8 +45,8 @@ ScRepMutate <- function(screp, mutaters) {
 #' screp <- scRepertoire::combineTCR(contig_list,
 #'    samples = c("P17B", "P17L", "P18B", "P18L", "P19B","P19L", "P20B", "P20L"))
 #'
-#' ScRepSubset(screp, "nchar(CTaa) < 20")[[1]] %>% head()
-#' ScRepSubset(screp, "Sample %in% c('P17B', 'P17L')") %>% names()
+#' head(ScRepSubset(screp, "nchar(CTaa) < 20")[[1]])
+#' names(ScRepSubset(screp, "Sample %in% c('P17B', 'P17L')"))
 #' }
 ScRepSubset <- function(screp, subset) {
     if (inherits(screp, "Seurat")) {
