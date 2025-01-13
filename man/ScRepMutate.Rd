@@ -21,6 +21,6 @@ Mutate scRepertorie object
 \donttest{
 data(contig_list, package = "scRepertoire")
 screp <- scRepertoire::combineTCR(contig_list)
-ScRepMutate(screp, list(CTaa_len = "nchar(CTaa)"))[[1]] \%>\% head()
+head(ScRepMutate(screp, list(CTaa_len = "nchar(CTaa)"))[[1]])
 }
 }
