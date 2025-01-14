@@ -15,6 +15,8 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratIntegration.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratScDblFinder.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratTransformation.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ScRepMutate.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ScRepSubset.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizDEGs.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizEnrich.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratCellQC.html</loc></url>
