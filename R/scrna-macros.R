@@ -130,7 +130,16 @@ RunSeuratDEAnalysis <- function(
             empty
         })
     } else {
-        degs <- find_markers(recorrect_umi, ...)
+        degs <- tryCatch({
+            find_markers(recorrect_umi, ...)
+        }, error = function(e) {
+            if (grepl("PrepSCTFindMarkers", e$message) && isTRUE(recorrect_umi)) {
+                warning("[RunSeuratDEAnalysis] Still failing about PrepSCTFindMarkers, try recorrect_umi = FALSE", immediate. = TRUE)
+                find_markers(recorrect_umi = FALSE, ...)
+            } else {
+                stop(e)
+            }
+        })
     }
 
     degs$diff_pct <- degs$pct.1 - degs$pct.2
