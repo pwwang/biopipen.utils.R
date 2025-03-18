@@ -53,7 +53,8 @@ jobs:
           extra-packages: |
             any::devtools, any::pkgdown, any::testthat, any::gglogger, any::ComplexHeatmap,
             any::plotthis, any::scplotter, any::enrichR, github::immunogenomics/presto,
-            github::mojaveazure/seurat-disk, github::satijalab/seurat-data
+            github::mojaveazure/seurat-disk, github::satijalab/seurat-data,
+            github::satijalab/azimuth
 
       - uses: r-lib/actions/check-r-package@v2
 
