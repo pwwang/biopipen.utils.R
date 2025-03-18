@@ -798,6 +798,7 @@ RunSeuratDoubletDetection <- function(
 #' @importFrom Seurat DefaultAssay DefaultAssay<-
 #' @importFrom SeuratObject RenameAssays
 #' @importFrom digest digest
+#' @importFrom methods as
 #' @examples
 #' \donttest{
 #' ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad")
@@ -828,30 +829,32 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, log = 
             )
         )
         if (file.exists(h5seurat_file) &&
-            (file.mtime(h5seurat_file) < file.mtime(sobjfile))) {
+            !inherits(object_or_file, "Seurat") &&
+            (file.mtime(h5seurat_file) < file.mtime(object_or_file))) {
             file.remove(h5seurat_file)
         }
 
-        if (is.character(object_or_file)) {
-            log$debug("[ConvertSeuratToAnnData] Reading RDS file ...")
-            object_or_file <- readRDS(object_or_file)
+        if (!file.exists(h5seurat_file)) {
+            if (is.character(object_or_file)) {
+                log$debug("[ConvertSeuratToAnnData] Reading RDS file ...")
+                object_or_file <- readRDS(object_or_file)
+            }
+
+            assay <- assay %||% DefaultAssay(object_or_file)
+            # In order to convert to h5ad
+            # https://github.com/satijalab/seurat/issues/8220#issuecomment-1871874649
+            object_or_file$RNAv3 <- as(object = object_or_file[[assay]], Class = "Assay")
+            DefaultAssay(object_or_file) <- "RNAv3"
+            object_or_file$RNA <- NULL
+            object_or_file <- RenameAssays(object_or_file, RNAv3 = "RNA")
+
+            log$debug("[ConvertSeuratToAnnData] Saving Seurat object to H5Seurat file ...")
+            SeuratDisk::SaveH5Seurat(object_or_file, h5seurat_file)
+
+            rm(object_or_file)
+            gc()
         }
-
-        assay <- assay %||% DefaultAssay(object_or_file)
-        # In order to convert to h5ad
-        # https://github.com/satijalab/seurat/issues/8220#issuecomment-1871874649
-        object_or_file$RNAv3 <- as(object = object_or_file[[assay]], Class = "Assay")
-        DefaultAssay(object_or_file) <- "RNAv3"
-        object_or_file$RNA <- NULL
-        object_or_file <- RenameAssays(object_or_file, RNAv3 = "RNA")
-
-        log$debug("[ConvertSeuratToAnnData] Saving Seurat object to H5Seurat file ...")
-        SeuratDisk::SaveH5Seurat(object_or_file, h5seurat_file)
-
-        rm(object_or_file)
-        gc()
         object_or_file <- h5seurat_file
-
     }
 
     if (!endsWith(object_or_file, ".h5seurat")) {
@@ -872,8 +875,9 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, log = 
         do.call("[", c(list(space), list(...)))
         ref_type <- hdf5r::h5const$H5R_OBJECT
         ref_obj <- hdf5r::H5R_OBJECT$new(1, self)
-        res <- .Call("R_H5Rcreate", ref_obj$ref, self$id, ".", ref_type,
-                    space$id, FALSE, PACKAGE = "hdf5r")
+        res <- .Call(
+            "R_H5Rcreate", ref_obj$ref,  self$id, ".", ref_type,
+            space$id, FALSE, PACKAGE = "hdf5r")
         if (res$return_val < 0) {
             stop("Error creating object reference")
         }

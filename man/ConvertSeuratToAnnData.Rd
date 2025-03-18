@@ -22,6 +22,10 @@ No return value
 Convert a Seurat object (or RDS/H5Seurat file) to an AnnData object file
 }
 \examples{
+\donttest{
 ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad")
 
+saveRDS(SeuratObject::pbmc_small, "/tmp/pbmc_small.rds")
+ConvertSeuratToAnnData("/tmp/pbmc_small.rds", "/tmp/pbmc_small.h5ad")
+}
 }
