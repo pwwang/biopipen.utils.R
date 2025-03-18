@@ -38,10 +38,13 @@ Suggests:
     scRepertoire,
     testthat,
     covr,
-    gglogger
+    hdf5r,
+    gglogger,
+    seurat-disk
 Remotes:
     pwwang/scplotter,
     wjawaid/enrichR,
-    chris-mcginnis-ucsf/DoubletFinder
+    chris-mcginnis-ucsf/DoubletFinder,
+    mojaveazure/seurat-disk
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2

@@ -787,3 +787,111 @@ RunSeuratDoubletDetection <- function(
 
     object
 }
+
+#' Convert a Seurat object (or RDS/H5Seurat file) to an AnnData object file
+#' @param object_or_file The Seurat object or the path to the RDS or H5Seurat file
+#' @param outfile Output file
+#' @param assay Assay to be used
+#' @param log Logger
+#' @return No return value
+#' @importFrom rlang %||%
+#' @importFrom Seurat DefaultAssay DefaultAssay<-
+#' @importFrom SeuratObject RenameAssays
+#' @importFrom digest digest
+#' @examples
+#' \donttest{
+#' ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad")
+#'
+#' saveRDS(SeuratObject::pbmc_small, "/tmp/pbmc_small.rds")
+#' ConvertSeuratToAnnData("/tmp/pbmc_small.rds", "/tmp/pbmc_small.h5ad")
+#' }
+#' @export
+ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, log = NULL) {
+    stopifnot(
+        "[ConvertSeuratToAnnData] 'object_or_file' should be a Seurat object or a file path" =
+        is.character(object_or_file) || inherits(object_or_file, "Seurat")
+    )
+
+    log <- log %||% get_logger()
+    if (inherits(object_or_file, "Seurat") || endsWith(object_or_file, ".rds") || endsWith(object_or_file, ".RDS")) {
+
+        dig <- digest(capture.output(str(object_or_file)), algo = "sha256")
+        dig <- substr(dig, 1, 8)
+        assay_name <- ifelse(is.null(assay), "", paste0("_", assay))
+        outdir <- dirname(outfile)
+        dir.create(outdir, showWarnings = FALSE)
+        h5seurat_file <- file.path(
+            outdir,
+            paste0(
+                tools::file_path_sans_ext(basename(outfile)),
+                assay_name, ".", dig, ".h5seurat"
+            )
+        )
+        if (file.exists(h5seurat_file) &&
+            (file.mtime(h5seurat_file) < file.mtime(sobjfile))) {
+            file.remove(h5seurat_file)
+        }
+
+        if (is.character(object_or_file)) {
+            log$debug("[ConvertSeuratToAnnData] Reading RDS file ...")
+            object_or_file <- readRDS(object_or_file)
+        }
+
+        assay <- assay %||% DefaultAssay(object_or_file)
+        # In order to convert to h5ad
+        # https://github.com/satijalab/seurat/issues/8220#issuecomment-1871874649
+        object_or_file$RNAv3 <- as(object = object_or_file[[assay]], Class = "Assay")
+        DefaultAssay(object_or_file) <- "RNAv3"
+        object_or_file$RNA <- NULL
+        object_or_file <- RenameAssays(object_or_file, RNAv3 = "RNA")
+
+        log$debug("[ConvertSeuratToAnnData] Saving Seurat object to H5Seurat file ...")
+        SeuratDisk::SaveH5Seurat(object_or_file, h5seurat_file)
+
+        rm(object_or_file)
+        gc()
+        object_or_file <- h5seurat_file
+
+    }
+
+    if (!endsWith(object_or_file, ".h5seurat")) {
+        stop(
+            "[ConvertSeuratToAnnData] 'object_or_file' should be a Seurat object or ",
+            "a file path with extension '.rds', '.RDS' or '.h5seurat'"
+        )
+    }
+
+    log$debug("[ConvertSeuratToAnnData] Converting to AnnData ...")
+    SeuratDisk::Convert(object_or_file, dest = outfile, assay = assay %||% "RNA", overwrite = TRUE)
+
+    log$debug("[ConvertSeuratToAnnData] Fixing categorical data ...")
+    # See: https://github.com/mojaveazure/seurat-disk/issues/183
+
+    H5.create_reference <- function(self, ...) {
+        space <- self$get_space()
+        do.call("[", c(list(space), list(...)))
+        ref_type <- hdf5r::h5const$H5R_OBJECT
+        ref_obj <- hdf5r::H5R_OBJECT$new(1, self)
+        res <- .Call("R_H5Rcreate", ref_obj$ref, self$id, ".", ref_type,
+                    space$id, FALSE, PACKAGE = "hdf5r")
+        if (res$return_val < 0) {
+            stop("Error creating object reference")
+        }
+        ref_obj$ref <- res$ref
+        return(ref_obj)
+    }
+
+    h5ad <- hdf5r::H5File$new(outfile, "r+")
+    cats <- names(h5ad[["obs/__categories"]])
+    for (cat in cats) {
+        catname <- paste0("obs/__categories/", cat)
+        obsname <- paste0("obs/", cat)
+        ref <- H5.create_reference(h5ad[[catname]])
+        h5ad[[obsname]]$create_attr(
+            attr_name = "categories",
+            robj = ref,
+            space = hdf5r::H5S$new(type = "scalar")
+        )
+    }
+    h5ad$close()
+}
