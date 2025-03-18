@@ -792,6 +792,7 @@ RunSeuratDoubletDetection <- function(
 #' @param object_or_file The Seurat object or the path to the RDS or H5Seurat file
 #' @param outfile Output file
 #' @param assay Assay to be used
+#' @param subset Subset of cells to be kept in the AnnData object
 #' @param log Logger
 #' @return No return value
 #' @importFrom rlang %||%
@@ -802,42 +803,43 @@ RunSeuratDoubletDetection <- function(
 #' @examples
 #' \donttest{
 #' ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad")
+#' ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.g1.h5ad", subset = 'groups == "g1"')
 #'
 #' saveRDS(SeuratObject::pbmc_small, "/tmp/pbmc_small.rds")
 #' ConvertSeuratToAnnData("/tmp/pbmc_small.rds", "/tmp/pbmc_small.h5ad")
 #' }
 #' @export
-ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, log = NULL) {
+ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset = NULL, log = NULL) {
     stopifnot(
         "[ConvertSeuratToAnnData] 'object_or_file' should be a Seurat object or a file path" =
         is.character(object_or_file) || inherits(object_or_file, "Seurat")
     )
 
+    dig <- digest(capture.output(str(list(object_or_file, assay, subset))), algo = "sha256")
+    dig <- substr(dig, 1, 8)
+    outdir <- dirname(outfile)
+    dir.create(outdir, showWarnings = FALSE)
+    h5seurat_file <- file.path(
+        outdir,
+        paste0(tools::file_path_sans_ext(basename(outfile)), ".", dig, ".h5seurat")
+    )
+    if (file.exists(h5seurat_file) &&
+        !inherits(object_or_file, "Seurat") &&
+        (file.mtime(h5seurat_file) < file.mtime(object_or_file))) {
+        file.remove(h5seurat_file)
+    }
+
     log <- log %||% get_logger()
     if (inherits(object_or_file, "Seurat") || endsWith(object_or_file, ".rds") || endsWith(object_or_file, ".RDS")) {
-
-        dig <- digest(capture.output(str(object_or_file)), algo = "sha256")
-        dig <- substr(dig, 1, 8)
-        assay_name <- ifelse(is.null(assay), "", paste0("_", assay))
-        outdir <- dirname(outfile)
-        dir.create(outdir, showWarnings = FALSE)
-        h5seurat_file <- file.path(
-            outdir,
-            paste0(
-                tools::file_path_sans_ext(basename(outfile)),
-                assay_name, ".", dig, ".h5seurat"
-            )
-        )
-        if (file.exists(h5seurat_file) &&
-            !inherits(object_or_file, "Seurat") &&
-            (file.mtime(h5seurat_file) < file.mtime(object_or_file))) {
-            file.remove(h5seurat_file)
-        }
 
         if (!file.exists(h5seurat_file)) {
             if (is.character(object_or_file)) {
                 log$debug("[ConvertSeuratToAnnData] Reading RDS file ...")
                 object_or_file <- readRDS(object_or_file)
+            }
+            if (!is.null(subset)) {
+                log$debug("[ConvertSeuratToAnnData] Subsetting cells ...")
+                object_or_file <- eval(parse(text = paste0("base::subset(object_or_file, subset = ", subset, ")")))
             }
 
             assay <- assay %||% DefaultAssay(object_or_file)
@@ -855,13 +857,25 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, log = 
             gc()
         }
         object_or_file <- h5seurat_file
-    }
 
-    if (!endsWith(object_or_file, ".h5seurat")) {
+    } else if (!endsWith(object_or_file, ".h5seurat")) {
         stop(
             "[ConvertSeuratToAnnData] 'object_or_file' should be a Seurat object or ",
             "a file path with extension '.rds', '.RDS' or '.h5seurat'"
         )
+    } else {
+        log$debug("[ConvertSeuratToAnnData] Using existing H5Seurat file ...")
+        if (!is.null(subset)) {
+            if (!file.exists(h5seurat_file)) {
+                log$debug("[ConvertSeuratToAnnData] Reading H5Seurat file for subsetting ...")
+                object_or_file <- SeuratDisk::LoadH5Seurat(object_or_file, assay = assay %||% "RNA")
+                object_or_file <- eval(parse(text = paste0("base::subset(object_or_file, subset = ", subset, ")")))
+
+                log$debug("[ConvertSeuratToAnnData] Saving Seurat object to H5Seurat file ...")
+                SeuratDisk::SaveH5Seurat(object_or_file, h5seurat_file)
+            }
+            object_or_file <- h5seurat_file
+        }
     }
 
     log$debug("[ConvertSeuratToAnnData] Converting to AnnData ...")
@@ -898,4 +912,5 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, log = 
         )
     }
     h5ad$close()
+    rm(h5ad)
 }

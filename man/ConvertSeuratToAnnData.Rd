@@ -4,7 +4,13 @@
 \alias{ConvertSeuratToAnnData}
 \title{Convert a Seurat object (or RDS/H5Seurat file) to an AnnData object file}
 \usage{
-ConvertSeuratToAnnData(object_or_file, outfile, assay = NULL, log = NULL)
+ConvertSeuratToAnnData(
+  object_or_file,
+  outfile,
+  assay = NULL,
+  subset = NULL,
+  log = NULL
+)
 }
 \arguments{
 \item{object_or_file}{The Seurat object or the path to the RDS or H5Seurat file}
@@ -12,6 +18,8 @@ ConvertSeuratToAnnData(object_or_file, outfile, assay = NULL, log = NULL)
 \item{outfile}{Output file}
 
 \item{assay}{Assay to be used}
+
+\item{subset}{Subset of cells to be kept in the AnnData object}
 
 \item{log}{Logger}
 }
@@ -24,6 +32,7 @@ Convert a Seurat object (or RDS/H5Seurat file) to an AnnData object file
 \examples{
 \donttest{
 ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad")
+ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.g1.h5ad", subset = 'groups == "g1"')
 
 saveRDS(SeuratObject::pbmc_small, "/tmp/pbmc_small.rds")
 ConvertSeuratToAnnData("/tmp/pbmc_small.rds", "/tmp/pbmc_small.h5ad")
