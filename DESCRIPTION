@@ -40,7 +40,7 @@ Suggests:
     covr,
     hdf5r,
     gglogger,
-    seurat-disk
+    SeuratDisk
 Remotes:
     pwwang/scplotter,
     wjawaid/enrichR,
