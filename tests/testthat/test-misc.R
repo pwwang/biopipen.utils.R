@@ -155,3 +155,38 @@ test_that("list_rename: works with two-argument function", {
     x <- list(a = 1, b = 2, c = 3)
     expect_equal(list_rename(x, function(k, v) paste0(k, "_new")), list(a_new = 1, b_new = 2, c_new = 3))
 })
+
+test_that("monkey_patch: replaces and restores a function in a package namespace", {
+    ns <- "methods"
+    func_name <- "getSlots"
+
+    # Create a simple S4 class to test the behavior of getSlots
+    setClass("TestClass", representation(a = "numeric", b = "character"))
+    expected_slots <- c(a = "numeric", b = "character")
+
+    # Retrieve and save the original function from the namespace
+    original_function <- get(func_name, envir = asNamespace(ns))
+
+    # Check that the original function returns the expected slots
+    original_result <- getSlots("TestClass")
+    expect_identical(original_result, expected_slots)
+
+    # Define a new function to patch with
+    new_function <- function(...) {
+        "patched"
+    }
+
+    # Apply monkey_patch to override the function in the methods namespace
+    monkey_patch(ns, func_name, new_function)
+
+    # Verify that the patched function now returns "patched"
+    patched_result <- methods::getSlots("TestClass")
+    expect_identical(patched_result, "patched")
+
+    # Restore the original function
+    monkey_patch(ns, func_name, original_function)
+
+    # Verify that after restoration, getSlots returns the original expected result
+    restored_result <- methods::getSlots("TestClass")
+    expect_identical(restored_result, expected_slots)
+})
