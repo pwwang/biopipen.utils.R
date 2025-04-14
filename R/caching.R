@@ -42,6 +42,7 @@ save_to_cache <- function(to_cache, kind, cache_dir) {
     sig <- to_cache$sig
     data <- to_cache$data
     # Save an object to cache
+    dir.create(cache_dir, showWarnings = FALSE, recursive = TRUE)
     sig_file <- file.path(cache_dir, paste0(dig, ".", kind , ".signature.txt"))
     writeLines(c(as.character(Sys.time()), "", sig), sig_file)
     cached_file <- file.path(cache_dir, paste0(dig, ".", kind, ".RDS"))
