@@ -187,7 +187,7 @@ VizSeuratCellQC <- function(
         }
     } else {  # ridge
         RidgePlot(df, x = "value", group_by = "QC", facet_by = "feature", palette = palette,
-            ...)
+            facet_scales = "free_x", ...)
     }
 }
 
