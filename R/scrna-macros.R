@@ -204,10 +204,12 @@ PerformGeneQC <- function(object, gene_qc) {
 
     genes <- names(counts)
     if (!is.null(gene_qc$excludes) && length(gene_qc$excludes) > 0) {
-        if (length(excludes) == 1) {
-            excludes <- trimws(unlist(strsplit(excludes, ",")))
+        if (length(gene_qc$excludes) == 1) {
+            excludes <- trimws(unlist(strsplit(gene_qc$excludes, ",")))
+        } else {
+            excludes <- gene_qc$excludes
         }
-        passes <- passes & !grepl(paste(gene_qc$excludes, collapse = "|"), genes)
+        passes <- passes & !grepl(paste(excludes, collapse = "|"), genes)
     }
 
     data.frame(
