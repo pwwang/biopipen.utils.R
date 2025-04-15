@@ -90,12 +90,10 @@ pk/pK show the relationship between BC metric and pK when using DoubletFinder.</
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="LoadSeuratAndPerformQC.html">LoadSeuratAndPerformQC</a></span><span class="op">(</span><span class="va">meta</span>, cache <span class="op">=</span> <span class="cn">FALSE</span>, gene_qc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>min_cells <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    cell_qc <span class="op">=</span> <span class="st">"nFeature_RNA &gt; 500"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-14 21:27:44] Loading each sample ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-14 21:27:44] - Loading sample Sample1 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-14 21:27:45] - Loading sample Sample2 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-14 21:27:45] Merging samples ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-14 21:27:46] Performing cell QC ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-14 21:27:46] Performing gene QC ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-15 20:31:09] Loading each sample ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-15 20:31:09] - Loading Sample1 and performing QC ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-15 20:31:09] - Loading Sample2 and performing QC ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-15 20:31:10] Merging samples ...</span>
 <span class="r-in"><span><span class="fu"><a href="VizSeuratCellQC.html">VizSeuratCellQC</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="VizSeuratDoublets-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="VizSeuratCellQC.html">VizSeuratCellQC</a></span><span class="op">(</span><span class="va">obj</span>, plot_type <span class="op">=</span> <span class="st">"scatter"</span><span class="op">)</span></span></span>
@@ -115,82 +113,83 @@ pk/pK show the relationship between BC metric and pK when using DoubletFinder.</
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.341</span>
 <span class="r-plt img"><img src="VizSeuratDoublets-3.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="VizSeuratGeneQC.html">VizSeuratGeneQC</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Using `bins = 30`. Pick better value with `binwidth`.</span>
 <span class="r-plt img"><img src="VizSeuratDoublets-4.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="RunSeuratTransformation.html">RunSeuratTransformation</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-14 21:27:49] Performing data transformation and scaling ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-14 21:27:49] - Running NormalizeData ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-15 20:31:13] Performing data transformation and scaling ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-15 20:31:13] - Running NormalizeData ...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Normalizing layer: counts.Sample1</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Normalizing layer: counts.Sample2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-14 21:27:51] - Running FindVariableFeatures ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-15 20:31:15] - Running FindVariableFeatures ...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Finding variable features for layer counts.Sample1</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Finding variable features for layer counts.Sample2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-14 21:27:52] - Running ScaleData ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-15 20:31:17] - Running ScaleData ...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Centering and scaling data matrix</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-14 21:27:53] - Running RunPCA ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-15 20:31:18] - Running RunPCA ...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> PC_ 1 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  ENSG00000172005, ENSG00000230885, ENSG00000013297, ENSG00000123560, ENSG00000168314, ENSG00000173786, ENSG00000174607, ENSG00000167641, ENSG00000105695, ENSG00000091513 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000136541, ENSG00000103089, ENSG00000184221, ENSG00000197971, ENSG00000197430, ENSG00000115290, ENSG00000134198, ENSG00000159176, ENSG00000139433, ENSG00000188643 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000104267, ENSG00000205116, ENSG00000171766, ENSG00000148180, ENSG00000120913, ENSG00000102934, ENSG00000127920, ENSG00000169562, ENSG00000189058, ENSG00000105894 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  ENSG00000128683, ENSG00000143153, ENSG00000102804, ENSG00000197457, ENSG00000132639, ENSG00000139970, ENSG00000133169, ENSG00000125869, ENSG00000213190, ENSG00000101489 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000213760, ENSG00000122952, ENSG00000182698, ENSG00000151778, ENSG00000152954, ENSG00000105649, ENSG00000168081, ENSG00000104490, ENSG00000170004, ENSG00000170091 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000162188, ENSG00000148908, ENSG00000115738, ENSG00000250479, ENSG00000100092, ENSG00000273079, ENSG00000157152, ENSG00000152932, ENSG00000276734, ENSG00000119900 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  ENSG00000091513, ENSG00000171766, ENSG00000123560, ENSG00000230885, ENSG00000172005, ENSG00000173786, ENSG00000013297, ENSG00000174607, ENSG00000168314, ENSG00000105695 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000167641, ENSG00000136541, ENSG00000103089, ENSG00000184221, ENSG00000197971, ENSG00000197430, ENSG00000139433, ENSG00000115290, ENSG00000159176, ENSG00000120913 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000188643, ENSG00000134198, ENSG00000130429, ENSG00000205116, ENSG00000104267, ENSG00000102934, ENSG00000148180, ENSG00000127920, ENSG00000169562, ENSG00000189058 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  ENSG00000128683, ENSG00000074317, ENSG00000102804, ENSG00000143153, ENSG00000197457, ENSG00000132639, ENSG00000133169, ENSG00000213190, ENSG00000139970, ENSG00000213760 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000101489, ENSG00000125869, ENSG00000122952, ENSG00000151778, ENSG00000152954, ENSG00000182698, ENSG00000105649, ENSG00000162188, ENSG00000170004, ENSG00000104490 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000168081, ENSG00000115738, ENSG00000128739, ENSG00000170091, ENSG00000220205, ENSG00000250479, ENSG00000100092, ENSG00000273079, ENSG00000157152, ENSG00000152932 </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> PC_ 2 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  ENSG00000139182, ENSG00000172247, ENSG00000197106, ENSG00000092096, ENSG00000111897, ENSG00000101438, ENSG00000181790, ENSG00000071553, ENSG00000101180, ENSG00000187730 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000143153, ENSG00000174437, ENSG00000179222, ENSG00000187957, ENSG00000171951, ENSG00000063015, ENSG00000163536, ENSG00000185818, ENSG00000163399, ENSG00000135472 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000152583, ENSG00000105409, ENSG00000179218, ENSG00000182636, ENSG00000157087, ENSG00000180155, ENSG00000135916, ENSG00000069667, ENSG00000058404, ENSG00000144283 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  ENSG00000143947, ENSG00000088986, ENSG00000126267, ENSG00000138326, ENSG00000109846, ENSG00000171858, ENSG00000145592, ENSG00000197756, ENSG00000108518, ENSG00000169567 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000134419, ENSG00000142534, ENSG00000175130, ENSG00000088832, ENSG00000116030, ENSG00000147604, ENSG00000196531, ENSG00000240972, ENSG00000110700, ENSG00000233954 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000100442, ENSG00000173915, ENSG00000177600, ENSG00000137154, ENSG00000114391, ENSG00000272835, ENSG00000177432, ENSG00000178449, ENSG00000156976, ENSG00000131495 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  ENSG00000109846, ENSG00000105290, ENSG00000104833, ENSG00000088986, ENSG00000168314, ENSG00000134198, ENSG00000172005, ENSG00000132718, ENSG00000088832, ENSG00000013297 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000115290, ENSG00000230885, ENSG00000167641, ENSG00000136541, ENSG00000184221, ENSG00000103089, ENSG00000174607, ENSG00000149557, ENSG00000197430, ENSG00000151552 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000205116, ENSG00000108387, ENSG00000104267, ENSG00000173786, ENSG00000015592, ENSG00000123560, ENSG00000198892, ENSG00000102934, ENSG00000188643, ENSG00000159176 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  ENSG00000163131, ENSG00000159189, ENSG00000049860, ENSG00000169313, ENSG00000173372, ENSG00000173369, ENSG00000110876, ENSG00000158869, ENSG00000101439, ENSG00000171659 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000011600, ENSG00000183160, ENSG00000095970, ENSG00000162511, ENSG00000182578, ENSG00000168329, ENSG00000051523, ENSG00000206428, ENSG00000143226, ENSG00000100600 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000273686, ENSG00000113140, ENSG00000110057, ENSG00000166428, ENSG00000116774, ENSG00000258818, ENSG00000117984, ENSG00000112799, ENSG00000213316, ENSG00000226248 </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> PC_ 3 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  ENSG00000087258, ENSG00000172809, ENSG00000213741, ENSG00000170027, ENSG00000142541, ENSG00000161016, ENSG00000161970, ENSG00000145592, ENSG00000233927, ENSG00000197756 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000132535, ENSG00000146676, ENSG00000110076, ENSG00000071082, ENSG00000106244, ENSG00000198918, ENSG00000182899, ENSG00000048740, ENSG00000073969, ENSG00000173376 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000175352, ENSG00000122026, ENSG00000161681, ENSG00000118473, ENSG00000189056, ENSG00000089169, ENSG00000118432, ENSG00000138326, ENSG00000136854, ENSG00000198300 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  ENSG00000136156, ENSG00000166922, ENSG00000099797, ENSG00000110651, ENSG00000117410, ENSG00000101439, ENSG00000116459, ENSG00000143198, ENSG00000182698, ENSG00000111716 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000184277, ENSG00000128463, ENSG00000102471, ENSG00000014641, ENSG00000005022, ENSG00000134333, ENSG00000144746, ENSG00000133872, ENSG00000182636, ENSG00000151729 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000062716, ENSG00000123395, ENSG00000151366, ENSG00000140740, ENSG00000075415, ENSG00000109472, ENSG00000044574, ENSG00000080824, ENSG00000166736, ENSG00000277791 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  ENSG00000134419, ENSG00000138326, ENSG00000145592, ENSG00000142534, ENSG00000177600, ENSG00000196262, ENSG00000110700, ENSG00000158869, ENSG00000173369, ENSG00000163131 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000173372, ENSG00000110876, ENSG00000159189, ENSG00000197958, ENSG00000011600, ENSG00000128245, ENSG00000142541, ENSG00000183160, ENSG00000113140, ENSG00000171659 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000182578, ENSG00000169313, ENSG00000114391, ENSG00000049860, ENSG00000162511, ENSG00000095970, ENSG00000168329, ENSG00000273686, ENSG00000051523, ENSG00000171858 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  ENSG00000139182, ENSG00000132718, ENSG00000092096, ENSG00000197106, ENSG00000111897, ENSG00000172247, ENSG00000181790, ENSG00000174437, ENSG00000101438, ENSG00000101180 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000143153, ENSG00000187957, ENSG00000185818, ENSG00000105409, ENSG00000135472, ENSG00000163536, ENSG00000071553, ENSG00000180155, ENSG00000163399, ENSG00000157087 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000063015, ENSG00000179218, ENSG00000152583, ENSG00000069667, ENSG00000171951, ENSG00000179222, ENSG00000176884, ENSG00000168081, ENSG00000164742, ENSG00000154096 </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> PC_ 4 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  ENSG00000179218, ENSG00000128564, ENSG00000179292, ENSG00000105290, ENSG00000166963, ENSG00000174437, ENSG00000110025, ENSG00000167552, ENSG00000092096, ENSG00000176884 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000156261, ENSG00000110955, ENSG00000054523, ENSG00000117691, ENSG00000166736, ENSG00000006451, ENSG00000143740, ENSG00000154917, ENSG00000167614, ENSG00000139182 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000182636, ENSG00000166165, ENSG00000134121, ENSG00000273761, ENSG00000088367, ENSG00000152583, ENSG00000240849, ENSG00000006118, ENSG00000169925, ENSG00000188517 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  ENSG00000113387, ENSG00000161970, ENSG00000100442, ENSG00000178531, ENSG00000233927, ENSG00000213741, ENSG00000182899, ENSG00000109270, ENSG00000196262, ENSG00000145592 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000134809, ENSG00000173372, ENSG00000261857, ENSG00000119979, ENSG00000166441, ENSG00000172809, ENSG00000244694, ENSG00000135070, ENSG00000214736, ENSG00000131495 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000156482, ENSG00000122026, ENSG00000213190, ENSG00000197756, ENSG00000240972, ENSG00000155849, ENSG00000197584, ENSG00000182698, ENSG00000137154, ENSG00000143727 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  ENSG00000172809, ENSG00000087258, ENSG00000161016, ENSG00000233927, ENSG00000145592, ENSG00000161970, ENSG00000142541, ENSG00000182899, ENSG00000170027, ENSG00000173376 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000198918, ENSG00000138326, ENSG00000189056, ENSG00000106244, ENSG00000171858, ENSG00000118432, ENSG00000146676, ENSG00000132535, ENSG00000048740, ENSG00000176788 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000175352, ENSG00000114391, ENSG00000134419, ENSG00000122026, ENSG00000143195, ENSG00000166441, ENSG00000110076, ENSG00000174444, ENSG00000138650, ENSG00000233954 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  ENSG00000166922, ENSG00000099797, ENSG00000117410, ENSG00000136156, ENSG00000110651, ENSG00000182636, ENSG00000182698, ENSG00000111716, ENSG00000128463, ENSG00000143198 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000102471, ENSG00000184277, ENSG00000116459, ENSG00000014641, ENSG00000062716, ENSG00000134333, ENSG00000152583, ENSG00000120885, ENSG00000144746, ENSG00000115310 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000080824, ENSG00000277791, ENSG00000005022, ENSG00000123395, ENSG00000151366, ENSG00000075415, ENSG00000137267, ENSG00000166736, ENSG00000140740, ENSG00000163479 </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> PC_ 5 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  ENSG00000155849, ENSG00000105048, ENSG00000188730, ENSG00000115738, ENSG00000089220, ENSG00000130066, ENSG00000171119, ENSG00000183166, ENSG00000119900, ENSG00000198739 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000130592, ENSG00000278588, ENSG00000105516, ENSG00000174871, ENSG00000151276, ENSG00000157193, ENSG00000154229, ENSG00000076356, ENSG00000198363, ENSG00000168993 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000130226, ENSG00000167549, ENSG00000240891, ENSG00000185630, ENSG00000119421, ENSG00000111674, ENSG00000120963, ENSG00000105364, ENSG00000135824, ENSG00000196353 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  ENSG00000173376, ENSG00000189056, ENSG00000118432, ENSG00000198785, ENSG00000137726, ENSG00000143195, ENSG00000162545, ENSG00000178568, ENSG00000145242, ENSG00000196090 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000134121, ENSG00000138650, ENSG00000120833, ENSG00000035862, ENSG00000155052, ENSG00000166006, ENSG00000182220, ENSG00000118971, ENSG00000122584, ENSG00000249992 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000170419, ENSG00000092421, ENSG00000174460, ENSG00000115252, ENSG00000139970, ENSG00000153956, ENSG00000170540, ENSG00000145681, ENSG00000173805, ENSG00000134419 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  ENSG00000117984, ENSG00000179218, ENSG00000158869, ENSG00000100600, ENSG00000136156, ENSG00000030582, ENSG00000011600, ENSG00000173372, ENSG00000182578, ENSG00000168329 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000173369, ENSG00000101160, ENSG00000163131, ENSG00000109861, ENSG00000113140, ENSG00000027697, ENSG00000185896, ENSG00000226248, ENSG00000051523, ENSG00000183160 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000116774, ENSG00000224156, ENSG00000135919, ENSG00000089157, ENSG00000064601, ENSG00000278032, ENSG00000110876, ENSG00000128564, ENSG00000118705, ENSG00000159189 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  ENSG00000182698, ENSG00000178531, ENSG00000213190, ENSG00000100442, ENSG00000109270, ENSG00000188730, ENSG00000128739, ENSG00000175854, ENSG00000173915, ENSG00000102981 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000127540, ENSG00000102804, ENSG00000261857, ENSG00000113387, ENSG00000160213, ENSG00000157470, ENSG00000172809, ENSG00000174871, ENSG00000240972, ENSG00000112304 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000109846, ENSG00000090263, ENSG00000214736, ENSG00000145335, ENSG00000160194, ENSG00000152954, ENSG00000204856, ENSG00000161970, ENSG00000272835, ENSG00000169249 </span>
 <span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="RunSeuratIntegration.html">RunSeuratIntegration</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-14 21:27:55] Performing data integration ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-14 21:27:55] - Running IntegrateLayers (method = rpca) ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-15 20:31:20] Performing data integration ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-15 20:31:20] - Running IntegrateLayers (method = rpca) ...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Computing within dataset neighborhoods</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Finding all pairwise anchors</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Projecting new data onto SVD</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Projecting new data onto SVD</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Finding neighborhoods</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Finding anchors</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 	Found 233 anchors</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 	Found 261 anchors</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Merging dataset 2 into 1</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Extracting anchors for merged samples</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Finding integration vectors</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Finding integration vector weights</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Integrating data</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-14 21:27:59] - Joining layers ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-15 20:31:23] - Joining layers ...</span>
 <span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="RunSeuratDoubletDetection.html">RunSeuratDoubletDetection</a></span><span class="op">(</span><span class="va">obj</span>, tool <span class="op">=</span> <span class="st">"scDblFinder"</span>, filter <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-14 21:28:00] Running doublet detection using scDblFinder ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-04-15 20:31:24] Running doublet detection using scDblFinder ...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Assuming the input to be a matrix of counts or expected counts.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Creating ~1500 artificial doublets...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Dimensional reduction</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Evaluating kNN...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Training model...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> iter=0, 18 cells excluded from training.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> iter=1, 13 cells excluded from training.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> iter=2, 13 cells excluded from training.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Threshold found:0.647</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 12 (3%) doublets called</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> iter=0, 24 cells excluded from training.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> iter=1, 22 cells excluded from training.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> iter=2, 27 cells excluded from training.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Threshold found:0.57</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 14 (3.1%) doublets called</span>
 <span class="r-in"><span><span class="fu">VizSeuratDoublets</span><span class="op">(</span><span class="va">obj</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="VizSeuratDoublets-5.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu">VizSeuratDoublets</span><span class="op">(</span><span class="va">obj</span>, plot_type <span class="op">=</span> <span class="st">"pie"</span><span class="op">)</span></span></span>

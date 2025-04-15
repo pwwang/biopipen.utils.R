@@ -41,9 +41,9 @@
 <span>  <span class="va">object</span>,</span>
 <span>  features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nFeature_RNA"</span>, <span class="st">"nCount_RNA"</span>, <span class="st">"percent.mt"</span>, <span class="st">"percent.ribo"</span>, <span class="st">"percent.hb"</span>,</span>
 <span>    <span class="st">"percent.plat"</span><span class="op">)</span>,</span>
-<span>  plot_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"violin"</span>, <span class="st">"box"</span>, <span class="st">"scatter"</span>, <span class="st">"ridge"</span><span class="op">)</span>,</span>
+<span>  plot_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"violin"</span>, <span class="st">"box"</span>, <span class="st">"scatter"</span>, <span class="st">"bar"</span>, <span class="st">"ridge"</span>, <span class="st">"table"</span><span class="op">)</span>,</span>
 <span>  scatter_x <span class="op">=</span> <span class="st">"nCount_RNA"</span>,</span>
-<span>  palette <span class="op">=</span> <span class="st">"Set2"</span>,</span>
+<span>  palette <span class="op">=</span> <span class="st">"Set1"</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -62,7 +62,9 @@
 
 <dt id="arg-plot-type">plot_type<a class="anchor" aria-label="anchor" href="#arg-plot-type"></a></dt>
 <dd><p>Type of plot to generate
-One of 'violin', 'box', 'scatter', 'ridge'</p></dd>
+One of 'violin', 'box', 'scatter', 'bar', 'ridge' and 'table'
+If 'plot_type' is 'table', it will return a data frame with number of cells
+before and after filtering</p></dd>
 
 
 <dt id="arg-scatter-x">scatter_x<a class="anchor" aria-label="anchor" href="#arg-scatter-x"></a></dt>
@@ -83,6 +85,61 @@ If it is one of the features, it will be removed from the features</p></dd>
     <p>The plot</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">8525</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sobj</span> <span class="op">&lt;-</span> <span class="fu">SeuratObject</span><span class="fu">::</span><span class="va"><a href="https://mojaveazure.github.io/seurat-object/reference/pbmc_small.html" class="external-link">pbmc_small</a></span></span></span>
+<span class="r-in"><span><span class="va">sobj</span><span class="op">$</span><span class="va">.QC</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="cn">FALSE</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">sobj</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sobj</span><span class="op">$</span><span class="va">Sample</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Sample1"</span>, <span class="st">"Sample2"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">sobj</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sobj</span><span class="op">$</span><span class="va">percent.mt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">sobj</span><span class="op">)</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sobj</span><span class="op">$</span><span class="va">percent.ribo</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">sobj</span><span class="op">)</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sobj</span><span class="op">$</span><span class="va">percent.hb</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">sobj</span><span class="op">)</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sobj</span><span class="op">$</span><span class="va">percent.plat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">sobj</span><span class="op">)</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sobj</span><span class="op">$</span><span class="va">nFeature_RNA</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">sobj</span><span class="op">)</span>, <span class="fl">1000</span>, <span class="fl">5000</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sobj</span><span class="op">$</span><span class="va">nCount_RNA</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">sobj</span><span class="op">)</span>, <span class="fl">1000</span>, <span class="fl">5000</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Visualize cell QC metrics</span></span></span>
+<span class="r-in"><span><span class="fu">VizSeuratCellQC</span><span class="op">(</span><span class="va">sobj</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="VizSeuratCellQC-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu">VizSeuratCellQC</span><span class="op">(</span><span class="va">sobj</span>, plot_type <span class="op">=</span> <span class="st">"scatter"</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="VizSeuratCellQC-2.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu">VizSeuratCellQC</span><span class="op">(</span><span class="va">sobj</span>, plot_type <span class="op">=</span> <span class="st">"bar"</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="VizSeuratCellQC-3.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu">VizSeuratCellQC</span><span class="op">(</span><span class="va">sobj</span>, plot_type <span class="op">=</span> <span class="st">"ridge"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 501</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 509</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.125</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0973</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.12</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.128</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 501</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 509</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.125</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0973</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.12</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.128</span>
+<span class="r-plt img"><img src="VizSeuratCellQC-4.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu">VizSeuratCellQC</span><span class="op">(</span><span class="va">sobj</span>, features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"percent.mt"</span>, <span class="st">"percent.ribo"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="VizSeuratCellQC-5.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu">VizSeuratCellQC</span><span class="op">(</span><span class="va">sobj</span>, features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"percent.mt"</span>, <span class="st">"percent.ribo"</span><span class="op">)</span>, plot_type <span class="op">=</span> <span class="st">"box"</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="VizSeuratCellQC-6.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu">VizSeuratCellQC</span><span class="op">(</span><span class="va">sobj</span>, plot_type <span class="op">=</span> <span class="st">"table"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 4</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Sample      failed passed total</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> Sample1         14     26    40</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> Sample2         21     19    40</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> All_Samples     35     45    80</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">sobj</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 230  80</span>
+<span class="r-in"><span><span class="va">sobj</span> <span class="op">&lt;-</span> <span class="fu"><a href="FinishSeuratQC.html">FinishSeuratQC</a></span><span class="op">(</span><span class="va">sobj</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">sobj</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 230  45</span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
