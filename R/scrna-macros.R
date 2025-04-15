@@ -155,6 +155,7 @@ RunSeuratDEAnalysis <- function(
 }
 
 #' Perform cell QC
+#'
 #' @param object Seurat object
 #' @param cell_qc Cell QC criteria
 #' @return The Seurat object with cell QC results in `@misc$cell_qc_df`
@@ -168,20 +169,54 @@ PerformSeuratCellQC <- function(object, cell_qc) {
     object$percent.hb <- PercentageFeatureSet(object, pattern = "^HB[^P]|^Hb[^p]")
     object$percent.plat <- PercentageFeatureSet(object, pattern = "PECAM1|PF4|Pecam1|Pf4")
 
-    cols <- c("Sample", "nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo", "percent.hb", "percent.plat", ".QC")
+    # cols <- c("Sample", "nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo", "percent.hb", "percent.plat", ".QC")
     if (!"Sample" %in% colnames(object@meta.data)) {
         object@meta.data$Sample <- object@project.name
     }
     if (is.null(cell_qc) || is.na(cell_qc) || length(cell_qc) == 0) {
         object$.QC <- TRUE
-        object@misc$cell_qc_df <- object@meta.data[, cols, drop = FALSE]
+        # object@misc$cell_qc_df <- object@meta.data[, cols, drop = FALSE]
     } else {
         object@meta.data <- mutate(object@meta.data, .QC = !!parse_expr(cell_qc))
-        object@misc$cell_qc_df <- object@meta.data[, cols, drop = FALSE]
-        object <- subset(object, subset = !!sym(".QC"))
+        # object@misc$cell_qc_df <- object@meta.data[, cols, drop = FALSE]
+        # object <- subset(object, subset = !!sym(".QC"))
     }
 
     return(object)
+}
+
+#' Perform gene QC
+#'
+#' @param object Seurat object of a single sample.
+#' @param gene_qc Gene QC criteria
+#' @return A data frame with Sample (`object@project.name`),
+#' Count (number of cells a gene is expressed in) and QC (whether the gene passes the QC)
+#'
+#' @importFrom SeuratObject GetAssayData
+#' @export
+PerformGeneQC <- function(object, gene_qc) {
+    counts <- Matrix::rowSums(GetAssayData(object, layer = "counts") > 0)
+    if (!is.null(gene_qc$min_cells) && gene_qc$min_cells > 0) {
+        passes <- counts >= gene_qc$min_cells
+    } else {
+        passes <- rep(TRUE, length(counts))
+    }
+
+    genes <- names(counts)
+    if (!is.null(gene_qc$excludes) && !is.na(gene_qc$excludes) && length(gene_qc$excludes) > 0) {
+        if (length(excludes) == 1) {
+            excludes <- trimws(unlist(strsplit(excludes, ",")))
+        }
+        passes <- passes & !grepl(paste(gene_qc$excludes, collapse = "|"), genes)
+    }
+
+    data.frame(
+        Sample = object@project.name,
+        Feature = genes,
+        Count = counts,
+        QC = passes,
+        stringsAsFactors = FALSE
+    )
 }
 
 #' Load samples into a Seurat object
@@ -193,10 +228,15 @@ PerformSeuratCellQC <- function(object, cell_qc) {
 #' If the path is a directory, the function will look for barcodes.tsv.gz, features.tsv.gz and matrix.mtx.gz.
 #' The directory should be loaded by [Seurat::Read10X]. Sometimes, there may be prefix in the file names,
 #' e.g. "'prefix'.barcodes.tsv.gz", which is also supported.
-#' If the path is a file, it should be a h5 file that can be loaded by [Seurat::Read10X_h5]
+#' If the path is a file, it should be a h5 file that can be loaded by [Seurat::Read10X_h5()]
+#' @param min_cells Include features detected in at least this many cells.
+#' This will be applied to all samples and passed to the [Seurat::CreateSeuratObject()] function.
+#' QCs can be further performed on the object after loading.
+#' @param min_features Include cells where at least this many features are detected.
+#' This will be applied to all samples and passed to the [Seurat::CreateSeuratObject()] function.
+#' QCs can be further performed on the object after loading.
 #' @param samples Samples to load. If NULL, all samples will be loaded
-#' @param per_sample_qc Whether to perform per-sample cell QC
-#' @param cell_qc Cell QC criteria
+#' @param cell_qc Cell QC criteria, a string of expression to pass to `dplyr::filter` function
 #' @param gene_qc Gene QC criteria
 #' A list containing the following fields:
 #' * min_cells: Minimum number of cells a gene should be expressed in to be kept
@@ -228,8 +268,9 @@ PerformSeuratCellQC <- function(object, cell_qc) {
 #' }
 LoadSeuratAndPerformQC <- function(
     meta,
+    min_cells = 0,
+    min_features = 0,
     samples = NULL,
-    per_sample_qc = FALSE,
     cell_qc = NULL,
     gene_qc = NULL,
     tmpdir = NULL,
@@ -242,7 +283,7 @@ LoadSeuratAndPerformQC <- function(
     stopifnot("No samples found" = length(samples) > 0)
 
     cache <- cache %||% gettempdir()
-    cached <- get_cached(list(meta, samples, per_sample_qc, cell_qc, gene_qc), "biopipen.utils.LoadSeuratAndPerformQC", cache)
+    cached <- get_cached(list(meta, min_cells, min_features, samples, cell_qc, gene_qc), "biopipen.utils.LoadSeuratAndPerformQC", cache)
     if (!is.null(cached$data)) {
         log$info("Initialized and QC'ed data loaded from cache")
         return(cached$data)
@@ -255,13 +296,9 @@ LoadSeuratAndPerformQC <- function(
     tmpdir <- file.path(tmpdir, paste0("biopipen.utils.LoadSeuratSamples.", dig))
 
     object_list <- list()
-    cell_qc_df <- NULL
+    geneqc_df <- NULL
     for (sam in samples) {
-        if (per_sample_qc) {
-            log$info("- Loading sample {sam} and performing per-sample QC ...")
-        } else {
-            log$info("- Loading sample {sam} ...")
-        }
+        log$info("- Loading {sam} and performing QC ...")
 
         mdata <- meta[meta$Sample == sam, , drop = TRUE]
         if (is.data.frame(mdata) && nrow(mdata) == 0) {
@@ -301,7 +338,7 @@ LoadSeuratAndPerformQC <- function(
             exprs <- exprs[["Gene Expression"]]
         }
 
-        obj <- CreateSeuratObject(exprs, project = sam)
+        obj <- CreateSeuratObject(exprs, project = sam, min.cells = min_cells, min.features = min_features)
         obj <- RenameCells(obj, add.cell.id = sam)
         # Attach meta data
         for (mname in names(mdata)) {
@@ -312,9 +349,11 @@ LoadSeuratAndPerformQC <- function(
             obj[[mname]] <- mdt
         }
 
-        if (isTRUE(per_sample_qc)) {
-            obj <- PerformSeuratCellQC(obj, cell_qc)
-            cell_qc_df <- rbind(cell_qc_df, obj@misc$cell_qc_df)
+        # cell qc
+        obj <- PerformSeuratCellQC(obj, cell_qc)
+        if (!is.null(gene_qc) && !is.na(gene_qc) && length(gene_qc) > 0) {
+            # Sample, Feature, Count, QC
+            geneqc_df <- rbind(geneqc_df, PerformGeneQC(obj, gene_qc))
         }
 
         object_list[[sam]] <- obj
@@ -325,65 +364,7 @@ LoadSeuratAndPerformQC <- function(
     rm(object_list)
     gc()
 
-    if (!per_sample_qc) {
-        log$info("Performing cell QC ...")
-        obj = PerformSeuratCellQC(obj, cell_qc = cell_qc)
-    } else {
-        obj@misc$cell_qc_df <- cell_qc_df
-    }
-
-    log$info("Performing gene QC ...")
-    genes <- rownames(obj)
-    obj@misc$gene_qc <- list(
-        before = length(genes),
-        criteria = gene_qc,
-        ncells = data.frame(Sample = character(), feature = character(), ncells = numeric())
-    )
-    ncells_df <- data.frame(Sample = character(), feature = character(), ncells = numeric())
-    if (!is.null(gene_qc)) {
-        for (l in names(obj@assays$RNA@layers)) {
-            if (startsWith(l, "counts.")) {
-                lname <- substring(l, 8)
-            } else {
-                lname <- l
-            }
-            ncells_df <- rbind(
-                ncells_df,
-                data.frame(
-                    Sample = rep(lname, length(genes)),
-                    feature = genes,
-                    ncells = Matrix::rowSums(obj@assays$RNA@layers[[l]] > 0)
-                )
-            )
-        }
-        if (!is.null(gene_qc$min_cells) && gene_qc$min_cells > 0) {
-            obj@misc$gene_qc$ncells <- ncells_df[
-                ncells_df$feature %in% (
-                    ncells_df %>%
-                    group_by(!!sym("feature")) %>%
-                    summarise(.i = any(!!sym("ncells") < gene_qc$min_cells), .groups = "drop") %>%
-                    filter(!!sym(".i")) %>%
-                    pull("feature")
-                ), , drop = FALSE
-            ]
-        }
-        excludes <- gene_qc$excludes
-        if (!is.null(excludes)) {
-            if (length(excludes) == 1) {
-                excludes <- trimws(unlist(strsplit(excludes, ",")))
-            }
-            exgenes <- unique(unlist(lapply(excludes, function(ex) { genes[grepl(ex, genes)] })))
-            exgenes <- setdiff(exgenes, unique(obj@misc$gene_qc$ncells$feature))
-            obj@misc$gene_gc$ncells <- rbind(
-                obj@misc$gene_qc$ncells,
-                ncells_df[ncells_df$feature %in% exgenes, , drop = FALSE]
-            )
-        }
-        if (nrow(obj@misc$gene_qc$ncells) > 0) {
-            obj <- subset(obj, features = setdiff(genes, unique(obj@misc$gene_qc$ncells$feature)))
-        }
-    }
-    obj@misc$gene_qc$after <- nrow(obj)
+    obj@misc$gene_qc <- geneqc_df
 
     cached$data <- obj
     save_to_cache(cached, "biopipen.utils.LoadSeuratAndPerformQC", cache)
@@ -392,6 +373,33 @@ LoadSeuratAndPerformQC <- function(
         obj, "LoadSeuratAndPerformQC",
         "LoadSeuratAndPerformQC(meta, samples, per_sample_qc, cell_qc, gene_qc, tmpdir, log, cache)"
     )
+}
+
+#' Finish the QC process including the visualization
+#'
+#' This will remove the cells and genes that are not passing the QC, and also remove
+#' the intermediate data used for QC visualization.
+#'
+#' @param object Seurat object
+#' @return The Seurat object with the QC process finished
+#' @export
+FinishSeuratQC <- function(object) {
+    if (!".QC" %in% colnames(object@meta.data)) {
+        stop("[FinishSeuratQC] No cell QC data found, the object must be loaded with `LoadSeuratAndPerformQC`")
+    }
+
+    features <- NULL
+    if (!is.null(object@misc$gene_qc)) {
+        failed_features <- unique(object@misc$gene_qc[!object@misc$gene_qc$QC, "Feature"])
+        features <- setdiff(unique(object@misc$gene_qc$Feature), failed_features)
+    }
+
+    object <- subset(object, subset = !!sym(".QC"), features = features)
+    object@meta.data$.QC <- NULL
+    object@misc$gene_qc <- NULL
+    gc()
+
+    AddSeuratCommand(object, "FinishSeuratQC", "FinishSeuratQC(object)")
 }
 
 #' Run transformations on a Seurat object
@@ -803,7 +811,8 @@ RunSeuratDoubletDetection <- function(
 #' @examples
 #' \donttest{
 #' ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad")
-#' ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.g1.h5ad", subset = 'groups == "g1"')
+#' ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.g1.h5ad",
+#'   subset = 'groups == "g1"')
 #'
 #' saveRDS(SeuratObject::pbmc_small, "/tmp/pbmc_small.rds")
 #' ConvertSeuratToAnnData("/tmp/pbmc_small.rds", "/tmp/pbmc_small.h5ad")

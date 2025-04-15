@@ -14,8 +14,11 @@
 #' @importFrom utils getFromNamespace
 #' @export
 #' @examples
-#' degs <- suppressWarnings(RunSeuratDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2"))
+#' \donttest{
+#' degs <- suppressWarnings(RunSeuratDEAnalysis(SeuratObject::pbmc_small,
+#'  "groups", "g1", "g2"))
 #' RunEnrichment(degs, deg = "abs(avg_log2FC) > 1")
+#' }
 RunEnrichment <- function(
     degs, deg = 'p_val_adj < 0.05', dbs = "KEGG_2021_Human", cache = NULL,
     error = TRUE, site = "Enrichr", ...) {

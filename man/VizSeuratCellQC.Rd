@@ -8,9 +8,9 @@ VizSeuratCellQC(
   object,
   features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo", "percent.hb",
     "percent.plat"),
-  plot_type = c("violin", "box", "scatter", "ridge"),
+  plot_type = c("violin", "box", "scatter", "bar", "ridge", "table"),
   scatter_x = "nCount_RNA",
-  palette = "Set2",
+  palette = "Set1",
   ...
 )
 }
@@ -20,7 +20,9 @@ VizSeuratCellQC(
 \item{features}{Features to visualize}
 
 \item{plot_type}{Type of plot to generate
-One of 'violin', 'box', 'scatter', 'ridge'}
+One of 'violin', 'box', 'scatter', 'bar', 'ridge' and 'table'
+If 'plot_type' is 'table', it will return a data frame with number of cells
+before and after filtering}
 
 \item{scatter_x}{Feature to use as x-axis in scatter plot.
 If it is one of the features, it will be removed from the features}
@@ -34,4 +36,31 @@ The plot
 }
 \description{
 Visualize Cell QC metrics of Seurat object
+}
+\examples{
+\donttest{
+set.seed(8525)
+sobj <- SeuratObject::pbmc_small
+sobj$.QC <- sample(c(TRUE, FALSE), ncol(sobj), replace = TRUE)
+sobj$Sample <- sample(c("Sample1", "Sample2"), ncol(sobj), replace = TRUE)
+sobj$percent.mt <- runif(ncol(sobj), 0, 1)
+sobj$percent.ribo <- runif(ncol(sobj), 0, 1)
+sobj$percent.hb <- runif(ncol(sobj), 0, 1)
+sobj$percent.plat <- runif(ncol(sobj), 0, 1)
+sobj$nFeature_RNA <- as.integer(runif(ncol(sobj), 1000, 5000))
+sobj$nCount_RNA <- as.integer(runif(ncol(sobj), 1000, 5000))
+
+# Visualize cell QC metrics
+VizSeuratCellQC(sobj)
+VizSeuratCellQC(sobj, plot_type = "scatter")
+VizSeuratCellQC(sobj, plot_type = "bar")
+VizSeuratCellQC(sobj, plot_type = "ridge")
+VizSeuratCellQC(sobj, features = c("percent.mt", "percent.ribo"))
+VizSeuratCellQC(sobj, features = c("percent.mt", "percent.ribo"), plot_type = "box")
+VizSeuratCellQC(sobj, plot_type = "table")
+
+dim(sobj)
+sobj <- FinishSeuratQC(sobj)
+dim(sobj)
+}
 }

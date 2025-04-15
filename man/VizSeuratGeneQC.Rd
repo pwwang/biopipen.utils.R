@@ -4,19 +4,54 @@
 \alias{VizSeuratGeneQC}
 \title{Visualize gene QC metrics of Seurat object}
 \usage{
-VizSeuratGeneQC(object, features = 10, ...)
+VizSeuratGeneQC(
+  object,
+  plot_type = c("histogram", "box", "violin", "ridge", "table"),
+  palette = "Set1",
+  ylab = "Number of cells a gene is expressed in",
+  ...
+)
 }
 \arguments{
 \item{object}{A Seurat object with gene QC metrics}
 
-\item{features}{Number of features/actual features to visualize
-If actual features are given, they must be the features excluded in gene QC}
+\item{plot_type}{Type of plot to generate
+One of 'histogram', 'box', 'violin', 'ridge' and 'table'
+If 'plot_type' is 'table', it will return a data frame with number of genes
+before and after filtering}
 
-\item{...}{Additional arguments to pass to the plot function \link[plotthis:barplot]{plotthis::BarPlot}}
+\item{palette}{Color palette to use}
+
+\item{ylab}{Y-axis label
+When plot_type is ridge, it will be used as x-axis label}
+
+\item{...}{Additional arguments to pass to the plot function \code{\link[plotthis:barplot]{plotthis::BarPlot()}}}
 }
 \value{
 The plot
 }
 \description{
 Visualize gene QC metrics of Seurat object
+}
+\examples{
+\donttest{
+set.seed(8525)
+sobj <- SeuratObject::pbmc_small
+sobj@misc$gene_qc <- data.frame(
+  Sample = rep(c("Sample1", "Sample2"), each = nrow(sobj)),
+  Feature = rep(rownames(sobj), 2),
+  Count = as.integer(runif(nrow(sobj) * 2, 0, 100))
+)
+sobj@misc$gene_qc$QC <- (
+  sobj@misc$gene_qc$Count >= 20 |
+     sample(c(TRUE, FALSE), nrow(sobj) * 2, prob = c(0.8, 0.2), replace = TRUE)
+)
+
+# Visualize gene QC metrics
+VizSeuratGeneQC(sobj)
+VizSeuratGeneQC(sobj, plot_type = "box")
+VizSeuratGeneQC(sobj, plot_type = "violin")
+VizSeuratGeneQC(sobj, plot_type = "ridge")
+VizSeuratGeneQC(sobj, plot_type = "table")
+}
 }

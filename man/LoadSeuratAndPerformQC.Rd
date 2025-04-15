@@ -6,8 +6,9 @@
 \usage{
 LoadSeuratAndPerformQC(
   meta,
+  min_cells = 0,
+  min_features = 0,
   samples = NULL,
-  per_sample_qc = FALSE,
   cell_qc = NULL,
   gene_qc = NULL,
   tmpdir = NULL,
@@ -22,13 +23,19 @@ The RNAData column should contain the path to the 10X data, either a directory o
 If the path is a directory, the function will look for barcodes.tsv.gz, features.tsv.gz and matrix.mtx.gz.
 The directory should be loaded by \link[Seurat:Read10X]{Seurat::Read10X}. Sometimes, there may be prefix in the file names,
 e.g. "'prefix'.barcodes.tsv.gz", which is also supported.
-If the path is a file, it should be a h5 file that can be loaded by \link[Seurat:Read10X_h5]{Seurat::Read10X_h5}}
+If the path is a file, it should be a h5 file that can be loaded by \code{\link[Seurat:Read10X_h5]{Seurat::Read10X_h5()}}}
+
+\item{min_cells}{Include features detected in at least this many cells.
+This will be applied to all samples and passed to the \code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}} function.
+QCs can be further performed on the object after loading.}
+
+\item{min_features}{Include cells where at least this many features are detected.
+This will be applied to all samples and passed to the \code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}} function.
+QCs can be further performed on the object after loading.}
 
 \item{samples}{Samples to load. If NULL, all samples will be loaded}
 
-\item{per_sample_qc}{Whether to perform per-sample cell QC}
-
-\item{cell_qc}{Cell QC criteria}
+\item{cell_qc}{Cell QC criteria, a string of expression to pass to \code{dplyr::filter} function}
 
 \item{gene_qc}{Gene QC criteria
 A list containing the following fields:

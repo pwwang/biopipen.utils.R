@@ -35,6 +35,9 @@ Set to \code{FALSE} to disable caching}
 Run enrichment analysis on a list of differentially expressed genes (DEGs)
 }
 \examples{
-degs <- suppressWarnings(RunSeuratDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2"))
+\donttest{
+degs <- suppressWarnings(RunSeuratDEAnalysis(SeuratObject::pbmc_small,
+ "groups", "g1", "g2"))
 RunEnrichment(degs, deg = "abs(avg_log2FC) > 1")
+}
 }
