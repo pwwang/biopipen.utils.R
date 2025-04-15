@@ -203,7 +203,7 @@ PerformGeneQC <- function(object, gene_qc) {
     }
 
     genes <- names(counts)
-    if (!is.null(gene_qc$excludes) && !is.na(gene_qc$excludes) && length(gene_qc$excludes) > 0) {
+    if (!is.null(gene_qc$excludes) && length(gene_qc$excludes) > 0) {
         if (length(excludes) == 1) {
             excludes <- trimws(unlist(strsplit(excludes, ",")))
         }
@@ -351,7 +351,7 @@ LoadSeuratAndPerformQC <- function(
 
         # cell qc
         obj <- PerformSeuratCellQC(obj, cell_qc)
-        if (!is.null(gene_qc) && !is.na(gene_qc) && length(gene_qc) > 0) {
+        if (!is.null(gene_qc) && length(gene_qc) > 0) {
             # Sample, Feature, Count, QC
             geneqc_df <- rbind(geneqc_df, PerformGeneQC(obj, gene_qc))
         }
