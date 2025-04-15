@@ -165,7 +165,7 @@ VizSeuratCellQC <- function(
     }
     df <- object@misc$cell_qc_df %>%
         pivot_longer(cols = features, names_to = "feature", values_to = "value") %>%
-        mutate(QC = factor(if_else(!!sym(".QC"), "passed", "failed"), levels = c("passed", "failed")))
+        mutate(QC = factor(if_else(!!sym(".QC"), "passed", "failed"), levels = c("failed", "passed")))
 
     if (plot_type == "scatter") {
         ScatterPlot(
