@@ -16,6 +16,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDoubletDetection.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDoubletFinder.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratIntegration.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratMap2Ref.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratScDblFinder.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratTransformation.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ScRepMutate.html</loc></url>
@@ -25,6 +26,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratCellQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratDoublets.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratGeneQC.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratMap2Ref.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/bQuote.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/case_info.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/do_call.html</loc></url>
