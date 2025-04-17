@@ -399,3 +399,254 @@ VizSeuratDoublets <- function(object, plot_type = c("dim", "pie", "pk", "pK"), p
         )
     }
 }
+
+
+#' Visualize features between the query and reference Seurat objects by [biopipen.utils::RunSeuratMap2Ref()]
+#'
+#' @param query A Seurat object with query data
+#' @param ref A Seurat object with reference data
+#' @param features Features from the query and reference to visualize.
+#' The format is 'query:ref' or 'feature', where 'feature' is the same in both query and reference.
+#' The query and reference features must be the same type (numeric or factor/character).
+#' All features must be in the same type.
+#' A special case is to visualize the mapping score, for example `"seurat_clusters.score"`. If so,
+#' only one feature can be provided, and the plot type must be "dim". The reference will be plotted
+#' with the identity of the reference dataset.
+#' @param split_by Column name in the query object to split the plot by, will not be supported.
+#' The plot will be split by the query/reference features instead.
+#' @param plot_type Type of plot to generate.
+#' One of 'dim', 'violin', 'box', 'bar', 'ridge', 'heatmap' and 'dot'.
+#' * 'dim': Dimensionality reduction plot.
+#'   If the features are numeric, [scplotter::FeatureStatPlot()] will be used.
+#'   If the features are factor/character, [scplotter::CellDimPlot()] will be used.
+#' * other: [scplotter::FeatureStatPlot()] will be used.
+#' @param reduction Dimensionality reduction to use for the plot.
+#' If NULL, the default reduction will be used for both query and reference.
+#' If the format is 'reduction_q:reduction_r', the first part will be used for the query and the second part for the reference.
+#' If the format is 'reduction', the same reduction will be used for both query and reference.
+#' @param ident Column name in the query and reference object to use for the plot.
+#' If NULL, the default identity will be used for both query and reference.
+#' If the format is 'ident_q:ident_r', the first part will be used for the query and the second part for the reference.
+#' If the format is 'ident', the same identity will be used for both query and reference.
+#' @param combine Whether to combine the plots into one plot.
+#' If FALSE, the plots will be returned as a list.
+#' @param nrow Number of rows to use for the combined plot.
+#' If NULL, the number of rows will be calculated based on the number of features and ncol.
+#' If ncol is NULL, the number of columns will be calculated based on the number of features and nrow.
+#' @param ncol Number of columns to use for the combined plot.
+#' If NULL, the number of columns will be calculated based on the number of features and nrow.
+#' If nrow is NULL, the number of rows will be calculated based on the number of features and ncol.
+#' @param byrow Whether to combine the plots by row or column.
+#' @param axes Whether to show the axes for the combined plot.
+#' @param axis_titles Whether to show the axis titles for the combined plot.
+#' @param guides Whether to show the guides for the combined plot.
+#' @param design Design for the combined plot.
+#' See also [patchwork::wrap_plots()].
+#' @param ... Additional arguments to pass to the plot function
+#'
+#' @export
+#' @importFrom SeuratObject DefaultDimReduc Idents
+#' @importFrom plotthis palette_this
+#' @importFrom scplotter CellDimPlot FeatureStatPlot
+VizSeuratMap2Ref <- function(
+    query, ref, features,
+    split_by = NULL,
+    plot_type = c("dim", "violin", "box", "bar", "ridge", "heatmap", "dot"),
+    reduction = NULL,
+    ident = NULL,
+    combine = TRUE,
+    nrow = NULL,
+    ncol = ifelse(length(features) > 1, 1, 2),
+    byrow = NULL,
+    axes = NULL,
+    axis_titles = NULL,
+    guides = NULL,
+    design = NULL,
+    ...) {
+    stopifnot("[VizSeuratMap2Ref] 'query' and 'ref' must be Seurat objects" = inherits(query, "Seurat") && inherits(ref, "Seurat"))
+    stopifnot("[VizSeuratMap2Ref] 'features' must be a character vector" = is.character(features))
+    stopifnot("[VizSeuratMap2Ref] 'split_by' is not supported" = is.null(split_by))
+
+    plot_type <- match.arg(plot_type)
+    feat_types <- c()
+    features_q <- c()
+    features_r <- c()
+    is_mappingscore_case <- FALSE
+    for (feat in features) {
+        feat_parts <- strsplit(feat, ":")[[1]]
+        if (length(feat_parts) > 2) {
+            stop("[VizSeuratMap2Ref] 'features' must be in the format 'query:ref' or 'query', got: ", feat)
+        }
+
+        feat_q <- feat_parts[1]
+        feat_r <- ifelse(length(feat_parts) > 1, feat_parts[2], feat_q)
+        features_q <- c(features_q, feat_q)
+        features_r <- c(features_r, feat_r)
+
+        if (endsWith(feat_q, ".score") && substr(feat_q, 1, nchar(feat_q) - 6) %in% colnames(query@meta.data) && feat_q == feat_r) {
+            # Plotting mapping score is a special case
+            # We need to use the ident for reference, and the score for query
+            if (length(features) > 1) {
+                stop("[VizSeuratMap2Ref] 'features' must be a single feature when plotting mapping score")
+            }
+            if (plot_type != "dim") {
+                stop("[VizSeuratMap2Ref] 'plot_type' must be 'dim' when plotting mapping score")
+            }
+            feat_types <- c(feat_types, "mapping_score")
+            is_mappingscore_case <- TRUE
+        } else {
+
+            if (is.null(query[[feat_q]])) {
+                stop(paste0("[VizSeuratMap2Ref] 'query' does not contain feature: ", feat_q))
+            }
+            if (is.null(ref[[feat_r]])) {
+                stop(paste0("[VizSeuratMap2Ref] 'ref' does not contain feature: ", feat_r))
+            }
+
+            query_feat <- if (is.data.frame(query[[feat_q]])) { query[[feat_q]][, 1] } else { query[[feat_q]] }
+            ref_feat <- if (is.data.frame(ref[[feat_r]])) { ref[[feat_r]][, 1] } else { ref[[feat_r]] }
+
+            if (is.numeric(query_feat) != is.numeric(ref_feat)) {
+                stop(paste0("[VizSeuratMap2Ref] 'query' and 'ref' must have the same type for feature: ", feat_q, ":", feat_r, ".\n",
+                    "- is.numeric(query$", feat_q, "): ", is.numeric(query_feat), "\n",
+                    "- is.numeric(ref$", feat_r, "): ", is.numeric(ref_feat)))
+            } else if (is.numeric(query_feat)) {
+                feat_types <- c(feat_types, "numeric")
+            } else {
+                feat_types <- c(feat_types, "factor")
+                query_levels <- if (is.factor(query_feat)) levels(query_feat) else unique(query_feat)
+                ref_levels <- if (is.factor(ref_feat)) levels(ref_feat) else unique(ref_feat)
+                all_levels <- unique(c(query_levels, ref_levels))
+                query[[feat_q]] <- factor(query_feat, levels = all_levels)
+                ref[[feat_r]] <- factor(ref_feat, levels = all_levels)
+            }
+        }
+    }
+
+    if (length(unique(feat_types)) > 1) {
+        stop("[VizSeuratMap2Ref] 'query' and 'ref' should be either 'numeric' or 'character/factor' for all features, \n",
+            "we got: ", paste0(feat_types, collapse = ", "))
+    }
+
+    if (feat_types[1] == "factor" && plot_type != "dim") {
+        stop("[VizSeuratMap2Ref] 'plot_type' must be 'dim' when features are charactors/factors")
+    }
+
+    if (is.null(reduction)) {
+        reduction_q <- DefaultDimReduc(query)
+        reduction_r <- DefaultDimReduc(ref)
+    } else if (grepl(reduction, ":")) {
+        reduction_q <- strsplit(reduction, ":")[[1]][1]
+        reduction_r <- strsplit(reduction, ":")[[1]][2]
+    } else {
+        reduction_q <- reduction_r <- reduction
+    }
+
+    combine_plots <- getFromNamespace("combine_plots", "plotthis")
+    if (isTRUE(is_mappingscore_case)) {
+        ident_r <- NULL
+        for (name in colnames(ref@meta.data)) {
+            if (!is.factor(ref@meta.data[[name]])) next
+            if (all.equal(unname(Idents(ref)), ref@meta.data[[name]])) {
+                ident_r <- name
+                break
+            }
+        }
+        if (is.null(ident_r)) {
+            ref@meta.data$Identity <- Idents(ref)
+            ident_r <- "Identity"
+        }
+        p_q <- FeatureStatPlot(
+            query, features = features_q,
+            plot_type = plot_type,
+            ident = ident_r,
+            reduction = reduction_q,
+            title = paste0("Query Dataset: ", features_q),
+            ...
+        )
+        p_r <- CellDimPlot(
+            ref, group_by = ident_r,
+            reduction = reduction_r,
+            title = "Reference Dataset",
+            label = TRUE,
+            ...
+        )
+        combine_plots(list(p_q, p_r), combine = combine, nrow = nrow, ncol = ncol, byrow = byrow,
+            axes = axes, axis_titles = axis_titles,
+            guides = guides, design = design)
+    } else if (plot_type == "dim" && feat_types[1] != "numeric") {
+        p_q <- lapply(features_q, function(feat) {
+            CellDimPlot(
+                query, group_by = feat,
+                reduction = reduction_q,
+                title = paste0("Query: ", feat),
+                ...)
+        })
+        p_r <- lapply(features_r, function(feat) {
+            CellDimPlot(
+                ref, group_by = feat,
+                reduction = reduction_r,
+                title = paste0("Reference: ", feat),
+                ...)
+        })
+        combine_plots(c(p_q, p_r), combine = combine, nrow = nrow, ncol = ncol, byrow = byrow,
+            axes = axes, axis_titles = axis_titles,
+            guides = guides, design = design)
+    } else {
+        if (is.null(ident)) {
+            if (plot_type != "dim") {
+                # Find the ident column in meta.data
+                ident_q <- ident_r <- NULL
+                for (name in colnames(query@meta.data)) {
+                    if (!is.factor(query@meta.data[[name]])) next
+                    if (all.equal(unname(Idents(query)), query@meta.data[[name]])) {
+                        ident_q <- name
+                        break
+                    }
+                }
+                for (name in colnames(ref@meta.data)) {
+                    if (!is.factor(ref@meta.data[[name]])) next
+                    if (all.equal(unname(Idents(ref)), ref@meta.data[[name]])) {
+                        ident_r <- name
+                        break
+                    }
+                }
+                if (is.null(ident_q)) {
+                    query@meta.data$Identity <- Idents(query)
+                    ident_q <- "Identity"
+                }
+                if (is.null(ident_r)) {
+                    ref@meta.data$Identity <- Idents(ref)
+                    ident_r <- "Identity"
+                }
+            } else {
+                # We don't need ident for feature dim plot
+                ident_q <- ident_r <- NULL
+            }
+        } else if (grepl(":", ident)) {
+            ident_q <- strsplit(ident, ":")[[1]][1]
+            ident_r <- strsplit(ident, ":")[[1]][2]
+        } else {
+            ident_q <- ident_r <- ident
+        }
+        p_q <- FeatureStatPlot(
+            query, features = features_q,
+            plot_type = plot_type,
+            ident = ident_q,
+            reduction = reduction_q,
+            title = if (length(features_q) == 1) paste0("Query Dataset: ", features_q) else "Query Dataset",
+            ...
+        )
+        p_r <- FeatureStatPlot(
+            ref, features = features_r,
+            plot_type = plot_type,
+            ident = ident_r,
+            reduction = reduction_r,
+            title = if (length(features_r) == 1) paste0("Reference Dataset: ", features_r) else "Reference Dataset",
+            ...
+        )
+        combine_plots(list(p_q, p_r), combine = combine, nrow = nrow, ncol = ncol, byrow = byrow,
+            axes = axes, axis_titles = axis_titles,
+            guides = guides, design = design)
+    }
+}
