@@ -859,7 +859,7 @@ RunSeuratMap2Ref <- function(
     cache <- cache %||% gettempdir()
     cached <- get_cached(
         list(object, ref, use, ident, refnorm, skip_if_normalized,
-            split_by, ncores, MapQuery_args, FindTransferAnchors_args,
+            split_by, MapQuery_args, FindTransferAnchors_args,
             SCTransform_args, NormalizeData_args
         ),
         "biopipen.utils.RunSeuratMap2Ref",
@@ -1072,7 +1072,7 @@ RunSeuratMap2Ref <- function(
     }
 
     cached$data <- object
-    save_to_cache(cached, "biopipen.utils.RunSeuratDoubletDetection", cache)
+    save_to_cache(cached, "biopipen.utils.RunSeuratMap2Ref", cache)
 
     object
 }
