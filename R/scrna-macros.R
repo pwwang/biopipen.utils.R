@@ -7,6 +7,7 @@
 #' @param call.string Call string of the command
 #' @param params Parameters of the command
 #' @param assay.used Assay used in the command
+#' @param time.stamp Time stamp of the command
 #' @return The Seurat object with the command added
 #' @importFrom rlang %||%
 #' @importFrom methods new
@@ -22,7 +23,7 @@
 #' object@commands$RunSeuratDEAnalysis
 AddSeuratCommand <- function(
     object, name, call.string = paste0(name, "(object, ...)"),
-    params = list(), assay.used = NULL
+    params = list(), assay.used = NULL, time.stamp = Sys.time()
 ) {
     assay.used <- assay.used %||% DefaultAssay(object)
     if (is.null(object@commands)) {
@@ -32,7 +33,7 @@ AddSeuratCommand <- function(
     commands <- names(SeuratObject::pbmc_small@commands)
     scommand <- SeuratObject::pbmc_small@commands[[commands[length(commands)]]]
     scommand@name <- name
-    scommand@time.stamp <- Sys.time()
+    scommand@time.stamp <- time.stamp
     scommand@assay.used <- assay.used
     scommand@call.string <- call.string
     scommand@params <- params
@@ -401,7 +402,15 @@ FinishSeuratQC <- function(object) {
     object@misc$gene_qc <- NULL
     gc()
 
-    AddSeuratCommand(object, "FinishSeuratQC", "FinishSeuratQC(object)")
+    # Add the command to the object, using the time.stamp of LoadSeuratAndPerformQC
+    # to keep the same time.stamp, so that later processes can be cached
+    # and reused
+    if (!is.null(object@commands) && !is.null(object@commands$LoadSeuratAndPerformQC)) {
+        time.stamp <- object@commands$LoadSeuratAndPerformQC@time.stamp
+    } else {
+        time.stamp <- Sys.time()
+    }
+    AddSeuratCommand(object, "FinishSeuratQC", "FinishSeuratQC(object)", time.stamp = time.stamp)
 }
 
 #' Run transformations on a Seurat object

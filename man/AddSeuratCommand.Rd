@@ -9,7 +9,8 @@ AddSeuratCommand(
   name,
   call.string = paste0(name, "(object, ...)"),
   params = list(),
-  assay.used = NULL
+  assay.used = NULL,
+  time.stamp = Sys.time()
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ AddSeuratCommand(
 \item{params}{Parameters of the command}
 
 \item{assay.used}{Assay used in the command}
+
+\item{time.stamp}{Time stamp of the command}
 }
 \value{
 The Seurat object with the command added
