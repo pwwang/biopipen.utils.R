@@ -535,7 +535,7 @@ VizSeuratMap2Ref <- function(
     if (is.null(reduction)) {
         reduction_q <- DefaultDimReduc(query)
         reduction_r <- DefaultDimReduc(ref)
-    } else if (grepl(reduction, ":")) {
+    } else if (grepl(":", reduction)) {
         reduction_q <- strsplit(reduction, ":")[[1]][1]
         reduction_r <- strsplit(reduction, ":")[[1]][2]
     } else {
