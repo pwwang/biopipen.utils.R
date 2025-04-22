@@ -547,7 +547,7 @@ VizSeuratMap2Ref <- function(
         ident_r <- NULL
         for (name in colnames(ref@meta.data)) {
             if (!is.factor(ref@meta.data[[name]])) next
-            if (all.equal(unname(Idents(ref)), ref@meta.data[[name]])) {
+            if (all(as.character(Idents(ref)) == as.character(ref@meta.data[[name]]))) {
                 ident_r <- name
                 break
             }
