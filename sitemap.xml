@@ -5,6 +5,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/authors.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/index.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/AddSeuratCommand.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/Caching.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ConvertSeuratToAnnData.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/FinishSeuratQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/LoadSeuratAndPerformQC.html</loc></url>
