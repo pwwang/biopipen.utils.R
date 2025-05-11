@@ -267,3 +267,55 @@ monkey_patch <- function(namespace, function_name, new_function) {
     assign(function_name, new_function, envir = ns)
     lockBinding(function_name, ns)
 }
+
+
+#' Read and write objects to/from files
+#'
+#' @rdname read_save_object
+#' @param file The file to read or write
+#' @param type The type of the file. Can be "auto", "qs2" or "rds".
+#' If "auto", the type will be inferred from the file extension.
+#' @return The object read from the file or NULL if writing
+#' @export
+read_obj <- function(file, type = c("auto", "qs2", "rds")) {
+    type <- match.arg(type)
+    if (type == "auto") {
+        if (grepl("\\.rds$", file, ignore.case = TRUE)) {
+            type <- "rds"
+        } else if (grepl("\\.qs2?$", file)) {
+            type <- "qs2"
+        } else {
+            stop("Unknown file type")
+        }
+    }
+    if (type == "rds") {
+        readRDS(file)
+    } else if (type == "qs2") {
+        qs2::qs_read(file)
+    } else {
+        stop("Unknown file type")
+    }
+}
+
+#' Save an object to a file
+#' @rdname read_save_object
+#' @export
+save_obj <- function(obj, file, type = c("auto", "qs2", "rds")) {
+    type <- match.arg(type)
+    if (type == "auto") {
+        if (grepl("\\.rds$", file, ignore.case = TRUE)) {
+            type <- "rds"
+        } else if (grepl("\\.qs2?$", file)) {
+            type <- "qs2"
+        } else {
+            stop("Unknown file type")
+        }
+    }
+    if (type == "rds") {
+        saveRDS(obj, file)
+    } else if (type == "qs2") {
+        qs2::qs_save(obj, file)
+    } else {
+        stop("Unknown file type")
+    }
+}

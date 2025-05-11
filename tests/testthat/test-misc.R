@@ -190,3 +190,27 @@ test_that("monkey_patch: replaces and restores a function in a package namespace
     restored_result <- methods::getSlots("TestClass")
     expect_identical(restored_result, expected_slots)
 })
+
+test_that("read_obj/save_obj: works with rds file", {
+    obj <- list(a = 1, b = 2, c = 3)
+    file <- tempfile(fileext = ".RDS")
+    save_obj(obj, file)
+    expect_equal(read_obj(file), obj)
+    unlink(file)
+})
+
+test_that("read_obj/save_obj: works with qs file", {
+    obj <- list(a = 1, b = 2, c = 3)
+    file <- tempfile(fileext = ".qs")
+    save_obj(obj, file)
+    expect_equal(read_obj(file), obj)
+    unlink(file)
+})
+
+test_that("read_obj/save_obj: works with qs2 file", {
+    obj <- list(a = 1, b = 2, c = 3)
+    file <- tempfile(fileext = ".qs2")
+    save_obj(obj, file)
+    expect_equal(read_obj(file), obj)
+    unlink(file)
+})
