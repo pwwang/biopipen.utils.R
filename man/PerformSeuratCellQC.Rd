@@ -9,7 +9,11 @@ PerformSeuratCellQC(object, cell_qc)
 \arguments{
 \item{object}{Seurat object}
 
-\item{cell_qc}{Cell QC criteria}
+\item{cell_qc}{Cell QC criteria.
+It is an expression string to pass to \code{dplyr::filter} function to filter the cells.
+It can also be a list of expressions, where the names of the list are sample names.
+You can have a default expression in the list with the name "DEFAULT" for the samples
+that are not listed.}
 }
 \value{
 The Seurat object with cell QC results in \verb{@misc$cell_qc_df}

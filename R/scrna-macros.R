@@ -158,7 +158,11 @@ RunSeuratDEAnalysis <- function(
 #' Perform cell QC
 #'
 #' @param object Seurat object
-#' @param cell_qc Cell QC criteria
+#' @param cell_qc Cell QC criteria.
+#' It is an expression string to pass to `dplyr::filter` function to filter the cells.
+#' It can also be a list of expressions, where the names of the list are sample names.
+#' You can have a default expression in the list with the name "DEFAULT" for the samples
+#' that are not listed.
 #' @return The Seurat object with cell QC results in `@misc$cell_qc_df`
 #' @importFrom dplyr mutate
 #' @importFrom rlang parse_expr
@@ -173,6 +177,11 @@ PerformSeuratCellQC <- function(object, cell_qc) {
     # cols <- c("Sample", "nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo", "percent.hb", "percent.plat", ".QC")
     if (!"Sample" %in% colnames(object@meta.data)) {
         object@meta.data$Sample <- object@project.name
+    }
+
+    sam <- object@project.name
+    if (is.list(cell_qc)) {
+        cell_qc <- cell_qc[[sam]] %||% cell_qc$DEFAULT %||% NULL
     }
     if (is.null(cell_qc) || is.na(cell_qc) || length(cell_qc) == 0) {
         object$.QC <- TRUE
@@ -235,11 +244,25 @@ PerformGeneQC <- function(object, gene_qc) {
 #' @param min_cells Include features detected in at least this many cells.
 #' This will be applied to all samples and passed to the [Seurat::CreateSeuratObject()] function.
 #' QCs can be further performed on the object after loading.
+#' You can also provide a list of values, where the names of the list are sample names
+#' and the values are the minimum number of cells for each sample to load by
+#' [Seurat::CreateSeuratObject()].
+#' You can have a default value in the list with the name "DEFAULT" for the samples
+#' that are not listed.
 #' @param min_features Include cells where at least this many features are detected.
 #' This will be applied to all samples and passed to the [Seurat::CreateSeuratObject()] function.
 #' QCs can be further performed on the object after loading.
+#' You can also provide a list of values, where the names of the list are sample names
+#' and the values are the minimum number of features for each sample to load by
+#' [Seurat::CreateSeuratObject()].
+#' You can have a default value in the list with the name "DEFAULT" for the samples
+#' that are not listed.
 #' @param samples Samples to load. If NULL, all samples will be loaded
 #' @param cell_qc Cell QC criteria, a string of expression to pass to `dplyr::filter` function
+#' to filter the cells.
+#' It can also be a list of expressions, where the names of the list are sample names.
+#' You can have a default expression in the list with the name "DEFAULT" for the samples
+#' that are not listed.
 #' @param gene_qc Gene QC criteria
 #' A list containing the following fields:
 #' * min_cells: Minimum number of cells a gene should be expressed in to be kept
@@ -341,7 +364,17 @@ LoadSeuratAndPerformQC <- function(
             exprs <- exprs[["Gene Expression"]]
         }
 
-        obj <- CreateSeuratObject(exprs, project = sam, min.cells = min_cells, min.features = min_features)
+        minc <- if (is.list(min_cells)) {
+            min_cells[[sam]] %||% min_cells$DEFAULT %||% 0
+        } else {
+            min_cells
+        }
+        minf <- if (is.list(min_features)) {
+            min_features[[sam]] %||% min_features$DEFAULT %||% 0
+        } else {
+            min_features
+        }
+        obj <- CreateSeuratObject(exprs, project = sam, min.cells = minc, min.features = minf)
         obj <- RenameCells(obj, add.cell.id = sam)
         # Attach meta data
         for (mname in names(mdata)) {

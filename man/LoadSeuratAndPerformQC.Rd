@@ -27,15 +27,29 @@ If the path is a file, it should be a h5 file that can be loaded by \code{\link[
 
 \item{min_cells}{Include features detected in at least this many cells.
 This will be applied to all samples and passed to the \code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}} function.
-QCs can be further performed on the object after loading.}
+QCs can be further performed on the object after loading.
+You can also provide a list of values, where the names of the list are sample names
+and the values are the minimum number of cells for each sample to load by
+\code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}}.
+You can have a default value in the list with the name "DEFAULT" for the samples
+that are not listed.}
 
 \item{min_features}{Include cells where at least this many features are detected.
 This will be applied to all samples and passed to the \code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}} function.
-QCs can be further performed on the object after loading.}
+QCs can be further performed on the object after loading.
+You can also provide a list of values, where the names of the list are sample names
+and the values are the minimum number of features for each sample to load by
+\code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}}.
+You can have a default value in the list with the name "DEFAULT" for the samples
+that are not listed.}
 
 \item{samples}{Samples to load. If NULL, all samples will be loaded}
 
-\item{cell_qc}{Cell QC criteria, a string of expression to pass to \code{dplyr::filter} function}
+\item{cell_qc}{Cell QC criteria, a string of expression to pass to \code{dplyr::filter} function
+to filter the cells.
+It can also be a list of expressions, where the names of the list are sample names.
+You can have a default expression in the list with the name "DEFAULT" for the samples
+that are not listed.}
 
 \item{gene_qc}{Gene QC criteria
 A list containing the following fields:
