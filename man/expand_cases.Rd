@@ -15,7 +15,8 @@ expand_cases(cases, defaults, post = NULL, default_case = "DEFAULT")
 name and the case. One can also return multiple cases based on the demand.
 All cases returned will be finally merged.}
 
-\item{default_case}{The name of the default case}
+\item{default_case}{The name of the default case. If a function is provided, it will
+take the defaults as argument and return the name of the default case.}
 }
 \value{
 A list of expanded cases

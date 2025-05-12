@@ -10,6 +10,19 @@ test_that("expand_cases works with default values", {
     expect_equal(expanded_cases$case2, list(a = 3, b = 0, c = 0))
 })
 
+test_that("expand_cases works with default name", {
+    defaults <- list(a = 3, b = 0, c = 0)
+    expanded_cases <- expand_cases(list(), defaults)
+    expect_equal(expanded_cases$DEFAULT, list(a = 3, b = 0, c = 0))
+
+    # When default case name is a function
+    default_case_fn <- function(defaults) {
+        return("DEFAULT_CASE")
+    }
+    expanded_cases <- expand_cases(list(), defaults, default_case = default_case_fn)
+    expect_equal(expanded_cases$DEFAULT_CASE, list(a = 3, b = 0, c = 0))
+})
+
 test_that("expand_cases works with no cases", {
     defaults <- list(a = 0, b = 0, c = 0)
     expanded_cases <- expand_cases(NULL, defaults)

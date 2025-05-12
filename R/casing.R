@@ -6,12 +6,17 @@
 #' @param post A function for post-handling each case, returning the a list with the
 #' name and the case. One can also return multiple cases based on the demand.
 #' All cases returned will be finally merged.
-#' @param default_case The name of the default case
+#' @param default_case The name of the default case. If a function is provided, it will
+#' take the defaults as argument and return the name of the default case.
 #' @return A list of expanded cases
+#' @importFrom stats setNames
 #' @export
 expand_cases <- function(cases, defaults, post = NULL, default_case = "DEFAULT") {
     if (is.null(cases) || length(cases) == 0) {
-        filled_cases <- list(DEFAULT = defaults)
+        if (is.function(default_case)) {
+            default_case <- default_case(defaults)
+        }
+        filled_cases <- setNames(list(defaults), default_case)
     } else {
         filled_cases <- lapply(cases, function(case) {
             list_update(defaults, case)
