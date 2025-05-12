@@ -49,7 +49,11 @@
 
 
 <dt id="arg-cell-qc">cell_qc<a class="anchor" aria-label="anchor" href="#arg-cell-qc"></a></dt>
-<dd><p>Cell QC criteria</p></dd>
+<dd><p>Cell QC criteria.
+It is an expression string to pass to <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">dplyr::filter</a></code> function to filter the cells.
+It can also be a list of expressions, where the names of the list are sample names.
+You can have a default expression in the list with the name "DEFAULT" for the samples
+that are not listed.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -66,7 +70,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
 </div>
 
     </footer></div>
