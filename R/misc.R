@@ -298,6 +298,8 @@ read_obj <- function(file, type = c("auto", "qs2", "rds")) {
 }
 
 #' Save an object to a file
+#'
+#' @param obj The object to save
 #' @rdname read_save_object
 #' @export
 save_obj <- function(obj, file, type = c("auto", "qs2", "rds")) {

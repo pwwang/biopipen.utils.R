@@ -14,6 +14,8 @@ save_obj(obj, file, type = c("auto", "qs2", "rds"))
 
 \item{type}{The type of the file. Can be "auto", "qs2" or "rds".
 If "auto", the type will be inferred from the file extension.}
+
+\item{obj}{The object to save}
 }
 \value{
 The object read from the file or NULL if writing
