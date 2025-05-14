@@ -25,25 +25,29 @@ Imports:
     Seurat (>= 5.0.0),
     SeuratObject,
     tidyseurat,
+    Matrix,
+    matrixStats,
     parallel,
     plotthis,
-    scplotter
+    scplotter,
+    enrichit
 Suggests:
     mygene,
     zip,
     enrichR,
     DoubletFinder,
     scDblFinder,
-    Matrix,
     BiocParallel,
     scRepertoire,
     testthat,
+    fgsea,
     covr,
     hdf5r,
     gglogger,
     SeuratDisk,
     qs2
 Remotes:
+    pwwang/enrichit,
     pwwang/scplotter,
     wjawaid/enrichR,
     chris-mcginnis-ucsf/DoubletFinder,
