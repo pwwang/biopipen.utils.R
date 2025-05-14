@@ -1,93 +1,10 @@
-#' Get more_than, less_than, emerged or vanished entities from a data frame.
+#' Internal helper function to compare the size of two groups.
 #'
-#' * `more_than`: Select entities that have more counts in the first group than the second group.
-#' * `less_than`: Select entities that have less counts in the first group than the second group.
-#' * `emerged`: Select entities that have counts in the first group but not in the second group.
-#' * `vanished`: Select entities that have counts in the second group but not in the first group.
-#'
-#' @rdname mutate-helper-1
-#'
-#' @param df The data frame
-#' @param group_by The column name in the data frame to group the entities.
-#' It could be a quoted string or a bare variable, and defines the groups of entities
-#' for comparison.
-#' @param idents The groups of entities to compare (values in `group_by` column).
-#' Either length 1 (`ident_1`) or length 2 (`ident_1` and `ident_2`).
-#' If length 1, the rest of the cells with non-NA values in `group_by` will
-#' be used as `ident_2`.
-#' @param subset An expression to subset the cells, will be passed to
-#' `dplyr::filter()`. Default is `NULL` (no filtering).
-#' @param split_by A column name in data frame to split the entities.
-#' Each comparison will be done for each split in this column.
-#' @param id The column name in data frame to mark the entities for the same group.
-#' @param compare Either a (numeric) column name (i.e. `Count`)
-#' in data frame to compare between groups, or `.n` to compare the
-#' number (count) of entities in each group.
-#' If a column name is given, only the first value of the entities from the same `id`
-#' will be used. So make sure that the values are the same for each group (`id`).
+#' @inheritParams more_than
 #' @param fun The way to compare between groups. Either `"more_than"`,
 #' `"less_than"`, `"emerged"` or `"vanished"`.
-#' @param return_type The type of the returned value. Default is `uids`.
-#' It could be one of
-#' * `uids`: return the unique ids of the selected entities
-#' * `ids`: return the ids of all entities in the same order as in `df`, where the
-#'    non-selected ids will be `NA`
-#' * `subdf`: return a subset of `df` with the selected entities
-#' * `df`: return the original `df` with a new logical column `.selected` to mark
-#'    the selected entities
-#' * `interdf`: return the intermediate data frame with the id column, `ident_1`,
-#'   `ident_2`, `predicate`, `sum`, `diff` and the split_by column if provided.
-#' @param order An expression to order the intermediate data frame before returning
-#' the final result. Default is `NULL`. It does not work for `subdf` and `df`.
-#' @param include_zeros Whether to include the zero entities in the other group for
-#' `more_than` and `less_than` comparisons. Default is `FALSE`.
-#' By default, the zero entities will be excluded, meaning that the entities must
-#' exist in both groups to be selected.
-#'
-#' @return Depending on the `return_type`, the function will return different values.
-#' * `uids`: a vector of unique ids of the selected entities
-#' * `ids`: a vector of ids of all entities in the same order as in `df`, where the
-#'   non-selected ids will be `NA`
-#' * `subdf`: a subset of `df` with the selected entities
-#' * `df`: the original `df` with a new logical column `.selected` to mark the selected
-#'    entities
-#' * `interdf`: the intermediate data frame with the id column, `ident_1`, `ident_2`,
-#'   `predicate`, `sum`, and `diff` and the split_by column if provided.
-#'
-#' @importFrom rlang parse_expr sym
-#' @importFrom dplyr filter mutate n first if_else rowwise arrange left_join select
-#' @importFrom tidyr drop_na pivot_wider replace_na
-#' @examples
-#' df <- data.frame(
-#'     id = c("A", "A", "A", "B", "B", "B", "C", "C", "D", "D"),
-#'     group = c("G1", "G1", "G2", "G1", "G2", "G2", "G1", "G2", "G1", "G2"),
-#'     count = rep(1, 10),
-#'     split = c("S1", "S2", "S1", "S1", "S2", "S1", "S1", "S2", "S1", "S2")
-#' )
-#' more_than(df, group_by = group, idents = c("G1", "G2"), id = id, compare = count,
-#'   return_type = "uids")
-#' more_than(df, group_by = group, idents = c("G1", "G2"), id = id, compare = ".n",
-#'   return_type = "uids")
-#' more_than(df, group_by = group, split_by = split, idents = c("G1", "G2"), id = id,
-#'   compare = count, return_type = "ids")
-#' more_than(df, group_by = group, idents = c("G1", "G2"), id = id, compare = count,
-#'   return_type = "subdf")
-#' more_than(df, group_by = group, idents = c("G1", "G2"), id = id, compare = count,
-#'   return_type = "ids")
-#' more_than(df, group_by = group, idents = c("G1", "G2"), id = id, compare = count,
-#'   return_type = "interdf")
-#' more_than(df, group_by = group, idents = c("G1", "G2"), id = id, compare = count,
-#'   return_type = "df")
-#' more_than(df, group_by = group, idents = c("G1", "G2"), id = id,
-#'   return_type = "uids", subset = id %in% c("A", "B"))
-#' dplyr::mutate(df, selected = more_than(group_by = group, idents = c("G1", "G2"),
-#'   id = id, compare = count, return_type = "ids"))
-#' less_than(df, group_by = group, idents = c("G1", "G2"), id = id, compare = count,
-#'   return_type = "uids")
-#' emerged(df, group_by = group, idents = c("G1", "G2"), id = id, compare = count,
-#'   return_type = "uids", order = sum)
-#' vanished(df, group_by = group, idents = c("G1", "G2"), id = id, compare = count,
-#'   return_type = "uids")
+#' @return A vector of ids or a data frame with the selected entities.
+#' @keywords internal
 .size_compare <- function(
     df, group_by, idents, id, fun, compare = ".n", split_by = NULL, order = "desc(sum)",
     subset = NULL, return_type = c("uids", "ids", "subdf", "df", "interdf"),
@@ -178,8 +95,97 @@
     }
 }
 
-#' @export
+#' Get more_than, less_than, emerged, vanished, paired or top entities from a data frame.
+#'
+#' * `more_than`: Select entities that have more counts in the first group than the second group.
+#' * `less_than`: Select entities that have less counts in the first group than the second group.
+#' * `emerged`: Select entities that have counts in the first group but not in the second group.
+#' * `vanished`: Select entities that have counts in the second group but not in the first group.
+#' * `paired`: Select entities that have the same counts in both groups.
+#' * `top`: Select the top entities from a data frame based on the number of entities in each group.
+#'
 #' @rdname mutate-helper-1
+#'
+#' @param df The data frame
+#' @param group_by The column name in the data frame to group the entities.
+#' It could be a quoted string or a bare variable, and defines the groups of entities
+#' for comparison.
+#' @param idents The groups of entities to compare (values in `group_by` column).
+#' Either length 1 (`ident_1`) or length 2 (`ident_1` and `ident_2`).
+#' If length 1, the rest of the cells with non-NA values in `group_by` will
+#' be used as `ident_2`.
+#' @param subset An expression to subset the cells, will be passed to
+#' `dplyr::filter()`. Default is `NULL` (no filtering).
+#' @param split_by A column name in data frame to split the entities.
+#' Each comparison will be done for each split in this column.
+#' @param id The column name in data frame to mark the entities for the same group.
+#' @param compare Either a (numeric) column name (i.e. `Count`)
+#' in data frame to compare between groups, or `.n` to compare the
+#' number (count) of entities in each group.
+#' If a column name is given, only the first value of the entities from the same `id`
+#' will be used. So make sure that the values are the same for each group (`id`).
+#' @param return_type The type of the returned value. Default is `uids`.
+#' It could be one of
+#' * `uids`: return the unique ids of the selected entities
+#' * `ids`: return the ids of all entities in the same order as in `df`, where the
+#'    non-selected ids will be `NA`
+#' * `subdf`: return a subset of `df` with the selected entities
+#' * `df`: return the original `df` with a new logical column `.selected` to mark
+#'    the selected entities
+#' * `interdf`: return the intermediate data frame with the id column, `ident_1`,
+#'   `ident_2`, `predicate`, `sum`, `diff` and the split_by column if provided.
+#' @param order An expression to order the intermediate data frame before returning
+#' the final result. Default is `NULL`. It does not work for `subdf` and `df`.
+#' @param include_zeros Whether to include the zero entities in the other group for
+#' `more_than` and `less_than` comparisons. Default is `FALSE`.
+#' By default, the zero entities will be excluded, meaning that the entities must
+#' exist in both groups to be selected.
+#'
+#' @return Depending on the `return_type`, the function will return different values.
+#' * `uids`: a vector of unique ids of the selected entities
+#' * `ids`: a vector of ids of all entities in the same order as in `df`, where the
+#'   non-selected ids will be `NA`
+#' * `subdf`: a subset of `df` with the selected entities
+#' * `df`: the original `df` with a new logical column `.selected` to mark the selected
+#'    entities
+#' * `interdf`: the intermediate data frame with the id column, `ident_1`, `ident_2`,
+#'   `predicate`, `sum`, and `diff` and the split_by column if provided.
+#'
+#' @importFrom rlang parse_expr sym
+#' @importFrom dplyr filter mutate n first if_else rowwise arrange left_join select
+#' @importFrom tidyr drop_na pivot_wider replace_na
+#' @examples
+#' df <- data.frame(
+#'     id = c("A", "A", "A", "B", "B", "B", "C", "C", "D", "D"),
+#'     group = c("G1", "G1", "G2", "G1", "G2", "G2", "G1", "G2", "G1", "G2"),
+#'     count = rep(1, 10),
+#'     split = c("S1", "S2", "S1", "S1", "S2", "S1", "S1", "S2", "S1", "S2")
+#' )
+#' more_than(df, group_by = group, idents = c("G1", "G2"), id = id, compare = count,
+#'   return_type = "uids")
+#' more_than(df, group_by = group, idents = c("G1", "G2"), id = id, compare = ".n",
+#'   return_type = "uids")
+#' more_than(df, group_by = group, split_by = split, idents = c("G1", "G2"), id = id,
+#'   compare = count, return_type = "ids")
+#' more_than(df, group_by = group, idents = c("G1", "G2"), id = id, compare = count,
+#'   return_type = "subdf")
+#' more_than(df, group_by = group, idents = c("G1", "G2"), id = id, compare = count,
+#'   return_type = "ids")
+#' more_than(df, group_by = group, idents = c("G1", "G2"), id = id, compare = count,
+#'   return_type = "interdf")
+#' more_than(df, group_by = group, idents = c("G1", "G2"), id = id, compare = count,
+#'   return_type = "df")
+#' more_than(df, group_by = group, idents = c("G1", "G2"), id = id,
+#'   return_type = "uids", subset = id %in% c("A", "B"))
+#' dplyr::mutate(df, selected = more_than(group_by = group, idents = c("G1", "G2"),
+#'   id = id, compare = count, return_type = "ids"))
+#' less_than(df, group_by = group, idents = c("G1", "G2"), id = id, compare = count,
+#'   return_type = "uids")
+#' emerged(df, group_by = group, idents = c("G1", "G2"), id = id, compare = count,
+#'   return_type = "uids", order = sum)
+#' vanished(df, group_by = group, idents = c("G1", "G2"), id = id, compare = count,
+#'   return_type = "uids")
+#' @export
 #' @importFrom rlang as_name as_label enquo enexpr expr_deparse
 #' @importFrom dplyr across everything
 more_than <- function(
@@ -354,10 +360,7 @@ vanished <- function(
     )
 }
 
-
-#' Get paired entities from a data frame based on the other column
-#'
-#' @rdname mutate-helper-2
+#' @rdname mutate-helper-1
 #' @param df The data frame.
 #' @param id The column name in `df` for the ids to be returned in the
 #'   final output
@@ -455,9 +458,7 @@ paired <- function(
     }
 }
 
-#' Get top entities from a data frame based on the number of entities in each group
-#'
-#' @rdname mutate-helper-3
+#' @rdname mutate-helper-1
 #' @param df The data frame. Use `.` if the function is called in a dplyr pipe.
 #' @param id The column name in `df` for the groups.
 #' @param compare The column name in `df` to compare the values for each group.
