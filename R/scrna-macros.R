@@ -67,9 +67,13 @@ AddSeuratCommand <- function(
 RunSeuratDEAnalysis <- function(
     object, group.by, ident.1 = NULL, ident.2 = NULL, assay = NULL, subset = NULL, cache = NULL, error = TRUE, ...) {
     cache <- cache %||% gettempdir()
-    cached <- get_cached(list(object, group.by, ident.1, ident.2, subset, ...), "biopipen.utils.RunSeuratDEAnalysis", cache)
-    if (!is.null(cached$data)) {
-        return(cached$data)
+    cached <- Cache$new(
+        list(object, group.by, ident.1, ident.2, subset, ...),
+        prefix = "biopipen.utils.RunSeuratDEAnalysis",
+        cache_dir = cache,
+    )
+    if (cached$is_cached()) {
+        return(cached$get())
     }
 
     stopifnot("'group.by' is not found in the object" = group.by %in% colnames(object@meta.data))
@@ -149,9 +153,7 @@ RunSeuratDEAnalysis <- function(
     attr(degs, "ident.1") <- ident.1
     attr(degs, "ident.2") <- ident.2
 
-    cached$data <- degs
-    save_to_cache(cached, "biopipen.utils.RunSeuratDEAnalysis", cache)
-
+    cached$save(degs)
     degs
 }
 
@@ -309,10 +311,14 @@ LoadSeuratAndPerformQC <- function(
     stopifnot("No samples found" = length(samples) > 0)
 
     cache <- cache %||% gettempdir()
-    cached <- get_cached(list(meta, min_cells, min_features, samples, cell_qc, gene_qc), "biopipen.utils.LoadSeuratAndPerformQC", cache)
-    if (!is.null(cached$data)) {
+    cached <- Cache$new(
+        list(meta, min_cells, min_features, samples, cell_qc, gene_qc),
+        prefix = "biopipen.utils.LoadSeuratAndPerformQC",
+        cache_dir = cache
+    )
+    if (cached$is_cached()) {
         log$info("Initialized and QC'ed data loaded from cache")
-        return(cached$data)
+        return(cached$get())
     }
 
     log$info("Loading each sample ...")
@@ -401,9 +407,7 @@ LoadSeuratAndPerformQC <- function(
     gc()
 
     obj@misc$gene_qc <- geneqc_df
-
-    cached$data <- obj
-    save_to_cache(cached, "biopipen.utils.LoadSeuratAndPerformQC", cache)
+    cached$save(obj)
 
     AddSeuratCommand(
         obj, "LoadSeuratAndPerformQC",
@@ -477,7 +481,7 @@ RunSeuratTransformation <- function(
 ) {
     log <- log %||% get_logger()
     cache <- cache %||% gettempdir()
-    cached <- get_cached(
+    cached <- Cache$new(
         list(
             object, use_sct,
             SCTransformArgs,
@@ -486,12 +490,12 @@ RunSeuratTransformation <- function(
             ScaleDataArgs,
             RunPCAArgs
         ),
-        "biopipen.utils.RunSeuratTransformations",
-        cache
+        prefix = "biopipen.utils.RunSeuratTransformations",
+        cache_dir = cache
     )
-    if (!is.null(cached$data)) {
+    if (cached$is_cached()) {
         log$info("Transformed data loaded from cache")
-        return(cached$data)
+        return(cached$get())
     }
 
     log$info("Performing data transformation and scaling ...")
@@ -547,8 +551,7 @@ RunSeuratTransformation <- function(
     rm(RunPCAArgs)
     gc()
 
-    cached$data <- object
-    save_to_cache(cached, "biopipen.utils.RunSeuratTransformations", cache)
+    cached$save(object)
 
     object
 }
@@ -571,14 +574,14 @@ RunSeuratIntegration <- function(
 ) {
     log <- log %||% get_logger()
     cache <- cache %||% gettempdir()
-    cached <- get_cached(
+    cached <- Cache$new(
         list(object, no_integration, IntegrateLayersArgs),
-        "biopipen.utils.RunSeuratIntegration",
-        cache
+        prefix = "biopipen.utils.RunSeuratIntegration",
+        cache_dir = cache
     )
-    if (!is.null(cached$data)) {
+    if (cached$is_cached()) {
         log$info("Integrated data loaded from cache")
-        return(cached$data)
+        return(cached$get())
     }
 
     log$info("Performing data integration ...")
@@ -634,8 +637,7 @@ RunSeuratIntegration <- function(
     log$info("- Joining layers ...")
     object <- JoinLayers(object, assay = "RNA")
 
-    cached$data <- object
-    save_to_cache(cached, "biopipen.utils.RunSeuratIntegration", cache)
+    cached$save(object)
 
     object
 }
@@ -791,14 +793,14 @@ RunSeuratDoubletDetection <- function(
 ) {
     log <- log %||% get_logger()
     cache <- cache %||% gettempdir()
-    cached <- get_cached(
+    cached <- Cache$new(
         list(object, tool, DoubletFinderArgs, scDblFinderArgs, filter),
-        "biopipen.utils.RunSeuratDoubletDetection",
-        cache
+        prefix = "biopipen.utils.RunSeuratDoubletDetection",
+        cache_dir = cache
     )
-    if (!is.null(cached$data)) {
+    if (cached$is_cached()) {
         log$info("Doublet detection results loaded from cache")
-        return(cached$data)
+        return(cached$get())
     }
 
     if (tolower(tool) == "doubletfinder") {
@@ -834,8 +836,7 @@ RunSeuratDoubletDetection <- function(
         }
     }
 
-    cached$data <- object
-    save_to_cache(cached, "biopipen.utils.RunSeuratDoubletDetection", cache)
+    cached$save(object)
 
     object
 }
@@ -899,17 +900,17 @@ RunSeuratMap2Ref <- function(
 
     log <- log %||% get_logger()
     cache <- cache %||% gettempdir()
-    cached <- get_cached(
+    cached <- Cache$new(
         list(object, ref, use, ident, refnorm, skip_if_normalized,
-            split_by, MapQuery_args, FindTransferAnchors_args,
+            split_by, ncores, MapQuery_args, FindTransferAnchors_args,
             SCTransform_args, NormalizeData_args
         ),
-        "biopipen.utils.RunSeuratMap2Ref",
-        cache
+        prefix = "biopipen.utils.RunSeuratMap2Ref",
+        cache_dir = cache
     )
-    if (!is.null(cached$data)) {
+    if (cached$is_cached()) {
         log$info("Mapping-to-reference results loaded from cache")
-        return(cached$data)
+        return(cached$get())
     }
 
     if (is.character(ref) && (endsWith(ref, ".rds") || endsWith(ref, ".RDS"))) {
@@ -1113,8 +1114,7 @@ RunSeuratMap2Ref <- function(
         )
     }
 
-    cached$data <- object
-    save_to_cache(cached, "biopipen.utils.RunSeuratMap2Ref", cache)
+    cached$save(object)
 
     object
 }

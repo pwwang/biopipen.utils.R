@@ -138,7 +138,7 @@ RunGSEA = function(ranks, genesets, ...) {
 
 #' Visualize GSEA results
 #'
-#' @rdname vizGSEA
+#' @rdname VizGSEA
 #' @param gsea_results A data frame with the results of the fgsea analysis
 #' @param plot_type The type of plot to create
 #' One of "summary", "gsea"
@@ -173,8 +173,8 @@ RunGSEA = function(ranks, genesets, ...) {
 #' r <- RunGSEA(ranks, genesets)
 #'
 #' # Visualize the GSEA results
-#' vizGSEA(r, plot_type = "summary")
-#' vizGSEA(r, plot_type = "gsea", gs = c("set10", "set2"))
+#' VizGSEA(r, plot_type = "summary")
+#' VizGSEA(r, plot_type = "gsea", gs = c("set10", "set2"))
 #' }
 VizGSEA <- function(
     gsea_results, plot_type = c("summary", "gsea"),

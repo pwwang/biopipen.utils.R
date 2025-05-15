@@ -1,34 +1,40 @@
 test_that("caching: not cached by default", {
-    cache <- Caching$new(1, cache_dir = tempdir(), prefix = "test", kind = "object")
+    cache <- Cache$new(1, cache_dir = tempdir(), prefix = "test", kind = "object")
     expect_null(cache$get())
+    expect_false(cache$is_cached())
 })
 
 test_that("caching: cached", {
     obj <- list(a = 1, b = 2)
-    cache <- Caching$new(2, cache_dir = tempdir(), prefix = "test", kind = "object")
+    cache <- Cache$new(2, cache_dir = tempdir(), prefix = "test", kind = "object")
     expect_null(cache$get())
+    expect_false(cache$is_cached())
 
     cache$save(obj)
+    expect_true(cache$is_cached())
     cached <- cache$get()
     expect_equal(cached, obj)
 })
 
 test_that("caching: not cached after clear", {
     obj <- list(a = 1, b = 2)
-    cache <- Caching$new(3, cache_dir = tempdir(), prefix = "test", kind = "object")
+    cache <- Cache$new(3, cache_dir = tempdir(), prefix = "test", kind = "object")
     expect_null(cache$get())
+    expect_false(cache$is_cached())
 
     cache$save(obj)
+    expect_true(cache$is_cached())
     cached <- cache$get()
     expect_equal(cached, obj)
 
     cache$clear()
+    expect_false(cache$is_cached())
     expect_null(cache$get())
 })
 
 test_that("caching: not cached after clear_all", {
     obj <- list(a = 1, b = 2)
-    cache <- Caching$new(4, cache_dir = tempdir(), prefix = "test", kind = "object")
+    cache <- Cache$new(4, cache_dir = tempdir(), prefix = "test", kind = "object")
     expect_null(cache$get())
 
     cache$save(obj)
@@ -43,14 +49,14 @@ test_that("caching: not cached when cache_dir is NULL or FALSE", {
     obj <- list(a = 1, b = 2)
 
     # Test with NULL cache_dir
-    cache_null <- Caching$new(5, cache_dir = NULL, prefix = "test", kind = "object")
+    cache_null <- Cache$new(5, cache_dir = NULL, prefix = "test", kind = "object")
     expect_null(cache_null$get())
 
     cache_null$save(obj)
     expect_null(cache_null$get())
 
     # Test with FALSE cache_dir
-    cache_false <- Caching$new(6, cache_dir = FALSE, prefix = "test", kind = "object")
+    cache_false <- Cache$new(6, cache_dir = FALSE, prefix = "test", kind = "object")
     expect_null(cache_false$get())
 
     cache_false$save(obj)
@@ -61,7 +67,7 @@ test_that("caching: save and get file", {
     temp_file <- tempfile()
     writeLines("Hello, World!", temp_file)
 
-    cache <- Caching$new(7, cache_dir = tempdir(), prefix = "test_file", kind = "file")
+    cache <- Cache$new(7, cache_dir = tempdir(), prefix = "test_file", kind = "file")
     expect_null(cache$get(temp_file))
 
     cache$save(temp_file)
@@ -81,7 +87,7 @@ test_that("caching: save and get directory", {
     dir.create(temp_dir)
     writeLines("Hello, World!", file.path(temp_dir, "test.txt"))
 
-    cache <- Caching$new(8, cache_dir = tempdir(), prefix = "test_dir", kind = "dir")
+    cache <- Cache$new(8, cache_dir = tempdir(), prefix = "test_dir", kind = "dir")
     expect_null(cache$get(temp_dir))
 
     cache$save(temp_dir)

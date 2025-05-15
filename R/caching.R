@@ -1,55 +1,4 @@
-#' Get signatures and cached data
-#'
-#' @param x An object to infer signature from
-#' @param kind A string indicating the kind of the object
-#'   Used as part of the filename of the cached file
-#' @param cache_dir A string indicating the directory to store cached files
-#' @export
-#' @return A list containing the signature, digested signature and cached data
-#' @importFrom utils capture.output str
-#' @importFrom digest digest
-#' @details
-#' This function is used to get the signature of an object and the cached data
-#' if it exists. The signature is used to identify the object and the cached data
-#' is used to avoid recomputing the object.
-get_cached <- function(x, kind, cache_dir) {
-    if (is.null(cache_dir) || isFALSE(cache_dir)) {
-        return(list(sig = NULL, dig = NULL, data = NULL))
-    }
-    # Get signature of an object
-    sig <- capture.output(str(x))
-    dig <- digest(sig, algo = "md5")
-    dig <- substr(dig, 1, 8)
-    cached_file <- file.path(cache_dir, paste0(dig, ".", kind, ".RDS"))
-    if (!file.exists(cached_file)) {
-        return(list(sig = sig, dig = dig, data = NULL))
-    }
-
-    list(sig = sig, dig = dig, data = readRDS(cached_file))
-}
-
-#' Save an object to cache
-#'
-#' @param to_cache An list to cache,
-#'   including the signature, digested signature and data
-#' @param kind A string indicating the kind of the object
-#'   Used as part of the filename of the cached file
-#' @param cache_dir A string indicating the directory to store cached files
-#' @export
-save_to_cache <- function(to_cache, kind, cache_dir) {
-    if (is.null(cache_dir) || isFALSE(cache_dir)) { return() }
-    dig <- to_cache$dig
-    sig <- to_cache$sig
-    data <- to_cache$data
-    # Save an object to cache
-    dir.create(cache_dir, showWarnings = FALSE, recursive = TRUE)
-    sig_file <- file.path(cache_dir, paste0(dig, ".", kind , ".signature.txt"))
-    writeLines(c(as.character(Sys.time()), "", sig), sig_file)
-    cached_file <- file.path(cache_dir, paste0(dig, ".", kind, ".RDS"))
-    saveRDS(data, cached_file)
-}
-
-#' Caching class for object, file or directory caching
+#' Cache class for object, file or directory caching
 #'
 #' @description
 #' A class to handle caching of objects, files, or directories.
@@ -57,8 +6,8 @@ save_to_cache <- function(to_cache, kind, cache_dir) {
 #' based on that signature.
 #'
 #' @export
-Caching <- R6::R6Class(
-    "Caching",
+Cache <- R6::R6Class(
+    "Cache",
 
     private = list(
         kind = NULL,
@@ -137,12 +86,12 @@ Caching <- R6::R6Class(
             if (!is.null(cache_dir) && is.character(cache_dir) && nzchar(cache_dir) > 0) {
                 cached_path <- file.path(cache_dir, private$prefix)
                 if (private$kind == "file") {
-                    stopifnot("[Caching$get()] file path is needed for 'taget' to copy cached file." = !is.null(target) && is.character(target) && nzchar(target))
+                    stopifnot("[Cache$get()] file path is needed for 'taget' to copy cached file." = !is.null(target) && is.character(target) && nzchar(target))
                     if (!file.exists(cached_path)) { return(NULL) }
                     file.copy(cached_path, target, overwrite = TRUE)
                     return(target)
                 } else if (private$kind == "dir") {
-                    stopifnot("[Caching$get()] directory path is needed for 'taget' to copy cached directory." = !is.null(target) && is.character(target) && nzchar(target))
+                    stopifnot("[Cache$get()] directory path is needed for 'taget' to copy cached directory." = !is.null(target) && is.character(target) && nzchar(target))
                     if (!dir.exists(cached_path)) { return(NULL) }
                     dir.create(target, showWarnings = FALSE, recursive = TRUE)
                     file.copy(
@@ -163,6 +112,25 @@ Caching <- R6::R6Class(
         },
 
         #' @description
+        #' Check if we have a cached object/file/directory
+        #' @return TRUE if the cached object/file/directory exists, FALSE otherwise
+        is_cached = function() {
+            cache_dir <- self$cache_dir
+            if (!is.null(cache_dir) && is.character(cache_dir) && nzchar(cache_dir) > 0) {
+                cached_path <- file.path(cache_dir, private$prefix)
+                if (private$kind == "file") {
+                    return(file.exists(cached_path))
+                } else if (private$kind == "dir") {
+                    return(dir.exists(cached_path))
+                } else {
+                    cached_path <- paste0(cached_path, ".qs")
+                    return(file.exists(cached_path))
+                }
+            }
+            FALSE
+        },
+
+        #' @description
         #' Get the path to the cached object/file/directory
         #' @return The path to the cached object/file/directory
         get_path = function() {
@@ -180,14 +148,14 @@ Caching <- R6::R6Class(
                 return()
             }
             if (private$kind == "file") {
-                stopifnot("[Caching$save()] 'data' must be a valid file path." = is.character(data) && nzchar(data) && file.exists(data))
+                stopifnot("[Cache$save()] 'data' must be a valid file path." = is.character(data) && nzchar(data) && file.exists(data))
                 file.copy(
                     from = data,
                     to = file.path(self$cache_dir, private$prefix),
                     overwrite = TRUE
                 )
             } else if (private$kind == "dir") {
-                stopifnot("[Caching$save()] 'data' must be a valid directory path." = is.character(data) && nzchar(data) && dir.exists(data))
+                stopifnot("[Cache$save()] 'data' must be a valid directory path." = is.character(data) && nzchar(data) && dir.exists(data))
                 dir.create(file.path(self$cache_dir, private$prefix), showWarnings = FALSE, recursive = TRUE)
                 file.copy(
                     list.files(data, full.names = TRUE),
