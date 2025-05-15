@@ -22,6 +22,7 @@ based on that signature.
 \item \href{#method-Caching-clear}{\code{Caching$clear()}}
 \item \href{#method-Caching-clear_all}{\code{Caching$clear_all()}}
 \item \href{#method-Caching-get}{\code{Caching$get()}}
+\item \href{#method-Caching-get_path}{\code{Caching$get_path()}}
 \item \href{#method-Caching-save}{\code{Caching$save()}}
 \item \href{#method-Caching-clone}{\code{Caching$clone()}}
 }
@@ -101,6 +102,19 @@ When NULL is returned, it means the cache does not exist
 \subsection{Returns}{
 For objects: the cached object or NULL if not found
 For files/dirs: the target path or NULL if not found
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Caching-get_path"></a>}}
+\if{latex}{\out{\hypertarget{method-Caching-get_path}{}}}
+\subsection{Method \code{get_path()}}{
+Get the path to the cached object/file/directory
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Caching$get_path()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+The path to the cached object/file/directory
 }
 }
 \if{html}{\out{<hr>}}

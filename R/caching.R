@@ -103,7 +103,7 @@ Caching <- R6::R6Class(
                 } else if (private$kind == "dir" && dir.exists(cached_path)) {
                     unlink(cached_path, recursive = TRUE)
                 } else {
-                    cached_file <- paste0(cached_path, ".RDS")
+                    cached_file <- paste0(cached_path, ".qs")
                     if (file.exists(cached_file)) {
                         file.remove(cached_file)
                     }
@@ -153,12 +153,22 @@ Caching <- R6::R6Class(
                     )
                     return(target)
                 } else {
-                    cached_path <- paste0(cached_path, ".RDS")
+                    cached_path <- paste0(cached_path, ".qs")
                     if (!file.exists(cached_path)) { return(NULL) }
-                    return(readRDS(cached_path))
+                    return(read_obj(cached_path))
                 }
             }
 
+            NULL
+        },
+
+        #' @description
+        #' Get the path to the cached object/file/directory
+        #' @return The path to the cached object/file/directory
+        get_path = function() {
+            if (!is.null(self$cache_dir) && is.character(self$cache_dir) && nzchar(self$cache_dir)) {
+                return(file.path(self$cache_dir, private$prefix))
+            }
             NULL
         },
 
@@ -186,7 +196,7 @@ Caching <- R6::R6Class(
                     overwrite = TRUE
                 )
             } else {
-                saveRDS(data, file.path(self$cache_dir, paste0(private$prefix, ".RDS")))
+                save_obj(data, file.path(self$cache_dir, paste0(private$prefix, ".qs")))
             }
             invisible()
         }
