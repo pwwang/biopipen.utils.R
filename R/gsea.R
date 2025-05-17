@@ -29,7 +29,7 @@ VizEnrichment <- EnrichmentPlot
 
 #' Pre-rank genes based on expression data
 #'
-#' @rdname PreRank
+#' @rdname RunGSEAPreRank
 #' @param exprs Expression data matrix (genes x samples)
 #' @param classes A vector of class labels for each sample
 #' Must be in the same order as the columns of `exprs`
@@ -47,7 +47,7 @@ VizEnrichment <- EnrichmentPlot
 #' @importFrom Matrix rowMeans
 #' @importFrom matrixStats rowSds
 #' @seealso https://gseapy.readthedocs.io/en/latest/run.html#gseapy.gsea
-PreRank <- function(
+RunGSEAPreRank <- function(
     exprs,
     classes, # must be in the order of colnames(exprdata)
     case,
@@ -122,7 +122,7 @@ PreRank <- function(
 #' colnames(exprs) <- paste0("Sample", 1:10)
 #' rownames(exprs) <- paste0("Gene", 1:100)
 #' classes <- c(rep("A", 5), rep("B", 5))
-#' ranks <- PreRank(exprs, case = "A", control = "B", classes = classes)
+#' ranks <- RunGSEAPreRank(exprs, case = "A", control = "B", classes = classes)
 #' genesets <- list(
 #'     set1 = c("Gene1", "Gene2", "Gene3"),
 #'     set2 = c("Gene4", "Gene5", "Gene6")
@@ -167,7 +167,7 @@ RunGSEA = function(ranks, genesets, ...) {
 #' colnames(exprs) <- paste0("Sample", 1:10)
 #' rownames(exprs) <- paste0("Gene", 1:100)
 #' classes <- c(rep("A", 5), rep("B", 5))
-#' ranks <- PreRank(exprs, case = "A", control = "B", classes = classes)
+#' ranks <- RunGSEAPreRank(exprs, case = "A", control = "B", classes = classes)
 #' genesets <- list(
 #'     set1 = c("Gene1", "Gene2", "Gene3"),
 #'     set2 = c("Gene4", "Gene5", "Gene6"),
