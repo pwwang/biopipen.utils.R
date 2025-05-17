@@ -5,14 +5,15 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/authors.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/index.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/AddSeuratCommand.html</loc></url>
-<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/Caching.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/Cache.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ConvertSeuratToAnnData.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/FinishSeuratQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/LoadSeuratAndPerformQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/PerformGeneQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/PerformSeuratCellQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/Reporter.html</loc></url>
-<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunEnrichment.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunGSEA.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunGSEAPreRank.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDEAnalysis.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDoubletDetection.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDoubletFinder.html</loc></url>
@@ -23,7 +24,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ScRepMutate.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ScRepSubset.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizDEGs.html</loc></url>
-<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizEnrich.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizGSEA.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratCellQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratDoublets.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratGeneQC.html</loc></url>
@@ -31,11 +32,11 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/bQuote.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/case_info.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/do_call.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-size_compare.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/expand_cases.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/extract_vars.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/format_args.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/gene_name_conversion.html</loc></url>
-<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/get_cached.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/get_logger.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/get_reporter.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/gettempdir.html</loc></url>
@@ -46,14 +47,12 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/list_update2.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/monkey_patch.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/mutate-helper-1.html</loc></url>
-<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/mutate-helper-2.html</loc></url>
-<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/mutate-helper-3.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/re-exports.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/read_save_object.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/repr.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/run_command.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/save_plot.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/save_plotcode.html</loc></url>
-<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/save_to_cache.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/slugify.html</loc></url>
 </urlset>
 

@@ -48,10 +48,10 @@
         <dd>AddSeuratCommand</dd>
       </dl><dl><dt>
 
-          <code><a href="Caching.html">Caching</a></code>
+          <code><a href="Cache.html">Cache</a></code>
 
         </dt>
-        <dd>Caching class for object, file or directory caching</dd>
+        <dd>Cache class for object, file or directory caching</dd>
       </dl><dl><dt>
 
           <code><a href="ConvertSeuratToAnnData.html">ConvertSeuratToAnnData()</a></code>
@@ -90,10 +90,16 @@
         <dd>Add and save report</dd>
       </dl><dl><dt>
 
-          <code><a href="RunEnrichment.html">RunEnrichment()</a></code>
+          <code><a href="RunGSEA.html">RunGSEA()</a></code>
 
         </dt>
-        <dd>Run Enrichment Analysis (Over-representation Analysis)</dd>
+        <dd>Run GSEA using fgsea</dd>
+      </dl><dl><dt>
+
+          <code><a href="RunGSEAPreRank.html">RunGSEAPreRank()</a></code>
+
+        </dt>
+        <dd>Pre-rank genes based on expression data</dd>
       </dl><dl><dt>
 
           <code><a href="RunSeuratDEAnalysis.html">RunSeuratDEAnalysis()</a></code>
@@ -144,10 +150,10 @@
         <dd>Visualize DEGs</dd>
       </dl><dl><dt>
 
-          <code><a href="VizEnrich.html">VizEnrich()</a></code>
+          <code><a href="VizGSEA.html">VizGSEA()</a></code>
 
         </dt>
-        <dd>Visualize Enrichment</dd>
+        <dd>Visualize GSEA results</dd>
       </dl><dl><dt>
 
           <code><a href="VizSeuratCellQC.html">VizSeuratCellQC()</a></code>
@@ -210,12 +216,6 @@
         <dd>Convert gene names between different formats</dd>
       </dl><dl><dt>
 
-          <code><a href="get_cached.html">get_cached()</a></code>
-
-        </dt>
-        <dd>Get signatures and cached data</dd>
-      </dl><dl><dt>
-
           <code><a href="get_logger.html">get_logger()</a></code>
 
         </dt>
@@ -252,22 +252,16 @@
         <dd>Update the first list based on other lists</dd>
       </dl><dl><dt>
 
-          <code><a href="mutate-helper-1.html">.size_compare()</a></code> <code><a href="mutate-helper-1.html">more_than()</a></code> <code><a href="mutate-helper-1.html">less_than()</a></code> <code><a href="mutate-helper-1.html">emerged()</a></code> <code><a href="mutate-helper-1.html">vanished()</a></code>
+          <code><a href="mutate-helper-1.html">more_than()</a></code> <code><a href="mutate-helper-1.html">less_than()</a></code> <code><a href="mutate-helper-1.html">emerged()</a></code> <code><a href="mutate-helper-1.html">vanished()</a></code> <code><a href="mutate-helper-1.html">paired()</a></code> <code><a href="mutate-helper-1.html">top()</a></code>
 
         </dt>
-        <dd>Get more_than, less_than, emerged or vanished entities from a data frame.</dd>
+        <dd>Get more_than, less_than, emerged, vanished, paired or top entities from a data frame.</dd>
       </dl><dl><dt>
 
-          <code><a href="mutate-helper-2.html">paired()</a></code>
+          <code><a href="re-exports.html">RunEnrichment()</a></code> <code><a href="re-exports.html">ParseGMT()</a></code> <code><a href="re-exports.html">VizEnrichment()</a></code>
 
         </dt>
-        <dd>Get paired entities from a data frame based on the other column</dd>
-      </dl><dl><dt>
-
-          <code><a href="mutate-helper-3.html">top()</a></code>
-
-        </dt>
-        <dd>Get top entities from a data frame based on the number of entities in each group</dd>
+        <dd>Re-exported functions from other packages</dd>
       </dl><dl><dt>
 
           <code><a href="read_save_object.html">read_obj()</a></code> <code><a href="read_save_object.html">save_obj()</a></code>
@@ -298,12 +292,6 @@
 
         </dt>
         <dd>Save the plot code and data to reproduce the plot</dd>
-      </dl><dl><dt>
-
-          <code><a href="save_to_cache.html">save_to_cache()</a></code>
-
-        </dt>
-        <dd>Save an object to cache</dd>
       </dl><dl><dt>
 
           <code><a href="slugify.html">slugify()</a></code>
