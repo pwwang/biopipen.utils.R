@@ -31,10 +31,11 @@ VizEnrichment <- EnrichmentPlot
 #'
 #' @rdname PreRank
 #' @param exprs Expression data matrix (genes x samples)
-#' @param case The case group name
-#' @param control The control group name
 #' @param classes A vector of class labels for each sample
 #' Must be in the same order as the columns of `exprs`
+#' @param case The case group name in the `classes` vector
+#' @param control The control group name in the `classes` vector
+#' If `NULL`, the control group will be the other groups in `classes`
 #' @param method The method to use for ranking
 #' One of "signal_to_noise", "abs_signal_to_noise", "t_test",
 #' "ratio_of_classes", "diff_of_classes", "log2_ratio_of_classes",
@@ -48,9 +49,9 @@ VizEnrichment <- EnrichmentPlot
 #' @seealso https://gseapy.readthedocs.io/en/latest/run.html#gseapy.gsea
 PreRank <- function(
     exprs,
-    case,
-    control,
     classes, # must be in the order of colnames(exprdata)
+    case,
+    control = NULL,
     method = c(
         "signal_to_noise",
         "abs_signal_to_noise",
@@ -66,9 +67,18 @@ PreRank <- function(
     method <- match.arg(method)
 
     expr_pos_mean <- rowMeans(exprs[, classes == case, drop = FALSE], na.rm = TRUE)
-    expr_neg_mean <- rowMeans(exprs[, classes == control, drop = FALSE], na.rm = TRUE)
+    if (is.null(control)) {
+        expr_neg_mean <- rowMeans(exprs[, classes != case, drop = FALSE], na.rm = TRUE)
+    } else {
+        expr_neg_mean <- rowMeans(exprs[, classes == control, drop = FALSE], na.rm = TRUE)
+    }
     expr_pos_std <- rowSds(as.matrix(exprs[, classes == case, drop = FALSE]), na.rm = TRUE, useNames = TRUE)
-    expr_neg_std <- rowSds(as.matrix(exprs[, classes == control, drop = FALSE]), na.rm=TRUE, useNames = TRUE)
+    if (is.null(control)) {
+        expr_neg_std <- rowSds(as.matrix(exprs[, classes != case, drop = FALSE]), na.rm = TRUE, useNames = TRUE)
+    } else {
+        expr_neg_std <- rowSds(as.matrix(exprs[, classes == control, drop = FALSE]), na.rm = TRUE, useNames = TRUE)
+    }
+    # add a small random number to avoid division by zero
     rands <- rnorm(length(expr_neg_std)) * 1e-6
 
     if (method %in% c("s2n", "signal_to_noise")) {

@@ -6,9 +6,9 @@
 \usage{
 PreRank(
   exprs,
-  case,
-  control,
   classes,
+  case,
+  control = NULL,
   method = c("signal_to_noise", "abs_signal_to_noise", "t_test", "ratio_of_classes",
     "diff_of_classes", "log2_ratio_of_classes", "s2n", "abs_s2n")
 )
@@ -16,12 +16,13 @@ PreRank(
 \arguments{
 \item{exprs}{Expression data matrix (genes x samples)}
 
-\item{case}{The case group name}
-
-\item{control}{The control group name}
-
 \item{classes}{A vector of class labels for each sample
 Must be in the same order as the columns of \code{exprs}}
+
+\item{case}{The case group name in the \code{classes} vector}
+
+\item{control}{The control group name in the \code{classes} vector
+If \code{NULL}, the control group will be the other groups in \code{classes}}
 
 \item{method}{The method to use for ranking
 One of "signal_to_noise", "abs_signal_to_noise", "t_test",
