@@ -138,6 +138,9 @@ RunGSEA = function(ranks, genesets, ...) {
         ...
     )
     out <- out[order(out$padj), , drop = FALSE]
+    # The leadingEdge column is list of genes, which can not be saved directly using write.table
+    # so we convert it to a string by pasting the genes together
+    out$leadingEdge <- sapply(out$leadingEdge, function(x) paste(x, collapse = ","))
 
     attr(out, "gene_ranks") <- ranks
     attr(out, "gene_sets") <- genesets
