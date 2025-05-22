@@ -559,11 +559,6 @@ RunSeuratTransformation <- function(
 #' Run seurat unsupervised clustering
 #'
 #' @param object Seurat object
-#' @param use_sct Whether to use [Seurat::SCTransform()]
-#' @param SCTransformArgs Arguments to pass to [Seurat::SCTransform()]
-#' @param NormalizeDataArgs Arguments to pass to [Seurat::NormalizeData()]
-#' @param FindVariableFeaturesArgs Arguments to pass to [Seurat::FindVariableFeatures()]
-#' @param ScaleDataArgs Arguments to pass to [Seurat::ScaleData()]
 #' @param RunPCAArgs Arguments to pass to [Seurat::RunPCA()]
 #' @param RunUMAPArgs Arguments to pass to [Seurat::RunUMAP()]
 #' @param FindNeighborsArgs Arguments to pass to [Seurat::FindNeighbors()]
@@ -578,11 +573,6 @@ RunSeuratTransformation <- function(
 #' @importFrom rlang %||%
 RunSeuratClustering <- function(
     object,
-    use_sct = FALSE,
-    SCTransformArgs = list(),
-    NormalizeDataArgs = list(),
-    FindVariableFeaturesArgs = list(),
-    ScaleDataArgs = list(),
     RunPCAArgs = list(),
     RunUMAPArgs = list(),
     FindNeighborsArgs = list(),
@@ -593,26 +583,23 @@ RunSeuratClustering <- function(
     log <- log %||% get_logger()
     cache <- cache %||% gettempdir()
 
-    # After integration
-    if (identical(DefaultAssay(object), "SCT") && !use_sct) {
-        stop("[RunSeuratClustering] DefaultAssay is SCT, but use_sct is FALSE. Please set use_sct = TRUE")
-    }
-    if (!identical(DefaultAssay(object), "SCT") && use_sct) {
-        stop("[RunSeuratClustering] DefaultAssay is not SCT, but use_sct is TRUE. Please set use_sct = FALSE")
-    }
-    object <- RunSeuratTransformation(
-        object,
-        use_sct = use_sct,
-        SCTransformArgs = SCTransformArgs,
-        NormalizeDataArgs = NormalizeDataArgs,
-        FindVariableFeaturesArgs = FindVariableFeaturesArgs,
-        ScaleDataArgs = ScaleDataArgs,
-        RunPCAArgs = RunPCAArgs,
-        log = log,
-        cache = cache
+    log$info("Running RunPCA ...")
+    caching <- Cache$new(
+        list(object, RunPCAArgs),
+        prefix = "biopipen.utils.RunSeuratClustering.RunPCA",
+        cache_dir = cache
     )
+    if (caching$is_cached()) {
+        log$info("PCA results loaded from cache")
+        object <- caching$get()
+    } else {
+        log$debug("  Arguments: {format_args(RunPCAArgs)}")
+        RunPCAArgs$dims <- RunPCAArgs$dims %||% 1:min(30, ncol(object) - 1)
+        object <- do_call(RunPCA, c(list(object), RunPCAArgs))
+        caching$save(object)
+    }
 
-    log$info("Running UMAP ...")
+    log$info("Running RunUMAP ...")
     caching <- Cache$new(
         list(object, RunUMAPArgs),
         prefix = "biopipen.utils.RunSeuratClustering.RunUMAP",

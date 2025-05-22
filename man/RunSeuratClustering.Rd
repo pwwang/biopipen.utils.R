@@ -6,13 +6,8 @@
 \usage{
 RunSeuratClustering(
   object,
-  use_sct = FALSE,
-  SCTransformArgs = list(),
-  NormalizeDataArgs = list(),
-  FindVariableFeaturesArgs = list(),
-  ScaleDataArgs = list(),
   RunPCAArgs = list(),
-  UMAPArgs = list(),
+  RunUMAPArgs = list(),
   FindNeighborsArgs = list(),
   FindClustersArgs = list(),
   log = NULL,
@@ -22,19 +17,9 @@ RunSeuratClustering(
 \arguments{
 \item{object}{Seurat object}
 
-\item{use_sct}{Whether to use \code{\link[Seurat:SCTransform]{Seurat::SCTransform()}}}
-
-\item{SCTransformArgs}{Arguments to pass to \code{\link[Seurat:SCTransform]{Seurat::SCTransform()}}}
-
-\item{NormalizeDataArgs}{Arguments to pass to \code{\link[Seurat:NormalizeData]{Seurat::NormalizeData()}}}
-
-\item{FindVariableFeaturesArgs}{Arguments to pass to \code{\link[Seurat:FindVariableFeatures]{Seurat::FindVariableFeatures()}}}
-
-\item{ScaleDataArgs}{Arguments to pass to \code{\link[Seurat:ScaleData]{Seurat::ScaleData()}}}
-
 \item{RunPCAArgs}{Arguments to pass to \code{\link[Seurat:RunPCA]{Seurat::RunPCA()}}}
 
-\item{UMAPArgs}{Arguments to pass to \code{\link[Seurat:RunUMAP]{Seurat::RunUMAP()}}}
+\item{RunUMAPArgs}{Arguments to pass to \code{\link[Seurat:RunUMAP]{Seurat::RunUMAP()}}}
 
 \item{FindNeighborsArgs}{Arguments to pass to \code{\link[Seurat:FindNeighbors]{Seurat::FindNeighbors()}}}
 
