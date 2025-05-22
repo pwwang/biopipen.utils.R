@@ -14,6 +14,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/Reporter.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunGSEA.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunGSEAPreRank.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratClustering.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDEAnalysis.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDoubletDetection.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDoubletFinder.html</loc></url>
@@ -32,6 +33,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/bQuote.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/case_info.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/do_call.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-expand_number.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-size_compare.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/expand_cases.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/extract_vars.html</loc></url>

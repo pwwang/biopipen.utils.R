@@ -46,10 +46,10 @@
 <span>  skip_if_normalized <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  split_by <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  ncores <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  MapQuery_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>refdata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  FindTransferAnchors_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  SCTransform_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  NormalizeData_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  MapQueryArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>refdata <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  FindTransferAnchorsArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  SCTransformArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  NormalizeDataArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  log <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cache <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -96,21 +96,21 @@ The same normalization method will be used for the query.</p><ul><li><p>"auto": 
 <dd><p>Number of cores to use for parallel processing for the split query objects</p></dd>
 
 
-<dt id="arg-mapquery-args">MapQuery_args<a class="anchor" aria-label="anchor" href="#arg-mapquery-args"></a></dt>
+<dt id="arg-mapqueryargs">MapQueryArgs<a class="anchor" aria-label="anchor" href="#arg-mapqueryargs"></a></dt>
 <dd><p>Arguments to pass to <code><a href="https://satijalab.org/seurat/reference/MapQuery.html" class="external-link">Seurat::MapQuery()</a></code>.
 The <code>use</code> argument will be added to the <code>refdata</code> list.</p></dd>
 
 
-<dt id="arg-findtransferanchors-args">FindTransferAnchors_args<a class="anchor" aria-label="anchor" href="#arg-findtransferanchors-args"></a></dt>
+<dt id="arg-findtransferanchorsargs">FindTransferAnchorsArgs<a class="anchor" aria-label="anchor" href="#arg-findtransferanchorsargs"></a></dt>
 <dd><p>Arguments to pass to <code><a href="https://satijalab.org/seurat/reference/FindTransferAnchors.html" class="external-link">Seurat::FindTransferAnchors()</a></code>.</p></dd>
 
 
-<dt id="arg-sctransform-args">SCTransform_args<a class="anchor" aria-label="anchor" href="#arg-sctransform-args"></a></dt>
+<dt id="arg-sctransformargs">SCTransformArgs<a class="anchor" aria-label="anchor" href="#arg-sctransformargs"></a></dt>
 <dd><p>Arguments to pass to <code><a href="https://satijalab.org/seurat/reference/SCTransform.html" class="external-link">Seurat::SCTransform()</a></code>.
 Will be used to normalize the query object if <code>refnorm</code> is set to "SCT"</p></dd>
 
 
-<dt id="arg-normalizedata-args">NormalizeData_args<a class="anchor" aria-label="anchor" href="#arg-normalizedata-args"></a></dt>
+<dt id="arg-normalizedataargs">NormalizeDataArgs<a class="anchor" aria-label="anchor" href="#arg-normalizedataargs"></a></dt>
 <dd><p>Arguments to pass to <code><a href="https://satijalab.org/seurat/reference/NormalizeData.html" class="external-link">Seurat::NormalizeData()</a></code>.
 Will be used to normalize the query object if <code>refnorm</code> is set to "LogNormalize"</p></dd>
 
