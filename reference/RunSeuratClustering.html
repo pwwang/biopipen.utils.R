@@ -39,13 +39,8 @@
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RunSeuratClustering</span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
-<span>  use_sct <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  SCTransformArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  NormalizeDataArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  FindVariableFeaturesArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  ScaleDataArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  RunPCAArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  UMAPArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  RunUMAPArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  FindNeighborsArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  FindClustersArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  log <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -61,31 +56,11 @@
 <dd><p>Seurat object</p></dd>
 
 
-<dt id="arg-use-sct">use_sct<a class="anchor" aria-label="anchor" href="#arg-use-sct"></a></dt>
-<dd><p>Whether to use <code><a href="https://satijalab.org/seurat/reference/SCTransform.html" class="external-link">Seurat::SCTransform()</a></code></p></dd>
-
-
-<dt id="arg-sctransformargs">SCTransformArgs<a class="anchor" aria-label="anchor" href="#arg-sctransformargs"></a></dt>
-<dd><p>Arguments to pass to <code><a href="https://satijalab.org/seurat/reference/SCTransform.html" class="external-link">Seurat::SCTransform()</a></code></p></dd>
-
-
-<dt id="arg-normalizedataargs">NormalizeDataArgs<a class="anchor" aria-label="anchor" href="#arg-normalizedataargs"></a></dt>
-<dd><p>Arguments to pass to <code><a href="https://satijalab.org/seurat/reference/NormalizeData.html" class="external-link">Seurat::NormalizeData()</a></code></p></dd>
-
-
-<dt id="arg-findvariablefeaturesargs">FindVariableFeaturesArgs<a class="anchor" aria-label="anchor" href="#arg-findvariablefeaturesargs"></a></dt>
-<dd><p>Arguments to pass to <code><a href="https://satijalab.org/seurat/reference/FindVariableFeatures.html" class="external-link">Seurat::FindVariableFeatures()</a></code></p></dd>
-
-
-<dt id="arg-scaledataargs">ScaleDataArgs<a class="anchor" aria-label="anchor" href="#arg-scaledataargs"></a></dt>
-<dd><p>Arguments to pass to <code><a href="https://satijalab.org/seurat/reference/ScaleData.html" class="external-link">Seurat::ScaleData()</a></code></p></dd>
-
-
 <dt id="arg-runpcaargs">RunPCAArgs<a class="anchor" aria-label="anchor" href="#arg-runpcaargs"></a></dt>
 <dd><p>Arguments to pass to <code><a href="https://satijalab.org/seurat/reference/RunPCA.html" class="external-link">Seurat::RunPCA()</a></code></p></dd>
 
 
-<dt id="arg-umapargs">UMAPArgs<a class="anchor" aria-label="anchor" href="#arg-umapargs"></a></dt>
+<dt id="arg-runumapargs">RunUMAPArgs<a class="anchor" aria-label="anchor" href="#arg-runumapargs"></a></dt>
 <dd><p>Arguments to pass to <code><a href="https://satijalab.org/seurat/reference/RunUMAP.html" class="external-link">Seurat::RunUMAP()</a></code></p></dd>
 
 
