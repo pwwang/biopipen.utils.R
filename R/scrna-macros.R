@@ -1,5 +1,18 @@
 #' AddSeuratCommand
+#' Expand a single numer into 1:number
 #'
+#' This is useful to expand args$dims = 10 to args$dims = 1:10
+#'
+#' @param x A numeric vector
+#' @return A numeric vector
+#' @keywords internal
+.expand_number <- function(x) {
+    if (length(x) == 1 && x > 0) {
+        return(1:x)
+    }
+    x
+}
+
 #' Add a command to a Seurat object `@commands` slot
 #'
 #' @param object Seurat object
@@ -65,7 +78,8 @@ AddSeuratCommand <- function(
 #' @examples
 #' RunSeuratDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2")
 RunSeuratDEAnalysis <- function(
-    object, group.by, ident.1 = NULL, ident.2 = NULL, assay = NULL, subset = NULL, cache = NULL, error = TRUE, ...) {
+    object, group.by,
+    ident.1 = NULL, ident.2 = NULL, assay = NULL, subset = NULL, cache = NULL, error = TRUE, ...) {
     cache <- cache %||% gettempdir()
     cached <- Cache$new(
         list(object, group.by, ident.1, ident.2, subset, ...),
@@ -407,12 +421,12 @@ LoadSeuratAndPerformQC <- function(
     gc()
 
     obj@misc$gene_qc <- geneqc_df
-    cached$save(obj)
-
-    AddSeuratCommand(
+    obj <- AddSeuratCommand(
         obj, "LoadSeuratAndPerformQC",
         "LoadSeuratAndPerformQC(meta, samples, per_sample_qc, cell_qc, gene_qc, tmpdir, log, cache)"
     )
+    cached$save(obj)
+    obj
 }
 
 #' Finish the QC process including the visualization
@@ -505,53 +519,154 @@ RunSeuratTransformation <- function(
         log$info("- Running SCTransform ...")
         # log to stdout but don't populate it to running log
         log$debug("  Arguments: {format_args(SCTransformArgs)}")
-        SCTransformArgs$object <- object
-        object <- do_call(SCTransform, SCTransformArgs)
-        # Default is to use the SCT assay
-        # Cleanup memory
-        SCTransformArgs$object <- NULL
-        rm(SCTransformArgs)
-        gc()
+        object <- do_call(SCTransform, c(list(object), SCTransformArgs))
     } else {
         log$info("- Running NormalizeData ...")
         log$debug("  Arguments: {format_args(NormalizeDataArgs)}")
-        NormalizeDataArgs$object <- object
-        object <- do_call(NormalizeData, NormalizeDataArgs)
-        # Cleanup memory
-        NormalizeDataArgs$object <- NULL
-        rm(NormalizeDataArgs)
-        gc()
+        object <- do_call(NormalizeData, c(list(object), NormalizeDataArgs))
 
         log$info("- Running FindVariableFeatures ...")
         log$debug("  Arguments: {format_args(FindVariableFeaturesArgs)}")
-        FindVariableFeaturesArgs$object <- object
-        object <- do_call(FindVariableFeatures, FindVariableFeaturesArgs)
-        # Cleanup memory
-        FindVariableFeaturesArgs$object <- NULL
-        rm(FindVariableFeaturesArgs)
-        gc()
+        object <- do_call(FindVariableFeatures, c(list(object), FindVariableFeaturesArgs))
 
         log$info("- Running ScaleData ...")
         log_debug("  Arguments: {format_args(ScaleDataArgs)}")
-        ScaleDataArgs$object <- object
-        object <- do_call(ScaleData, ScaleDataArgs)
-        # Cleanup memory
-        ScaleDataArgs$object <- NULL
-        rm(ScaleDataArgs)
-        gc()
+        object <- do_call(ScaleData, c(list(object), ScaleDataArgs))
     }
 
     log$info("- Running RunPCA ...")
     RunPCAArgs$npcs <- if (is.null(RunPCAArgs$npcs)) { 50 } else { min(RunPCAArgs$npcs, ncol(object) - 1) }
-    log$debug("  RunPCA: {format_args(RunPCAArgs)}")
-    RunPCAArgs$object <- object
-    object <- do_call(RunPCA, RunPCAArgs)
-    # Cleanup memory
-    RunPCAArgs$object <- NULL
-    rm(RunPCAArgs)
-    gc()
 
+    log$debug("  RunPCA: {format_args(RunPCAArgs)}")
+    object <- do_call(RunPCA, c(list(object), RunPCAArgs))
+
+    object <- AddSeuratCommand(
+        object, name = "RunSeuratTransformations",
+        call.string = "RunSeuratTransformations(object, use_sct, SCTransformArgs, NormalizeDataArgs, FindVariableFeaturesArgs, ScaleDataArgs, RunPCAArgs)",
+        params = list(
+            use_sct = use_sct,
+            SCTransformArgs = SCTransformArgs,
+            NormalizeDataArgs = NormalizeDataArgs,
+            FindVariableFeaturesArgs = FindVariableFeaturesArgs,
+            ScaleDataArgs = ScaleDataArgs,
+            RunPCAArgs = RunPCAArgs
+        )
+    )
     cached$save(object)
+    object
+}
+
+#' Run seurat unsupervised clustering
+#'
+#' @param object Seurat object
+#' @param use_sct Whether to use [Seurat::SCTransform()]
+#' @param SCTransformArgs Arguments to pass to [Seurat::SCTransform()]
+#' @param NormalizeDataArgs Arguments to pass to [Seurat::NormalizeData()]
+#' @param FindVariableFeaturesArgs Arguments to pass to [Seurat::FindVariableFeatures()]
+#' @param ScaleDataArgs Arguments to pass to [Seurat::ScaleData()]
+#' @param RunPCAArgs Arguments to pass to [Seurat::RunPCA()]
+#' @param RunUMAPArgs Arguments to pass to [Seurat::RunUMAP()]
+#' @param FindNeighborsArgs Arguments to pass to [Seurat::FindNeighbors()]
+#' @param FindClustersArgs Arguments to pass to [Seurat::FindClusters()]
+#' @param log Logger
+#' @param cache Directory to cache the results. Set to `FALSE` to disable caching
+#' @return The Seurat object with clustering results
+#' @export
+#' @importFrom Seurat RunUMAP FindNeighbors FindClusters SCTransform NormalizeData
+#' @importFrom Seurat FindVariableFeatures ScaleData RunPCA
+#' @importFrom SeuratObject DefaultAssay
+#' @importFrom rlang %||%
+RunSeuratClustering <- function(
+    object,
+    use_sct = FALSE,
+    SCTransformArgs = list(),
+    NormalizeDataArgs = list(),
+    FindVariableFeaturesArgs = list(),
+    ScaleDataArgs = list(),
+    RunPCAArgs = list(),
+    RunUMAPArgs = list(),
+    FindNeighborsArgs = list(),
+    FindClustersArgs = list(),
+    log = NULL,
+    cache = NULL
+) {
+    log <- log %||% get_logger()
+    cache <- cache %||% gettempdir()
+
+    # After integration
+    if (identical(DefaultAssay(object), "SCT") && !use_sct) {
+        stop("[RunSeuratClustering] DefaultAssay is SCT, but use_sct is FALSE. Please set use_sct = TRUE")
+    }
+    if (!identical(DefaultAssay(object), "SCT") && use_sct) {
+        stop("[RunSeuratClustering] DefaultAssay is not SCT, but use_sct is TRUE. Please set use_sct = FALSE")
+    }
+    object <- RunSeuratTransformation(
+        object,
+        use_sct = use_sct,
+        SCTransformArgs = SCTransformArgs,
+        NormalizeDataArgs = NormalizeDataArgs,
+        FindVariableFeaturesArgs = FindVariableFeaturesArgs,
+        ScaleDataArgs = ScaleDataArgs,
+        RunPCAArgs = RunPCAArgs,
+        log = log,
+        cache = cache
+    )
+
+    log$info("Running UMAP ...")
+    caching <- Cache$new(
+        list(object, RunUMAPArgs),
+        prefix = "biopipen.utils.RunSeuratClustering.RunUMAP",
+        cache_dir = cache
+    )
+    if (caching$is_cached()) {
+        log$info("UMAP results loaded from cache")
+        object <- caching$get()
+    } else {
+        log$debug("  Arguments: {format_args(RunUMAPArgs)}")
+        RunUMAPArgs$dims <- RunUMAPArgs$dims %||% 1:min(30, ncol(object) - 1)
+        RunUMAPArgs$umap.method <- RunUMAPArgs$umap.method %||% "uwot"
+        if (RunUMAPArgs$umap.method == "uwot") {
+            # https://github.com/satijalab/seurat/issues/4312
+            RunUMAPArgs$n.neighbors <- RunUMAPArgs$n.neighbors %||% min(ncells - 1, 30)
+        }
+        object <- do_call(RunUMAP, c(list(object), RunUMAPArgs))
+        caching$save(object)
+    }
+
+    log$info("- Running FindNeighbors ...")
+    caching <- Cache$new(
+        list(object, FindNeighborsArgs),
+        prefix = "biopipen.utils.RunSeuratClustering.FindNeighbors",
+        cache_dir = cache
+    )
+    if (caching$is_cached()) {
+        log$info("FindNeighbors results loaded from cache")
+        object <- caching$get()
+    } else {
+        log$debug("  Arguments: {format_args(FindNeighborsArgs)}")
+        FindNeighborsArgs$reduction <- FindNeighborsArgs$reduction %||% object@misc$integrated_new_reduction %||% "pca"
+        if (!is.null(FindNeighborsArgs$dims)) {
+            FindNeighborsArgs$dims <- .expand_number(FindNeighborsArgs$dims)
+        }
+        object <- do_call(FindNeighbors, c(list(object), FindNeighborsArgs))
+        caching$save(object)
+    }
+
+    log$info("- Running FindClusters ...")
+    caching <- Cache$new(
+        list(object, FindClustersArgs),
+        prefix = "biopipen.utils.RunSeuratClustering.FindClusters",
+        cache_dir = cache
+    )
+    if (caching$is_cached()) {
+        log$info("FindClusters results loaded from cache")
+        object <- caching$get()
+    } else {
+        log$debug("  Arguments: {format_args(FindClustersArgs)}")
+        FindClustersArgs$graph.name <- FindClustersArgs$graph.name %||% "RNA_snn"
+        object <- do_call(FindClusters, c(list(object), FindClustersArgs))
+        caching$save(object)
+    }
 
     object
 }
@@ -623,22 +738,23 @@ RunSeuratIntegration <- function(
         IntegrateLayersArgs$new.reduction <- IntegrateLayersArgs$new.reduction %||% new_reductions[[method]]
 
         log$debug("  Arguments: {format_args(IntegrateLayersArgs)}")
-        IntegrateLayersArgs$object <- object
-        object <- do_call(IntegrateLayers, IntegrateLayersArgs)
+        object <- do_call(IntegrateLayers, c(list(object), IntegrateLayersArgs))
         # Save it for dimension reduction plots
         object@misc$integrated_new_reduction <- IntegrateLayersArgs$new.reduction
-
-        # Cleanup memory
-        IntegrateLayersArgs$object <- NULL
-        rm(IntegrateLayersArgs)
-        gc()
     }
 
     log$info("- Joining layers ...")
     object <- JoinLayers(object, assay = "RNA")
+    object <- AddSeuratCommand(
+        object, "RunSeuratIntegration",
+        "RunSeuratIntegration(object, no_integration, IntegrateLayersArgs)",
+        params = list(
+            no_integration = no_integration,
+            IntegrateLayersArgs = IntegrateLayersArgs
+        )
+    )
 
     cached$save(object)
-
     object
 }
 
@@ -813,17 +929,9 @@ RunSeuratDoubletDetection <- function(
 
     log$info("Running doublet detection using {tool} ...")
     if (tool == "DoubletFinder") {
-        DoubletFinderArgs$object <- object
-        object <- do_call(RunSeuratDoubletFinder, DoubletFinderArgs)
-        DoubletFinderArgs$object <- NULL
-        rm(DoubletFinderArgs)
-        gc()
+        object <- do_call(RunSeuratDoubletFinder, c(list(object), DoubletFinderArgs))
     } else {
-        scDblFinderArgs$object <- object
-        object <- do_call(RunSeuratScDblFinder, scDblFinderArgs)
-        scDblFinderArgs$object <- NULL
-        rm(scDblFinderArgs)
-        gc()
+        object <- do_call(RunSeuratScDblFinder, c(list(object), scDblFinderArgs))
     }
     object@misc$doublets$filtered <- filter
 
@@ -836,8 +944,17 @@ RunSeuratDoubletDetection <- function(
         }
     }
 
+    object <- AddSeuratCommand(
+        object, "RunSeuratDoubletDetection",
+        "RunSeuratDoubletDetection(object, tool, DoubletFinderArgs, scDblFinderArgs, filter)",
+        params = list(
+            tool = tool,
+            DoubletFinderArgs = DoubletFinderArgs,
+            scDblFinderArgs = scDblFinderArgs,
+            filter = filter
+        )
+    )
     cached$save(object)
-
     object
 }
 
@@ -859,12 +976,12 @@ RunSeuratDoubletDetection <- function(
 #' @param skip_if_normalized Skip normalization if the query is already normalized with the same method as the reference
 #' @param split_by The name of the metadata to split the query object by and do the mapping separately
 #' @param ncores Number of cores to use for parallel processing for the split query objects
-#' @param MapQuery_args Arguments to pass to [Seurat::MapQuery()].
+#' @param MapQueryArgs Arguments to pass to [Seurat::MapQuery()].
 #' The `use` argument will be added to the `refdata` list.
-#' @param FindTransferAnchors_args Arguments to pass to [Seurat::FindTransferAnchors()].
-#' @param SCTransform_args Arguments to pass to [Seurat::SCTransform()].
+#' @param FindTransferAnchorsArgs Arguments to pass to [Seurat::FindTransferAnchors()].
+#' @param SCTransformArgs Arguments to pass to [Seurat::SCTransform()].
 #' Will be used to normalize the query object if `refnorm` is set to "SCT"
-#' @param NormalizeData_args Arguments to pass to [Seurat::NormalizeData()].
+#' @param NormalizeDataArgs Arguments to pass to [Seurat::NormalizeData()].
 #' Will be used to normalize the query object if `refnorm` is set to "LogNormalize"
 #' @param log Logger
 #' @param cache Directory to cache the results. Set to `FALSE` to disable caching
@@ -885,14 +1002,14 @@ RunSeuratMap2Ref <- function(
     skip_if_normalized = TRUE,
     split_by = NULL,
     ncores = 1,
-    MapQuery_args = list(
+    MapQueryArgs = list(
         # reference.reduction = NULL,
         # reduction.model = NULL,
         refdata = list()
     ),
-    FindTransferAnchors_args = list(),
-    SCTransform_args = list(),
-    NormalizeData_args = list(),
+    FindTransferAnchorsArgs = list(),
+    SCTransformArgs = list(),
+    NormalizeDataArgs = list(),
     log = NULL,
     cache = NULL
 ) {
@@ -902,8 +1019,8 @@ RunSeuratMap2Ref <- function(
     cache <- cache %||% gettempdir()
     cached <- Cache$new(
         list(object, ref, use, ident, refnorm, skip_if_normalized,
-            split_by, ncores, MapQuery_args, FindTransferAnchors_args,
-            SCTransform_args, NormalizeData_args
+            split_by, ncores, MapQueryArgs, FindTransferAnchorsArgs,
+            SCTransformArgs, NormalizeDataArgs
         ),
         prefix = "biopipen.utils.RunSeuratMap2Ref",
         cache_dir = cache
@@ -929,11 +1046,11 @@ RunSeuratMap2Ref <- function(
     ref_is_sct <- is_sct(GetAssay(reference))
     if (ref_is_sct) { reference <- UpdateSCTAssays(reference) }
 
-    MapQuery_args$refdata <- MapQuery_args$refdata %||% list()
-    MapQuery_args$refdata[[use]] <- use
+    MapQueryArgs$refdata <- MapQueryArgs$refdata %||% list()
+    MapQueryArgs$refdata[[use]] <- use
 
     log$info("Checking if given refdata is in the reference ...")
-    for (name in names(MapQuery_args$refdata)) {
+    for (name in names(MapQueryArgs$refdata)) {
         if (!name %in% colnames(reference@meta.data)) {
             stop(paste0("[RunSeuratMap2Ref] items of 'refdata' should be in the reference: ", name, "\n",
                 "Available items: ", paste0(colnames(reference@meta.data), collapse = ", ")))
@@ -943,32 +1060,32 @@ RunSeuratMap2Ref <- function(
                 " please use 'x' instead of 'predicted.x'"))
         }
     }
-    if (is.null(MapQuery_args$reference.reduction)) {
-        MapQuery_args$reference.reduction <- Reductions(reference)[1]
-        log$warn("- `MapQuery_args$reference.reduction` is not set, using the first reduction in the reference: {MapQuery_args$reference.reduction}")
+    if (is.null(MapQueryArgs$reference.reduction)) {
+        MapQueryArgs$reference.reduction <- Reductions(reference)[1]
+        log$warn("- `MapQueryArgs$reference.reduction` is not set, using the first reduction in the reference: {MapQueryArgs$reference.reduction}")
     }
-    if (!MapQuery_args$reference.reduction %in% Reductions(reference)) {
-        stop(paste0("[RunSeuratMap2Ref] `MapQuery_args$reference.reduction` is not in the reference: ", MapQuery_args$reference.reduction, "\n",
+    if (!MapQueryArgs$reference.reduction %in% Reductions(reference)) {
+        stop(paste0("[RunSeuratMap2Ref] `MapQueryArgs$reference.reduction` is not in the reference: ", MapQueryArgs$reference.reduction, "\n",
             "Available reductions: ", paste0(Reductions(reference), collapse = ", ")))
     }
-    MapQuery_args$reduction.model <- MapQuery_args$reduction.model %||% "umap"
+    MapQueryArgs$reduction.model <- MapQueryArgs$reduction.model %||% "umap"
     # Check if reference has the same reduction model
     if (
-        is.null(reference@reductions[[MapQuery_args$reduction.model]]) ||
-        length(x = Misc(object = reference@reductions[[MapQuery_args$reduction.model]], slot = 'model')) == 0
+        is.null(reference@reductions[[MapQueryArgs$reduction.model]]) ||
+        length(x = Misc(object = reference@reductions[[MapQueryArgs$reduction.model]], slot = 'model')) == 0
     ) {
         models <- sapply(names(reference@reductions), function(x) {
             ifelse(length(x = Misc(object = reference@reductions[[x]], slot = 'model')) > 0, x, NA)
         })
         models <- models[!is.na(models)]
-        msg <- paste0("[RunSeuratMap2Ref] `MapQuery_args$reduction.model` is not in the reference: ", MapQuery_args$reduction.model, "\n",
+        msg <- paste0("[RunSeuratMap2Ref] `MapQueryArgs$reduction.model` is not in the reference: ", MapQueryArgs$reduction.model, "\n",
             "Try to run the reference with ",
-            "RunUMAP(reference, reduction = '", MapQuery_args$reference.reduction, "', reduction.name = '", MapQuery_args$reduction.model, "', dims = 1:N, return.model = TRUE)\n",
+            "RunUMAP(reference, reduction = '", MapQueryArgs$reference.reduction, "', reduction.name = '", MapQueryArgs$reduction.model, "', dims = 1:N, return.model = TRUE)\n",
             "to create the model.\n")
         if (length(models) == 0) {
             stop(msg)
         } else {
-            msg <- paste0(msg, "Or choose a different `MapQuery_args$reduction.model`. Available models: ", paste0(models, collapse = ", "), "\n")
+            msg <- paste0(msg, "Or choose a different `MapQueryArgs$reduction.model`. Available models: ", paste0(models, collapse = ", "), "\n")
             stop(msg)
         }
     }
@@ -986,7 +1103,7 @@ RunSeuratMap2Ref <- function(
             stop("[RunSeuratMap2Ref] reference doesn't contain any SCTModel.")
         }
     }
-    FindTransferAnchors_args$normalization.method <- refnorm
+    FindTransferAnchorsArgs$normalization.method <- refnorm
 
     defassay <- DefaultAssay(object)
 
@@ -1018,7 +1135,7 @@ RunSeuratMap2Ref <- function(
                 object <- mclapply(
                     X = object,
                     FUN = function(x) {
-                        do_call(SCTransform, c(list(object = x), SCTransform_args))
+                        do_call(SCTransform, c(list(object = x), SCTransformArgs))
                     },
                     mc.cores = ncores
                 )
@@ -1026,7 +1143,7 @@ RunSeuratMap2Ref <- function(
                     stop(paste0("[RunSeuratMap2Ref] mclapply (SCTransform) error:", object))
                 }
             } else {
-                object <- do_call(SCTransform, c(list(object = object), SCTransform_args))
+                object <- do_call(SCTransform, c(list(object = object), SCTransformArgs))
             }
         } else {  # LogNormalize
             log$info("Normalizing query with LogNormalize ...")
@@ -1034,7 +1151,7 @@ RunSeuratMap2Ref <- function(
                 object <- mclapply(
                     X = object,
                     FUN = function(x) {
-                        do_call(NormalizeData, c(list(object = x), NormalizeData_args))
+                        do_call(NormalizeData, c(list(object = x), NormalizeDataArgs))
                     },
                     mc.cores = ncores
                 )
@@ -1042,19 +1159,22 @@ RunSeuratMap2Ref <- function(
                     stop(paste0("[RunSeuratMap2Ref] mclapply (NormalizeData) error:", object))
                 }
             } else {
-                object <- do_call(NormalizeData, c(list(object = object), NormalizeData_args))
+                object <- do_call(NormalizeData, c(list(object = object), NormalizeDataArgs))
             }
         }
     }
 
     log$info("Running FindTransferAnchors ...")
-    FindTransferAnchors_args$reference.reduction <- FindTransferAnchors_args$reference.reduction %||%
-        MapQuery_args$reference.reduction %||% Reductions(reference)[1]
+    FindTransferAnchorsArgs$reference.reduction <- FindTransferAnchorsArgs$reference.reduction %||%
+        MapQueryArgs$reference.reduction %||% Reductions(reference)[1]
+    if (!is.null(FindTransferAnchorsArgs$dims)) {
+        FindTransferAnchorsArgs$dims <- .expand_number(FindTransferAnchorsArgs$dims)
+    }
     if (!is.null(split_by)) {
         anchors <- mclapply(
             X = object,
             FUN = function(x) {
-                do_call(FindTransferAnchors, c(list(query = x, reference = reference), FindTransferAnchors_args))
+                do_call(FindTransferAnchors, c(list(query = x, reference = reference), FindTransferAnchorsArgs))
             },
             mc.cores = ncores
         )
@@ -1062,7 +1182,7 @@ RunSeuratMap2Ref <- function(
             stop(paste0("[RunSeuratMap2Ref] mclapply (FindTransferAnchors) error:", anchors))
         }
     } else {
-        anchors <- do_call(FindTransferAnchors, c(list(query = object, reference = reference), FindTransferAnchors_args))
+        anchors <- do_call(FindTransferAnchors, c(list(query = object, reference = reference), FindTransferAnchorsArgs))
     }
     # a <<- anchors
     log$info("Running MapQuery ...")
@@ -1070,7 +1190,7 @@ RunSeuratMap2Ref <- function(
         object <- mclapply(
             X = seq_along(object),
             FUN = function(i) {
-                do_call(MapQuery, c(list(query = object[[i]], reference = reference, anchorset = anchors[[i]]), MapQuery_args))
+                do_call(MapQuery, c(list(query = object[[i]], reference = reference, anchorset = anchors[[i]]), MapQueryArgs))
             },
             mc.cores = ncores
         )
@@ -1081,9 +1201,9 @@ RunSeuratMap2Ref <- function(
         log$info("Joining split objects ...")
         gc()
 
-        object <- merge(object[[1]], object[2:length(object)], merge.dr = MapQuery_args$reference.reduction)
+        object <- merge(object[[1]], object[2:length(object)], merge.dr = MapQueryArgs$reference.reduction)
     } else {
-        object <- do_call(MapQuery, c(list(query = object, reference = reference, anchorset = anchors), MapQuery_args))
+        object <- do_call(MapQuery, c(list(query = object, reference = reference, anchorset = anchors), MapQueryArgs))
     }
 
     log$info("Adding ident to metadata and set as identity ...")

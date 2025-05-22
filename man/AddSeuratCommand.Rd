@@ -2,7 +2,7 @@
 % Please edit documentation in R/scrna-macros.R
 \name{AddSeuratCommand}
 \alias{AddSeuratCommand}
-\title{AddSeuratCommand}
+\title{Add a command to a Seurat object \verb{@commands} slot}
 \usage{
 AddSeuratCommand(
   object,

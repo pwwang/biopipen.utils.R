@@ -13,10 +13,10 @@ RunSeuratMap2Ref(
   skip_if_normalized = TRUE,
   split_by = NULL,
   ncores = 1,
-  MapQuery_args = list(refdata = list()),
-  FindTransferAnchors_args = list(),
-  SCTransform_args = list(),
-  NormalizeData_args = list(),
+  MapQueryArgs = list(refdata = list()),
+  FindTransferAnchorsArgs = list(),
+  SCTransformArgs = list(),
+  NormalizeDataArgs = list(),
   log = NULL,
   cache = NULL
 )
@@ -45,15 +45,15 @@ The same normalization method will be used for the query.
 
 \item{ncores}{Number of cores to use for parallel processing for the split query objects}
 
-\item{MapQuery_args}{Arguments to pass to \code{\link[Seurat:MapQuery]{Seurat::MapQuery()}}.
+\item{MapQueryArgs}{Arguments to pass to \code{\link[Seurat:MapQuery]{Seurat::MapQuery()}}.
 The \code{use} argument will be added to the \code{refdata} list.}
 
-\item{FindTransferAnchors_args}{Arguments to pass to \code{\link[Seurat:FindTransferAnchors]{Seurat::FindTransferAnchors()}}.}
+\item{FindTransferAnchorsArgs}{Arguments to pass to \code{\link[Seurat:FindTransferAnchors]{Seurat::FindTransferAnchors()}}.}
 
-\item{SCTransform_args}{Arguments to pass to \code{\link[Seurat:SCTransform]{Seurat::SCTransform()}}.
+\item{SCTransformArgs}{Arguments to pass to \code{\link[Seurat:SCTransform]{Seurat::SCTransform()}}.
 Will be used to normalize the query object if \code{refnorm} is set to "SCT"}
 
-\item{NormalizeData_args}{Arguments to pass to \code{\link[Seurat:NormalizeData]{Seurat::NormalizeData()}}.
+\item{NormalizeDataArgs}{Arguments to pass to \code{\link[Seurat:NormalizeData]{Seurat::NormalizeData()}}.
 Will be used to normalize the query object if \code{refnorm} is set to "LogNormalize"}
 
 \item{log}{Logger}
