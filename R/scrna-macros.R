@@ -519,26 +519,41 @@ RunSeuratTransformation <- function(
         log$info("- Running SCTransform ...")
         # log to stdout but don't populate it to running log
         log$debug("  Arguments: {format_args(SCTransformArgs)}")
-        object <- do_call(SCTransform, c(list(object), SCTransformArgs))
+        SCTransformArgs$object <- object
+        object <- do_call(SCTransform, SCTransformArgs)
+        SCTransformArgs$object <- NULL
+        gc()
     } else {
         log$info("- Running NormalizeData ...")
         log$debug("  Arguments: {format_args(NormalizeDataArgs)}")
-        object <- do_call(NormalizeData, c(list(object), NormalizeDataArgs))
+        NormalizeDataArgs$object <- object
+        object <- do_call(NormalizeData, NormalizeDataArgs)
+        NormalizeDataArgs$object <- NULL
+        gc()
 
         log$info("- Running FindVariableFeatures ...")
         log$debug("  Arguments: {format_args(FindVariableFeaturesArgs)}")
-        object <- do_call(FindVariableFeatures, c(list(object), FindVariableFeaturesArgs))
+        FindVariableFeaturesArgs$object <- object
+        object <- do_call(FindVariableFeatures, FindVariableFeaturesArgs)
+        FindVariableFeaturesArgs$object <- NULL
+        gc()
 
         log$info("- Running ScaleData ...")
         log_debug("  Arguments: {format_args(ScaleDataArgs)}")
-        object <- do_call(ScaleData, c(list(object), ScaleDataArgs))
+        ScaleDataArgs$object <- object
+        object <- do_call(ScaleData, ScaleDataArgs)
+        ScaleDataArgs$object <- NULL
+        gc()
     }
 
     log$info("- Running RunPCA ...")
     RunPCAArgs$npcs <- if (is.null(RunPCAArgs$npcs)) { 50 } else { min(RunPCAArgs$npcs, ncol(object) - 1) }
 
     log$debug("  RunPCA: {format_args(RunPCAArgs)}")
-    object <- do_call(RunPCA, c(list(object), RunPCAArgs))
+    RunPCAArgs$object <- object
+    object <- do_call(RunPCA, RunPCAArgs)
+    RunPCAArgs$object <- NULL
+    gc()
 
     object <- AddSeuratCommand(
         object, name = "RunSeuratTransformations",
@@ -595,7 +610,11 @@ RunSeuratClustering <- function(
     } else {
         log$debug("  Arguments: {format_args(RunPCAArgs)}")
         RunPCAArgs$dims <- RunPCAArgs$dims %||% 1:min(30, ncol(object) - 1)
-        object <- do_call(RunPCA, c(list(object), RunPCAArgs))
+        RunPCAArgs$object <- object
+        object <- do_call(RunPCA, RunPCAArgs)
+        RunPCAArgs$object <- NULL
+        gc()
+
         caching$save(object)
     }
 
@@ -616,7 +635,11 @@ RunSeuratClustering <- function(
             # https://github.com/satijalab/seurat/issues/4312
             RunUMAPArgs$n.neighbors <- RunUMAPArgs$n.neighbors %||% min(ncells - 1, 30)
         }
-        object <- do_call(RunUMAP, c(list(object), RunUMAPArgs))
+        RunUMAPArgs$object <- object
+        object <- do_call(RunUMAP, RunUMAPArgs)
+        RunUMAPArgs$object <- NULL
+        gc()
+
         caching$save(object)
     }
 
@@ -635,7 +658,11 @@ RunSeuratClustering <- function(
         if (!is.null(FindNeighborsArgs$dims)) {
             FindNeighborsArgs$dims <- .expand_number(FindNeighborsArgs$dims)
         }
-        object <- do_call(FindNeighbors, c(list(object), FindNeighborsArgs))
+        FindNeighborsArgs$object <- object
+        object <- do_call(FindNeighbors, FindNeighborsArgs)
+        FindNeighborsArgs$object <- NULL
+        gc()
+
         caching$save(object)
     }
 
@@ -651,7 +678,11 @@ RunSeuratClustering <- function(
     } else {
         log$debug("  Arguments: {format_args(FindClustersArgs)}")
         FindClustersArgs$graph.name <- FindClustersArgs$graph.name %||% "RNA_snn"
-        object <- do_call(FindClusters, c(list(object), FindClustersArgs))
+        FindClustersArgs$object <- object
+        object <- do_call(FindClusters, FindClustersArgs)
+        FindClustersArgs$object <- NULL
+        gc()
+
         caching$save(object)
     }
 
@@ -725,7 +756,11 @@ RunSeuratIntegration <- function(
         IntegrateLayersArgs$new.reduction <- IntegrateLayersArgs$new.reduction %||% new_reductions[[method]]
 
         log$debug("  Arguments: {format_args(IntegrateLayersArgs)}")
-        object <- do_call(IntegrateLayers, c(list(object), IntegrateLayersArgs))
+        IntegrateLayersArgs$object <- object
+        object <- do_call(IntegrateLayers, IntegrateLayersArgs)
+        IntegrateLayersArgs$object <- NULL
+        gc()
+
         # Save it for dimension reduction plots
         object@misc$integrated_new_reduction <- IntegrateLayersArgs$new.reduction
     }
@@ -916,9 +951,15 @@ RunSeuratDoubletDetection <- function(
 
     log$info("Running doublet detection using {tool} ...")
     if (tool == "DoubletFinder") {
-        object <- do_call(RunSeuratDoubletFinder, c(list(object), DoubletFinderArgs))
+        DoubletFinderArgs$object <- object
+        object <- do_call(RunSeuratDoubletFinder, DoubletFinderArgs)
+        DoubletFinderArgs$object <- NULL
+        gc()
     } else {
-        object <- do_call(RunSeuratScDblFinder, c(list(object), scDblFinderArgs))
+        scDblFinderArgs$object <- object
+        object <- do_call(RunSeuratScDblFinder, scDblFinderArgs)
+        scDblFinderArgs$object <- NULL
+        gc()
     }
     object@misc$doublets$filtered <- filter
 
@@ -1122,7 +1163,12 @@ RunSeuratMap2Ref <- function(
                 object <- mclapply(
                     X = object,
                     FUN = function(x) {
-                        do_call(SCTransform, c(list(object = x), SCTransformArgs))
+                        SCTransformArgs1 <- SCTransformArgs
+                        SCTransformArgs1$object <- x
+                        do_call(SCTransform, SCTransformArgs1)
+                        SCTransformArgs1$object <- NULL
+                        rm(SCTransformArgs1)
+                        gc()
                     },
                     mc.cores = ncores
                 )
@@ -1130,7 +1176,10 @@ RunSeuratMap2Ref <- function(
                     stop(paste0("[RunSeuratMap2Ref] mclapply (SCTransform) error:", object))
                 }
             } else {
-                object <- do_call(SCTransform, c(list(object = object), SCTransformArgs))
+                SCTransformArgs$object <- object
+                object <- do_call(SCTransform, SCTransformArgs)
+                SCTransformArgs$object <- NULL
+                gc()
             }
         } else {  # LogNormalize
             log$info("Normalizing query with LogNormalize ...")
@@ -1138,7 +1187,12 @@ RunSeuratMap2Ref <- function(
                 object <- mclapply(
                     X = object,
                     FUN = function(x) {
-                        do_call(NormalizeData, c(list(object = x), NormalizeDataArgs))
+                        NormalizeDataArgs1 <- NormalizeDataArgs
+                        NormalizeDataArgs1$object <- x
+                        do_call(NormalizeData, NormalizeDataArgs1)
+                        NormalizeDataArgs1$object <- NULL
+                        rm(NormalizeDataArgs1)
+                        gc()
                     },
                     mc.cores = ncores
                 )
@@ -1146,7 +1200,10 @@ RunSeuratMap2Ref <- function(
                     stop(paste0("[RunSeuratMap2Ref] mclapply (NormalizeData) error:", object))
                 }
             } else {
-                object <- do_call(NormalizeData, c(list(object = object), NormalizeDataArgs))
+                NormalizeDataArgs$object <- object
+                object <- do_call(NormalizeData, NormalizeDataArgs)
+                NormalizeDataArgs$object <- NULL
+                gc()
             }
         }
     }
@@ -1161,7 +1218,14 @@ RunSeuratMap2Ref <- function(
         anchors <- mclapply(
             X = object,
             FUN = function(x) {
-                do_call(FindTransferAnchors, c(list(query = x, reference = reference), FindTransferAnchorsArgs))
+                FindTransferAnchorsArgs1 <- FindTransferAnchorsArgs
+                FindTransferAnchorsArgs1$query <- x
+                FindTransferAnchorsArgs1$reference <- reference
+                do_call(FindTransferAnchors, FindTransferAnchorsArgs1)
+                FindTransferAnchorsArgs1$query <- NULL
+                FindTransferAnchorsArgs1$reference <- NULL
+                rm(FindTransferAnchorsArgs1)
+                gc()
             },
             mc.cores = ncores
         )
@@ -1169,7 +1233,12 @@ RunSeuratMap2Ref <- function(
             stop(paste0("[RunSeuratMap2Ref] mclapply (FindTransferAnchors) error:", anchors))
         }
     } else {
-        anchors <- do_call(FindTransferAnchors, c(list(query = object, reference = reference), FindTransferAnchorsArgs))
+        FindTransferAnchorsArgs$query <- object
+        FindTransferAnchorsArgs$reference <- reference
+        anchors <- do_call(FindTransferAnchors, FindTransferAnchorsArgs)
+        FindTransferAnchorsArgs$query <- NULL
+        FindTransferAnchorsArgs$reference <- NULL
+        gc()
     }
     # a <<- anchors
     log$info("Running MapQuery ...")
@@ -1177,7 +1246,16 @@ RunSeuratMap2Ref <- function(
         object <- mclapply(
             X = seq_along(object),
             FUN = function(i) {
-                do_call(MapQuery, c(list(query = object[[i]], reference = reference, anchorset = anchors[[i]]), MapQueryArgs))
+                MapQueryArgs1 <- MapQueryArgs
+                MapQueryArgs1$query <- object[[i]]
+                MapQueryArgs1$reference <- reference
+                MapQueryArgs1$anchorset <- anchors[[i]]
+                do_call(MapQuery, MapQueryArgs1)
+                MapQueryArgs1$query <- NULL
+                MapQueryArgs1$reference <- NULL
+                MapQueryArgs1$anchorset <- NULL
+                rm(MapQueryArgs1)
+                gc()
             },
             mc.cores = ncores
         )
@@ -1190,7 +1268,14 @@ RunSeuratMap2Ref <- function(
 
         object <- merge(object[[1]], object[2:length(object)], merge.dr = MapQueryArgs$reference.reduction)
     } else {
-        object <- do_call(MapQuery, c(list(query = object, reference = reference, anchorset = anchors), MapQueryArgs))
+        MapQueryArgs$query <- object
+        MapQueryArgs$reference <- reference
+        MapQueryArgs$anchorset <- anchors
+        object <- do_call(MapQuery, MapQueryArgs)
+        MapQueryArgs$query <- NULL
+        MapQueryArgs$reference <- NULL
+        MapQueryArgs$anchorset <- NULL
+        gc()
     }
 
     log$info("Adding ident to metadata and set as identity ...")
