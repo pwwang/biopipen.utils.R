@@ -679,7 +679,7 @@ RunSeuratClustering <- function(
         object <- caching$get()
     } else {
         log$debug("  Arguments: {format_args(FindClustersArgs)}")
-        FindClustersArgs$graph.name <- FindClustersArgs$graph.name %||% "RNA_snn"
+        # FindClustersArgs$graph.name <- FindClustersArgs$graph.name %||% "RNA_snn"
         FindClustersArgs$object <- object
         object <- do_call(FindClusters, FindClustersArgs)
         FindClustersArgs$object <- NULL
