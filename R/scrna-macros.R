@@ -604,12 +604,14 @@ RunSeuratClustering <- function(
         prefix = "biopipen.utils.RunSeuratClustering.RunPCA",
         cache_dir = cache
     )
+
+    ncells <- ncol(object)
     if (caching$is_cached()) {
         log$info("PCA results loaded from cache")
         object <- caching$get()
     } else {
         log$debug("  Arguments: {format_args(RunPCAArgs)}")
-        RunPCAArgs$dims <- RunPCAArgs$dims %||% 1:min(30, ncol(object) - 1)
+        RunPCAArgs$dims <- RunPCAArgs$dims %||% 1:min(30, ncells - 1)
         RunPCAArgs$object <- object
         object <- do_call(RunPCA, RunPCAArgs)
         RunPCAArgs$object <- NULL
@@ -629,7 +631,7 @@ RunSeuratClustering <- function(
         object <- caching$get()
     } else {
         log$debug("  Arguments: {format_args(RunUMAPArgs)}")
-        RunUMAPArgs$dims <- RunUMAPArgs$dims %||% 1:min(30, ncol(object) - 1)
+        RunUMAPArgs$dims <- RunUMAPArgs$dims %||% 1:min(30, ncells - 1)
         RunUMAPArgs$umap.method <- RunUMAPArgs$umap.method %||% "uwot"
         if (RunUMAPArgs$umap.method == "uwot") {
             # https://github.com/satijalab/seurat/issues/4312
