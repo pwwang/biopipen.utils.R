@@ -1194,9 +1194,6 @@ RunSeuratMap2Ref <- function(
                         SCTransformArgs1 <- SCTransformArgs
                         SCTransformArgs1$object <- x
                         do_call(SCTransform, SCTransformArgs1)
-                        SCTransformArgs1$object <- NULL
-                        rm(SCTransformArgs1)
-                        gc()
                     },
                     mc.cores = ncores
                 )
@@ -1218,9 +1215,6 @@ RunSeuratMap2Ref <- function(
                         NormalizeDataArgs1 <- NormalizeDataArgs
                         NormalizeDataArgs1$object <- x
                         do_call(NormalizeData, NormalizeDataArgs1)
-                        NormalizeDataArgs1$object <- NULL
-                        rm(NormalizeDataArgs1)
-                        gc()
                     },
                     mc.cores = ncores
                 )
@@ -1250,10 +1244,6 @@ RunSeuratMap2Ref <- function(
                 FindTransferAnchorsArgs1$query <- x
                 FindTransferAnchorsArgs1$reference <- reference
                 do_call(FindTransferAnchors, FindTransferAnchorsArgs1)
-                FindTransferAnchorsArgs1$query <- NULL
-                FindTransferAnchorsArgs1$reference <- NULL
-                rm(FindTransferAnchorsArgs1)
-                gc()
             },
             mc.cores = ncores
         )
@@ -1279,11 +1269,6 @@ RunSeuratMap2Ref <- function(
                 MapQueryArgs1$reference <- reference
                 MapQueryArgs1$anchorset <- anchors[[i]]
                 do_call(MapQuery, MapQueryArgs1)
-                MapQueryArgs1$query <- NULL
-                MapQueryArgs1$reference <- NULL
-                MapQueryArgs1$anchorset <- NULL
-                rm(MapQueryArgs1)
-                gc()
             },
             mc.cores = ncores
         )
