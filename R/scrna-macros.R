@@ -1382,12 +1382,12 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
     }
 
     log <- log %||% get_logger()
-    if (inherits(object_or_file, "Seurat") || endsWith(object_or_file, ".rds") || endsWith(object_or_file, ".RDS")) {
+    if (inherits(object_or_file, "Seurat") || endsWith(object_or_file, ".rds") || endsWith(object_or_file, ".RDS") || endsWith(object_or_file, ".qs") || endsWith(object_or_file, ".qs2")) {
 
         if (!file.exists(h5seurat_file)) {
             if (is.character(object_or_file)) {
-                log$debug("[ConvertSeuratToAnnData] Reading RDS file ...")
-                object_or_file <- readRDS(object_or_file)
+                log$debug("[ConvertSeuratToAnnData] Reading Seurat object from file ...")
+                object_or_file <- read_obj(object_or_file)
             }
             if (!is.null(subset)) {
                 log$debug("[ConvertSeuratToAnnData] Subsetting cells ...")
