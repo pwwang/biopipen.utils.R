@@ -679,11 +679,37 @@ RunSeuratClustering <- function(
         object <- caching$get()
     } else {
         log$debug("  Arguments: {format_args(FindClustersArgs)}")
+
+        # recode clusters from 0, 1, 2, ... to c1, c2, c3, ...
+        recode_clusters <- function(clusters) {
+            recode <- function(x) paste0("c", as.integer(as.character(x)) + 1)
+            clusters <- factor(recode(clusters), levels = recode(levels(clusters)))
+            clusters
+        }
+
         # FindClustersArgs$graph.name <- FindClustersArgs$graph.name %||% "RNA_snn"
         FindClustersArgs$object <- object
+        FindClustersArgs$random.seed <- FindClustersArgs$random.seed %||% 8525
+        FindClustersArgs$resolution <- FindClustersArgs$resolution %||% 0.8
+        FindClustersArgs$cluster.name <- paste0("seurat_clusters.", resolution)
+        log$info("  Using resolution(s): {paste(FindClustersArgs$resolution, collapse = ', ')}")
         object <- do_call(FindClusters, FindClustersArgs)
         FindClustersArgs$object <- NULL
         gc()
+
+        for (clname in FindClustersArgs$cluster.name) {
+            object@meta.data[[clname]] <- recode_clusters(object@meta.data[[clname]])
+        }
+        object@meta.data$seurat_clusters <- recode_clusters(object@meta.data$seurat_clusters)
+        Idents(object) <- "seurat_clusters"
+
+        ident_table <- table(Idents(sobj))
+        ident_table <- paste0(names(ident_table), "(", ident_table, ")")
+        log$info("  Found clusters:")
+        # log every 5 clusters
+        for (i in seq(1, length(ident_table), by = 5)) {
+            log$info("   {paste(ident_table[i:min(i + 4, length(ident_table))], collapse = ', ')}")
+        }
 
         caching$save(object)
     }
