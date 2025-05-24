@@ -1086,16 +1086,16 @@ RunSeuratMap2Ref <- function(
         return(cached$get())
     }
 
-    if (is.character(ref) && (endsWith(ref, ".rds") || endsWith(ref, ".RDS"))) {
+    if (is.character(ref) && (endsWith(ref, ".rds") || endsWith(ref, ".RDS") || endsWith(ref, "qs") || endsWith(ref, ".qs2"))) {
         log$info("Loading reference ...")
-        reference <- readRDS(ref)
+        reference <- read_obj(ref)
     } else if (is.character(ref) && (endsWith(ref, ".h5seurat") || endsWith(ref, ".H5Seurat"))) {
         log$info("Loading reference ...")
         reference <- SeuratDisk::LoadH5Seurat(ref)
     } else if (inherits(ref, "Seurat")) {
         reference <- ref
     } else {
-        stop("[RunSeuratMap2Ref] 'reference' should be a Seurat object or a file path with extension '.rds', '.RDS' or '.h5seurat'")
+        stop("[RunSeuratMap2Ref] 'reference' should be a Seurat object or a file path with extension '.qs', 'qs2', '.rds', '.RDS' or '.h5seurat'")
     }
     reference <- UpdateSeuratObject(reference)
     is_sct <- getFromNamespace("IsSCT", "Seurat")
@@ -1105,7 +1105,7 @@ RunSeuratMap2Ref <- function(
     MapQueryArgs$refdata <- MapQueryArgs$refdata %||% list()
     MapQueryArgs$refdata[[use]] <- use
 
-    log$info("Checking if given refdata is in the reference ...")
+    log$info("Checking if given refdata for MapQuery is in the reference ...")
     for (name in names(MapQueryArgs$refdata)) {
         if (!name %in% colnames(reference@meta.data)) {
             stop(paste0("[RunSeuratMap2Ref] items of 'refdata' should be in the reference: ", name, "\n",
