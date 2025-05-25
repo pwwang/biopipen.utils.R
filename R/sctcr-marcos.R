@@ -39,6 +39,7 @@ ScRepMutate <- function(screp, mutaters) {
 #' @export
 #' @importFrom rlang parse_expr
 #' @importFrom dplyr filter
+#' @import tidyseurat
 #' @examples
 #' \donttest{
 #' data(contig_list, package = "scRepertoire")
@@ -50,12 +51,12 @@ ScRepMutate <- function(screp, mutaters) {
 #' }
 ScRepSubset <- function(screp, subset) {
     if (inherits(screp, "Seurat")) {
-        eval(parse(text = paste('base::subset(screp, subset = "', subset, '")')))
+        filter(screp, !!parse_expr(subset))
     } else {
         screp <- sapply(names(screp), function(x) {
             y <- screp[[x]]
             y$Sample <- x
-            filter(y, !!parse_expr(subset))
+            dplyr::filter(y, !!parse_expr(subset))
         }, simplify = FALSE, USE.NAMES = TRUE)
         screp[sapply(screp, nrow) > 0]
     }
