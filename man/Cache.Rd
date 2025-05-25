@@ -21,7 +21,7 @@ based on that signature.
 \item \href{#method-Cache-new}{\code{Cache$new()}}
 \item \href{#method-Cache-clear}{\code{Cache$clear()}}
 \item \href{#method-Cache-clear_all}{\code{Cache$clear_all()}}
-\item \href{#method-Cache-get}{\code{Cache$get()}}
+\item \href{#method-Cache-restore}{\code{Cache$restore()}}
 \item \href{#method-Cache-is_cached}{\code{Cache$is_cached()}}
 \item \href{#method-Cache-get_path}{\code{Cache$get_path()}}
 \item \href{#method-Cache-save}{\code{Cache$save()}}
@@ -39,7 +39,7 @@ Initialize a new Cache object
   prefix,
   cache_dir,
   save_sig = FALSE,
-  kind = c("object", "file", "dir")
+  kind = c("object", "file", "dir", "prefix")
 )}\if{html}{\out{</div>}}
 }
 
@@ -54,7 +54,13 @@ Initialize a new Cache object
 
 \item{\code{save_sig}}{Whether to save the signature to a file}
 
-\item{\code{kind}}{Type of cache: "object", "file", or "dir"}
+\item{\code{kind}}{Type of cache: "object", "file", "dir" or "prefix"
+\itemize{
+\item object: cache an R object
+\item file: cache a file
+\item dir: cache a directory
+\item prefix: cache files/directories with the same prefix
+}}
 }
 \if{html}{\out{</div>}}
 }
@@ -84,25 +90,17 @@ Be careful with this operation as it will remove all cached files in the cache d
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Cache-get"></a>}}
-\if{latex}{\out{\hypertarget{method-Cache-get}{}}}
-\subsection{Method \code{get()}}{
+\if{html}{\out{<a id="method-Cache-restore"></a>}}
+\if{latex}{\out{\hypertarget{method-Cache-restore}{}}}
+\subsection{Method \code{restore()}}{
 Retrieve the cached object/file/directory
 When NULL is returned, it means the cache does not exist
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Cache$get(target = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Cache$restore()}\if{html}{\out{</div>}}
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{target}}{Target path for file/directory cache (required for file/dir kind)}
-}
-\if{html}{\out{</div>}}
-}
 \subsection{Returns}{
-For objects: the cached object or NULL if not found
-For files/dirs: the target path or NULL if not found
+The cached object if kind is "object", otherwise NULL
 }
 }
 \if{html}{\out{<hr>}}
@@ -135,7 +133,7 @@ The path to the cached object/file/directory
 \if{html}{\out{<a id="method-Cache-save"></a>}}
 \if{latex}{\out{\hypertarget{method-Cache-save}{}}}
 \subsection{Method \code{save()}}{
-Save an object/file/directory to cache
+Save an object/file/directory/prefix to cache
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Cache$save(data)}\if{html}{\out{</div>}}
 }

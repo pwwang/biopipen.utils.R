@@ -87,7 +87,7 @@ RunSeuratDEAnalysis <- function(
         cache_dir = cache,
     )
     if (cached$is_cached()) {
-        return(cached$get())
+        return(cached$restore())
     }
 
     stopifnot("'group.by' is not found in the object" = group.by %in% colnames(object@meta.data))
@@ -332,7 +332,7 @@ LoadSeuratAndPerformQC <- function(
     )
     if (cached$is_cached()) {
         log$info("Initialized and QC'ed data loaded from cache")
-        return(cached$get())
+        return(cached$restore())
     }
 
     log$info("Loading each sample ...")
@@ -509,7 +509,7 @@ RunSeuratTransformation <- function(
     )
     if (cached$is_cached()) {
         log$info("Transformed data loaded from cache")
-        return(cached$get())
+        return(cached$restore())
     }
 
     log$info("Performing data transformation and scaling ...")
@@ -608,7 +608,7 @@ RunSeuratClustering <- function(
     ncells <- ncol(object)
     if (caching$is_cached()) {
         log$info("PCA results loaded from cache")
-        object <- caching$get()
+        object <- caching$restore()
     } else {
         log$debug("  Arguments: {format_args(RunPCAArgs)}")
         RunPCAArgs$dims <- RunPCAArgs$dims %||% 1:min(30, ncells - 1)
@@ -628,7 +628,7 @@ RunSeuratClustering <- function(
     )
     if (caching$is_cached()) {
         log$info("UMAP results loaded from cache")
-        object <- caching$get()
+        object <- caching$restore()
     } else {
         log$debug("  Arguments: {format_args(RunUMAPArgs)}")
         RunUMAPArgs$dims <- RunUMAPArgs$dims %||% 1:min(30, ncells - 1)
@@ -653,7 +653,7 @@ RunSeuratClustering <- function(
     )
     if (caching$is_cached()) {
         log$info("FindNeighbors results loaded from cache")
-        object <- caching$get()
+        object <- caching$restore()
     } else {
         log$debug("  Arguments: {format_args(FindNeighborsArgs)}")
         FindNeighborsArgs$reduction <- FindNeighborsArgs$reduction %||% object@misc$integrated_new_reduction %||% "pca"
@@ -676,7 +676,7 @@ RunSeuratClustering <- function(
     )
     if (caching$is_cached()) {
         log$info("FindClusters results loaded from cache")
-        object <- caching$get()
+        object <- caching$restore()
     } else {
         log$debug("  Arguments: {format_args(FindClustersArgs)}")
 
@@ -742,7 +742,7 @@ RunSeuratIntegration <- function(
     )
     if (cached$is_cached()) {
         log$info("Integrated data loaded from cache")
-        return(cached$get())
+        return(cached$restore())
     }
 
     log$info("Performing data integration ...")
@@ -966,7 +966,7 @@ RunSeuratDoubletDetection <- function(
     )
     if (cached$is_cached()) {
         log$info("Doublet detection results loaded from cache")
-        return(cached$get())
+        return(cached$restore())
     }
 
     if (tolower(tool) == "doubletfinder") {
@@ -1083,7 +1083,7 @@ RunSeuratMap2Ref <- function(
     )
     if (cached$is_cached()) {
         log$info("Mapping-to-reference results loaded from cache")
-        return(cached$get())
+        return(cached$restore())
     }
 
     if (is.character(ref) && (endsWith(ref, ".rds") || endsWith(ref, ".RDS") || endsWith(ref, "qs") || endsWith(ref, ".qs2"))) {
