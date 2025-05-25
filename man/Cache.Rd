@@ -8,10 +8,34 @@ A class to handle caching of objects, files, or directories.
 It generates a signature from the provided object and creates cached versions
 based on that signature.
 }
+\examples{
+
+## ------------------------------------------------
+## Method `Cache$new`
+## ------------------------------------------------
+
+\dontrun{
+# Create a Cache object for an R object
+cache <- Cache$new(sig_object = mtcars, prefix = "mtcars_cache",
+                   cache_dir = tempdir(), save_sig = TRUE, kind = "object")
+# Save the object to cache
+cache$save(mtcars)
+# Restore the cached object
+cached_mtcars <- cache$restore()
+# Check if the object is cached
+cache$is_cached()  # Should return TRUE
+# Clear the cache
+cache$clear()
+# Clear all cached objects in the cache directory
+cache$clear_all()
+}
+}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
 \item{\code{cache_dir}}{Directory where cached files are stored}
+
+\item{\code{source}}{path to the original file/directory/prefix}
 }
 \if{html}{\out{</div>}}
 }
@@ -39,7 +63,8 @@ Initialize a new Cache object
   prefix,
   cache_dir,
   save_sig = FALSE,
-  kind = c("object", "file", "dir", "prefix")
+  kind = c("object", "file", "dir", "prefix"),
+  path = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -61,12 +86,57 @@ Initialize a new Cache object
 \item dir: cache a directory
 \item prefix: cache files/directories with the same prefix
 }}
+
+\item{\code{path}}{Path to the file or directory to cache
+This is required when \code{kind} is "file", "dir", or "prefix"}
 }
 \if{html}{\out{</div>}}
 }
+\subsection{Details}{
+The \code{sig_object} is used to generate a unique signature for the cache.
+The signature is based on the structure of the object, which helps in
+determining if the cached version is still valid.
+The \code{prefix} is used to create a unique identifier for the cached files.
+The \code{cache_dir} is the directory where the cached files will be stored.
+If \code{save_sig} is TRUE, the signature will be saved to a file in the cache directory.
+The \code{kind} parameter determines how the cache will be handled:
+\itemize{
+\item "object": The cache will store an R object.
+\item "file": The cache will store a file.
+\item "dir": The cache will store a directory.
+\item "prefix": The cache will store files/directories with the same prefix.
+The \code{path} parameter is required when \code{kind} is "file", "dir", or "prefix".
+It specifies the path to the file or directory to cache.
+If \code{cache_dir} is NULL or an empty string, caching will not be performed.
+If \code{cache_dir} is FALSE, caching will not be performed.
+}
+}
+
 \subsection{Returns}{
 A new Cache object
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\dontrun{
+# Create a Cache object for an R object
+cache <- Cache$new(sig_object = mtcars, prefix = "mtcars_cache",
+                   cache_dir = tempdir(), save_sig = TRUE, kind = "object")
+# Save the object to cache
+cache$save(mtcars)
+# Restore the cached object
+cached_mtcars <- cache$restore()
+# Check if the object is cached
+cache$is_cached()  # Should return TRUE
+# Clear the cache
+cache$clear()
+# Clear all cached objects in the cache directory
+cache$clear_all()
+}
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Cache-clear"></a>}}
@@ -135,13 +205,13 @@ The path to the cached object/file/directory
 \subsection{Method \code{save()}}{
 Save an object/file/directory/prefix to cache
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Cache$save(data)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Cache$save(data = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{data}}{The object to cache, or path to file/directory to cache}
+\item{\code{data}}{The object to cache, or NULL for non-"object" kinds}
 }
 \if{html}{\out{</div>}}
 }

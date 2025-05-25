@@ -34,14 +34,16 @@ Cache <- R6::R6Class(
 
     private = list(
         kind = NULL,
-        prefix = NULL,
-        source_path = NULL
+        prefix = NULL
     ),
 
     public = list(
 
         #' @field cache_dir Directory where cached files are stored
         cache_dir = NULL,
+
+        #' @field source path to the original file/directory/prefix
+        source = NULL,
 
         #' @description
         #' Initialize a new Cache object
@@ -54,8 +56,46 @@ Cache <- R6::R6Class(
         #' * file: cache a file
         #' * dir: cache a directory
         #' * prefix: cache files/directories with the same prefix
+        #' @param path Path to the file or directory to cache
+        #' This is required when `kind` is "file", "dir", or "prefix"
+        #' @details
+        #' The `sig_object` is used to generate a unique signature for the cache.
+        #' The signature is based on the structure of the object, which helps in
+        #' determining if the cached version is still valid.
+        #' The `prefix` is used to create a unique identifier for the cached files.
+        #' The `cache_dir` is the directory where the cached files will be stored.
+        #' If `save_sig` is TRUE, the signature will be saved to a file in the cache directory.
+        #' The `kind` parameter determines how the cache will be handled:
+        #' * "object": The cache will store an R object.
+        #' * "file": The cache will store a file.
+        #' * "dir": The cache will store a directory.
+        #' * "prefix": The cache will store files/directories with the same prefix.
+        #' The `path` parameter is required when `kind` is "file", "dir", or "prefix".
+        #' It specifies the path to the file or directory to cache.
+        #' If `cache_dir` is NULL or an empty string, caching will not be performed.
+        #' If `cache_dir` is FALSE, caching will not be performed.
+        #' @examples
+        #' \dontrun{
+        #' # Create a Cache object for an R object
+        #' cache <- Cache$new(sig_object = mtcars, prefix = "mtcars_cache",
+        #'                    cache_dir = tempdir(), save_sig = TRUE, kind = "object")
+        #' # Save the object to cache
+        #' cache$save(mtcars)
+        #' # Restore the cached object
+        #' cached_mtcars <- cache$restore()
+        #' # Check if the object is cached
+        #' cache$is_cached()  # Should return TRUE
+        #' # Clear the cache
+        #' cache$clear()
+        #' # Clear all cached objects in the cache directory
+        #' cache$clear_all()
+        #' }
         #' @return A new Cache object
-        initialize = function(sig_object, prefix, cache_dir, save_sig = FALSE, kind = c("object", "file", "dir", "prefix")) {
+        initialize = function(
+            sig_object, prefix, cache_dir,
+            save_sig = FALSE, kind = c("object", "file", "dir", "prefix"),
+            path = NULL
+        ) {
             private$kind <- match.arg(kind)
             self$cache_dir <- cache_dir
             if (!is.null(cache_dir) && is.character(cache_dir) && nzchar(cache_dir)) {
@@ -67,6 +107,14 @@ Cache <- R6::R6Class(
                     writeLines(c(as.character(Sys.time()), "", full_sig), sig_file)
                 }
                 private$prefix <- paste0(prefix, ".", sig)
+
+                if (private$kind == "object") {
+                    self$source <- "<object>"
+                } else if (is.null(path)) {
+                    stop("[Cache$initialize()] 'path' must be provided for 'file', 'dir', or 'prefix' kind.")
+                } else {
+                    self$source <- path
+                }
             }
         },
 
@@ -117,14 +165,14 @@ Cache <- R6::R6Class(
                     if (!file.exists(cached_path)) {
                         stop(paste0("[Cache$restore()] Cached file does not exist: ", cached_path))
                     }
-                    file.copy(cached_path, private$source_path, overwrite = TRUE, copy.date = TRUE)
+                    file.copy(cached_path, self$source, overwrite = TRUE, copy.date = TRUE)
                 } else if (private$kind == "dir") {
                     if (!dir.exists(cached_path)) {
                         stop(paste0("[Cache$restore()] Cached directory does not exist: ", cached_path))
                     }
                     .dir.copy(
                         from = cached_path,
-                        to = private$source_path,
+                        to = self$source,
                         overwrite = TRUE,
                         copy.date = TRUE
                     )
@@ -133,8 +181,7 @@ Cache <- R6::R6Class(
                     if (length(files) == 0) {
                         stop(paste0("[Cache$restore()] No cached files found with prefix: ", private$prefix))
                     }
-                    prefix <- private$source_path[1]
-                    src_files <- private$source_path[-1]
+                    prefix <- self$source
                     dir.create(dirname(prefix), showWarnings = FALSE, recursive = TRUE)
                     target_files <- c()
                     for (file in files) {
@@ -156,10 +203,6 @@ Cache <- R6::R6Class(
                                 copy.date = TRUE
                             )
                         }
-                    }
-                    unrestored <- setdiff(src_files, target_files)
-                    if (length(unrestored) > 0) {
-                        stop(paste0("[Cache$restore()] Some files were not restored: \n- ", paste(unrestored, collapse = "\n- ")))
                     }
                 } else {
                     cached_path <- paste0(cached_path, ".qs")
@@ -208,39 +251,29 @@ Cache <- R6::R6Class(
 
         #' @description
         #' Save an object/file/directory/prefix to cache
-        #' @param data The object to cache, or path to file/directory to cache
-        save = function(data) {
+        #' @param data The object to cache, or NULL for non-"object" kinds
+        save = function(data = NULL) {
             if (is.null(self$cache_dir) || !is.character(self$cache_dir) || !nzchar(self$cache_dir)) {
                 stop("[Cache$save()] 'cache$cache_dir' must be a valid directory path.")
             }
 
-            if (!is.null(private$source_path)) {
-                stop("[Cache$save()] Only one save is allowed per Cache object.")
-            }
-
             cached_path <- file.path(self$cache_dir, private$prefix)
             if (private$kind == "file") {
-                private$source_path <- data
-                stopifnot("[Cache$save()] 'data' must be a valid file path." = is.character(data) && nzchar(data) && file.exists(data))
                 file.copy(
-                    from = data,
+                    from = self$source,
                     to = cached_path,
                     overwrite = TRUE,
                     copy.date = TRUE
                 )
             } else if (private$kind == "dir") {
-                private$source_path <- data
-                stopifnot("[Cache$save()] 'data' must be a valid directory path." = is.character(data) && nzchar(data) && dir.exists(data))
                 .dir.copy(
-                    from = data,
+                    from = self$source,
                     to = cached_path,
                     overwrite = TRUE,
                     copy.date = TRUE
                 )
             } else if (private$kind == "prefix") {
-                stopifnot("[Cache$save()] 'data' must be a valid file path." = is.character(data) && nzchar(data))
-                files <- Sys.glob(paste0(data, "*"))
-                private$source_path <- c(data, files)
+                files <- Sys.glob(paste0(self$source, "*"))
                 for (file in files) {
                     if (dir.exists(file)) {
                         .dir.copy(
@@ -259,7 +292,12 @@ Cache <- R6::R6Class(
                     }
                 }
             } else {
-                private$source_path <- "<object>"
+                if (is.null(data)) {
+                    stop("[Cache$save()] 'data' must be provided for 'object' kind.")
+                }
+                if (self$is_cached()) {
+                    stop(paste0("[Cache$save()] Cached object already exists: ", cached_path))
+                }
                 save_obj(data, file.path(self$cache_dir, paste0(private$prefix, ".qs")))
             }
             invisible()

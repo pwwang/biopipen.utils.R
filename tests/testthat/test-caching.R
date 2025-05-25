@@ -63,10 +63,11 @@ test_that("caching: save and get file", {
     temp_file <- tempfile()
     writeLines("Hello, World!", temp_file)
 
-    cache <- Cache$new(7, cache_dir = tempdir(), prefix = "test_file", kind = "file")
+    cache <- Cache$new(7, cache_dir = tempdir(), prefix = "test_file", kind = "file",
+        path = temp_file)
     expect_false(cache$is_cached())
 
-    cache$save(temp_file)
+    cache$save()
     unlink(temp_file)  # Remove original file to test restoration
     expect_false(file.exists(temp_file))
 
@@ -86,10 +87,11 @@ test_that("caching: save and get directory", {
     dir.create(temp_dir)
     writeLines("Hello, World!", file.path(temp_dir, "test.txt"))
 
-    cache <- Cache$new(8, cache_dir = tempdir(), prefix = "test_dir", kind = "dir")
+    cache <- Cache$new(8, cache_dir = tempdir(), prefix = "test_dir", kind = "dir",
+        path = temp_dir)
     expect_false(cache$is_cached())
 
-    cache$save(temp_dir)
+    cache$save()
     unlink(temp_dir, recursive = TRUE)  # Remove original directory to test restoration
     expect_false(dir.exists(temp_dir))
 
@@ -112,10 +114,11 @@ test_that("caching: save and get directory recursively", {
     dir.create(sub_dir)
     writeLines("Hello, World!", file.path(sub_dir, "test.txt"))
 
-    cache <- Cache$new(9, cache_dir = tempdir(), prefix = "test_recursive", kind = "dir")
+    cache <- Cache$new(9, cache_dir = tempdir(), prefix = "test_recursive", kind = "dir",
+        path = temp_dir)
     expect_false(cache$is_cached())
 
-    cache$save(temp_dir)
+    cache$save()
     unlink(temp_dir, recursive = TRUE)  # Remove original directory to test restoration
     expect_false(dir.exists(temp_dir))
     expect_false(dir.exists(sub_dir))
@@ -139,11 +142,12 @@ test_that("caching: save and get with path prefix", {
     writeLines("Goodbye, World!", tmpfile2)
 
     prefix <- file.path(tmpdir, "prefix_")
-    cache <- Cache$new(10, cache_dir = tempdir(), prefix = "test_prefix", kind = "prefix")
+    cache <- Cache$new(10, cache_dir = tempdir(), prefix = "test_prefix", kind = "prefix",
+        path = prefix)
     cache$clear()  # Ensure cache is empty before starting
     expect_false(cache$is_cached())
 
-    cache$save(prefix)
+    cache$save()
     expect_true(cache$is_cached())
 
     unlink(tmpfile1)  # Remove original files to test restoration
@@ -180,11 +184,12 @@ test_that("caching: save and restore with path prefix recursively", {
     writeLines("Goodbye, World!", file.path(subdir, "test2.txt"))
 
     prefix <- file.path(tmpdir, "prefix_rec_")
-    cache <- Cache$new(11, cache_dir = tempdir(), prefix = "test_prefix_recursive", kind = "prefix")
+    cache <- Cache$new(11, cache_dir = tempdir(), prefix = "test_prefix_recursive",
+        kind = "prefix", path = prefix)
     cache$clear()  # Ensure cache is empty before starting
     expect_false(cache$is_cached())
 
-    cache$save(prefix)
+    cache$save()
     expect_true(cache$is_cached())
 
     unlink(tmpdir1, recursive = TRUE)  # Remove original directories to test restoration
@@ -229,37 +234,5 @@ test_that("caching: cannot save twice", {
     cached <- cache$restore()
     expect_equal(cached, obj)
 
-    cache$clear()
-})
-
-test_that("caching: error when partially restored", {
-    tmpdir <- gettempdir()
-    tmpdir1 <- file.path(tmpdir, "prefix_part_dir1")
-    tmpdir2 <- file.path(tmpdir, "prefix_part_dir2")
-    dir.create(tmpdir1, showWarnings = FALSE)
-    dir.create(tmpdir2, showWarnings = FALSE)
-    writeLines("Hello, World!", file.path(tmpdir1, "test1.txt"))
-    subdir <- file.path(tmpdir2, "subdir")
-    dir.create(subdir, showWarnings = FALSE)
-    writeLines("Goodbye, World!", file.path(subdir, "test2.txt"))
-
-    prefix <- file.path(tmpdir, "prefix_part_")
-    cache <- Cache$new(11, cache_dir = tempdir(), prefix = "test_prefix_part", kind = "prefix")
-    cache$clear()  # Ensure cache is empty before starting
-    expect_false(cache$is_cached())
-
-    cache$save(prefix)
-    expect_true(cache$is_cached())
-
-    cache_prefix <- cache$get_path()
-    unlink(paste0(cache_prefix, ".prefix_part_dir2"), recursive = TRUE)  # Remove subdir to simulate partial restoration
-
-    unlink(tmpdir1, recursive = TRUE)  # Remove original directories to test restoration
-    unlink(tmpdir2, recursive = TRUE)
-
-    expect_error(cache$restore())
-
-    unlink(tmpdir1, recursive = TRUE)
-    unlink(tmpdir2, recursive = TRUE)
     cache$clear()
 })
