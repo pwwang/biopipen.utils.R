@@ -13,6 +13,41 @@
     x
 }
 
+#' Expand the resolution for `FindClusters`
+#'
+#' So that we can have 0.1:0.4:0.1 to be expanded to
+#' 0.1, 0.2, 0.3, 0.4
+#'
+#' @param resolution A numeric vector or a character vector
+#' @return A numeric vector with the expanded resolution
+#' @keywords internal
+.expand_findclusters_resolution <- function(resolution) {
+    expanded_res <- c()
+    for (res in resolution) {
+        if (is.numeric(res)) {
+            expanded_res <- c(expanded_res, res)
+        } else {
+            # is.character
+            parts <- trimws(unlist(strsplit(res, ",")))
+            for (part in parts) {
+                if (grepl(":", part)) {
+                    ps <- trimws(unlist(strsplit(part, ":")))
+                    if (length(ps) == 2) { ps <- c(ps, 0.1) }
+                    if (length(ps) != 3) {
+                        stop("Invalid resolution format: {part}. Expected 2 or 3 parts separated by ':' for a range.")
+                    }
+                    ps <- as.numeric(ps)
+                    expanded_res <- c(expanded_res, seq(ps[1], ps[2], by = ps[3]))
+                } else {
+                    expanded_res <- c(expanded_res, as.numeric(part))
+                }
+            }
+        }
+    }
+    # keep the last resolution at last
+    rev(unique(rev(round(expanded_res, 2))))
+}
+
 #' Add a command to a Seurat object `@commands` slot
 #'
 #' @param object Seurat object
@@ -690,7 +725,7 @@ RunSeuratClustering <- function(
         # FindClustersArgs$graph.name <- FindClustersArgs$graph.name %||% "RNA_snn"
         FindClustersArgs$object <- object
         FindClustersArgs$random.seed <- FindClustersArgs$random.seed %||% 8525
-        FindClustersArgs$resolution <- FindClustersArgs$resolution %||% 0.8
+        FindClustersArgs$resolution <- .expand_findclusters_resolution(FindClustersArgs$resolution %||% 0.8)
         FindClustersArgs$cluster.name <- paste0("seurat_clusters.", FindClustersArgs$resolution)
         log$info("  Using resolution(s): {paste(FindClustersArgs$resolution, collapse = ', ')}")
         object <- do_call(FindClusters, FindClustersArgs)
@@ -703,12 +738,12 @@ RunSeuratClustering <- function(
         object@meta.data$seurat_clusters <- recode_clusters(object@meta.data$seurat_clusters)
         Idents(object) <- "seurat_clusters"
 
-        ident_table <- table(Idents(sobj))
+        ident_table <- table(object@meta.data$seurat_clusters)
         ident_table <- paste0(names(ident_table), "(", ident_table, ")")
-        log$info("  Found clusters:")
+        log$info("  Found clusters (with resolution {FindClustersArgs$resolution[length(FindClustersArgs$resolution)]}):")
         # log every 5 clusters
         for (i in seq(1, length(ident_table), by = 5)) {
-            log$info("   {paste(ident_table[i:min(i + 4, length(ident_table))], collapse = ', ')}")
+            log$info("   | {paste(ident_table[i:min(i + 4, length(ident_table))], collapse = ', ')}")
         }
 
         caching$save(object)
