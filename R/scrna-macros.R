@@ -645,7 +645,7 @@ RunSeuratClustering <- function(
         caching$save(object)
     }
 
-    log$info("- Running FindNeighbors ...")
+    log$info("Running FindNeighbors ...")
     caching <- Cache$new(
         list(object, FindNeighborsArgs),
         prefix = "biopipen.utils.RunSeuratClustering.FindNeighbors",
@@ -668,7 +668,7 @@ RunSeuratClustering <- function(
         caching$save(object)
     }
 
-    log$info("- Running FindClusters ...")
+    log$info("Running FindClusters ...")
     caching <- Cache$new(
         list(object, FindClustersArgs),
         prefix = "biopipen.utils.RunSeuratClustering.FindClusters",
@@ -691,7 +691,7 @@ RunSeuratClustering <- function(
         FindClustersArgs$object <- object
         FindClustersArgs$random.seed <- FindClustersArgs$random.seed %||% 8525
         FindClustersArgs$resolution <- FindClustersArgs$resolution %||% 0.8
-        FindClustersArgs$cluster.name <- paste0("seurat_clusters.", resolution)
+        FindClustersArgs$cluster.name <- paste0("seurat_clusters.", FindClustersArgs$resolution)
         log$info("  Using resolution(s): {paste(FindClustersArgs$resolution, collapse = ', ')}")
         object <- do_call(FindClusters, FindClustersArgs)
         FindClustersArgs$object <- NULL
