@@ -6,6 +6,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/index.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/AddSeuratCommand.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/Cache.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ConvertAnnDataToSeurat.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ConvertSeuratToAnnData.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/FinishSeuratQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/LoadSeuratAndPerformQC.html</loc></url>
@@ -33,7 +34,11 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/bQuote.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/case_info.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/do_call.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-H5ADToH5Seurat.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-dir.copy.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-expand_findclusters_resolution.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-expand_number.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-set_h5_seurat_project-set.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-size_compare.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/expand_cases.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/extract_vars.html</loc></url>
