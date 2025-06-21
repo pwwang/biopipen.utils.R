@@ -1411,7 +1411,7 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
             }
             if (!is.null(subset)) {
                 log$debug("[ConvertSeuratToAnnData] Subsetting cells ...")
-                object_or_file <- eval(parse(text = paste0("base::subset(object_or_file, subset = ", subset, ")")))
+                object_or_file <- filter(object_or_file, !!!rlang::parse_expr(subset))
             }
 
             assay <- assay %||% DefaultAssay(object_or_file)
