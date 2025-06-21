@@ -55,7 +55,7 @@ test_that("caching: not cached when cache_dir is NULL or FALSE", {
     cache_false <- Cache$new(6, cache_dir = FALSE, prefix = "test", kind = "object")
     expect_false(cache_false$is_cached())
 
-    expect_error(cache_false$save(obj))
+    expect_null(cache_false$save(obj))
     expect_error(cache_false$restore())
 })
 

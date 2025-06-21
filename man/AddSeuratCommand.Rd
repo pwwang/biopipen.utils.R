@@ -36,8 +36,10 @@ Add a command to a Seurat object \verb{@commands} slot
 object <- SeuratObject::pbmc_small
 names(object@commands)
 
-object <- AddSeuratCommand(object, "RunSeuratDEAnalysis",
- "RunSeuratDEAnalysis(object, group.by = 'groups', ident.1 = 'g1', ident.2 = 'g2')",
- list(group.by = 'groups', ident.1 = 'g1', ident.2 = 'g2'))
+object <- AddSeuratCommand(
+    object, "RunSeuratDEAnalysis",
+    "RunSeuratDEAnalysis(object, group.by = 'groups', ident.1 = 'g1', ident.2 = 'g2')",
+    list(group.by = "groups", ident.1 = "g1", ident.2 = "g2")
+)
 object@commands$RunSeuratDEAnalysis
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/scrna-macros.R
 \name{ConvertSeuratToAnnData}
 \alias{ConvertSeuratToAnnData}
-\title{Convert a Seurat object (or RDS/H5Seurat file) to an AnnData object file}
+\title{Convert a Seurat object (or RDS/H5Seurat/qs2 file) to an AnnData object file}
 \usage{
 ConvertSeuratToAnnData(
   object_or_file,
@@ -27,13 +27,14 @@ ConvertSeuratToAnnData(
 No return value
 }
 \description{
-Convert a Seurat object (or RDS/H5Seurat file) to an AnnData object file
+Convert a Seurat object (or RDS/H5Seurat/qs2 file) to an AnnData object file
 }
 \examples{
 \donttest{
 ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad")
 ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.g1.h5ad",
-  subset = 'groups == "g1"')
+    subset = 'groups == "g1"'
+)
 
 saveRDS(SeuratObject::pbmc_small, "/tmp/pbmc_small.rds")
 ConvertSeuratToAnnData("/tmp/pbmc_small.rds", "/tmp/pbmc_small.h5ad")

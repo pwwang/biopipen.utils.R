@@ -252,7 +252,7 @@ gettempdir <- function() {
 #' @return The formatted arguments
 #' @keywords internal
 format_args <- function(args) {
-    paste(capture.output(str(args)), collapse = ", ")
+    paste(capture.output(utils::str(args)), collapse = ", ")
 }
 
 #' Monkey patch a function from a namespace

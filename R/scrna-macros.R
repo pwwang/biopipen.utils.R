@@ -32,7 +32,9 @@
             for (part in parts) {
                 if (grepl(":", part)) {
                     ps <- trimws(unlist(strsplit(part, ":")))
-                    if (length(ps) == 2) { ps <- c(ps, 0.1) }
+                    if (length(ps) == 2) {
+                        ps <- c(ps, 0.1)
+                    }
                     if (length(ps) != 3) {
                         stop("Invalid resolution format: {part}. Expected 2 or 3 parts separated by ':' for a range.")
                     }
@@ -65,14 +67,15 @@
 #' object <- SeuratObject::pbmc_small
 #' names(object@commands)
 #'
-#' object <- AddSeuratCommand(object, "RunSeuratDEAnalysis",
-#'  "RunSeuratDEAnalysis(object, group.by = 'groups', ident.1 = 'g1', ident.2 = 'g2')",
-#'  list(group.by = 'groups', ident.1 = 'g1', ident.2 = 'g2'))
+#' object <- AddSeuratCommand(
+#'     object, "RunSeuratDEAnalysis",
+#'     "RunSeuratDEAnalysis(object, group.by = 'groups', ident.1 = 'g1', ident.2 = 'g2')",
+#'     list(group.by = "groups", ident.1 = "g1", ident.2 = "g2")
+#' )
 #' object@commands$RunSeuratDEAnalysis
 AddSeuratCommand <- function(
     object, name, call.string = paste0(name, "(object, ...)"),
-    params = list(), assay.used = NULL, time.stamp = Sys.time()
-) {
+    params = list(), assay.used = NULL, time.stamp = Sys.time()) {
     assay.used <- assay.used %||% DefaultAssay(object)
     if (is.null(object@commands)) {
         object@commands <- list()
@@ -166,8 +169,10 @@ RunSeuratDEAnalysis <- function(
                 m
             }))
         } else {
-            degs <- FindMarkers(object, group.by = group.by, ident.1 = ident.1, ident.2 = ident.2, recorrect_umi = recorrect_umi,
-                assay = assay, ...)
+            degs <- FindMarkers(object,
+                group.by = group.by, ident.1 = ident.1, ident.2 = ident.2, recorrect_umi = recorrect_umi,
+                assay = assay, ...
+            )
             degs$gene <- rownames(degs)
             degs[[group.by]] <- NA
         }
@@ -177,23 +182,29 @@ RunSeuratDEAnalysis <- function(
     }
 
     if (!error) {
-        degs <- tryCatch({
-            find_markers(recorrect_umi, ...)
-        }, error = function(e) {
-            warning("[RunSeuratDEAnalysis] Failed to run DE analysis: ", e$message, immediate. = TRUE)
-            empty
-        })
-    } else {
-        degs <- tryCatch({
-            find_markers(recorrect_umi, ...)
-        }, error = function(e) {
-            if (grepl("PrepSCTFindMarkers", e$message) && isTRUE(recorrect_umi)) {
-                warning("[RunSeuratDEAnalysis] Still failing about PrepSCTFindMarkers, try recorrect_umi = FALSE", immediate. = TRUE)
-                find_markers(recorrect_umi = FALSE, ...)
-            } else {
-                stop(e)
+        degs <- tryCatch(
+            {
+                find_markers(recorrect_umi, ...)
+            },
+            error = function(e) {
+                warning("[RunSeuratDEAnalysis] Failed to run DE analysis: ", e$message, immediate. = TRUE)
+                empty
             }
-        })
+        )
+    } else {
+        degs <- tryCatch(
+            {
+                find_markers(recorrect_umi, ...)
+            },
+            error = function(e) {
+                if (grepl("PrepSCTFindMarkers", e$message) && isTRUE(recorrect_umi)) {
+                    warning("[RunSeuratDEAnalysis] Still failing about PrepSCTFindMarkers, try recorrect_umi = FALSE", immediate. = TRUE)
+                    find_markers(recorrect_umi = FALSE, ...)
+                } else {
+                    stop(e)
+                }
+            }
+        )
     }
 
     degs$diff_pct <- degs$pct.1 - degs$pct.2
@@ -352,8 +363,7 @@ LoadSeuratAndPerformQC <- function(
     gene_qc = NULL,
     tmpdir = NULL,
     log = NULL,
-    cache = NULL
-) {
+    cache = NULL) {
     log <- log %||% get_logger()
     meta <- as.data.frame(meta)
     samples <- samples %||% meta$Sample
@@ -372,7 +382,7 @@ LoadSeuratAndPerformQC <- function(
 
     log$info("Loading each sample ...")
     tmpdir <- tmpdir %||% gettempdir()
-    dig <- digest(capture.output(str(meta)), algo = "md5")
+    dig <- digest(capture.output(utils::str(meta)), algo = "md5")
     dig <- substr(dig, 1, 8)
     tmpdir <- file.path(tmpdir, paste0("biopipen.utils.LoadSeuratSamples.", dig))
 
@@ -395,16 +405,20 @@ LoadSeuratAndPerformQC <- function(
 
         if (dir.exists(path)) {
             exprs <- tryCatch(
-                { Read10X(data.dir = path) },
+                {
+                    Read10X(data.dir = path)
+                },
                 error = function(e) {
                     tmpdatadir <- file.path(tmpdir, slugify(sam))
-                    if (dir.exists(tmpdatadir)) { unlink(tmpdatadir, recursive = TRUE) }
+                    if (dir.exists(tmpdatadir)) {
+                        unlink(tmpdatadir, recursive = TRUE)
+                    }
                     dir.create(tmpdatadir, recursive = TRUE, showWarnings = FALSE)
-                    barcodefile = Sys.glob(file.path(path, "*barcodes.tsv.gz"))[1]
+                    barcodefile <- Sys.glob(file.path(path, "*barcodes.tsv.gz"))[1]
                     file.symlink(normalizePath(barcodefile), file.path(tmpdatadir, "barcodes.tsv.gz"))
-                    genefile = glob(file.path(path, "*{genes,features}.tsv.gz"))[1]
+                    genefile <- glob(file.path(path, "*{genes,features}.tsv.gz"))[1]
                     file.symlink(normalizePath(genefile), file.path(tmpdatadir, "features.tsv.gz"))
-                    matrixfile = Sys.glob(file.path(path, "*matrix.mtx.gz"))[1]
+                    matrixfile <- Sys.glob(file.path(path, "*matrix.mtx.gz"))[1]
                     file.symlink(normalizePath(matrixfile), file.path(tmpdatadir, "matrix.mtx.gz"))
                     Read10X(data.dir = tmpdatadir)
                 }
@@ -433,9 +447,13 @@ LoadSeuratAndPerformQC <- function(
         obj <- RenameCells(obj, add.cell.id = sam)
         # Attach meta data
         for (mname in names(mdata)) {
-            if (mname %in% c("RNAData", "TCRData", "BCRData")) { next }
+            if (mname %in% c("RNAData", "TCRData", "BCRData")) {
+                next
+            }
             mdt <- mdata[[mname]]
-            if (is.factor(mdt)) { mdt <- levels(mdt)[mdt] }
+            if (is.factor(mdt)) {
+                mdt <- levels(mdt)[mdt]
+            }
 
             obj[[mname]] <- mdt
         }
@@ -451,7 +469,7 @@ LoadSeuratAndPerformQC <- function(
     }
 
     log$info("Merging samples ...")
-    obj = Reduce(merge, object_list)
+    obj <- Reduce(merge, object_list)
     rm(object_list)
     gc()
 
@@ -526,8 +544,7 @@ RunSeuratTransformation <- function(
     ScaleDataArgs = list(),
     RunPCAArgs = list(),
     log = NULL,
-    cache = NULL
-) {
+    cache = NULL) {
     log <- log %||% get_logger()
     cache <- cache %||% gettempdir()
     cached <- Cache$new(
@@ -582,7 +599,11 @@ RunSeuratTransformation <- function(
     }
 
     log$info("- Running RunPCA ...")
-    RunPCAArgs$npcs <- if (is.null(RunPCAArgs$npcs)) { 50 } else { min(RunPCAArgs$npcs, ncol(object) - 1) }
+    RunPCAArgs$npcs <- if (is.null(RunPCAArgs$npcs)) {
+        50
+    } else {
+        min(RunPCAArgs$npcs, ncol(object) - 1)
+    }
 
     log$debug("  RunPCA: {format_args(RunPCAArgs)}")
     RunPCAArgs$object <- object
@@ -591,7 +612,8 @@ RunSeuratTransformation <- function(
     gc()
 
     object <- AddSeuratCommand(
-        object, name = "RunSeuratTransformations",
+        object,
+        name = "RunSeuratTransformations",
         call.string = "RunSeuratTransformations(object, use_sct, SCTransformArgs, NormalizeDataArgs, FindVariableFeaturesArgs, ScaleDataArgs, RunPCAArgs)",
         params = list(
             use_sct = use_sct,
@@ -628,8 +650,7 @@ RunSeuratClustering <- function(
     FindNeighborsArgs = list(),
     FindClustersArgs = list(),
     log = NULL,
-    cache = NULL
-) {
+    cache = NULL) {
     log <- log %||% get_logger()
     cache <- cache %||% gettempdir()
 
@@ -766,8 +787,7 @@ RunSeuratClustering <- function(
 #' @importFrom SeuratObject JoinLayers
 RunSeuratIntegration <- function(
     object, no_integration = FALSE, IntegrateLayersArgs = list(),
-    log = NULL, cache = NULL
-) {
+    log = NULL, cache = NULL) {
     log <- log %||% get_logger()
     cache <- cache %||% gettempdir()
     cached <- Cache$new(
@@ -790,8 +810,7 @@ RunSeuratIntegration <- function(
             log$debug("  Transferred to indices: {paste(IntegrateLayersArgs$reference, collapse = ', ')}")
         }
         log$info("- Running IntegrateLayers (method = {method}) ...")
-        method <- switch(
-            method,
+        method <- switch(method,
             "CCA" = "CCAIntegration",
             "cca" = "CCAIntegration",
             "RPCA" = "RPCAIntegration",
@@ -927,7 +946,7 @@ RunSeuratDoubletFinder <- function(object, ncores = 1, PCs = 30, pN = 0.25, doub
     DF_col <- paste0("DF.classifications_", pN, "_", pK)
     DF_col <- colnames(object@meta.data)[grepl(DF_col, colnames(object@meta.data))]
     doublets <- object@meta.data[, c(pANN_col, DF_col), drop = FALSE]
-    colnames(doublets) <-  c("DoubletFinder_score","DoubletFinder_DropletType")
+    colnames(doublets) <- c("DoubletFinder_score", "DoubletFinder_DropletType")
     doublets$DoubletFinder_DropletType <- tolower(doublets$DoubletFinder_DropletType)
     doublets$DoubletFinder_DropletType <- factor(doublets$DoubletFinder_DropletType, levels = c("singlet", "doublet"))
 
@@ -990,8 +1009,7 @@ RunSeuratDoubletDetection <- function(
     scDblFinderArgs = list(),
     filter = TRUE,
     log = NULL,
-    cache = NULL
-) {
+    cache = NULL) {
     log <- log %||% get_logger()
     cache <- cache %||% gettempdir()
     cached <- Cache$new(
@@ -1102,14 +1120,14 @@ RunSeuratMap2Ref <- function(
     SCTransformArgs = list(),
     NormalizeDataArgs = list(),
     log = NULL,
-    cache = NULL
-) {
+    cache = NULL) {
     refnorm <- match.arg(refnorm)
 
     log <- log %||% get_logger()
     cache <- cache %||% gettempdir()
     cached <- Cache$new(
-        list(object, ref, use, ident, refnorm, skip_if_normalized,
+        list(
+            object, ref, use, ident, refnorm, skip_if_normalized,
             split_by, ncores, MapQueryArgs, FindTransferAnchorsArgs,
             SCTransformArgs, NormalizeDataArgs
         ),
@@ -1135,7 +1153,9 @@ RunSeuratMap2Ref <- function(
     reference <- UpdateSeuratObject(reference)
     is_sct <- getFromNamespace("IsSCT", "Seurat")
     ref_is_sct <- is_sct(GetAssay(reference))
-    if (ref_is_sct) { reference <- UpdateSCTAssays(reference) }
+    if (ref_is_sct) {
+        reference <- UpdateSCTAssays(reference)
+    }
 
     MapQueryArgs$refdata <- MapQueryArgs$refdata %||% list()
     MapQueryArgs$refdata[[use]] <- use
@@ -1143,12 +1163,16 @@ RunSeuratMap2Ref <- function(
     log$info("Checking if given refdata for MapQuery is in the reference ...")
     for (name in names(MapQueryArgs$refdata)) {
         if (!name %in% colnames(reference@meta.data)) {
-            stop(paste0("[RunSeuratMap2Ref] items of 'refdata' should be in the reference: ", name, "\n",
-                "Available items: ", paste0(colnames(reference@meta.data), collapse = ", ")))
+            stop(paste0(
+                "[RunSeuratMap2Ref] items of 'refdata' should be in the reference: ", name, "\n",
+                "Available items: ", paste0(colnames(reference@meta.data), collapse = ", ")
+            ))
         }
         if (startsWith(name, "predicted.")) {
-            stop(paste0("[RunSeuratMap2Ref] items 'refdata' should not start with 'predicted.': ", name,
-                " please use 'x' instead of 'predicted.x'"))
+            stop(paste0(
+                "[RunSeuratMap2Ref] items 'refdata' should not start with 'predicted.': ", name,
+                " please use 'x' instead of 'predicted.x'"
+            ))
         }
     }
     if (is.null(MapQueryArgs$reference.reduction)) {
@@ -1156,23 +1180,27 @@ RunSeuratMap2Ref <- function(
         log$warn("- `MapQueryArgs$reference.reduction` is not set, using the first reduction in the reference: {MapQueryArgs$reference.reduction}")
     }
     if (!MapQueryArgs$reference.reduction %in% Reductions(reference)) {
-        stop(paste0("[RunSeuratMap2Ref] `MapQueryArgs$reference.reduction` is not in the reference: ", MapQueryArgs$reference.reduction, "\n",
-            "Available reductions: ", paste0(Reductions(reference), collapse = ", ")))
+        stop(paste0(
+            "[RunSeuratMap2Ref] `MapQueryArgs$reference.reduction` is not in the reference: ", MapQueryArgs$reference.reduction, "\n",
+            "Available reductions: ", paste0(Reductions(reference), collapse = ", ")
+        ))
     }
     MapQueryArgs$reduction.model <- MapQueryArgs$reduction.model %||% "umap"
     # Check if reference has the same reduction model
     if (
         is.null(reference@reductions[[MapQueryArgs$reduction.model]]) ||
-        length(x = Misc(object = reference@reductions[[MapQueryArgs$reduction.model]], slot = 'model')) == 0
+            length(x = Misc(object = reference@reductions[[MapQueryArgs$reduction.model]], slot = "model")) == 0
     ) {
         models <- sapply(names(reference@reductions), function(x) {
-            ifelse(length(x = Misc(object = reference@reductions[[x]], slot = 'model')) > 0, x, NA)
+            ifelse(length(x = Misc(object = reference@reductions[[x]], slot = "model")) > 0, x, NA)
         })
         models <- models[!is.na(models)]
-        msg <- paste0("[RunSeuratMap2Ref] `MapQueryArgs$reduction.model` is not in the reference: ", MapQueryArgs$reduction.model, "\n",
+        msg <- paste0(
+            "[RunSeuratMap2Ref] `MapQueryArgs$reduction.model` is not in the reference: ", MapQueryArgs$reduction.model, "\n",
             "Try to run the reference with ",
             "RunUMAP(reference, reduction = '", MapQueryArgs$reference.reduction, "', reduction.name = '", MapQueryArgs$reduction.model, "', dims = 1:N, return.model = TRUE)\n",
-            "to create the model.\n")
+            "to create the model.\n"
+        )
         if (length(models) == 0) {
             stop(msg)
         } else {
@@ -1181,15 +1209,21 @@ RunSeuratMap2Ref <- function(
         }
     }
 
-    if (refnorm == "auto") { refnorm <- ifelse(ref_is_sct, "SCT", "LogNormalize") }
-    if (refnorm == "SCTransform") { refnorm <- "SCT" }
+    if (refnorm == "auto") {
+        refnorm <- ifelse(ref_is_sct, "SCT", "LogNormalize")
+    }
+    if (refnorm == "SCTransform") {
+        refnorm <- "SCT"
+    }
 
     if (refnorm == "SCT") {
         # Check if the reference is SCTransform'ed
-        stopifnot("[RunSeuratMap2Ref] reference is not SCTransform'ed, but refnorm is set to SCT" =
-            ref_is_sct)
+        stopifnot(
+            "[RunSeuratMap2Ref] reference is not SCTransform'ed, but refnorm is set to SCT" =
+                ref_is_sct
+        )
 
-        n_models = length(x = slot(object = reference[[DefaultAssay(reference)]], name = "SCTModel.list"))
+        n_models <- length(x = slot(object = reference[[DefaultAssay(reference)]], name = "SCTModel.list"))
         if (n_models == 0) {
             stop("[RunSeuratMap2Ref] reference doesn't contain any SCTModel.")
         }
@@ -1200,8 +1234,8 @@ RunSeuratMap2Ref <- function(
 
     if (!is.null(split_by)) {
         # check if each split has more than 100 cells
-        cellno = table(object@meta.data[[split_by]])
-        cellno = cellno[cellno < 100]
+        cellno <- table(object@meta.data[[split_by]])
+        cellno <- cellno[cellno < 100]
         if (length(cellno) > 0) {
             # stop and print the splits with # cells
             stop(paste0(
@@ -1212,7 +1246,7 @@ RunSeuratMap2Ref <- function(
                 "or choose a different `split_by`."
             ))
         }
-        object = SplitObject(object, split.by = split_by)
+        object <- SplitObject(object, split.by = split_by)
     }
 
     if (refnorm == "SCT" && defassay == "SCT" && skip_if_normalized) {
@@ -1241,7 +1275,7 @@ RunSeuratMap2Ref <- function(
                 SCTransformArgs$object <- NULL
                 gc()
             }
-        } else {  # LogNormalize
+        } else { # LogNormalize
             log$info("Normalizing query with LogNormalize ...")
             if (!is.null(split_by)) {
                 object <- mclapply(
@@ -1330,7 +1364,8 @@ RunSeuratMap2Ref <- function(
     object <- AddMetaData(
         object,
         metadata = object@meta.data[[paste0("predicted.", use)]],
-        col.name = ident)
+        col.name = ident
+    )
 
     object@meta.data[[paste0("predicted.", use)]] <- NULL
     object@meta.data[[ident]] <- factor(object@meta.data[[ident]], levels = unique(object@meta.data[[ident]]))
@@ -1359,7 +1394,7 @@ RunSeuratMap2Ref <- function(
     object
 }
 
-#' Convert a Seurat object (or RDS/H5Seurat file) to an AnnData object file
+#' Convert a Seurat object (or RDS/H5Seurat/qs2 file) to an AnnData object file
 #' @param object_or_file The Seurat object or the path to the RDS or H5Seurat file
 #' @param outfile Output file
 #' @param assay Assay to be used
@@ -1375,7 +1410,8 @@ RunSeuratMap2Ref <- function(
 #' \donttest{
 #' ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad")
 #' ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.g1.h5ad",
-#'   subset = 'groups == "g1"')
+#'     subset = 'groups == "g1"'
+#' )
 #'
 #' saveRDS(SeuratObject::pbmc_small, "/tmp/pbmc_small.rds")
 #' ConvertSeuratToAnnData("/tmp/pbmc_small.rds", "/tmp/pbmc_small.h5ad")
@@ -1384,10 +1420,10 @@ RunSeuratMap2Ref <- function(
 ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset = NULL, log = NULL) {
     stopifnot(
         "[ConvertSeuratToAnnData] 'object_or_file' should be a Seurat object or a file path" =
-        is.character(object_or_file) || inherits(object_or_file, "Seurat")
+            is.character(object_or_file) || inherits(object_or_file, "Seurat")
     )
 
-    dig <- digest(capture.output(str(list(object_or_file, assay, subset))), algo = "sha256")
+    dig <- digest(capture.output(utils::str(list(object_or_file, assay, subset))), algo = "sha256")
     dig <- substr(dig, 1, 8)
     outdir <- dirname(outfile)
     dir.create(outdir, showWarnings = FALSE)
@@ -1403,7 +1439,6 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
 
     log <- log %||% get_logger()
     if (inherits(object_or_file, "Seurat") || endsWith(object_or_file, ".rds") || endsWith(object_or_file, ".RDS") || endsWith(object_or_file, ".qs") || endsWith(object_or_file, ".qs2")) {
-
         if (!file.exists(h5seurat_file)) {
             if (is.character(object_or_file)) {
                 log$debug("[ConvertSeuratToAnnData] Reading Seurat object from file ...")
@@ -1429,7 +1464,6 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
             gc()
         }
         object_or_file <- h5seurat_file
-
     } else if (!endsWith(object_or_file, ".h5seurat")) {
         stop(
             "[ConvertSeuratToAnnData] 'object_or_file' should be a Seurat object or ",
@@ -1462,8 +1496,10 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
         ref_type <- hdf5r::h5const$H5R_OBJECT
         ref_obj <- hdf5r::H5R_OBJECT$new(1, self)
         res <- .Call(
-            "R_H5Rcreate", ref_obj$ref,  self$id, ".", ref_type,
-            space$id, FALSE, PACKAGE = "hdf5r")
+            "R_H5Rcreate", ref_obj$ref, self$id, ".", ref_type,
+            space$id, FALSE,
+            PACKAGE = "hdf5r"
+        )
         if (res$return_val < 0) {
             stop("Error creating object reference")
         }
@@ -1485,4 +1521,64 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
     }
     h5ad$close()
     rm(h5ad)
+}
+
+
+#' Convert an AnnData file (h5ad) to a Seurat object or an RDS/qs2 file
+#' @param infile Input file
+#' @param outfile Output file. If "NULL" (default) is given, a temporary file will be created
+#' and saved and the Seurat object will be read from it.
+#' @param assay Assay naem to save in the Seurat object
+#' @param log Logger
+#' @export
+#' @return The Seurat object if `outfile` is "<object>", otherwise NULL.
+ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", log = NULL) {
+    stopifnot(
+        "[ConvertAnnDataToSeurat] 'infile' should be a file path with extension '.h5ad'" =
+            is.character(infile) && endsWith(infile, ".h5ad")
+    )
+    monkey_patch("SeuratDisk", "H5ADToH5Seurat", .H5ADToH5Seurat)
+
+    log <- log %||% get_logger()
+    return_object <- is.null(outfile)
+
+    if (return_object) {
+        destfile <- tempfile(fileext = ".h5seurat")
+    } else {
+        if (
+            !endsWith(outfile, ".h5seurat") &&
+                !endsWith(outfile, ".rds") && !endsWith(outfile, ".RDS") &&
+                !endsWith(outfile, ".qs") && !endsWith(outfile, ".qs2")
+        ) {
+            stop(
+                "[ConvertAnnDataToSeurat] 'outfile' should be either NULL or ",
+                "a file path with extension '.h5seurat', '.rds', '.RDS', '.qs' or '.qs2'"
+            )
+        }
+        if (endsWith(outfile, ".h5seurat")) {
+            destfile <- outfile
+        } else {
+            destfile <- tempfile(fileext = ".h5seurat")
+        }
+        outdir <- dirname(outfile)
+        dir.create(outdir, showWarnings = FALSE)
+    }
+
+    log$debug("[ConvertAnnDataToSeurat] Converting h5ad file to h5seurat file ...")
+    SeuratDisk::Convert(infile, destfile, assay = assay, overwrite = TRUE)
+
+    if (identical(destfile, outfile)) {
+        # already converted to the desired output file
+        return(NULL)
+    }
+
+    log$debug("[ConvertAnnDataToSeurat] Loading h5seurat file ...")
+    object <- SeuratDisk::LoadH5Seurat(destfile)
+
+    if (return_object) {
+        return(object)
+    }
+
+    log$debug("[ConvertAnnDataToSeurat] Saved Seurat object to {outfile}")
+    save_obj(object, outfile)
 }

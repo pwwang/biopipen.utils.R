@@ -79,7 +79,7 @@ RunGSEAPreRank <- function(
         expr_neg_std <- rowSds(as.matrix(exprs[, classes == control, drop = FALSE]), na.rm = TRUE, useNames = TRUE)
     }
     # add a small random number to avoid division by zero
-    rands <- rnorm(length(expr_neg_std)) * 1e-6
+    rands <- stats::rnorm(length(expr_neg_std)) * 1e-6
 
     if (method %in% c("s2n", "signal_to_noise")) {
         out <- (expr_pos_mean - expr_neg_mean) / (expr_pos_std + expr_neg_std + rands)

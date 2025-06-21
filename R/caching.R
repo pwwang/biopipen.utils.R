@@ -253,6 +253,9 @@ Cache <- R6::R6Class(
         #' Save an object/file/directory/prefix to cache
         #' @param data The object to cache, or NULL for non-"object" kinds
         save = function(data = NULL) {
+            if (isFALSE(self$cache_dir)) {
+                return(invisible())
+            }
             if (is.null(self$cache_dir) || !is.character(self$cache_dir) || !nzchar(self$cache_dir)) {
                 stop("[Cache$save()] 'cache$cache_dir' must be a valid directory path.")
             }
