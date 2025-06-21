@@ -1567,6 +1567,50 @@ ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", log = 
     log$debug("[ConvertAnnDataToSeurat] Converting h5ad file to h5seurat file ...")
     SeuratDisk::Convert(infile, destfile, assay = assay, overwrite = TRUE)
 
+    # Fixing categorical data
+    # See: https://github.com/mojaveazure/seurat-disk/issues/109#issuecomment-1722394184
+    f <- hdf5r::H5File$new(destfile, "r+")
+    groups <- f$ls(recursive = TRUE)
+
+    for (name in groups$name[grepl("categories", groups$name)]) {
+        names <- strsplit(name, "/")[[1]]
+        lvl_names <- c(names[1:length(names) - 1], "levels")
+        lvl_names <- paste(lvl_names, collapse = "/")
+
+        # check codes
+        code_names <- c(names[1:length(names) - 1], "codes")
+        code_names <- paste(code_names, collapse = "/")
+        codes <- f[[code_names]]$read()
+        # print(codes)
+        if (any(codes < 0)) {
+            f$create_dataset(
+                name = lvl_names,
+                robj = c("<NA>", as.character(f[[name]]$read())),
+                dtype = hdf5r::H5T_STRING$new(size = Inf)
+            )
+        } else {
+            f[[lvl_names]] <- f[[name]]
+        }
+    }
+
+    for (name in groups$name[grepl("codes", groups$name)]) {
+        names <- strsplit(name, "/")[[1]]
+        names <- c(names[1:length(names) - 1], "values")
+        new_name <- paste(names, collapse = "/")
+        f[[new_name]] <- f[[name]]
+        grp <- f[[new_name]]
+        codes <- grp$read()
+        if (any(codes < 0)) {
+            codes <- ifelse(codes < 0, 1, codes + 2)
+        } else {
+            codes <- codes + 1
+        }
+        grp$write(args = list(1:grp$dims), value = codes)
+    }
+
+    f$close_all()
+    # Done fixing categorical data
+
     if (identical(destfile, outfile)) {
         # already converted to the desired output file
         return(NULL)
