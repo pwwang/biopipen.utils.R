@@ -1,10 +1,85 @@
+#' Convert H5D or H5Group to a list
+#'
+#' When the structure of the HDF5 file is miscellaneous, simply
+#' using `as.list()` will not work.
+#' @param h5group An H5D or H5Group object
+#' @return A list representation of the H5D or H5Group
+#' @keywords internal
+h5group_to_list <- function(h5group) {
+    result <- list()
+    for (name in names(h5group)) {
+        obj <- h5group[[name]]
+        if (inherits(obj, "H5D")) {
+            value <- obj$read()
+            # Optionally: preserve dataset-level attributes
+            attrs <- obj$attr
+            if (length(attrs) > 0) {
+                attributes(value) <- c(attributes(value), as.list(attrs))
+            }
+            result[[name]] <- value
+        } else if (inherits(obj, "H5Group")) {
+            result[[name]] <- h5group_to_list(obj)
+        } else {
+            result[[name]] <- NULL
+        }
+    }
+
+    group_attrs <- h5group$attr
+    if (length(group_attrs) > 0) {
+        attributes(result) <- c(attributes(result), as.list(group_attrs))
+    }
+
+    return(result)
+}
+
+#' Then write the list to a group
+#'
+#' This function writes a list to an H5Group, creating datasets for each element.
+#' If the list contains nested lists, it will create subgroups.
+#' @param h5fg An H5File or H5Group object where the group will be created
+#' @param name The name of the group to create
+#' @param lst The list to write to the group
+#' @return The created H5Group object
+#' @keywords internal
+list_to_h5group <- function(h5fg, name, lst) {
+    if (name %in% names(h5fg)) {
+        h5fg$link_delete(name)  # preferred method to delete group or dataset
+    }
+    grp <- h5fg$create_group(name)
+    for (key in names(lst)) {
+        value <- lst[[key]]
+        if (is.list(value)) {
+            # Recurse for nested list
+            list_to_h5group(grp, key, value)
+        } else {
+            dset <- grp[[key]] <- value
+            # Write attributes on scalar items (if any)
+            attrs <- attributes(value)
+            if (!is.null(attrs)) {
+                for (attr_name in names(attrs)) {
+                    dset$attr[[attr_name]] <- attrs[[attr_name]]
+                }
+            }
+        }
+    }
+    # Write attributes for the group itself (like R.class)
+    group_attrs <- attributes(lst)
+    if (!is.null(group_attrs)) {
+        for (attr_name in names(group_attrs)) {
+            grp$create_attr(attr_name, group_attrs[[attr_name]])
+        }
+    } else {
+        grp$create_attr("R.class", "list")  # Default class if not set
+    }
+    invisible(grp)
+}
 
 #' SeuratDisk's "Project<-.h5Seurat" function
 #' @keywords internal
 ".set_h5_seurat_project<-" <- function(object, ..., value) {
-    object$attr_delete(attr_name = 'project')
+    object$attr_delete(attr_name = "project")
     object$create_attr(
-        attr_name = 'project',
+        attr_name = "project",
         robj = value,
         dtype = SeuratDisk:::GuessDType(x = value)
     )

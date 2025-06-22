@@ -1565,7 +1565,7 @@ ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", log = 
     }
 
     log$debug("[ConvertAnnDataToSeurat] Converting h5ad file to h5seurat file ...")
-    SeuratDisk::Convert(infile, destfile, assay = assay, overwrite = TRUE)
+    SeuratDisk::Convert(infile, destfile, assay = assay %||% "RNA", overwrite = TRUE)
 
     # Fixing categorical data
     # See: https://github.com/mojaveazure/seurat-disk/issues/109#issuecomment-1722394184
@@ -1608,6 +1608,16 @@ ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", log = 
         grp$write(args = list(1:grp$dims), value = codes)
     }
 
+    # make as.list() works on misc and tools
+    if (!is.null(f[["misc"]])) {
+        lst <- h5group_to_list(f[["misc"]])
+        list_to_h5group(f, "misc", lst)
+    }
+    if (!is.null(f[["tools"]])) {
+        lst <- h5group_to_list(f[["tools"]])
+        list_to_h5group(f, "tools", lst)
+    }
+
     f$close_all()
     # Done fixing categorical data
 
@@ -1617,7 +1627,7 @@ ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", log = 
     }
 
     log$debug("[ConvertAnnDataToSeurat] Loading h5seurat file ...")
-    object <- SeuratDisk::LoadH5Seurat(destfile)
+    object <- SeuratDisk::LoadH5Seurat(destfile, misc = FALSE, tools = FALSE)
 
     if (return_object) {
         return(object)
