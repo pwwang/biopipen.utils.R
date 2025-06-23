@@ -43,7 +43,7 @@ h5group_to_list <- function(h5group) {
 #' @keywords internal
 list_to_h5group <- function(h5fg, name, lst) {
     if (name %in% names(h5fg)) {
-        h5fg$link_delete(name)  # preferred method to delete group or dataset
+        h5fg$link_delete(name) # preferred method to delete group or dataset
     }
     grp <- h5fg$create_group(name)
     for (key in names(lst)) {
@@ -57,7 +57,12 @@ list_to_h5group <- function(h5fg, name, lst) {
             attrs <- attributes(value)
             if (!is.null(attrs)) {
                 for (attr_name in names(attrs)) {
-                    dset$create_attr(attr_name, attrs[[attr_name]])
+                    tryCatch(
+                        expr = {
+                            dset$create_attr(attr_name, attrs[[attr_name]])
+                        },
+                        error = function(e) {}
+                    )
                 }
             }
         }
@@ -69,7 +74,7 @@ list_to_h5group <- function(h5fg, name, lst) {
             grp$create_attr(attr_name, group_attrs[[attr_name]])
         }
     } else {
-        grp$create_attr("R.class", "list")  # Default class if not set
+        grp$create_attr("R.class", "list") # Default class if not set
     }
     invisible(grp)
 }
