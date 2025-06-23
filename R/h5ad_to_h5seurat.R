@@ -57,7 +57,7 @@ list_to_h5group <- function(h5fg, name, lst) {
             attrs <- attributes(value)
             if (!is.null(attrs)) {
                 for (attr_name in names(attrs)) {
-                    dset$attr[[attr_name]] <- attrs[[attr_name]]
+                    dset$create_attr(attr_name, attrs[[attr_name]])
                 }
             }
         }
