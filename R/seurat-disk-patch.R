@@ -12,6 +12,11 @@
         stop("At least one of 'counts' or 'data' must be loaded", call. = FALSE)
     }
     assay.group <- file[["assays"]][[assay]]
+    if (paste0("layer_features_", assay) %in% names(x = file[["misc"]])) {
+        layer_features <- SeuratDisk:::FixFeatures(file[["misc"]][[paste0("layer_features_", assay)]][])
+    } else {
+        layer_features <- NULL
+    }
     features <- SeuratDisk:::FixFeatures(features = assay.group[["features"]][])
     # Add counts if not data, otherwise add data
     if ("counts" %in% slots && !"data" %in% slots) {
@@ -19,7 +24,9 @@
             message("Initializing ", assay, " with counts")
         }
         counts <- as.matrix(x = assay.group[["counts"]])
-        if (length(features) == nrow(counts)) {
+        if (!is.null(x = layer_features)) {
+            rownames(x = counts) <- layer_features
+        } else {
             rownames(x = counts) <- features
         }
         colnames(x = counts) <- SeuratObject::Cells(x = file)
@@ -29,7 +36,9 @@
             message("Initializing ", assay, " with data")
         }
         data <- as.matrix(x = assay.group[["data"]])
-        if (length(features) == nrow(data)) {
+        if (!is.null(x = layer_features)) {
+            rownames(x = data) <- layer_features
+        } else {
             rownames(x = data) <- features
         }
         colnames(x = data) <- SeuratObject::Cells(x = file)
@@ -47,6 +56,8 @@
             tryCatch({
                 rownames(x = dat) <- if (slot == "scale.data") {
                     FixFeatures(features = assay.group[["scaled.features"]][])
+                } else if (!is.null(x = layer_features)) {
+                    layer_features
                 } else {
                     features
                 }
