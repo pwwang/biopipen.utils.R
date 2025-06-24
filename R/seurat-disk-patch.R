@@ -12,11 +12,14 @@
         stop("At least one of 'counts' or 'data' must be loaded", call. = FALSE)
     }
     assay.group <- file[["assays"]][[assay]]
+    # The features might be different from the features in the
+    # assay group, so we allow to get them from the misc slot
     if (paste0("layer_features_", assay) %in% names(x = file[["misc"]])) {
         layer_features <- SeuratDisk:::FixFeatures(file[["misc"]][[paste0("layer_features_", assay)]][])
     } else {
         layer_features <- NULL
     }
+
     features <- SeuratDisk:::FixFeatures(features = assay.group[["features"]][])
     # Add counts if not data, otherwise add data
     if ("counts" %in% slots && !"data" %in% slots) {
@@ -24,7 +27,7 @@
             message("Initializing ", assay, " with counts")
         }
         counts <- as.matrix(x = assay.group[["counts"]])
-        if (!is.null(x = layer_features)) {
+        if (length(x = layer_features) == nrow(x = counts)) {
             rownames(x = counts) <- layer_features
         } else {
             rownames(x = counts) <- features
@@ -36,7 +39,7 @@
             message("Initializing ", assay, " with data")
         }
         data <- as.matrix(x = assay.group[["data"]])
-        if (!is.null(x = layer_features)) {
+        if (length(x = layer_features) == nrow(x = data)) {
             rownames(x = data) <- layer_features
         } else {
             rownames(x = data) <- features
@@ -47,7 +50,7 @@
     SeuratObject::Key(object = obj) <- SeuratObject::Key(object = assay.group)
     # Add remaining slots
     for (slot in slots) {
-        if (SeuratDisk:::IsMatrixEmpty(x = SeuratObject::GetAssayData(object = obj, slot = slot))) {
+        if (SeuratDisk:::IsMatrixEmpty(x = SeuratObject::GetAssayData(object = obj, layer = slot))) {
             if (verbose) {
                 message("Adding ", slot, " for ", assay)
             }
@@ -56,13 +59,13 @@
             tryCatch({
                 rownames(x = dat) <- if (slot == "scale.data") {
                     FixFeatures(features = assay.group[["scaled.features"]][])
-                } else if (!is.null(x = layer_features)) {
+                } else if (length(x = layer_features) == nrow(x = dat)) {
                     layer_features
                 } else {
                     features
                 }
             }, error = function(e) {})
-            obj <- SeuratObject:::SetAssayData(object = obj, slot = slot, new.data = dat)
+            obj <- SeuratObject:::SetAssayData(object = obj, layer = slot, new.data = dat)
         }
     }
     # Add meta features
