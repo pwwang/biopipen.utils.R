@@ -1,3 +1,116 @@
+#' Patch for SeuratDisk's AssembleAssay function
+#' @keywords internal
+.AssembleAssay <- function(assay, file, slots = NULL, verbose = TRUE) {
+    index <- file$index()
+    if (!assay %in% names(x = index)) {
+        stop("Cannot find assay ", assay, " in this h5Seurat file", call. = FALSE)
+    }
+    slots.assay <- names(x = Filter(f = isTRUE, x = index[[assay]]$slots))
+    slots <- slots %||% slots.assay
+    slots <- match.arg(arg = slots, choices = slots.assay, several.ok = TRUE)
+    if (!any(c("counts", "data") %in% slots)) {
+        stop("At least one of 'counts' or 'data' must be loaded", call. = FALSE)
+    }
+    assay.group <- file[["assays"]][[assay]]
+    features <- SeuratDisk:::FixFeatures(features = assay.group[["features"]][])
+    # Add counts if not data, otherwise add data
+    if ("counts" %in% slots && !"data" %in% slots) {
+        if (verbose) {
+            message("Initializing ", assay, " with counts")
+        }
+        counts <- as.matrix(x = assay.group[["counts"]])
+        if (length(features) == nrow(counts)) {
+            rownames(x = counts) <- features
+        }
+        colnames(x = counts) <- SeuratObject::Cells(x = file)
+        obj <- SeuratObject::CreateAssayObject(counts = counts, min.cells = -1, min.features = -1)
+    } else {
+        if (verbose) {
+            message("Initializing ", assay, " with data")
+        }
+        data <- as.matrix(x = assay.group[["data"]])
+        if (length(features) == nrow(data)) {
+            rownames(x = data) <- features
+        }
+        colnames(x = data) <- SeuratObject::Cells(x = file)
+        obj <- SeuratObject::CreateAssayObject(data = data)
+    }
+    SeuratObject::Key(object = obj) <- SeuratObject::Key(object = assay.group)
+    # Add remaining slots
+    for (slot in slots) {
+        if (SeuratDisk:::IsMatrixEmpty(x = SeuratObject::GetAssayData(object = obj, slot = slot))) {
+            if (verbose) {
+                message("Adding ", slot, " for ", assay)
+            }
+            dat <- as.matrix(x = assay.group[[slot]])
+            colnames(x = dat) <- SeuratObject::Cells(x = file)
+            tryCatch({
+                rownames(x = dat) <- if (slot == "scale.data") {
+                    FixFeatures(features = assay.group[["scaled.features"]][])
+                } else {
+                    features
+                }
+            }, error = function(e) {})
+            obj <- SeuratObject:::SetAssayData(object = obj, slot = slot, new.data = dat)
+        }
+    }
+    # Add meta features
+    if (assay.group$exists(name = "meta.features")) {
+        if (verbose) {
+            message("Adding feature-level metadata for ", assay)
+        }
+        meta.data <- as.data.frame(
+            x = assay.group[["meta.features"]],
+            row.names = features
+        )
+        if (ncol(x = meta.data)) {
+            obj <- SeuratObject::AddMetaData(
+                object = obj,
+                metadata = meta.data
+            )
+        }
+    }
+    # Add variable feature information
+    if (assay.group$exists(name = "variable.features")) {
+        if (verbose) {
+            message("Adding variable feature information for ", assay)
+        }
+        SeuratObject::VariableFeatures(object = obj) <- assay.group[["variable.features"]][]
+    }
+    # Add miscellaneous information
+    if (assay.group$exists(name = "misc")) {
+        if (verbose) {
+            message("Adding miscellaneous information for ", assay)
+        }
+        slot(object = obj, name = "misc") <- as.list(x = assay.group[["misc"]])
+    }
+    if (assay.group$attr_exists(attr_name = "s4class")) {
+        classdef <- unlist(x = strsplit(
+            x = hdf5r::h5attr(x = assay.group, which = "s4class"),
+            split = ":"
+        ))
+        pkg <- classdef[1]
+        cls <- classdef[2]
+        formal <- methods::getClassDef(Class = cls, package = pkg, inherits = FALSE)
+        missing <- setdiff(
+            x = methods::slotNames(x = formal),
+            y = methods::slotNames(x = methods::getClass(Class = "Assay"))
+        )
+        missing <- intersect(x = missing, y = names(x = assay.group))
+        missing <- sapply(
+            X = missing,
+            FUN = function(x) {
+                return(as.list(x = assay.group[[x]]))
+            },
+            simplify = FALSE
+        )
+        obj <- c(SeuratObject::S4ToList(object = obj), missing)
+        attr(x = obj, which = "classDef") <- paste(classdef, collapse = ":")
+        obj <- SeuratObject::ListToS4(x = obj)
+    }
+    return(obj)
+}
+
 #' Convert H5D or H5Group to a list
 #'
 #' When the structure of the HDF5 file is miscellaneous, simply

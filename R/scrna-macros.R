@@ -1538,6 +1538,7 @@ ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", log = 
             is.character(infile) && endsWith(infile, ".h5ad")
     )
     monkey_patch("SeuratDisk", "H5ADToH5Seurat", .H5ADToH5Seurat)
+    monkey_patch("SeuratDisk", "AssembleAssay", .AssembleAssay)
 
     log <- log %||% get_logger()
     return_object <- is.null(outfile)
