@@ -268,7 +268,6 @@ monkey_patch <- function(namespace, function_name, new_function) {
     lockBinding(function_name, ns)
 }
 
-
 #' Read and write objects to/from files
 #'
 #' @rdname read_save_object

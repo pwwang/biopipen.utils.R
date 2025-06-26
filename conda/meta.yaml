@@ -1,6 +1,6 @@
 package:
   name: r-biopipen.utils
-  version: 0.1.0
+  version: 0.2.0
 
 source:
   path: ..
@@ -15,88 +15,40 @@ requirements:
   host:
     - r-base
     - r-bracer
-    - r-clustree
-    - r-concaveman
     - r-digest
     - r-doubletfinder
-    - r-dplyr
-    - r-enrichr
-    - r-ggplot2
-    - r-ggwordcloud
-    - r-ggalluvial
-    - r-ggvenndiagram
-    - r-ggupset
-    - r-ggpubr
-    - r-ggforce
-    - r-ggraph
-    - r-ggridges
-    - r-hexbin
-    - r-igraph
-    - r-inext
+    - r-enrichit
     - r-jsonlite
     - r-logger
-    - r-matrix
     - r-r6
-    - r-rlang
-    - r-scales
     - r-seurat
-    - r-seuratobject
-    - r-scattermore
     - r-testthat
     - r-tibble
-    - r-tidyr
     - r-tidyseurat
     - r-zip
     - bioconda::bioconductor-biocparallel
-    - bioconda::bioconductor-complexheatmap
     - bioconda::bioconductor-mygene
     - bioconda::bioconductor-scdblfinder
-    - pwwang::r-plotthis
     - pwwang::r-scplotter
-    - pwwang::r-gglogger
 
   run:
     - r-base
     - r-bracer
-    - r-clustree
-    - r-concaveman
     - r-digest
     - r-doubletfinder
-    - r-dplyr
-    - r-enrichr
-    - r-ggplot2
-    - r-ggwordcloud
-    - r-ggalluvial
-    - r-ggvenndiagram
-    - r-ggupset
-    - r-ggpubr
-    - r-ggforce
-    - r-ggraph
-    - r-ggridges
-    - r-hexbin
-    - r-igraph
-    - r-inext
+    - r-enrichit
     - r-jsonlite
     - r-logger
-    - r-matrix
     - r-r6
-    - r-rlang
-    - r-scales
     - r-seurat
-    - r-seuratobject
-    - r-scattermore
     - r-testthat
     - r-tibble
-    - r-tidyr
     - r-tidyseurat
     - r-zip
     - bioconda::bioconductor-biocparallel
-    - bioconda::bioconductor-complexheatmap
     - bioconda::bioconductor-mygene
     - bioconda::bioconductor-scdblfinder
-    - pwwang::r-plotthis
     - pwwang::r-scplotter
-    - pwwang::r-gglogger
 
 test:
   commands:

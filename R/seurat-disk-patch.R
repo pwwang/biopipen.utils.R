@@ -1,6 +1,10 @@
 #' Patch for SeuratDisk's AssembleAssay function
 #' @keywords internal
 .AssembleAssay <- function(assay, file, slots = NULL, verbose = TRUE) {
+    FixFeatures <- utils::getFromNamespace(name = "FixFeatures", ns = "SeuratDisk")
+    IsMatrixEmpty <- utils::getFromNamespace(name = "IsMatrixEmpty", ns = "SeuratDisk")
+    SetAssayData <- utils::getFromNamespace(name = "SetAssayData", ns = "SeuratObject")
+
     index <- file$index()
     if (!assay %in% names(x = index)) {
         stop("Cannot find assay ", assay, " in this h5Seurat file", call. = FALSE)
@@ -15,12 +19,12 @@
     # The features might be different from the features in the
     # assay group, so we allow to get them from the misc slot
     if (paste0("layer_features_", assay) %in% names(x = file[["misc"]])) {
-        layer_features <- SeuratDisk:::FixFeatures(file[["misc"]][[paste0("layer_features_", assay)]][])
+        layer_features <- FixFeatures(file[["misc"]][[paste0("layer_features_", assay)]][])
     } else {
         layer_features <- NULL
     }
 
-    features <- SeuratDisk:::FixFeatures(features = assay.group[["features"]][])
+    features <- FixFeatures(features = assay.group[["features"]][])
     # Add counts if not data, otherwise add data
     if ("counts" %in% slots && !"data" %in% slots) {
         if (verbose) {
@@ -50,7 +54,7 @@
     SeuratObject::Key(object = obj) <- SeuratObject::Key(object = assay.group)
     # Add remaining slots
     for (slot in slots) {
-        if (SeuratDisk:::IsMatrixEmpty(x = SeuratObject::GetAssayData(object = obj, layer = slot))) {
+        if (IsMatrixEmpty(x = SeuratObject::GetAssayData(object = obj, layer = slot))) {
             if (verbose) {
                 message("Adding ", slot, " for ", assay)
             }
@@ -65,7 +69,7 @@
                     features
                 }
             }, error = function(e) {})
-            obj <- SeuratObject:::SetAssayData(object = obj, layer = slot, new.data = dat)
+            obj <- SetAssayData(object = obj, layer = slot, new.data = dat)
         }
     }
     # Add meta features
@@ -96,7 +100,7 @@
         if (verbose) {
             message("Adding miscellaneous information for ", assay)
         }
-        slot(object = obj, name = "misc") <- as.list(x = assay.group[["misc"]])
+        methods::slot(object = obj, name = "misc") <- as.list(x = assay.group[["misc"]])
     }
     if (assay.group$attr_exists(attr_name = "s4class")) {
         classdef <- unlist(x = strsplit(
@@ -209,11 +213,13 @@ list_to_h5group <- function(h5fg, name, lst) {
 #' SeuratDisk's "Project<-.h5Seurat" function
 #' @keywords internal
 ".set_h5_seurat_project<-" <- function(object, ..., value) {
+    GuessDType <- utils::getFromNamespace(name = "GuessDType", ns = "SeuratDisk")
+
     object$attr_delete(attr_name = "project")
     object$create_attr(
         attr_name = "project",
         robj = value,
-        dtype = SeuratDisk:::GuessDType(x = value)
+        dtype = GuessDType(x = value)
     )
     return(invisible(x = object))
 }
@@ -233,7 +239,18 @@ list_to_h5group <- function(h5fg, name, lst) {
             stop("Destination h5Seurat file exists", call. = FALSE)
         }
     }
-    dfile <- SeuratDisk::h5Seurat$new(filename = dest, mode = SeuratDisk:::WriteMode(overwrite = FALSE))
+    WriteMode <- utils::getFromNamespace(name = "WriteMode", ns = "SeuratDisk")
+    AttrExists <- utils::getFromNamespace(name = "AttrExists", ns = "SeuratDisk")
+    IsDType <- utils::getFromNamespace(name = "IsDType", ns = "SeuratDisk")
+    GuessDType <- utils::getFromNamespace(name = "GuessDType", ns = "SeuratDisk")
+    Exists <- utils::getFromNamespace(name = "Exists", ns = "SeuratDisk")
+    Transpose <- utils::getFromNamespace(name = "Transpose", ns = "SeuratDisk")
+    BoolToInt <- utils::getFromNamespace(name = "BoolToInt", ns = "SeuratDisk")
+    UpdateKey <- utils::getFromNamespace(name = "UpdateKey", ns = "SeuratDisk")
+    H5Path <- utils::getFromNamespace(name = "H5Path", ns = "SeuratDisk")
+    StringType <- utils::getFromNamespace(name = "StringType", ns = "SeuratDisk")
+
+    dfile <- SeuratDisk::h5Seurat$new(filename = dest, mode = WriteMode(overwrite = FALSE))
     # Get rownames from an H5AD data frame
     #
     # @param dset Name of data frame
@@ -243,7 +260,7 @@ list_to_h5group <- function(h5fg, name, lst) {
     GetRownames <- function(dset) {
         if (inherits(x = source[[dset]], what = "H5Group")) {
             # rownames <- if (source[[dset]]$attr_exists(attr_name = '_index')) {
-            rownames <- if (isTRUE(x = SeuratDisk:::AttrExists(x = source[[dset]], name = "_index"))) {
+            rownames <- if (isTRUE(x = AttrExists(x = source[[dset]], name = "_index"))) {
                 hdf5r::h5attr(x = source[[dset]], which = "_index")
             } else if (source[[dset]]$exists(name = "_index")) {
                 "_index"
@@ -284,7 +301,7 @@ list_to_h5group <- function(h5fg, name, lst) {
                         robj = dfgroup[[tname]][] + 1L,
                         dtype = dfgroup[[tname]]$get_type()
                     )
-                    if (SeuratDisk:::IsDType(x = dfgroup[["__categories"]][[i]], dtype = "H5T_STRING")) {
+                    if (IsDType(x = dfgroup[["__categories"]][[i]], dtype = "H5T_STRING")) {
                         dfgroup$obj_copy_to(
                             dst_loc = dfgroup,
                             dst_name = paste0(i, "/levels"),
@@ -308,7 +325,7 @@ list_to_h5group <- function(h5fg, name, lst) {
                 # dfile[['var']]$create_attr(
                 #   attr_name = 'column-order',
                 #   robj = col.order,
-                #   dtype = SeuratDisk:::GuessDType(x = col.order)
+                #   dtype = GuessDType(x = col.order)
                 # )
                 # dfile[['var']]$attr_delete(attr_name = 'old-column-order')
             }
@@ -346,12 +363,12 @@ list_to_h5group <- function(h5fg, name, lst) {
             dst_name = dst
         )
         # if (assay.group[[dst]]$attr_exists(attr_name = 'shape')) {
-        if (isTRUE(x = SeuratDisk:::AttrExists(x = assay.group[[dst]], name = "shape"))) {
+        if (isTRUE(x = AttrExists(x = assay.group[[dst]], name = "shape"))) {
             dims <- rev(x = hdf5r::h5attr(x = assay.group[[dst]], which = "shape"))
             assay.group[[dst]]$create_attr(
                 attr_name = "dims",
                 robj = dims,
-                dtype = SeuratDisk:::GuessDType(x = dims)
+                dtype = GuessDType(x = dims)
             )
             assay.group[[dst]]$attr_delete(attr_name = "shape")
         }
@@ -373,7 +390,7 @@ list_to_h5group <- function(h5fg, name, lst) {
             expr = assay.group$create_dataset(
                 name = "features",
                 robj = rownames(x = source[[features.source]]),
-                dtype = SeuratDisk:::GuessDType(x = "")
+                dtype = GuessDType(x = "")
             ),
             error = function(...) {
                 stop("Cannot find feature names in this H5AD file", call. = FALSE)
@@ -394,7 +411,7 @@ list_to_h5group <- function(h5fg, name, lst) {
                 expr = assay.group$create_dataset(
                     name = "scaled.features",
                     robj = rownames(x = source[["var"]]),
-                    dtype = SeuratDisk:::GuessDType(x = "")
+                    dtype = GuessDType(x = "")
                 ),
                 error = function(...) {
                     stop("Cannot find scaled features in this H5AD file", call. = FALSE)
@@ -405,7 +422,7 @@ list_to_h5group <- function(h5fg, name, lst) {
     assay.group$create_attr(
         attr_name = "key",
         robj = paste0(tolower(x = assay), "_"),
-        dtype = SeuratDisk:::GuessDType(x = assay)
+        dtype = GuessDType(x = assay)
     )
     # Set default assay
     SeuratObject::DefaultAssay(object = dfile) <- assay
@@ -418,7 +435,7 @@ list_to_h5group <- function(h5fg, name, lst) {
         )
     }
     # TODO: Support compound metafeatures
-    if (SeuratDisk:::Exists(x = source, name = "raw/var")) {
+    if (Exists(x = source, name = "raw/var")) {
         if (inherits(x = source[["raw/var"]], what = "H5Group")) {
             if (verbose) {
                 message("Adding meta.features from raw/var")
@@ -478,7 +495,7 @@ list_to_h5group <- function(h5fg, name, lst) {
     }
     ColToFactor(dfgroup = assay.group[["meta.features"]])
     # if (assay.group[['meta.features']]$attr_exists(attr_name = 'column-order')) {
-    if (isTRUE(x = SeuratDisk:::AttrExists(x = assay.group[["meta.features"]], name = "column-order"))) {
+    if (isTRUE(x = AttrExists(x = assay.group[["meta.features"]], name = "column-order"))) {
         colnames <- hdf5r::h5attr(
             x = assay.group[["meta.features"]],
             which = "column-order"
@@ -486,7 +503,7 @@ list_to_h5group <- function(h5fg, name, lst) {
         assay.group[["meta.features"]]$create_attr(
             attr_name = "colnames",
             robj = colnames,
-            dtype = SeuratDisk:::GuessDType(x = colnames)
+            dtype = GuessDType(x = colnames)
         )
     }
     if (inherits(x = source[["var"]], what = "H5Group")) {
@@ -508,12 +525,12 @@ list_to_h5group <- function(h5fg, name, lst) {
         )
         ColToFactor(dfgroup = dfile[["meta.data"]])
         # if (dfile[['meta.data']]$attr_exists(attr_name = 'column-order')) {
-        if (isTRUE(x = SeuratDisk:::AttrExists(x = dfile[["meta.data"]], name = "column-order"))) {
+        if (isTRUE(x = AttrExists(x = dfile[["meta.data"]], name = "column-order"))) {
             colnames <- hdf5r::h5attr(x = dfile[["meta.data"]], which = "column-order")
             dfile[["meta.data"]]$create_attr(
                 attr_name = "colnames",
                 robj = colnames,
-                dtype = SeuratDisk:::GuessDType(x = colnames)
+                dtype = GuessDType(x = colnames)
             )
         }
         rownames <- GetRownames(dset = "obs")
@@ -538,7 +555,7 @@ list_to_h5group <- function(h5fg, name, lst) {
         dfile$create_dataset(
             name = "cell.names",
             robj = paste0("Cell", seq.default(from = 1, to = ncells)),
-            dtype = SeuratDisk:::GuessDType(x = "Cell1")
+            dtype = GuessDType(x = "Cell1")
         )
     }
     # Add dimensional reduction information
@@ -549,7 +566,7 @@ list_to_h5group <- function(h5fg, name, lst) {
                 sreduc <- gsub(pattern = "^X_", replacement = "", x = reduc)
                 reduc.group <- dfile[["reductions"]]$create_group(name = sreduc)
                 message("Adding ", reduc, " as cell embeddings for ", sreduc)
-                SeuratDisk:::Transpose(
+                Transpose(
                     x = source[["obsm"]][[reduc]],
                     dest = reduc.group,
                     dname = "cell.embeddings",
@@ -559,7 +576,7 @@ list_to_h5group <- function(h5fg, name, lst) {
                 reduc.group$create_attr(
                     attr_name = "active.assay",
                     robj = assay,
-                    dtype = SeuratDisk:::GuessDType(x = assay)
+                    dtype = GuessDType(x = assay)
                 )
                 key <- paste0(
                     if (grepl(pattern = "pca", x = sreduc, ignore.case = TRUE)) {
@@ -574,9 +591,9 @@ list_to_h5group <- function(h5fg, name, lst) {
                 reduc.group$create_attr(
                     attr_name = "key",
                     robj = key,
-                    dtype = SeuratDisk:::GuessDType(x = reduc)
+                    dtype = GuessDType(x = reduc)
                 )
-                global <- SeuratDisk:::BoolToInt(x = grepl(
+                global <- BoolToInt(x = grepl(
                     pattern = "tsne|umap",
                     x = sreduc,
                     ignore.case = TRUE
@@ -584,7 +601,7 @@ list_to_h5group <- function(h5fg, name, lst) {
                 reduc.group$create_attr(
                     attr_name = "global",
                     robj = global,
-                    dtype = SeuratDisk:::GuessDType(x = global)
+                    dtype = GuessDType(x = global)
                 )
             }
         } else {
@@ -617,7 +634,7 @@ list_to_h5group <- function(h5fg, name, lst) {
                     if (isTRUE(x = verbose)) {
                         message("Adding ", reduc, " as feature loadings fpr ", sreduc)
                     }
-                    SeuratDisk:::Transpose(
+                    Transpose(
                         x = source[["varm"]][[reduc]],
                         dest = dfile[["reductions"]][[sreduc]],
                         dname = "feature.loadings",
@@ -675,7 +692,7 @@ list_to_h5group <- function(h5fg, name, lst) {
                     dfile[["reductions"]][[reduc]]$create_dataset(
                         name = "stdev",
                         robj = sqrt(x = dfile[["reductions"]][[reduc]][["misc"]][["variance"]][]),
-                        dtype = SeuratDisk:::GuessDType(x = 1.0)
+                        dtype = GuessDType(x = 1.0)
                     )
                 }
             }
@@ -686,20 +703,20 @@ list_to_h5group <- function(h5fg, name, lst) {
     idents <- dfile$create_group(name = "active.ident")
     idents$create_dataset(
         name = "values",
-        dtype = SeuratDisk:::GuessDType(x = 1L),
+        dtype = GuessDType(x = 1L),
         space = hdf5r::H5S$new(dims = dfile[["cell.names"]]$dims)
     )
     idents$create_dataset(
         name = "levels",
         robj = "AnnData",
-        dtype = SeuratDisk:::GuessDType(x = "AnnData")
+        dtype = GuessDType(x = "AnnData")
     )
     idents[["values"]]$write(
         args = list(seq.default(from = 1, to = idents[["values"]]$dims)),
         value = 1L
     )
     # Add nearest-neighbor graph
-    if (SeuratDisk:::Exists(x = source, name = "uns/neighbors/distances")) {
+    if (Exists(x = source, name = "uns/neighbors/distances")) {
         graph.name <- paste(
             assay,
             ifelse(
@@ -718,24 +735,24 @@ list_to_h5group <- function(h5fg, name, lst) {
             dst_name = graph.name
         )
         # if (dfile[['graphs']][[graph.name]]$attr_exists(attr_name = 'shape')) {
-        if (isTRUE(x = SeuratDisk:::AttrExists(x = dfile[["graphs"]], name = "shape"))) {
+        if (isTRUE(x = AttrExists(x = dfile[["graphs"]], name = "shape"))) {
             dfile[["graphs"]][[graph.name]]$create_attr(
                 attr_name = "dims",
                 robj = hdf5r::h5attr(x = dfile[["graphs"]][[graph.name]], which = "shape"),
-                dtype = SeuratDisk:::GuessDType(x = hdf5r::h5attr(
+                dtype = GuessDType(x = hdf5r::h5attr(
                     x = dfile[["graphs"]][[graph.name]],
                     which = "shape"
                 ))
             )
             dfile[["graphs"]][[graph.name]]$attr_delete(attr_name = "shape")
         }
-        if (isTRUE(x = SeuratDisk:::AttrExists(x = dfile[["graphs"]][[graph.name]], name = "assay.used"))) {
+        if (isTRUE(x = AttrExists(x = dfile[["graphs"]][[graph.name]], name = "assay.used"))) {
             dfile[["graphs"]][[graph.name]]$attr_delete(attr_name = "assay.used")
         }
         dfile[["graphs"]][[graph.name]]$create_attr(
             attr_name = "assay.used",
             robj = assay,
-            dtype = SeuratDisk:::GuessDType(x = assay)
+            dtype = GuessDType(x = assay)
         )
     }
     # Add miscellaneous information
@@ -756,7 +773,7 @@ list_to_h5group <- function(h5fg, name, lst) {
         }
     }
     # Add layers
-    if (SeuratDisk:::Exists(x = source, name = "layers")) {
+    if (Exists(x = source, name = "layers")) {
         slots <- c("data")
         if (!isTRUE(x = scaled)) {
             slots <- c(slots, "counts")
@@ -770,8 +787,8 @@ list_to_h5group <- function(h5fg, name, lst) {
             )
             layer.assay$create_attr(
                 attr_name = "key",
-                robj = SeuratDisk:::UpdateKey(key = layer),
-                dtype = SeuratDisk:::GuessDType(x = layer)
+                robj = UpdateKey(key = layer),
+                dtype = GuessDType(x = layer)
             )
             for (slot in slots) {
                 if (verbose) {
@@ -783,12 +800,12 @@ list_to_h5group <- function(h5fg, name, lst) {
                     dst_name = slot
                 )
                 # if (layer.assay[[slot]]$attr_exists(attr_name = 'shape')) {
-                if (isTRUE(x = SeuratDisk:::AttrExists(x = layer.assay[[slot]], name = "shape"))) {
+                if (isTRUE(x = AttrExists(x = layer.assay[[slot]], name = "shape"))) {
                     dims <- rev(x = hdf5r::h5attr(x = layer.assay[[slot]], which = "shape"))
                     layer.assay[[slot]]$create_attr(
                         attr_name = "dims",
                         robj = dims,
-                        dtype = SeuratDisk:::GuessDType(x = dims)
+                        dtype = GuessDType(x = dims)
                     )
                     layer.assay[[slot]]$attr_delete(attr_name = "shape")
                 }
