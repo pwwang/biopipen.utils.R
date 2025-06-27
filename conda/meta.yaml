@@ -6,7 +6,7 @@ source:
   path: ..
 
 build:
-  number: 1
+  number: 2
   rpaths:
     - lib/R/lib/
     - lib/
@@ -30,6 +30,8 @@ requirements:
     - bioconda::bioconductor-mygene
     - bioconda::bioconductor-scdblfinder
     - pwwang::r-scplotter
+    - pwwang::r-seuratdisk
+    - r-qs2
 
   run:
     - r-base
@@ -49,6 +51,8 @@ requirements:
     - bioconda::bioconductor-mygene
     - bioconda::bioconductor-scdblfinder
     - pwwang::r-scplotter
+    - pwwang::r-seuratdisk
+    - r-qs2
 
 test:
   commands:
