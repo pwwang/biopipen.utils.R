@@ -137,11 +137,14 @@ html_escape <- function(text) {
 #' @param ... The names of the variables
 #' named arguments are allowed to rename the variables. `b = "a"` will extract `a` and assign it to `b`
 #' @param keep Keep the extracted variables in the list
+#' @param allow_nonexisting Allow non-existing variables, if `TRUE`, it will not throw an error if the variable is not found
+#' If `FALSE`, it will throw an error if the variable is not found.
+#' The non-existing variables will be extracted as `NULL`.
 #' @param env The environment to assign the extracted variables
 #' @return The list with/ithout the extracted variables
 #'
 #' @export
-extract_vars <- function(x, ..., keep = FALSE, env = parent.frame()) {
+extract_vars <- function(x, ..., keep = FALSE, allow_nonexisting = FALSE, env = parent.frame()) {
     stopifnot("extract_vars: 'x' must be a named list" = is.list(x) && !is.null(names(x)))
     vars <- list(...)
     if (is.null(names(vars))) {
@@ -152,7 +155,11 @@ extract_vars <- function(x, ..., keep = FALSE, env = parent.frame()) {
     }
     nonexist_vars <- setdiff(unlist(vars), names(x))
     if (length(nonexist_vars) > 0) {
-        stop(sprintf("Variable(s) '%s' not found in the list", paste(nonexist_vars, collapse = "', '")))
+        if (!allow_nonexisting) {
+            stop(sprintf("Variable(s) '%s' not found in the list", paste(nonexist_vars, collapse = "', '")))
+        } else {
+            x <- c(x, stats::setNames(rep(list(NULL), length(nonexist_vars)), nonexist_vars))
+        }
     }
     xvars <- x[unlist(vars)]
     names(xvars) <- names(vars)

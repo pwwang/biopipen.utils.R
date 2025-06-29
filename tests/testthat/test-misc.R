@@ -74,6 +74,15 @@ test_that("extract_vars: works with keep", {
     expect_equal(a, 1)
 })
 
+test_that("extract_vars: works with allow_nonexisting", {
+    x <- list(a = 1, b = 2, c = 3)
+    expect_equal(extract_vars(x, "a", "d", allow_nonexisting = TRUE), list(b = 2, c = 3))
+    expect_true(exists("a"))
+    expect_equal(a, 1)
+    expect_true(exists("d"))
+    expect_equal(d, NULL)
+})
+
 test_that("extract_vars: works with env", {
     x <- list(a = 1, b = 2, c = 3)
     new_env <- new.env()

@@ -4,7 +4,13 @@
 \alias{extract_vars}
 \title{Extract variables from a named list}
 \usage{
-extract_vars(x, ..., keep = FALSE, env = parent.frame())
+extract_vars(
+  x,
+  ...,
+  keep = FALSE,
+  allow_nonexisting = FALSE,
+  env = parent.frame()
+)
 }
 \arguments{
 \item{x}{A named list}
@@ -13,6 +19,10 @@ extract_vars(x, ..., keep = FALSE, env = parent.frame())
 named arguments are allowed to rename the variables. \code{b = "a"} will extract \code{a} and assign it to \code{b}}
 
 \item{keep}{Keep the extracted variables in the list}
+
+\item{allow_nonexisting}{Allow non-existing variables, if \code{TRUE}, it will not throw an error if the variable is not found
+If \code{FALSE}, it will throw an error if the variable is not found.
+The non-existing variables will be extracted as \code{NULL}.}
 
 \item{env}{The environment to assign the extracted variables}
 }
