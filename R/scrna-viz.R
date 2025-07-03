@@ -22,19 +22,20 @@
 #' @export
 #' @importFrom rlang sym
 #' @importFrom scales number
-#' @importFrom dplyr slice_head arrange pull filter
+#' @importFrom dplyr slice_head arrange pull filter rename
 #' @examples
 #' \donttest{
-#' degs <- suppressWarnings(RunSeuratDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2"))
+#' degs <- RunSeuratDEAnalysis(scplotter::pancreas_sub, "SubCellType")
 #' VizDEGs(degs, plot_type = "volcano_pct")
 #' VizDEGs(degs, plot_type = "volcano_log2fc")
-#' VizDEGs(degs, plot_type = "violin")
-#' VizDEGs(degs, plot_type = "box")
-#' VizDEGs(degs, plot_type = "bar")
-#' VizDEGs(degs, plot_type = "ridge")
-#' VizDEGs(degs, plot_type = "dim")
-#' # VizDEGs(degs, plot_type = "heatmap")
-#' # VizDEGs(degs, plot_type = "dot")
+#' VizDEGs(degs, plot_type = "violin", genes = 2)
+#' VizDEGs(degs, plot_type = "violin", stack = TRUE, genes = 2)
+#' VizDEGs(degs, plot_type = "box", genes = 2)
+#' VizDEGs(degs, plot_type = "bar", genes = 2, x_text_angle = 90)
+#' VizDEGs(degs, plot_type = "ridge", genes = 2)
+#' VizDEGs(degs, plot_type = "dim", genes = 1)
+#' VizDEGs(degs, plot_type = "heatmap", genes = 5)
+#' VizDEGs(degs, plot_type = "dot", genes = 5)
 #' }
 VizDEGs <- function(
     degs, plot_type = c("volcano_pct", "volcano_log2fc", "violin", "box", "bar", "ridge", "dim", "heatmap", "dot"),
@@ -58,7 +59,7 @@ VizDEGs <- function(
 
         facet_by <- if (are_allmarkers) group.by else NULL
         args <- list(data = degs, x = ifelse(plot_type == "volcano_pct", "diff_pct", "avg_log2FC"),
-            y = "p_val_adj", ylab = "-log10(p_val_adj)", facet_by = facet_by, ...)
+            y = "p_val_adj", ylab = "-log10(p_val_adj)", facet_by = facet_by, label_by = "gene", ...)
         args$y_cutoff <- args$y_cutoff %||% -log10(0.05)
         args$y_cutoff_name <- paste0("p_val_adj = ", number(10 ^ -args$y_cutoff, accuracy = 0.01))
         p <- do_call(VolcanoPlot, args)
@@ -70,11 +71,12 @@ VizDEGs <- function(
             if (!is.null(ident.2)) {
                 object <- filter(object, !!sym(group.by) %in% c(ident.1, ident.2))
             } else {
-                all_idents <- as.character(unique(object@meta.data[[group.by]]))
+                all_idents <- unique(as.character(object@meta.data[[group.by]]))
                 ident.2 <- setdiff(all_idents, ident.1)
                 if (length(ident.2) != 1) {
-                    ident.2 <- ifelse(ident.1 == "Others", "Others_1", "Others")
+                    ident.2 <- ifelse(ident.1 == "Others", "Rest", "Others")
                 }
+                object@meta.data[[group.by]] <- as.character(object@meta.data[[group.by]])
                 object@meta.data[[group.by]][object@meta.data[[group.by]] != ident.1] <- ident.2
             }
             object@meta.data[[group.by]] <- factor(object@meta.data[[group.by]], levels = c(ident.1, ident.2))
@@ -87,14 +89,14 @@ VizDEGs <- function(
         }
 
         if (is.numeric(genes)) {
-            degs <- degs %>%
+            features <- degs %>%
                 dplyr::group_by(!!sym(group.by)) %>%
                 arrange(!!parse_expr(order_by)) %>%
                 slice_head(n = genes) %>%
                 pull("gene") %>%
                 unique()
         } else {
-            degs <- degs %>%
+            features <- degs %>%
                 dplyr::group_by(!!sym(group.by)) %>%
                 arrange(!!parse_expr(order_by)) %>%
                 filter(!!parse_expr(genes)) %>%
@@ -103,14 +105,34 @@ VizDEGs <- function(
         }
 
         if (plot_type == "dim") {
-            p <- FeatureStatPlot(object, features = degs, plot_type = plot_type,
+            p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
                 facet_by = group.by, split_by = TRUE, ...)
         } else if (plot_type == "heatmap") {
-            p <- FeatureStatPlot(object, features = degs, plot_type = plot_type,
+            if (is.null(ident.1)) {
+                deg_group_by <- paste0(" ", group.by)
+                fdata <- degs %>%
+                    dplyr::group_by(!!sym(group.by)) %>%
+                    arrange(!!parse_expr(order_by)) %>%
+                    slice_head(n = genes) %>%
+                    rename(Features = "gene", !!sym(deg_group_by) := group.by)
+
+                fdata[[deg_group_by]] <- factor(fdata[[deg_group_by]], levels = levels(object@meta.data[[group.by]]))
+
+                p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
+                    ident = group.by, show_row_names = show_row_names, show_column_names = show_column_names,
+                    rows_data = fdata, rows_split_by = paste0(deg_group_by), rows_name = "Features",
+                    name = "Expression Level", ...)
+            } else {
+                p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
+                    ident = group.by, show_row_names = show_row_names, show_column_names = show_column_names,
+                    name = "Expression Level", ...)
+            }
+        } else if (plot_type == "dot") {
+            p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
                 ident = group.by, show_row_names = show_row_names, show_column_names = show_column_names,
-                name = "Expression Level", ...)
+                ...)
         } else {
-            p <- FeatureStatPlot(object, features = degs, plot_type = plot_type,
+            p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
                 ident = group.by, ...)
         }
     }

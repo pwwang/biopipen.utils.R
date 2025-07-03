@@ -57,15 +57,16 @@ Visualize differentially expressed genes
 }
 \examples{
 \donttest{
-degs <- suppressWarnings(RunSeuratDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2"))
+degs <- RunSeuratDEAnalysis(scplotter::pancreas_sub, "SubCellType")
 VizDEGs(degs, plot_type = "volcano_pct")
 VizDEGs(degs, plot_type = "volcano_log2fc")
-VizDEGs(degs, plot_type = "violin")
-VizDEGs(degs, plot_type = "box")
-VizDEGs(degs, plot_type = "bar")
-VizDEGs(degs, plot_type = "ridge")
-VizDEGs(degs, plot_type = "dim")
-# VizDEGs(degs, plot_type = "heatmap")
-# VizDEGs(degs, plot_type = "dot")
+VizDEGs(degs, plot_type = "violin", genes = 2)
+VizDEGs(degs, plot_type = "violin", stack = TRUE, genes = 2)
+VizDEGs(degs, plot_type = "box", genes = 2)
+VizDEGs(degs, plot_type = "bar", genes = 2, x_text_angle = 90)
+VizDEGs(degs, plot_type = "ridge", genes = 2)
+VizDEGs(degs, plot_type = "dim", genes = 1)
+VizDEGs(degs, plot_type = "heatmap", genes = 5)
+VizDEGs(degs, plot_type = "dot", genes = 5)
 }
 }
