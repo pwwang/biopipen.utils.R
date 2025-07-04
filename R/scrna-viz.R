@@ -107,7 +107,7 @@ VizDEGs <- function(
         if (plot_type == "dim") {
             p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
                 facet_by = group.by, split_by = TRUE, ...)
-        } else if (plot_type == "heatmap") {
+        } else if (plot_type %in% c("heatmap", "dot")) {
             if (is.null(ident.1)) {
                 deg_group_by <- paste0(" ", group.by)
                 fdata <- degs %>%
@@ -127,10 +127,6 @@ VizDEGs <- function(
                     ident = group.by, show_row_names = show_row_names, show_column_names = show_column_names,
                     name = "Expression Level", ...)
             }
-        } else if (plot_type == "dot") {
-            p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
-                ident = group.by, show_row_names = show_row_names, show_column_names = show_column_names,
-                ...)
         } else {
             p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
                 ident = group.by, ...)
