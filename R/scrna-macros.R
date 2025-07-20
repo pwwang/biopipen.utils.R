@@ -13,6 +13,16 @@
     x
 }
 
+#' Recode the clusters, from 0, 1, 2, ... to x1, x2, x3, ...
+#' @param clusters A numeric vector of clusters
+#' @return A character vector of recoded clusters
+#' @keywords internal
+.recode_clusters <- function(clusters, prefix = "c") {
+    recode <- function(x) paste0(prefix, as.integer(as.character(x)) + 1)
+    clusters <- factor(recode(clusters), levels = recode(levels(clusters)))
+    clusters
+}
+
 #' Expand the resolution for `FindClusters`
 #'
 #' So that we can have 0.1:0.4:0.1 to be expanded to
@@ -599,11 +609,7 @@ RunSeuratTransformation <- function(
     }
 
     log$info("- Running RunPCA ...")
-    RunPCAArgs$npcs <- if (is.null(RunPCAArgs$npcs)) {
-        50
-    } else {
-        min(RunPCAArgs$npcs, ncol(object) - 1)
-    }
+    RunPCAArgs$npcs <- min(RunPCAArgs$npcs %||% 50, ncol(object) - 1, nrow(object) - 1)
 
     log$debug("  RunPCA: {format_args(RunPCAArgs)}")
     RunPCAArgs$object <- object
@@ -668,6 +674,9 @@ RunSeuratClustering <- function(
     } else {
         log$debug("  Arguments: {format_args(RunPCAArgs)}")
         RunPCAArgs$dims <- RunPCAArgs$dims %||% 1:min(30, ncells - 1)
+        RunPCAArgs$dims <- .expand_number(RunPCAArgs$dims)
+        # https://github.com/satijalab/seurat/issues/1914#issuecomment-1008728797
+        RunPCAArgs$npcs <- min(RunPCAArgs$npcs %||% 50, ncol(object) - 1, nrow(object) - 1)
         RunPCAArgs$object <- object
         object <- do_call(RunPCA, RunPCAArgs)
         RunPCAArgs$object <- NULL
@@ -688,6 +697,7 @@ RunSeuratClustering <- function(
     } else {
         log$debug("  Arguments: {format_args(RunUMAPArgs)}")
         RunUMAPArgs$dims <- RunUMAPArgs$dims %||% 1:min(30, ncells - 1)
+        RunUMAPArgs$dims <- .expand_number(RunUMAPArgs$dims)
         RunUMAPArgs$umap.method <- RunUMAPArgs$umap.method %||% "uwot"
         if (RunUMAPArgs$umap.method == "uwot") {
             # https://github.com/satijalab/seurat/issues/4312
@@ -736,13 +746,6 @@ RunSeuratClustering <- function(
     } else {
         log$debug("  Arguments: {format_args(FindClustersArgs)}")
 
-        # recode clusters from 0, 1, 2, ... to c1, c2, c3, ...
-        recode_clusters <- function(clusters) {
-            recode <- function(x) paste0("c", as.integer(as.character(x)) + 1)
-            clusters <- factor(recode(clusters), levels = recode(levels(clusters)))
-            clusters
-        }
-
         # FindClustersArgs$graph.name <- FindClustersArgs$graph.name %||% "RNA_snn"
         FindClustersArgs$object <- object
         FindClustersArgs$random.seed <- FindClustersArgs$random.seed %||% 8525
@@ -754,9 +757,9 @@ RunSeuratClustering <- function(
         gc()
 
         for (clname in FindClustersArgs$cluster.name) {
-            object@meta.data[[clname]] <- recode_clusters(object@meta.data[[clname]])
+            object@meta.data[[clname]] <- .recode_clusters(object@meta.data[[clname]])
         }
-        object@meta.data$seurat_clusters <- recode_clusters(object@meta.data$seurat_clusters)
+        object@meta.data$seurat_clusters <- .recode_clusters(object@meta.data$seurat_clusters)
         Idents(object) <- "seurat_clusters"
 
         ident_table <- table(object@meta.data$seurat_clusters)
@@ -772,6 +775,180 @@ RunSeuratClustering <- function(
 
     object
 }
+
+#' Run subset clustering on a Seurat object
+#'
+#' It's unlike [`Seurat::FindSubCluster`], which only finds subclusters of a single
+#' cluster. Instead, it will perform the whole clustering procedure on the subset of
+#' cells. One can use metadata to specify the subset of cells to perform clustering on.
+#'
+#' @param object Seurat object
+#' @param subset A string of expression to pass to `dplyr::filter` function to filter the cells.
+#' @param name Name of the run.
+#' It will be used as the prefix for the reduction name, keys and cluster names.
+#' For reduction keys, it will be `toupper(<name>)` + "PC_" and `toupper(<name>)` + "UMAP_".
+#' For cluster names, it will be `<name>` + "." + resolution.
+#' And the final cluster name will be `<name>`.
+#' Default is "subcluster".
+#' @param RunPCAArgs Arguments to pass to [Seurat::RunPCA()]
+#' @param RunUMAPArgs Arguments to pass to [Seurat::RunUMAP()]
+#' @param FindNeighborsArgs Arguments to pass to [Seurat::FindNeighbors()]
+#' @param FindClustersArgs Arguments to pass to [Seurat::FindClusters()]
+#' @param log Logger
+#' @param cache Directory to cache the results. Set to `FALSE` to disable caching
+#' @return The original Seurat object (not the subsetted one) with the subclusters
+#' results in `@meta.data` and `@reductions`.
+#' @export
+#' @importFrom Seurat RunUMAP FindNeighbors FindClusters SCTransform NormalizeData
+#' @importFrom Seurat FindVariableFeatures ScaleData RunPCA
+#' @importFrom SeuratObject DefaultAssay Reductions
+#' @importFrom rlang %||%
+#' @importFrom dplyr filter
+#' @examples
+#' \donttest{
+#' obj <- SeuratObject::pbmc_small
+#' # Just run UMAP to compare with the subclusters
+#' obj <- suppressMessages(Seurat::RunUMAP(obj, dims = 1:10))
+#' obj <- suppressWarnings(suppressMessages(RunSeuratSubClustering(
+#'    obj, subset = "groups == 'g1'", name = "g1subcluster"
+#' )))
+#'
+#' scplotter::CellDimPlot(
+#'     obj, reduction = "umap", group_by = "groups",
+#'     title = "UMAP of all cells",
+#'     subtitle = "groups = g1 will be subclustered"
+#' )
+#' scplotter::CellDimPlot(
+#'     obj, reduction = "umap", group_by = "g1subcluster",
+#'     title = "Subclusters on the original UMAP"
+#' )
+#' scplotter::CellDimPlot(obj,
+#'     reduction = "g1subcluster.umap", group_by = "g1subcluster"
+#' )
+#' }
+RunSeuratSubClustering <- function(
+    object,
+    subset,
+    name = "subcluster",
+    RunPCAArgs = list(),
+    RunUMAPArgs = list(),
+    FindNeighborsArgs = list(),
+    FindClustersArgs = list(),
+    log = NULL,
+    cache = NULL) {
+    log <- log %||% get_logger()
+    cache <- cache %||% gettempdir()
+    cached <- Cache$new(
+        list(object, subset, name, RunPCAArgs, RunUMAPArgs, FindNeighborsArgs, FindClustersArgs),
+        prefix = "biopipen.utils.RunSeuratSubClustering",
+        cache_dir = cache
+    )
+    if (cached$is_cached()) {
+        log$info("Subset clustering results loaded from cache")
+        return(cached$restore())
+    }
+    log$info("Subsetting seurat object ...")
+    subobj <- subset(object, subset = !!rlang::parse_expr(subset))
+    if (ncol(subobj) < 10) {
+        stop("[RunSeuratSubClustering] Not enough (< 10) cells to perform clustering")
+    }
+
+    if (name %in% colnames(object@meta.data)) {
+        stop(paste0("[RunSeuratSubClustering] Name '", name, "' already exists in the metadata. Please choose a different name."))
+    }
+
+    log$info("- Running RunPCA ...")
+    RunPCAArgs$object <- subobj
+    RunPCAArgs$reduction.key <- RunPCAArgs$reduction.key %||% paste0(toupper(name), "PC_")
+    RunPCAArgs$dims <- RunPCAArgs$dims %||% 1:min(30, ncol(subobj) - 1)
+    RunPCAArgs$dims <- .expand_number(RunPCAArgs$dims)
+    # https://github.com/satijalab/seurat/issues/1914#issuecomment-1008728797
+    RunPCAArgs$npcs <- min(RunPCAArgs$npcs %||% 50, min(ncol(subobj), nrow(subobj)) - 1)
+    log$debug("  Arguments: {format_args(RunPCAArgs)}")
+    subobj <- do_call(RunPCA, RunPCAArgs)
+    RunPCAArgs$object <- NULL
+    gc()
+
+    log$info("- Running RunUMAP ...")
+    RunUMAPArgs$object <- subobj
+    RunUMAPArgs$reduction.key <- RunUMAPArgs$reduction.key %||% paste0(toupper(name), "UMAP_")
+    RunUMAPArgs$dims <- RunUMAPArgs$dims %||% 1:min(30, ceiling(ncol(subobj) / 3))
+    RunUMAPArgs$dims <- .expand_number(RunUMAPArgs$dims)
+
+    RunUMAPArgs$umap.method <- RunUMAPArgs$umap.method %||% "uwot"
+    if (RunUMAPArgs$umap.method == "uwot") {
+        # https://github.com/satijalab/seurat/issues/4312
+        RunUMAPArgs$n.neighbors <- RunUMAPArgs$n.neighbors %||% min(ncol(subobj) - 1, 30)
+    }
+    log$debug("  Arguments: {format_args(RunUMAPArgs)}")
+    subobj <- do_call(RunUMAP, RunUMAPArgs)
+    RunUMAPArgs$object <- NULL
+    gc()
+
+    log$info("- Running FindNeighbors ...")
+    FindNeighborsArgs$object <- subobj
+    FindNeighborsArgs$reduction <- FindNeighborsArgs$reduction %||% subobj@misc$integrated_new_reduction %||% "pca"
+    if (!is.null(FindNeighborsArgs$dims)) {
+        FindNeighborsArgs$dims <- .expand_number(FindNeighborsArgs$dims)
+    }
+    log$debug("  Arguments: {format_args(FindNeighborsArgs)}")
+    subobj <- do_call(FindNeighbors, FindNeighborsArgs)
+    FindNeighborsArgs$object <- NULL
+    gc()
+
+    log$info("- Running FindClusters ...")
+    FindClustersArgs$object <- subobj
+    FindClustersArgs$random.seed <- FindClustersArgs$random.seed %||% 8525
+    FindClustersArgs$resolution <- .expand_findclusters_resolution(FindClustersArgs$resolution %||% 0.8)
+    FindClustersArgs$cluster.name <- paste0(name, ".", FindClustersArgs$resolution)
+    log$info("  Using resolution(s): {paste(FindClustersArgs$resolution, collapse = ', ')}")
+    log$debug("  Arguments: {format_args(FindClustersArgs)}")
+    subobj <- do_call(FindClusters, FindClustersArgs)
+    FindClustersArgs$object <- NULL
+    gc()
+
+    for (clname in FindClustersArgs$cluster.name) {
+        subobj@meta.data[[clname]] <- .recode_clusters(subobj@meta.data[[clname]], prefix = "s")
+    }
+    subobj@meta.data[[name]] <- .recode_clusters(subobj@meta.data$seurat_clusters, prefix = "s")
+    Idents(subobj) <- name
+
+    ident_table <- table(subobj@meta.data[[name]])
+    ident_table <- paste0(names(ident_table), "(", ident_table, ")")
+    log$info("  Found subclusters (with resolution {FindClustersArgs$resolution[length(FindClustersArgs$resolution)]}):")
+    # log every 5 clusters
+    for (i in seq(1, length(ident_table), by = 5)) {
+        log$info("   | {paste(ident_table[i:min(i + 4, length(ident_table))], collapse = ', ')}")
+    }
+
+    object <- AddSeuratCommand(
+        object,
+        name = paste0("RunSeuratSubClustering.", name),
+        call.string = "RunSeuratSubClustering(object, subset, name, RunPCAArgs, RunUMAPArgs, FindNeighborsArgs, FindClustersArgs)",
+        params = list(
+            subset = subset,
+            name = name,
+            RunPCAArgs = RunPCAArgs,
+            RunUMAPArgs = RunUMAPArgs,
+            FindNeighborsArgs = FindNeighborsArgs,
+            FindClustersArgs = FindClustersArgs
+        )
+    )
+
+    # Add the subclusters.xxx and subclusters metadata to the original object
+    for (clname in FindClustersArgs$cluster.name) {
+        object@meta.data[[clname]] <- subobj@meta.data[colnames(object), clname, drop = TRUE]
+    }
+    object@meta.data[[name]] <- subobj@meta.data[colnames(object), name, drop = TRUE]
+
+    # Add the subclusters reduction to the original object
+    object@reductions[[paste0(name, ".pca")]] <- subobj@reductions[["pca"]]
+    object@reductions[[paste0(name, ".umap")]] <- subobj@reductions[["umap"]]
+
+    cached$save(object)
+    object
+}
+
 
 #' Run data integration on Seurat object
 #'
