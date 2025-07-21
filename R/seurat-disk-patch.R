@@ -1,9 +1,9 @@
 #' Patch for SeuratDisk's AssembleAssay function
 #' @keywords internal
 .AssembleAssay <- function(assay, file, slots = NULL, verbose = TRUE) {
-    FixFeatures <- utils::getFromNamespace(name = "FixFeatures", ns = "SeuratDisk")
-    IsMatrixEmpty <- utils::getFromNamespace(name = "IsMatrixEmpty", ns = "SeuratDisk")
-    SetAssayData <- utils::getFromNamespace(name = "SetAssayData", ns = "SeuratObject")
+    FixFeatures <- utils::getFromNamespace(x = "FixFeatures", ns = "SeuratDisk")
+    IsMatrixEmpty <- utils::getFromNamespace(x = "IsMatrixEmpty", ns = "SeuratDisk")
+    SetAssayData <- utils::getFromNamespace(x = "SetAssayData", ns = "SeuratObject")
 
     index <- file$index()
     if (!assay %in% names(x = index)) {
@@ -213,7 +213,7 @@ list_to_h5group <- function(h5fg, name, lst) {
 #' SeuratDisk's "Project<-.h5Seurat" function
 #' @keywords internal
 ".set_h5_seurat_project<-" <- function(object, ..., value) {
-    GuessDType <- utils::getFromNamespace(name = "GuessDType", ns = "SeuratDisk")
+    GuessDType <- utils::getFromNamespace(x = "GuessDType", ns = "SeuratDisk")
 
     object$attr_delete(attr_name = "project")
     object$create_attr(
@@ -239,16 +239,16 @@ list_to_h5group <- function(h5fg, name, lst) {
             stop("Destination h5Seurat file exists", call. = FALSE)
         }
     }
-    WriteMode <- utils::getFromNamespace(name = "WriteMode", ns = "SeuratDisk")
-    AttrExists <- utils::getFromNamespace(name = "AttrExists", ns = "SeuratDisk")
-    IsDType <- utils::getFromNamespace(name = "IsDType", ns = "SeuratDisk")
-    GuessDType <- utils::getFromNamespace(name = "GuessDType", ns = "SeuratDisk")
-    Exists <- utils::getFromNamespace(name = "Exists", ns = "SeuratDisk")
-    Transpose <- utils::getFromNamespace(name = "Transpose", ns = "SeuratDisk")
-    BoolToInt <- utils::getFromNamespace(name = "BoolToInt", ns = "SeuratDisk")
-    UpdateKey <- utils::getFromNamespace(name = "UpdateKey", ns = "SeuratDisk")
-    H5Path <- utils::getFromNamespace(name = "H5Path", ns = "SeuratDisk")
-    StringType <- utils::getFromNamespace(name = "StringType", ns = "SeuratDisk")
+    WriteMode <- utils::getFromNamespace(x = "WriteMode", ns = "SeuratDisk")
+    AttrExists <- utils::getFromNamespace(x = "AttrExists", ns = "SeuratDisk")
+    IsDType <- utils::getFromNamespace(x = "IsDType", ns = "SeuratDisk")
+    GuessDType <- utils::getFromNamespace(x = "GuessDType", ns = "SeuratDisk")
+    Exists <- utils::getFromNamespace(x = "Exists", ns = "SeuratDisk")
+    Transpose <- utils::getFromNamespace(x = "Transpose", ns = "SeuratDisk")
+    BoolToInt <- utils::getFromNamespace(x = "BoolToInt", ns = "SeuratDisk")
+    UpdateKey <- utils::getFromNamespace(x = "UpdateKey", ns = "SeuratDisk")
+    H5Path <- utils::getFromNamespace(x = "H5Path", ns = "SeuratDisk")
+    StringType <- utils::getFromNamespace(x = "StringType", ns = "SeuratDisk")
 
     dfile <- SeuratDisk::h5Seurat$new(filename = dest, mode = WriteMode(overwrite = FALSE))
     # Get rownames from an H5AD data frame
