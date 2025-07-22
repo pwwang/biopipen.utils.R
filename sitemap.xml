@@ -47,6 +47,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/extract_vars.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/format_args.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/gene_name_conversion.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/get_biopipen_dir.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/get_logger.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/get_reporter.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/gettempdir.html</loc></url>
