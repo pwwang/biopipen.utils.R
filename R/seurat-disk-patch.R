@@ -183,19 +183,25 @@ list_to_h5group <- function(h5fg, name, lst) {
             # Recurse for nested list
             list_to_h5group(grp, key, value)
         } else {
-            dset <- grp[[key]] <- value
-            # Write attributes on scalar items (if any)
-            attrs <- attributes(value)
-            if (!is.null(attrs)) {
-                for (attr_name in names(attrs)) {
-                    tryCatch(
-                        expr = {
-                            dset$create_attr(attr_name, attrs[[attr_name]])
-                        },
-                        error = function(e) {}
-                    )
+            tryCatch({
+                # unable to synchronously check link existence
+                # why?
+                h5fg$exists(name = key)
+                dset <- grp[[key]] <- unlist(value)
+                # Write attributes on scalar items (if any)
+                attrs <- attributes(value)
+                if (!is.null(attrs)) {
+                    for (attr_name in names(attrs)) {
+                        tryCatch(
+                            expr = {
+                                dset$create_attr(attr_name, attrs[[attr_name]])
+                            },
+                            error = function(e) {}
+                        )
+                    }
                 }
-            }
+            },
+            error = function(e) {})
         }
     }
     # Write attributes for the group itself (like R.class)
