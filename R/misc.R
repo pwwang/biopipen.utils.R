@@ -327,3 +327,30 @@ save_obj <- function(obj, file, type = c("auto", "qs2", "rds")) {
         stop("Unknown file type")
     }
 }
+
+#' Get the path where biopipen is installed
+#'
+#' This is useful when the script is running in a different environment/platform.
+#' At runtime, we need to know where the biopipen package is installed so that
+#' we can source or use some files (or scripts) shipped with biopipen.
+#'
+#' @param python The path to the Python executable at runtime.
+#' @return The path where biopipen is installed
+#'
+#' @export
+get_biopipen_dir <- function(python = "python") {
+    if (is.null(python)) {
+        stop("[get_biopipen_dir] Python executable path cannot be NULL")
+    }
+    stderr_file <- tempfile()
+    res <- suppressWarnings(system2(
+        python,
+        c("-c", "'import biopipen; print(biopipen.__path__[0])'"),
+        stderr = stderr_file,
+        stdout = TRUE
+    ))
+    if (!is.null(attr(res, "status")) && attr(res, "status") != 0) {
+        stop("[get_biopipen_dir] Failed to run the python command. Error: ", paste(readLines(stderr_file), collapse = "\n"))
+    }
+    res
+}
