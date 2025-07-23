@@ -1696,7 +1696,7 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
             space = hdf5r::H5S$new(type = "scalar")
         )
     }
-    h5ad$close()
+    h5ad$close_all()
     rm(h5ad)
 }
 
