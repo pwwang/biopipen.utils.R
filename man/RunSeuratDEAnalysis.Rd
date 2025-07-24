@@ -37,7 +37,7 @@ Anything changed in the object or arguments will trigger a re-run}
 \item{error}{Whether to raise an error if the analysis fails
 Otherwise, return an empty data frame}
 
-\item{...}{Additional arguments to pass to \link[Seurat:FindMarkers]{Seurat::FindMarkers}}
+\item{...}{Additional arguments to pass to \code{\link[Seurat:FindMarkers]{Seurat::FindMarkers()}}}
 }
 \description{
 Run differential expression analysis on a Seurat object

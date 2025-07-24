@@ -30,7 +30,16 @@ Default is "subcluster".}
 
 \item{RunPCAArgs}{Arguments to pass to \code{\link[Seurat:RunPCA]{Seurat::RunPCA()}}}
 
-\item{RunUMAPArgs}{Arguments to pass to \code{\link[Seurat:RunUMAP]{Seurat::RunUMAP()}}}
+\item{RunUMAPArgs}{Arguments to pass to \code{\link[Seurat:RunUMAP]{Seurat::RunUMAP()}}.
+\code{RunUMAPArgs$features} can be a character vector of features directly used for UMAP,
+or a list with the following fields:
+\itemize{
+\item \code{order}: The order of the markers to use for UMAP, e.g. "desc(abs(avg_log2FC))"
+\item \code{n}: The number of total features to use for UMAP, e.g. 30
+If \code{RunUMAPArgs$features} is a list, it will run \code{\link[=RunSeuratDEAnalysis]{RunSeuratDEAnalysis()}} to get the markers
+for each group, and then select the top \code{n}/\code{ngroups} features for each group
+based on the \code{order} field.
+}}
 
 \item{FindNeighborsArgs}{Arguments to pass to \code{\link[Seurat:FindNeighbors]{Seurat::FindNeighbors()}}}
 

@@ -118,7 +118,7 @@ AddSeuratCommand <- function(
 #'  Anything changed in the object or arguments will trigger a re-run
 #' @param error Whether to raise an error if the analysis fails
 #'  Otherwise, return an empty data frame
-#' @param ... Additional arguments to pass to [Seurat::FindMarkers]
+#' @param ... Additional arguments to pass to [Seurat::FindMarkers()]
 #' @export
 #' @import tidyseurat
 #' @importFrom dplyr filter
@@ -634,11 +634,90 @@ RunSeuratTransformation <- function(
     object
 }
 
+#' Run seurat UMAP
+#'
+#' In additional to [Seurat::RunUMAP()], we provide an additional arguments to use
+#' markers as features for UMAP, which makes the UMAP more separated for different clusters.
+#'
+#' @param object Seurat object
+#' @param RunUMAPArgs Arguments to pass to [Seurat::RunUMAP()].
+#' `RunUMAPArgs$features` can be a character vector of features directly used for UMAP,
+#' or a list with the following fields:
+#' * `order`: The order of the markers to use for UMAP, e.g. "desc(abs(avg_log2FC))"
+#' * `n`: The number of total features to use for UMAP, e.g. 30
+#' If `RunUMAPArgs$features` is a list, it will run [RunSeuratDEAnalysis()] to get the markers
+#' for each group, and then select the top `n`/`ngroups` features for each group
+#' based on the `order` field.
+#' @param cache Directory to cache the all markers, which can be reused later if
+#' DE analysis is desired.
+#' @param log The logger to use. If NULL, a default logger will be used.
+#' @return The Seurat object with UMAP results
+#' @importFrom Seurat RunUMAP
+#' @importFrom SeuratObject Idents
+#' @importFrom rlang %||% parse_expr
+#' @importFrom dplyr arrange group_by slice_head pull
+RunSeuratUMAP <- function(object, RunUMAPArgs = list(), cache = NULL, log = NULL) {
+    log <- log %||% get_logger()
+    if (is.list(RunUMAPArgs$features)) {
+        log$info("  Running RunSeuratDEAnalysis to get markers for UMAP ...")
+        object$Identity <- Idents(object)
+        markers <- RunSeuratDEAnalysis(object, group.by = "Identity", cache = cache)
+        attr(markers, "object") <- NULL
+        gc()
+
+        RunUMAPArgs$features$order <- RunUMAPArgs$features$order %||% "desc(abs(avg_log2FC))"
+        RunUMAPArgs$features$n <- RunUMAPArgs$features$n %||% 30
+
+        ngroups <- length(unique(markers$Identity))
+        each_n <- ceiling(RunUMAPArgs$features$n / ngroups)
+        RunUMAPArgs$features <- markers %>%
+            arrange(!!parse_expr(RunUMAPArgs$features$order)) %>%
+            group_by(!!sym("Identity")) %>%
+            slice_head(n = each_n) %>%
+            pull("gene") %>%
+            unique()
+
+        rm(markers)
+        gc()
+    }
+    ncells <- ncol(object)
+    if (!is.null(RunUMAPArgs$features) && !is.null(RunUMAPArgs$dims)) {
+        log$warn("  'RunUMAPArgs$features' and 'RunUMAPArgs$dims' are both set, 'RunUMAPArgs$dims' will be ignored")
+    } else if (is.null(RunUMAPArgs$features)) {
+        RunUMAPArgs$dims <- RunUMAPArgs$dims %||% 1:min(30, ceiling(ncells / 3))
+        RunUMAPArgs$dims <- .expand_number(RunUMAPArgs$dims)
+    }
+    RunUMAPArgs$umap.method <- RunUMAPArgs$umap.method %||% "uwot"
+    if (RunUMAPArgs$umap.method == "uwot") {
+        # https://github.com/satijalab/seurat/issues/4312
+        RunUMAPArgs$n.neighbors <- RunUMAPArgs$n.neighbors %||% min(ncells - 1, 30)
+    }
+    RunUMAPArgs$object <- object
+    object <- do_call(RunUMAP, RunUMAPArgs)
+    RunUMAPArgs$object <- NULL
+    gc()
+
+    object <- AddSeuratCommand(
+        object,
+        name = "RunSeuratUMAP",
+        call.string = "RunSeuratUMAP(object, RunUMAPArgs)",
+        params = list(RunUMAPArgs = RunUMAPArgs)
+    )
+    object
+}
+
 #' Run seurat unsupervised clustering
 #'
 #' @param object Seurat object
 #' @param RunPCAArgs Arguments to pass to [Seurat::RunPCA()]
-#' @param RunUMAPArgs Arguments to pass to [Seurat::RunUMAP()]
+#' @param RunUMAPArgs Arguments to pass to [Seurat::RunUMAP()].
+#' `RunUMAPArgs$features` can be a character vector of features directly used for UMAP,
+#' or a list with the following fields:
+#' * `order`: The order of the markers to use for UMAP, e.g. "desc(abs(avg_log2FC))"
+#' * `n`: The number of total features to use for UMAP, e.g. 30
+#' If `RunUMAPArgs$features` is a list, it will run [RunSeuratDEAnalysis()] to get the markers
+#' for each group, and then select the top `n`/`ngroups` features for each group
+#' based on the `order` field.
 #' @param FindNeighborsArgs Arguments to pass to [Seurat::FindNeighbors()]
 #' @param FindClustersArgs Arguments to pass to [Seurat::FindClusters()]
 #' @param log Logger
@@ -680,32 +759,6 @@ RunSeuratClustering <- function(
         RunPCAArgs$object <- object
         object <- do_call(RunPCA, RunPCAArgs)
         RunPCAArgs$object <- NULL
-        gc()
-
-        caching$save(object)
-    }
-
-    log$info("Running RunUMAP ...")
-    caching <- Cache$new(
-        list(object, RunUMAPArgs),
-        prefix = "biopipen.utils.RunSeuratClustering.RunUMAP",
-        cache_dir = cache
-    )
-    if (caching$is_cached()) {
-        log$info("UMAP results loaded from cache")
-        object <- caching$restore()
-    } else {
-        log$debug("  Arguments: {format_args(RunUMAPArgs)}")
-        RunUMAPArgs$dims <- RunUMAPArgs$dims %||% 1:min(30, ncells - 1)
-        RunUMAPArgs$dims <- .expand_number(RunUMAPArgs$dims)
-        RunUMAPArgs$umap.method <- RunUMAPArgs$umap.method %||% "uwot"
-        if (RunUMAPArgs$umap.method == "uwot") {
-            # https://github.com/satijalab/seurat/issues/4312
-            RunUMAPArgs$n.neighbors <- RunUMAPArgs$n.neighbors %||% min(ncells - 1, 30)
-        }
-        RunUMAPArgs$object <- object
-        object <- do_call(RunUMAP, RunUMAPArgs)
-        RunUMAPArgs$object <- NULL
         gc()
 
         caching$save(object)
@@ -773,6 +826,27 @@ RunSeuratClustering <- function(
         caching$save(object)
     }
 
+    log$info("Running RunUMAP ...")
+    caching <- Cache$new(
+        list(object, RunUMAPArgs),
+        prefix = "biopipen.utils.RunSeuratClustering.RunSeuratUMAP",
+        cache_dir = cache
+    )
+    if (caching$is_cached()) {
+        log$info("UMAP results loaded from cache")
+        object <- caching$restore()
+    } else {
+        log$debug("  Arguments: {format_args(RunUMAPArgs)}")
+        object <- RunSeuratUMAP(
+            object,
+            RunUMAPArgs = RunUMAPArgs,
+            cache = cache,
+            log = log
+        )
+
+        caching$save(object)
+    }
+
     object
 }
 
@@ -791,7 +865,14 @@ RunSeuratClustering <- function(
 #' And the final cluster name will be `<name>`.
 #' Default is "subcluster".
 #' @param RunPCAArgs Arguments to pass to [Seurat::RunPCA()]
-#' @param RunUMAPArgs Arguments to pass to [Seurat::RunUMAP()]
+#' @param RunUMAPArgs Arguments to pass to [Seurat::RunUMAP()].
+#' `RunUMAPArgs$features` can be a character vector of features directly used for UMAP,
+#' or a list with the following fields:
+#' * `order`: The order of the markers to use for UMAP, e.g. "desc(abs(avg_log2FC))"
+#' * `n`: The number of total features to use for UMAP, e.g. 30
+#' If `RunUMAPArgs$features` is a list, it will run [RunSeuratDEAnalysis()] to get the markers
+#' for each group, and then select the top `n`/`ngroups` features for each group
+#' based on the `order` field.
 #' @param FindNeighborsArgs Arguments to pass to [Seurat::FindNeighbors()]
 #' @param FindClustersArgs Arguments to pass to [Seurat::FindClusters()]
 #' @param log Logger
@@ -869,22 +950,6 @@ RunSeuratSubClustering <- function(
     RunPCAArgs$object <- NULL
     gc()
 
-    log$info("- Running RunUMAP ...")
-    RunUMAPArgs$object <- subobj
-    RunUMAPArgs$reduction.key <- RunUMAPArgs$reduction.key %||% paste0(toupper(name), "UMAP_")
-    RunUMAPArgs$dims <- RunUMAPArgs$dims %||% 1:min(30, ceiling(ncol(subobj) / 3))
-    RunUMAPArgs$dims <- .expand_number(RunUMAPArgs$dims)
-
-    RunUMAPArgs$umap.method <- RunUMAPArgs$umap.method %||% "uwot"
-    if (RunUMAPArgs$umap.method == "uwot") {
-        # https://github.com/satijalab/seurat/issues/4312
-        RunUMAPArgs$n.neighbors <- RunUMAPArgs$n.neighbors %||% min(ncol(subobj) - 1, 30)
-    }
-    log$debug("  Arguments: {format_args(RunUMAPArgs)}")
-    subobj <- do_call(RunUMAP, RunUMAPArgs)
-    RunUMAPArgs$object <- NULL
-    gc()
-
     log$info("- Running FindNeighbors ...")
     FindNeighborsArgs$object <- subobj
     FindNeighborsArgs$reduction <- FindNeighborsArgs$reduction %||% subobj@misc$integrated_new_reduction %||% "pca"
@@ -920,6 +985,16 @@ RunSeuratSubClustering <- function(
     for (i in seq(1, length(ident_table), by = 5)) {
         log$info("   | {paste(ident_table[i:min(i + 4, length(ident_table))], collapse = ', ')}")
     }
+
+    log$info("- Running RunUMAP ...")
+    RunUMAPArgs$reduction.key <- RunUMAPArgs$reduction.key %||% paste0(toupper(name), "UMAP_")
+    log$debug("  Arguments: {format_args(RunUMAPArgs)}")
+    subobj <- RunSeuratUMAP(
+        subobj,
+        RunUMAPArgs = RunUMAPArgs,
+        cache = cache,
+        log = log
+    )
 
     object <- AddSeuratCommand(
         object,
