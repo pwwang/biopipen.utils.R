@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">biopipen.utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,14 @@
 
 
 <dt id="arg-runumapargs">RunUMAPArgs<a class="anchor" aria-label="anchor" href="#arg-runumapargs"></a></dt>
-<dd><p>Arguments to pass to <code><a href="https://satijalab.org/seurat/reference/RunUMAP.html" class="external-link">Seurat::RunUMAP()</a></code></p></dd>
+<dd><p>Arguments to pass to <code><a href="https://satijalab.org/seurat/reference/RunUMAP.html" class="external-link">Seurat::RunUMAP()</a></code>.
+<code>RunUMAPArgs$features</code> can be a character vector of features directly used for UMAP,
+or a list with the following fields:</p><ul><li><p><code>order</code>: The order of the markers to use for UMAP, e.g. "desc(abs(avg_log2FC))"</p></li>
+<li><p><code>n</code>: The number of total features to use for UMAP, e.g. 30
+If <code>RunUMAPArgs$features</code> is a list, it will run <code><a href="RunSeuratDEAnalysis.html">RunSeuratDEAnalysis()</a></code> to get the markers
+for each group, and then select the top <code>n</code>/<code>ngroups</code> features for each group
+based on the <code>order</code> field.</p></li>
+</ul></dd>
 
 
 <dt id="arg-findneighborsargs">FindNeighborsArgs<a class="anchor" aria-label="anchor" href="#arg-findneighborsargs"></a></dt>
