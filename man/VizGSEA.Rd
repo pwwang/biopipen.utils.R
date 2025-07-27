@@ -6,10 +6,14 @@
 \usage{
 VizGSEA(
   gsea_results,
-  plot_type = c("summary", "gsea"),
+  plot_type = c("summary", "gsea", "heatmap", "dot"),
   gene_ranks = "@gene_ranks",
   gene_sets = "@gene_sets",
   gs = NULL,
+  group_by = NULL,
+  values_by = "NES",
+  signif_by = "padj",
+  signif_cutoff = 0.05,
   ...
 )
 }
@@ -31,6 +35,21 @@ If you only want to plot a subset of gene sets, you can subset the \code{gene_se
 
 \item{gs}{The names of the gene sets to plot
 If \code{NULL}, all gene sets in \code{gene_sets} will be plotted.}
+
+\item{group_by}{The column name to group by for heatmap and dot plot.
+They will be used as the columns in the heatmap or dot plot.}
+
+\item{values_by}{The column name to use for the values in the heatmap or dot plot.
+Default is "NES" (normalized enrichment score).}
+
+\item{signif_by}{The column name to use for significance in the heatmap or dot plot.
+Default is "padj" (adjusted p-value). It can also be "pval".
+If NULL, no significance labels will be added to the heatmap.}
+
+\item{signif_cutoff}{A numeric vector of significance cutoffs for the heatmap labels.
+Multiple values can be provided to indicate different levels (at most 3) of significance.
+For example, \code{c(0.05, 0.01, 0.001)} will label pathways with p-values less than 0.05 with "\emph{",
+less than 0.01 with "\strong{", and less than 0.001 with "}}".}
 
 \item{...}{Additional arguments passed to the plotting function
 \itemize{
@@ -69,5 +88,11 @@ r <- RunGSEA(ranks, genesets)
 # Visualize the GSEA results
 VizGSEA(r, plot_type = "summary")
 VizGSEA(r, plot_type = "gsea", gs = c("set10", "set2"))
+
+r$Group <- "A"
+r2 <- r
+r2$Group <- "B"
+r2$NES <- sample(r2$NES)
+VizGSEA(rbind(r, r2), plot_type = "heatmap")
 }
 }
