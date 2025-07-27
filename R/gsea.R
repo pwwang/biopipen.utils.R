@@ -206,7 +206,8 @@ RunGSEA = function(ranks, genesets, ...) {
 #' r2 <- r
 #' r2$Group <- "B"
 #' r2$NES <- sample(r2$NES)
-#' VizGSEA(rbind(r, r2), plot_type = "heatmap")
+#' VizGSEA(rbind(r, r2), group_by = "Group", plot_type = "heatmap")
+#' VizGSEA(rbind(r, r2), group_by = "Group", plot_type = "dot")
 #' }
 VizGSEA <- function(
     gsea_results, plot_type = c("summary", "gsea", "heatmap", "dot"),
