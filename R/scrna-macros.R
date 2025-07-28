@@ -1901,3 +1901,95 @@ ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", log = 
     log$debug("[ConvertAnnDataToSeurat] Saved Seurat object to {outfile}")
     save_obj(object, outfile)
 }
+
+
+#' Aggregate expression of single cells into psedobulk expression matrix
+#'
+#' @param object Seurat object
+#' @param aggregate_by The metadata column to aggregate by. Default is "Sample".
+#' You can add other columns to aggregate by, such as "Condition", "Batch", etc. But
+#' they should superset the "Sample" column, meaning that one sample can only belong to one condition,
+#' but one condition can have multiple samples.
+#' @param assay The assay to use for aggregation. Default is "RNA".
+#' @param layer The layer to use for aggregation. Default is "counts".
+#' @param log Logger
+#'
+#' @return A list of two elements:
+#' - `exprs`: A matrix of aggregated expression values with genes as rows and samples as columns.
+#' - `meta`: A data frame with metadata of the aggregated samples.
+#' @export
+#' @importFrom SeuratObject GetAssayData
+#' @importFrom dplyr %>% count distinct
+#' @importFrom rlang %||% sym syms
+#' @examples
+#' \donttest{
+#' obj <- SeuratObject::pbmc_small
+#' obj$Sample <- rep(paste0("S", 1:10), each = ncol(obj) / 10)
+#' obj$Condition <- rep(c("Control", "Treatment"), each = ncol(obj) / 2)
+#' result <- AggregateExpressionPseudobulk(obj, aggregate_by = c("Sample", "Condition"))
+#' head(result$exprs)
+#' head(result$meta)
+#' }
+AggregateExpressionPseudobulk <- function(
+    object,
+    aggregate_by = "Sample",
+    assay = "RNA",
+    layer = "counts",
+    log = NULL) {
+    log <- log %||% get_logger()
+
+    # Validate inputs
+    stopifnot("'aggregate_by' columns not found in metadata" = all(aggregate_by %in% colnames(object@meta.data)))
+    stopifnot("'assay' not found in object" = assay %in% names(object@assays))
+
+    log$info("Aggregating expression by: {paste(aggregate_by, collapse = ', ')}")
+
+    # Get expression data
+    expr_data <- GetAssayData(object, assay = assay, layer = layer)
+
+    # Get metadata for aggregation
+    metadata <- object@meta.data[, aggregate_by, drop = FALSE]
+
+    agg_n <- metadata %>% count(!!sym(aggregate_by[1]), name = "..n") %>% pull("..n")
+    if (length(aggregate_by) > 1) {
+        for (agg in aggregate_by[-1]) {
+            agg_n2 <- metadata %>% count(!!sym(aggregate_by[1]), !!sym(agg), name = "..n") %>% pull("..n")
+            if (!all(agg_n == agg_n2)) {
+                stop(paste0(
+                    "[AggregateExpressionPseudobulk] The number of cells in each group of '",
+                    aggregate_by[1], " (",
+                    paste(agg_n, collapse = ", "),
+                    ")' is not the same across '", agg, "'.\n"
+                ))
+            }
+        }
+    }
+
+    # Aggregate expression data
+    log$info("Aggregating expression matrix ...")
+    unique_groups <- unique(metadata[[aggregate_by[1]]])
+    aggregated_matrix <- sapply(unique_groups, function(group) {
+        group_cells <- rownames(metadata)[metadata[[aggregate_by[1]]] == group]
+        if (length(group_cells) == 1) {
+            as.numeric(expr_data[, group_cells])
+        } else {
+            Matrix::rowSums(expr_data[, group_cells])
+        }
+    })
+
+    # Set row and column names
+    rownames(aggregated_matrix) <- rownames(expr_data)
+    colnames(aggregated_matrix) <- unique_groups
+
+    # Create metadata for aggregated samples
+    log$info("Creating metadata for aggregated samples ...")
+    meta_df <- metadata %>% distinct(!!!syms(aggregate_by))
+    rownames(meta_df) <- NULL
+
+    log$info("Aggregation complete. Matrix dimensions: {nrow(aggregated_matrix)} x {ncol(aggregated_matrix)}")
+
+    return(list(
+        exprs = aggregated_matrix,
+        meta = meta_df
+    ))
+}
