@@ -27,11 +27,8 @@ but one condition can have multiple samples.}
 \item{log}{Logger}
 }
 \value{
-A list of two elements:
-\itemize{
-\item \code{exprs}: A matrix of aggregated expression values with genes as rows and samples as columns.
-\item \code{meta}: A data frame with metadata of the aggregated samples.
-}
+The expression matrix aggregated by the specified metadata columns.
+With the metadata as the metadata at \code{meta} attribute.
 }
 \description{
 Aggregate expression of single cells into psedobulk expression matrix

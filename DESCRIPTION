@@ -44,6 +44,8 @@ Suggests:
     hdf5r,
     gglogger,
     SeuratDisk,
+    DESeq2,
+    edgeR,
     ComplexHeatmap,
     qs2
 Remotes:

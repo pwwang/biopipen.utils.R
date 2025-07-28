@@ -1914,9 +1914,8 @@ ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", log = 
 #' @param layer The layer to use for aggregation. Default is "counts".
 #' @param log Logger
 #'
-#' @return A list of two elements:
-#' - `exprs`: A matrix of aggregated expression values with genes as rows and samples as columns.
-#' - `meta`: A data frame with metadata of the aggregated samples.
+#' @return The expression matrix aggregated by the specified metadata columns.
+#' With the metadata as the metadata at `meta` attribute.
 #' @export
 #' @importFrom SeuratObject GetAssayData
 #' @importFrom dplyr %>% count distinct
@@ -1988,8 +1987,6 @@ AggregateExpressionPseudobulk <- function(
 
     log$info("Aggregation complete. Matrix dimensions: {nrow(aggregated_matrix)} x {ncol(aggregated_matrix)}")
 
-    return(list(
-        exprs = aggregated_matrix,
-        meta = meta_df
-    ))
+    attr(aggregated_matrix, "meta") <- meta_df
+    return(aggregated_matrix)
 }
