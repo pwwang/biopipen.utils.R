@@ -11,6 +11,7 @@ LoadSeuratAndPerformQC(
   samples = NULL,
   cell_qc = NULL,
   gene_qc = NULL,
+  LoadLoomArgs = list(),
   tmpdir = NULL,
   log = NULL,
   cache = NULL
@@ -23,7 +24,8 @@ The RNAData column should contain the path to the 10X data, either a directory o
 If the path is a directory, the function will look for barcodes.tsv.gz, features.tsv.gz and matrix.mtx.gz.
 The directory should be loaded by \link[Seurat:Read10X]{Seurat::Read10X}. Sometimes, there may be prefix in the file names,
 e.g. "'prefix'.barcodes.tsv.gz", which is also supported.
-If the path is a file, it should be a h5 file that can be loaded by \code{\link[Seurat:Read10X_h5]{Seurat::Read10X_h5()}}}
+If the path is a file ending with ".loom", it will be loaded by \code{\link[SeuratDisk:Connect]{SeuratDisk::Connect()}} and converted to a Seurat object.
+Otherwise, if the path is a file, it should be a h5 file that can be loaded by \code{\link[Seurat:Read10X_h5]{Seurat::Read10X_h5()}}}
 
 \item{min_cells}{Include features detected in at least this many cells.
 This will be applied to all samples and passed to the \code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}} function.
@@ -32,7 +34,8 @@ You can also provide a list of values, where the names of the list are sample na
 and the values are the minimum number of cells for each sample to load by
 \code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}}.
 You can have a default value in the list with the name "DEFAULT" for the samples
-that are not listed.}
+that are not listed.
+This won't work if data is loaded from a loom file.}
 
 \item{min_features}{Include cells where at least this many features are detected.
 This will be applied to all samples and passed to the \code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}} function.
@@ -41,7 +44,8 @@ You can also provide a list of values, where the names of the list are sample na
 and the values are the minimum number of features for each sample to load by
 \code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}}.
 You can have a default value in the list with the name "DEFAULT" for the samples
-that are not listed.}
+that are not listed.
+This won't work if data is loaded from a loom file.}
 
 \item{samples}{Samples to load. If NULL, all samples will be loaded}
 
@@ -58,6 +62,8 @@ A list containing the following fields:
 \item excludes: A string or strings to exclude certain genes. Regular expressions are supported.
 Multiple strings can also be separated by commas in a single string.
 }}
+
+\item{LoadLoomArgs}{Arguments to pass to \code{\link[SeuratDisk:LoadLoom]{SeuratDisk::LoadLoom()}} when loading loom files.}
 
 \item{tmpdir}{Temporary directory to store intermediate files when there are prefix in the file names}
 
