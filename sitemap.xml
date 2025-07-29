@@ -5,6 +5,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/authors.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/index.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/AddSeuratCommand.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/AggregateExpressionPseudobulk.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/Cache.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ConvertAnnDataToSeurat.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ConvertSeuratToAnnData.html</loc></url>
@@ -13,6 +14,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/PerformGeneQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/PerformSeuratCellQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/Reporter.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunDEGAnalysis.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunGSEA.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunGSEAPreRank.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratClustering.html</loc></url>
@@ -27,6 +29,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratUMAP.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ScRepMutate.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ScRepSubset.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizBulkDEGs.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizDEGs.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizGSEA.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratCellQC.html</loc></url>
@@ -42,6 +45,8 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-expand_findclusters_resolution.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-expand_number.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-recode_clusters.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-run_deseq2.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-run_edger.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-set_h5_seurat_project-set.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-size_compare.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/expand_cases.html</loc></url>
