@@ -16,9 +16,7 @@ AggregateExpressionPseudobulk(
 \item{object}{Seurat object}
 
 \item{aggregate_by}{The metadata column to aggregate by. Default is "Sample".
-You can add other columns to aggregate by, such as "Condition", "Batch", etc. But
-they should superset the "Sample" column, meaning that one sample can only belong to one condition,
-but one condition can have multiple samples.}
+You can add other columns to aggregate by, such as "Condition", "Batch", etc.}
 
 \item{assay}{The assay to use for aggregation. Default is "RNA".}
 

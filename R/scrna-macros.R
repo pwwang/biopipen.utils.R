@@ -1907,9 +1907,7 @@ ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", log = 
 #'
 #' @param object Seurat object
 #' @param aggregate_by The metadata column to aggregate by. Default is "Sample".
-#' You can add other columns to aggregate by, such as "Condition", "Batch", etc. But
-#' they should superset the "Sample" column, meaning that one sample can only belong to one condition,
-#' but one condition can have multiple samples.
+#' You can add other columns to aggregate by, such as "Condition", "Batch", etc.
 #' @param assay The assay to use for aggregation. Default is "RNA".
 #' @param layer The layer to use for aggregation. Default is "counts".
 #' @param log Logger
@@ -1948,27 +1946,13 @@ AggregateExpressionPseudobulk <- function(
 
     # Get metadata for aggregation
     metadata <- object@meta.data[, aggregate_by, drop = FALSE]
-
-    agg_n <- metadata %>% count(!!sym(aggregate_by[1]), name = "..n") %>% pull("..n")
-    if (length(aggregate_by) > 1) {
-        for (agg in aggregate_by[-1]) {
-            agg_n2 <- metadata %>% count(!!sym(aggregate_by[1]), !!sym(agg), name = "..n") %>% pull("..n")
-            if (!all(agg_n == agg_n2)) {
-                stop(paste0(
-                    "[AggregateExpressionPseudobulk] The number of cells in each group of '",
-                    aggregate_by[1], " (",
-                    paste(agg_n, collapse = ", "),
-                    ")' is not the same across '", agg, "'.\n"
-                ))
-            }
-        }
-    }
+    metadata <- tidyr::unite(metadata, "Sample", !!!syms(aggregate_by), remove = FALSE)
 
     # Aggregate expression data
     log$info("Aggregating expression matrix ...")
-    unique_groups <- unique(metadata[[aggregate_by[1]]])
+    unique_groups <- unique(metadata$Sample)
     aggregated_matrix <- sapply(unique_groups, function(group) {
-        group_cells <- rownames(metadata)[metadata[[aggregate_by[1]]] == group]
+        group_cells <- rownames(metadata)[metadata$Sample == group]
         if (length(group_cells) == 1) {
             as.numeric(expr_data[, group_cells])
         } else {
