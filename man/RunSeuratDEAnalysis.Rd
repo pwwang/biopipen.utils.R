@@ -6,9 +6,9 @@
 \usage{
 RunSeuratDEAnalysis(
   object,
-  group.by,
-  ident.1 = NULL,
-  ident.2 = NULL,
+  group_by,
+  ident_1 = NULL,
+  ident_2 = NULL,
   assay = NULL,
   subset = NULL,
   cache = NULL,
@@ -19,11 +19,11 @@ RunSeuratDEAnalysis(
 \arguments{
 \item{object}{Seurat object}
 
-\item{group.by}{Column name in meta.data to group cells by}
+\item{group_by}{Column name in meta.data to group cells by}
 
-\item{ident.1}{Identity of the first group of cells}
+\item{ident_1}{Identity of the first group of cells}
 
-\item{ident.2}{Identity of the second group of cells}
+\item{ident_2}{Identity of the second group of cells}
 
 \item{assay}{Assay to use for analysis}
 

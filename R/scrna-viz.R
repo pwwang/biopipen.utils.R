@@ -46,9 +46,9 @@ VizDEGs <- function(
     # degs: p_val avg_log2FC pct.1 pct.2 p_val_adj gene group diff_pct
     stopifnot("[VizDEGs] Can only visualize object from RunSeuratDEAnalysis" = inherits(degs, "SeuratDEAnalysis"))
     stopifnot("[VizDEGs] 'outprefix' must be provided to save code" = !save_code || !is.null(outprefix))
-    group.by <- attr(degs, "group.by")
+    group_by <- attr(degs, "group_by")
     plot_type <- match.arg(plot_type)
-    are_allmarkers <- !all(is.na(degs[[group.by]]))
+    are_allmarkers <- !all(is.na(degs[[group_by]]))
 
     if (plot_type %in% c("volcano_pct", "volcano_log2fc")) {
         if (save_code) {
@@ -57,7 +57,7 @@ VizDEGs <- function(
             VolcanoPlot <- scplotter::VolcanoPlot
         }
 
-        facet_by <- if (are_allmarkers) group.by else NULL
+        facet_by <- if (are_allmarkers) group_by else NULL
         args <- list(data = degs, x = ifelse(plot_type == "volcano_pct", "diff_pct", "avg_log2FC"),
             y = "p_val_adj", ylab = "-log10(p_val_adj)", facet_by = facet_by, label_by = "gene", ...)
         args$y_cutoff <- args$y_cutoff %||% 0.05
@@ -65,21 +65,21 @@ VizDEGs <- function(
         p <- do_call(VolcanoPlot, args)
     } else {
         object <- attr(degs, "object")
-        ident.1 <- attr(degs, "ident.1")
-        ident.2 <- attr(degs, "ident.2")
-        if (!is.null(ident.1)) {
-            if (!is.null(ident.2)) {
-                object <- filter(object, !!sym(group.by) %in% c(ident.1, ident.2))
+        ident_1 <- attr(degs, "ident_1")
+        ident_2 <- attr(degs, "ident_2")
+        if (!is.null(ident_1)) {
+            if (!is.null(ident_2)) {
+                object <- filter(object, !!sym(group_by) %in% c(ident_1, ident_2))
             } else {
-                all_idents <- unique(as.character(object@meta.data[[group.by]]))
-                ident.2 <- setdiff(all_idents, ident.1)
-                if (length(ident.2) != 1) {
-                    ident.2 <- ifelse(ident.1 == "Others", "Rest", "Others")
+                all_idents <- unique(as.character(object@meta.data[[group_by]]))
+                ident_2 <- setdiff(all_idents, ident_1)
+                if (length(ident_2) != 1) {
+                    ident_2 <- ifelse(ident_1 == "Others", "Rest", "Others")
                 }
-                object@meta.data[[group.by]] <- as.character(object@meta.data[[group.by]])
-                object@meta.data[[group.by]][object@meta.data[[group.by]] != ident.1] <- ident.2
+                object@meta.data[[group_by]] <- as.character(object@meta.data[[group_by]])
+                object@meta.data[[group_by]][object@meta.data[[group_by]] != ident_1] <- ident_2
             }
-            object@meta.data[[group.by]] <- factor(object@meta.data[[group.by]], levels = c(ident.1, ident.2))
+            object@meta.data[[group_by]] <- factor(object@meta.data[[group_by]], levels = c(ident_1, ident_2))
         }
 
         if (save_code) {
@@ -90,14 +90,14 @@ VizDEGs <- function(
 
         if (is.numeric(genes)) {
             features <- degs %>%
-                dplyr::group_by(!!sym(group.by)) %>%
+                dplyr::group_by(!!sym(group_by)) %>%
                 arrange(!!parse_expr(order_by)) %>%
                 slice_head(n = genes) %>%
                 pull("gene") %>%
                 unique()
         } else {
             features <- degs %>%
-                dplyr::group_by(!!sym(group.by)) %>%
+                dplyr::group_by(!!sym(group_by)) %>%
                 arrange(!!parse_expr(order_by)) %>%
                 filter(!!parse_expr(genes)) %>%
                 pull("gene") %>%
@@ -106,30 +106,30 @@ VizDEGs <- function(
 
         if (plot_type == "dim") {
             p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
-                facet_by = group.by, split_by = TRUE, ...)
+                facet_by = group_by, split_by = TRUE, ...)
         } else if (plot_type %in% c("heatmap", "dot")) {
-            if (is.null(ident.1)) {
-                deg_group_by <- paste0(" ", group.by)
+            if (is.null(ident_1)) {
+                deg_group_by <- paste0(" ", group_by)
                 fdata <- degs %>%
-                    dplyr::group_by(!!sym(group.by)) %>%
+                    dplyr::group_by(!!sym(group_by)) %>%
                     arrange(!!parse_expr(order_by)) %>%
                     slice_head(n = genes) %>%
-                    rename(Features = "gene", !!sym(deg_group_by) := group.by)
+                    rename(Features = "gene", !!sym(deg_group_by) := group_by)
 
-                fdata[[deg_group_by]] <- factor(fdata[[deg_group_by]], levels = levels(object@meta.data[[group.by]]))
+                fdata[[deg_group_by]] <- factor(fdata[[deg_group_by]], levels = levels(object@meta.data[[group_by]]))
 
                 p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
-                    ident = group.by, show_row_names = show_row_names, show_column_names = show_column_names,
+                    ident = group_by, show_row_names = show_row_names, show_column_names = show_column_names,
                     rows_data = fdata, rows_split_by = paste0(deg_group_by), rows_name = "Features",
                     name = "Expression Level", ...)
             } else {
                 p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
-                    ident = group.by, show_row_names = show_row_names, show_column_names = show_column_names,
+                    ident = group_by, show_row_names = show_row_names, show_column_names = show_column_names,
                     name = "Expression Level", ...)
             }
         } else {
             p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
-                ident = group.by, ...)
+                ident = group_by, ...)
         }
     }
 
@@ -141,7 +141,7 @@ VizDEGs <- function(
                 setup = c("library(rlang)", "library(dplyr)", "library(gglogger)", "library(scplotter)", "load('data.RData')"),
                 prefix = outprefix)
             args <- c(args, setdiff(ls(), c("p", "args", "formats", "devpars", "more_formats", "save_code", "outprefix", "are_allmarkers")))
-            do.call(save_plotcode, args)
+            do_call(save_plotcode, args)
         }
         return(NULL)
     } else {

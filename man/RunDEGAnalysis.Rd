@@ -43,9 +43,9 @@ With attributes:
 \item \code{object}: The input expression matrix
 \item \code{meta}: The metadata used for the analysis
 \item \code{paired_by}: The column name used for paired samples, if applicable.
-\item \code{group.by}: The column name used for grouping samples.
-\item \code{ident.1}: The first identity used for comparison.
-\item \code{ident.2}: The second identity used for comparison.
+\item \code{group_by}: The column name used for grouping samples.
+\item \code{ident_1}: The first identity used for comparison.
+\item \code{ident_2}: The second identity used for comparison.
 }
 }
 \description{

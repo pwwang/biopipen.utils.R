@@ -79,8 +79,8 @@
 #'
 #' object <- AddSeuratCommand(
 #'     object, "RunSeuratDEAnalysis",
-#'     "RunSeuratDEAnalysis(object, group.by = 'groups', ident.1 = 'g1', ident.2 = 'g2')",
-#'     list(group.by = "groups", ident.1 = "g1", ident.2 = "g2")
+#'     "RunSeuratDEAnalysis(object, group_by = 'groups', ident_1 = 'g1', ident_2 = 'g2')",
+#'     list(group_by = "groups", ident_1 = "g1", ident_2 = "g2")
 #' )
 #' object@commands$RunSeuratDEAnalysis
 AddSeuratCommand <- function(
@@ -107,9 +107,9 @@ AddSeuratCommand <- function(
 #' Run differential expression analysis on a Seurat object
 #'
 #' @param object Seurat object
-#' @param group.by Column name in meta.data to group cells by
-#' @param ident.1 Identity of the first group of cells
-#' @param ident.2 Identity of the second group of cells
+#' @param group_by Column name in meta.data to group cells by
+#' @param ident_1 Identity of the first group of cells
+#' @param ident_2 Identity of the second group of cells
 #' @param assay Assay to use for analysis
 #' @param subset Subset of cells to use for analysis
 #'  It should be a string of expression to pass to `dplyr::filter` function
@@ -126,11 +126,11 @@ AddSeuratCommand <- function(
 #' @examples
 #' RunSeuratDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2")
 RunSeuratDEAnalysis <- function(
-    object, group.by,
-    ident.1 = NULL, ident.2 = NULL, assay = NULL, subset = NULL, cache = NULL, error = TRUE, ...) {
+    object, group_by,
+    ident_1 = NULL, ident_2 = NULL, assay = NULL, subset = NULL, cache = NULL, error = TRUE, ...) {
     cache <- cache %||% gettempdir()
     cached <- Cache$new(
-        list(object, group.by, ident.1, ident.2, subset, ...),
+        list(object, group_by, ident_1, ident_2, subset, ...),
         prefix = "biopipen.utils.RunSeuratDEAnalysis",
         cache_dir = cache,
     )
@@ -138,11 +138,11 @@ RunSeuratDEAnalysis <- function(
         return(cached$restore())
     }
 
-    stopifnot("'group.by' is not found in the object" = group.by %in% colnames(object@meta.data))
-    all_ident <- as.character(sort(unique(object@meta.data[[group.by]])))
-    stopifnot("'ident.1' is not found in 'group.by'" = is.null(ident.1) || ident.1 %in% all_ident)
-    stopifnot("'ident.2' is not found in 'group.by'" = is.null(ident.2) || ident.2 %in% all_ident)
-    stopifnot("'ident.1' should be provided when 'ident.2' is provided" = is.null(ident.2) || !is.null(ident.1))
+    stopifnot("'group_by' is not found in the object" = group_by %in% colnames(object@meta.data))
+    all_ident <- as.character(sort(unique(object@meta.data[[group_by]])))
+    stopifnot("'ident_1' is not found in 'group_by'" = is.null(ident_1) || ident_1 %in% all_ident)
+    stopifnot("'ident_2' is not found in 'group_by'" = is.null(ident_2) || ident_2 %in% all_ident)
+    stopifnot("'ident_1' should be provided when 'ident_2' is provided" = is.null(ident_2) || !is.null(ident_1))
 
     assay <- assay %||% DefaultAssay(object)
 
@@ -159,10 +159,10 @@ RunSeuratDEAnalysis <- function(
         p_val_adj = numeric(),
         diff_pct = numeric()
     )
-    empty[[group.by]] <- character()
+    empty[[group_by]] <- character()
     class(empty) <- c("SeuratDEAnalysis", class(empty))
 
-    object <- filter(object, !is.na(!!sym(group.by)))
+    object <- filter(object, !is.na(!!sym(group_by)))
     if (!is.null(subset)) {
         object <- filter(object, !!parse_expr(subset))
     }
@@ -170,21 +170,21 @@ RunSeuratDEAnalysis <- function(
     recorrect_umi <- is.null(subset) && assay == "SCT"
 
     find_markers <- function(recorrect_umi, ...) {
-        if (is.null(ident.1)) {
-            degs <- do.call(rbind, lapply(all_ident, function(ident) {
-                m <- FindMarkers(object, group.by = group.by, ident.1 = ident, recorrect_umi = recorrect_umi, assay = assay, ...)
+        if (is.null(ident_1)) {
+            degs <- do_call(rbind, lapply(all_ident, function(ident) {
+                m <- FindMarkers(object, group.by = group_by, ident.1 = ident, recorrect_umi = recorrect_umi, assay = assay, ...)
                 m$gene <- rownames(m)
                 rownames(m) <- NULL
-                m[[group.by]] <- ident
+                m[[group_by]] <- ident
                 m
             }))
         } else {
             degs <- FindMarkers(object,
-                group.by = group.by, ident.1 = ident.1, ident.2 = ident.2, recorrect_umi = recorrect_umi,
+                group.by = group_by, ident.1 = ident_1, ident.2 = ident_2, recorrect_umi = recorrect_umi,
                 assay = assay, ...
             )
             degs$gene <- rownames(degs)
-            degs[[group.by]] <- NA
+            degs[[group_by]] <- NA
         }
         class(degs) <- c("SeuratDEAnalysis", class(degs))
 
@@ -219,9 +219,9 @@ RunSeuratDEAnalysis <- function(
 
     degs$diff_pct <- degs$pct.1 - degs$pct.2
     attr(degs, "object") <- object
-    attr(degs, "group.by") <- group.by
-    attr(degs, "ident.1") <- ident.1
-    attr(degs, "ident.2") <- ident.2
+    attr(degs, "group_by") <- group_by
+    attr(degs, "ident_1") <- ident_1
+    attr(degs, "ident_2") <- ident_2
 
     cached$save(degs)
     degs
@@ -673,7 +673,7 @@ RunSeuratUMAP <- function(object, RunUMAPArgs = list(), cache = NULL, log = NULL
     if (is.list(RunUMAPArgs$features)) {
         log$info("  Running RunSeuratDEAnalysis to get markers for UMAP ...")
         object$Identity <- Idents(object)
-        markers <- RunSeuratDEAnalysis(object, group.by = "Identity", cache = cache)
+        markers <- RunSeuratDEAnalysis(object, group_by = "Identity", cache = cache)
         attr(markers, "object") <- NULL
         gc()
 
@@ -1756,7 +1756,7 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
 
     H5.create_reference <- function(self, ...) {
         space <- self$get_space()
-        do.call("[", c(list(space), list(...)))
+        do_call("[", c(list(space), list(...)))
         ref_type <- hdf5r::h5const$H5R_OBJECT
         ref_obj <- hdf5r::H5R_OBJECT$new(1, self)
         res <- .Call(

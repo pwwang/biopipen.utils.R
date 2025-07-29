@@ -17,9 +17,9 @@
 #' - `object`: The input expression matrix
 #' - `meta`: The metadata used for the analysis
 #' - `paired_by`: The column name used for paired samples, if applicable.
-#' - `group.by`: The column name used for grouping samples.
-#' - `ident.1`: The first identity used for comparison.
-#' - `ident.2`: The second identity used for comparison.
+#' - `group_by`: The column name used for grouping samples.
+#' - `ident_1`: The first identity used for comparison.
+#' - `ident_2`: The second identity used for comparison.
 #' @export
 RunDEGAnalysis <- function(
     exprs, group_by, ident_1, ident_2 = NULL, paired_by = NULL, meta = "@meta",
@@ -80,9 +80,9 @@ RunDEGAnalysis <- function(
     attr(result, "object") <- attr(exprs, "object") %||% exprs
     attr(result, "meta") <- meta
     attr(result, "paired_by") <- paired_by
-    attr(result, "group.by") <- group_by
-    attr(result, "ident.1") <- ident_1
-    attr(result, "ident.2") <- ident_2
+    attr(result, "group_by") <- group_by
+    attr(result, "ident_1") <- ident_1
+    attr(result, "ident_2") <- ident_2
 
     class(result) <- c("BulkDEAnalysis", class(result))
 
@@ -231,9 +231,9 @@ VizBulkDEGs <- function(
     # degs: p_val avg_log2FC pct.1 pct.2 p_val_adj gene group diff_pct
     stopifnot("[VizBulkDEGs] Can only visualize object from RunDEGAnalysis" = inherits(degs, "BulkDEAnalysis"))
     stopifnot("[VizBulkDEGs] 'outprefix' must be provided to save code" = !save_code || !is.null(outprefix))
-    group.by <- attr(degs, "group.by")
+    group_by <- attr(degs, "group_by")
     plot_type <- match.arg(plot_type)
-    are_allmarkers <- !all(is.na(degs[[group.by]]))
+    are_allmarkers <- !all(is.na(degs[[group_by]]))
 
     if (plot_type == "volcano") {
         if (save_code) {
@@ -242,7 +242,7 @@ VizBulkDEGs <- function(
             VolcanoPlot <- scplotter::VolcanoPlot
         }
 
-        facet_by <- if (are_allmarkers) group.by else NULL
+        facet_by <- if (are_allmarkers) group_by else NULL
         args <- list(data = degs, x = "log2FC",
             y = "p_val_adj", ylab = "-log10(p_val_adj)", facet_by = facet_by, label_by = "gene", ...)
         args$y_cutoff <- args$y_cutoff %||% 0.05
@@ -250,8 +250,8 @@ VizBulkDEGs <- function(
         p <- do_call(VolcanoPlot, args)
     } else {
         object <- attr(degs, "object")
-        ident.1 <- attr(degs, "ident.1")
-        ident.2 <- attr(degs, "ident.2")
+        ident_1 <- attr(degs, "ident_1")
+        ident_2 <- attr(degs, "ident_2")
         meta <- attr(degs, "meta")
 
         if (is.numeric(genes)) {
@@ -283,7 +283,7 @@ VizBulkDEGs <- function(
         p <- feature_stat_plot(
             data = object, features = features, plot_type = plot_type,
             should_shrink = should_shrink, should_pivot = should_pivot,
-            ident = group.by, ...
+            ident = group_by, ...
         )
     }
 
@@ -295,7 +295,7 @@ VizBulkDEGs <- function(
                 setup = c("library(rlang)", "library(dplyr)", "library(gglogger)", "library(scplotter)", "load('data.RData')"),
                 prefix = outprefix)
             args <- c(args, setdiff(ls(), c("p", "args", "formats", "devpars", "more_formats", "save_code", "outprefix", "are_allmarkers")))
-            do.call(save_plotcode, args)
+            do_call(save_plotcode, args)
         }
         return(NULL)
     } else {

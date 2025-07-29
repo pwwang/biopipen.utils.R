@@ -38,8 +38,8 @@ names(object@commands)
 
 object <- AddSeuratCommand(
     object, "RunSeuratDEAnalysis",
-    "RunSeuratDEAnalysis(object, group.by = 'groups', ident.1 = 'g1', ident.2 = 'g2')",
-    list(group.by = "groups", ident.1 = "g1", ident.2 = "g2")
+    "RunSeuratDEAnalysis(object, group_by = 'groups', ident_1 = 'g1', ident_2 = 'g2')",
+    list(group_by = "groups", ident_1 = "g1", ident_2 = "g2")
 )
 object@commands$RunSeuratDEAnalysis
 }
