@@ -204,7 +204,7 @@ RunDEGAnalysis <- function(
 #' @examples
 #' \donttest{
 #' set.seed(8525)
-#' data = matrix(abs(binorm(1000)), nrow = 100, ncol = 10)
+#' data = matrix(rnbinom(1000, mu = 5, size = 1), nrow = 100, ncol = 10)
 #' rownames(data) <- paste0("Gene", 1:100)
 #' colnames(data) <- paste0("Sample", 1:10)
 #' meta <- data.frame(
@@ -214,7 +214,7 @@ RunDEGAnalysis <- function(
 #'
 #' degs <- RunDEGAnalysis(data, meta = meta,
 #'  group_by = "Condition", ident_1 = "Treatment", tool = "edger")
-#' VizBulkDEGs(degs, plot_type = "volcano")
+#' VizBulkDEGs(degs, plot_type = "volcano", legend.position = "top", y_cutoff = 0.25)
 #' VizBulkDEGs(degs, plot_type = "violin", genes = 2)
 #' VizBulkDEGs(degs, plot_type = "violin", stack = TRUE, genes = 2)
 #' VizBulkDEGs(degs, plot_type = "box", genes = 2)
@@ -246,7 +246,7 @@ VizBulkDEGs <- function(
         args <- list(data = degs, x = "log2FC",
             y = "p_val_adj", ylab = "-log10(p_val_adj)", facet_by = facet_by, label_by = "gene", ...)
         args$y_cutoff <- args$y_cutoff %||% 0.05
-        args$y_cutoff_name <- paste0("p_val_adj = ", number(10 ^ -args$y_cutoff, accuracy = 0.01))
+        args$y_cutoff_name <- paste0("p_val_adj = ", args$y_cutoff)
         p <- do_call(VolcanoPlot, args)
     } else {
         object <- attr(degs, "object")

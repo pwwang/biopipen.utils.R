@@ -61,7 +61,7 @@ VizDEGs <- function(
         args <- list(data = degs, x = ifelse(plot_type == "volcano_pct", "diff_pct", "avg_log2FC"),
             y = "p_val_adj", ylab = "-log10(p_val_adj)", facet_by = facet_by, label_by = "gene", ...)
         args$y_cutoff <- args$y_cutoff %||% 0.05
-        args$y_cutoff_name <- paste0("p_val_adj = ", number(10 ^ -args$y_cutoff, accuracy = 0.01))
+        args$y_cutoff_name <- paste0("p_val_adj = ", args$y_cutoff)
         p <- do_call(VolcanoPlot, args)
     } else {
         object <- attr(degs, "object")

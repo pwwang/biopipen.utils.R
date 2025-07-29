@@ -57,7 +57,7 @@ Visualize bulk differentially expressed genes
 \examples{
 \donttest{
 set.seed(8525)
-data = matrix(abs(binorm(1000)), nrow = 100, ncol = 10)
+data = matrix(rnbinom(1000, mu = 5, size = 1), nrow = 100, ncol = 10)
 rownames(data) <- paste0("Gene", 1:100)
 colnames(data) <- paste0("Sample", 1:10)
 meta <- data.frame(
@@ -67,7 +67,7 @@ meta <- data.frame(
 
 degs <- RunDEGAnalysis(data, meta = meta,
  group_by = "Condition", ident_1 = "Treatment", tool = "edger")
-VizBulkDEGs(degs, plot_type = "volcano")
+VizBulkDEGs(degs, plot_type = "volcano", legend.position = "top", y_cutoff = 0.25)
 VizBulkDEGs(degs, plot_type = "violin", genes = 2)
 VizBulkDEGs(degs, plot_type = "violin", stack = TRUE, genes = 2)
 VizBulkDEGs(degs, plot_type = "box", genes = 2)
