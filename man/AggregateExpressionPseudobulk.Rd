@@ -9,6 +9,7 @@ AggregateExpressionPseudobulk(
   aggregate_by = "Sample",
   assay = "RNA",
   layer = "counts",
+  subset = NULL,
   log = NULL
 )
 }
@@ -21,6 +22,10 @@ You can add other columns to aggregate by, such as "Condition", "Batch", etc.}
 \item{assay}{The assay to use for aggregation. Default is "RNA".}
 
 \item{layer}{The layer to use for aggregation. Default is "counts".}
+
+\item{subset}{A string to filter the cells before aggregation.
+For example, \code{subset = "Condition == 'Control'"} will only aggregate cells
+from the "Control" condition.}
 
 \item{log}{Logger}
 }
@@ -37,7 +42,7 @@ obj <- SeuratObject::pbmc_small
 obj$Sample <- rep(paste0("S", 1:10), each = ncol(obj) / 10)
 obj$Condition <- rep(c("Control", "Treatment"), each = ncol(obj) / 2)
 result <- AggregateExpressionPseudobulk(obj, aggregate_by = c("Sample", "Condition"))
-head(result$exprs)
-head(result$meta)
+head(result)
+head(attr(result, "meta"))
 }
 }

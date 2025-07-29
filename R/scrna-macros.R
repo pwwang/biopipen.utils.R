@@ -941,7 +941,7 @@ RunSeuratSubClustering <- function(
         return(cached$restore())
     }
     log$info("Subsetting seurat object ...")
-    subobj <- subset(object, subset = !!rlang::parse_expr(subset))
+    subobj <- filter(object, !!rlang::parse_expr(subset))
     if (ncol(subobj) < 10) {
         stop("[RunSeuratSubClustering] Not enough (< 10) cells to perform clustering")
     }
@@ -1910,6 +1910,9 @@ ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", log = 
 #' You can add other columns to aggregate by, such as "Condition", "Batch", etc.
 #' @param assay The assay to use for aggregation. Default is "RNA".
 #' @param layer The layer to use for aggregation. Default is "counts".
+#' @param subset A string to filter the cells before aggregation.
+#' For example, `subset = "Condition == 'Control'"` will only aggregate cells
+#' from the "Control" condition.
 #' @param log Logger
 #'
 #' @return The expression matrix aggregated by the specified metadata columns.
@@ -1924,20 +1927,26 @@ ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", log = 
 #' obj$Sample <- rep(paste0("S", 1:10), each = ncol(obj) / 10)
 #' obj$Condition <- rep(c("Control", "Treatment"), each = ncol(obj) / 2)
 #' result <- AggregateExpressionPseudobulk(obj, aggregate_by = c("Sample", "Condition"))
-#' head(result$exprs)
-#' head(result$meta)
+#' head(result)
+#' head(attr(result, "meta"))
 #' }
 AggregateExpressionPseudobulk <- function(
     object,
     aggregate_by = "Sample",
     assay = "RNA",
     layer = "counts",
+    subset = NULL,
     log = NULL) {
     log <- log %||% get_logger()
 
     # Validate inputs
     stopifnot("'aggregate_by' columns not found in metadata" = all(aggregate_by %in% colnames(object@meta.data)))
     stopifnot("'assay' not found in object" = assay %in% names(object@assays))
+
+    if (!is.null(subset)) {
+        log$info("Subsetting cells based on: {subset}")
+        object <- filter(object, !!rlang::parse_expr(subset))
+    }
 
     log$info("Aggregating expression by: {paste(aggregate_by, collapse = ', ')}")
 
