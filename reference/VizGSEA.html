@@ -45,8 +45,9 @@
 <span>  gs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group_by <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  values_by <span class="op">=</span> <span class="st">"NES"</span>,</span>
-<span>  signif_by <span class="op">=</span> <span class="st">"padj"</span>,</span>
+<span>  signif_by <span class="op">=</span> <span class="st">"p.adjust"</span>,</span>
 <span>  signif_cutoff <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  signif_only <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -95,7 +96,7 @@ Default is "NES" (normalized enrichment score).</p></dd>
 
 <dt id="arg-signif-by">signif_by<a class="anchor" aria-label="anchor" href="#arg-signif-by"></a></dt>
 <dd><p>The column name to use for significance in the heatmap or dot plot.
-Default is "padj" (adjusted p-value). It can also be "pval".
+Default is "p.adjust" (adjusted p-value). It can also be "pvalue".
 If NULL, no significance labels will be added to the heatmap.</p></dd>
 
 
@@ -104,6 +105,13 @@ If NULL, no significance labels will be added to the heatmap.</p></dd>
 Multiple values can be provided to indicate different levels (at most 3) of significance.
 For example, <code>c(0.05, 0.01, 0.001)</code> will label pathways with p-values less than 0.05 with "<em>",
 less than 0.01 with "<strong>", and less than 0.001 with "</strong></em>".</p></dd>
+
+
+<dt id="arg-signif-only">signif_only<a class="anchor" aria-label="anchor" href="#arg-signif-only"></a></dt>
+<dd><p>If <code>TRUE</code>, only pathways that are significant in any group will be kept.
+The significance is determined by the <code>signif_by</code> column and <code>max(signif_cutoff)</code>.
+If <code>FALSE</code>, all pathways will be kept, but the significance labels will still be added
+to the heatmap.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -121,13 +129,13 @@ less than 0.01 with "<strong>", and less than 0.001 with "</strong></em>".</p></
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">exprs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">1000</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">100</span>, ncol <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">exprs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">1000</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">100</span>, ncol <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">exprs</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Sample"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">exprs</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Gene"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">100</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">classes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="fl">5</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">classes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, <span class="fl">10</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ranks</span> <span class="op">&lt;-</span> <span class="fu"><a href="RunGSEAPreRank.html">RunGSEAPreRank</a></span><span class="op">(</span><span class="va">exprs</span>, case <span class="op">=</span> <span class="st">"A"</span>, control <span class="op">=</span> <span class="st">"B"</span>, classes <span class="op">=</span> <span class="va">classes</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">genesets</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    set1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Gene1"</span>, <span class="st">"Gene2"</span>, <span class="st">"Gene3"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    set1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Gene73"</span>, <span class="st">"Gene30"</span>, <span class="st">"Gene97"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    set2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Gene4"</span>, <span class="st">"Gene5"</span>, <span class="st">"Gene6"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    set3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Gene7"</span>, <span class="st">"Gene8"</span>, <span class="st">"Gene9"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    set4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Gene10"</span>, <span class="st">"Gene11"</span>, <span class="st">"Gene12"</span><span class="op">)</span>,</span></span>
@@ -150,10 +158,15 @@ less than 0.01 with "<strong>", and less than 0.001 with "</strong></em>".</p></
 <span class="r-in"><span><span class="va">r2</span> <span class="op">&lt;-</span> <span class="va">r</span></span></span>
 <span class="r-in"><span><span class="va">r2</span><span class="op">$</span><span class="va">Group</span> <span class="op">&lt;-</span> <span class="st">"B"</span></span></span>
 <span class="r-in"><span><span class="va">r2</span><span class="op">$</span><span class="va">NES</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">r2</span><span class="op">$</span><span class="va">NES</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">r2</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">r2</span><span class="op">$</span><span class="va">padj</span> <span class="op">*</span> <span class="fl">.1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">VizGSEA</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">r</span>, <span class="va">r2</span><span class="op">)</span>, group_by <span class="op">=</span> <span class="st">"Group"</span>, plot_type <span class="op">=</span> <span class="st">"heatmap"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="VizGSEA-3.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu">VizGSEA</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">r</span>, <span class="va">r2</span><span class="op">)</span>, group_by <span class="op">=</span> <span class="st">"Group"</span>, plot_type <span class="op">=</span> <span class="st">"dot"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">VizGSEA</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">r</span>, <span class="va">r2</span><span class="op">)</span>, group_by <span class="op">=</span> <span class="st">"Group"</span>, plot_type <span class="op">=</span> <span class="st">"heatmap"</span>, signif_only <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="VizGSEA-4.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu">VizGSEA</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">r</span>, <span class="va">r2</span><span class="op">)</span>, group_by <span class="op">=</span> <span class="st">"Group"</span>, plot_type <span class="op">=</span> <span class="st">"dot"</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="VizGSEA-5.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu">VizGSEA</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">r</span>, <span class="va">r2</span><span class="op">)</span>, group_by <span class="op">=</span> <span class="st">"Group"</span>, plot_type <span class="op">=</span> <span class="st">"dot"</span>, signif_only <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="VizGSEA-6.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
