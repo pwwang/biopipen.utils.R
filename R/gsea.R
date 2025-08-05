@@ -160,7 +160,7 @@ RunGSEA = function(ranks, genesets, ...) {
 #' @param values_by The column name to use for the values in the heatmap or dot plot.
 #' Default is "NES" (normalized enrichment score).
 #' @param signif_by The column name to use for significance in the heatmap or dot plot.
-#' Default is "padj" (adjusted p-value). It can also be "pval".
+#' Default is "p.adjust" (adjusted p-value). It can also be "pvalue".
 #' If NULL, no significance labels will be added to the heatmap.
 #' @param signif_cutoff A numeric vector of significance cutoffs for the heatmap labels.
 #' Multiple values can be provided to indicate different levels (at most 3) of significance.
@@ -219,13 +219,19 @@ RunGSEA = function(ranks, genesets, ...) {
 VizGSEA <- function(
     gsea_results, plot_type = c("summary", "gsea", "heatmap", "dot"),
     gene_ranks = "@gene_ranks", gene_sets = "@gene_sets", gs = NULL,
-    group_by = NULL, values_by = "NES", signif_by = "padj", signif_cutoff = 0.05,
+    group_by = NULL, values_by = "NES", signif_by = "p.adjust", signif_cutoff = 0.05,
     signif_only = TRUE, ...
 ) {
     plottype <- match.arg(plot_type)
+    prepare_fgsea_result <- utils::getFromNamespace("prepare_fgsea_result", "plotthis")
+    # ID, Description, pvalue, p.adjust, core_enrichment, ES, NES, log2err, size
+    gsea_results <- prepare_fgsea_result(gsea_results)
 
     if (plot_type == "summary") {
-        GSEASummaryPlot(gsea_results, gene_ranks = gene_ranks, gene_sets = gene_sets, ...)
+        GSEASummaryPlot(
+            gsea_results, gene_ranks = gene_ranks, gene_sets = gene_sets,
+            metric = signif_by, cutoff = max(signif_cutoff), ...
+        )
     } else if (plot_type == "gsea") {
         GSEAPlot(gsea_results, gene_ranks = gene_ranks, gene_sets = gene_sets, gs = gs, ...)
     } else if (plot_type == "heatmap") {
@@ -236,20 +242,20 @@ VizGSEA <- function(
                 # keep the results if it is significant in any group
                 signif_pw <- gsea_results %>%
                     filter(!!sym(signif_by) < max(signif_cutoff)) %>%
-                    pull("pathway") %>%
+                    pull("ID") %>%
                     unique()
                 gsea_results <- gsea_results %>%
-                    filter(!!sym("pathway") %in% signif_pw)
+                    filter(!!sym("ID") %in% signif_pw)
             }
             gsea_results <- filter(gsea_results, !is.na(!!parse_expr(signif_by)))
-            signif_df <- gsea_results[, c("pathway", group_by, signif_by), drop = FALSE] %>%
+            signif_df <- gsea_results[, c("ID", group_by, signif_by), drop = FALSE] %>%
                 tidyr::pivot_wider(
                     names_from = group_by,
                     values_from = signif_by
                 ) %>%
                 as.data.frame()
-            rownames(signif_df) <- signif_df$pathway
-            signif_df$pathway <- NULL
+            rownames(signif_df) <- signif_df$ID
+            signif_df$ID <- NULL
             signif_df <- as.matrix(signif_df)
             signif_cutoff <- sort(signif_cutoff)
             if (length(signif_cutoff) > 3) {
@@ -284,7 +290,7 @@ VizGSEA <- function(
             gsea_results,
             in_form = "long",
             values_by = values_by,
-            rows_by = "pathway",
+            rows_by = "ID",
             columns_by = group_by,
             cell_type = cell_type,
             label = label,
@@ -296,15 +302,15 @@ VizGSEA <- function(
             # keep the results if it is significant in any group
             signif_pw <- gsea_results %>%
                 filter(!!sym(signif_by) < max(signif_cutoff)) %>%
-                pull("pathway") %>%
+                pull("ID") %>%
                 unique()
             gsea_results <- gsea_results %>%
-                filter(!!sym("pathway") %in% signif_pw)
+                filter(!!sym("ID") %in% signif_pw)
         }
-        if (signif_by == "padj") {
-            fill_by <- "-log10(padj)"
-        } else if (signif_by == "pval") {
-            fill_by <- "-log10(pval)"
+        if (signif_by == "p.adjust") {
+            fill_by <- "-log10(p.adjust)"
+        } else if (signif_by == "pvalue") {
+            fill_by <- "-log10(pvalue)"
         } else {
             fill_by <- signif_by
         }
@@ -315,7 +321,7 @@ VizGSEA <- function(
         DotPlot(
             gsea_results,
             x = group_by,
-            y = "pathway",
+            y = "ID",
             fill_by = values_by,
             size_by = fill_by,
             ...

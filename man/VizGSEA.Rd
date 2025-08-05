@@ -12,7 +12,7 @@ VizGSEA(
   gs = NULL,
   group_by = NULL,
   values_by = "NES",
-  signif_by = "padj",
+  signif_by = "p.adjust",
   signif_cutoff = 0.05,
   signif_only = TRUE,
   ...
@@ -44,7 +44,7 @@ They will be used as the columns in the heatmap or dot plot.}
 Default is "NES" (normalized enrichment score).}
 
 \item{signif_by}{The column name to use for significance in the heatmap or dot plot.
-Default is "padj" (adjusted p-value). It can also be "pval".
+Default is "p.adjust" (adjusted p-value). It can also be "pvalue".
 If NULL, no significance labels will be added to the heatmap.}
 
 \item{signif_cutoff}{A numeric vector of significance cutoffs for the heatmap labels.
