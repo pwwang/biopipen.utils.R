@@ -14,6 +14,7 @@ VizGSEA(
   values_by = "NES",
   signif_by = "padj",
   signif_cutoff = 0.05,
+  signif_only = TRUE,
   ...
 )
 }
@@ -51,6 +52,11 @@ Multiple values can be provided to indicate different levels (at most 3) of sign
 For example, \code{c(0.05, 0.01, 0.001)} will label pathways with p-values less than 0.05 with "\emph{",
 less than 0.01 with "\strong{", and less than 0.001 with "}}".}
 
+\item{signif_only}{If \code{TRUE}, only pathways that are significant in any group will be kept.
+The significance is determined by the \code{signif_by} column and \code{max(signif_cutoff)}.
+If \code{FALSE}, all pathways will be kept, but the significance labels will still be added
+to the heatmap.}
+
 \item{...}{Additional arguments passed to the plotting function
 \itemize{
 \item When \code{plot_type} is "summary", they are passed to \code{\link[plotthis:gsea]{plotthis::GSEASummaryPlot()}}
@@ -66,13 +72,13 @@ Visualize GSEA results
 \examples{
 \donttest{
 set.seed(123)
-exprs <- matrix(rnorm(1000), nrow = 100, ncol = 10)
+exprs <- matrix(rnorm(1000, 0, 1), nrow = 100, ncol = 10)
 colnames(exprs) <- paste0("Sample", 1:10)
 rownames(exprs) <- paste0("Gene", 1:100)
-classes <- c(rep("A", 5), rep("B", 5))
+classes <- sample(c("A", "B"), 10, replace = TRUE)
 ranks <- RunGSEAPreRank(exprs, case = "A", control = "B", classes = classes)
 genesets <- list(
-    set1 = c("Gene1", "Gene2", "Gene3"),
+    set1 = c("Gene73", "Gene30", "Gene97"),
     set2 = c("Gene4", "Gene5", "Gene6"),
     set3 = c("Gene7", "Gene8", "Gene9"),
     set4 = c("Gene10", "Gene11", "Gene12"),
@@ -93,7 +99,10 @@ r$Group <- "A"
 r2 <- r
 r2$Group <- "B"
 r2$NES <- sample(r2$NES)
+r2$padj <- sample(r2$padj * .1)
 VizGSEA(rbind(r, r2), group_by = "Group", plot_type = "heatmap")
+VizGSEA(rbind(r, r2), group_by = "Group", plot_type = "heatmap", signif_only = FALSE)
 VizGSEA(rbind(r, r2), group_by = "Group", plot_type = "dot")
+VizGSEA(rbind(r, r2), group_by = "Group", plot_type = "dot", signif_only = FALSE)
 }
 }

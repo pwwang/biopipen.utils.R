@@ -166,6 +166,10 @@ RunGSEA = function(ranks, genesets, ...) {
 #' Multiple values can be provided to indicate different levels (at most 3) of significance.
 #' For example, `c(0.05, 0.01, 0.001)` will label pathways with p-values less than 0.05 with "*",
 #' less than 0.01 with "**", and less than 0.001 with "***".
+#' @param signif_only If `TRUE`, only pathways that are significant in any group will be kept.
+#' The significance is determined by the `signif_by` column and `max(signif_cutoff)`.
+#' If `FALSE`, all pathways will be kept, but the significance labels will still be added
+#' to the heatmap.
 #' @inheritParams plotthis::GSEASummaryPlot
 #' @inheritParams plotthis::GSEAPlot
 #' @param ... Additional arguments passed to the plotting function
@@ -173,19 +177,19 @@ RunGSEA = function(ranks, genesets, ...) {
 #' * When `plot_type` is "gsea", they are passed to [plotthis::GSEAPlot()]
 #' @return A ggplot object or a list of ggplot objects
 #' @importFrom rlang sym parse_expr
-#' @importFrom dplyr mutate %>%
+#' @importFrom dplyr mutate %>% filter
 #' @importFrom plotthis GSEASummaryPlot GSEAPlot Heatmap DotPlot
 #' @export
 #' @examples
 #' \donttest{
 #' set.seed(123)
-#' exprs <- matrix(rnorm(1000), nrow = 100, ncol = 10)
+#' exprs <- matrix(rnorm(1000, 0, 1), nrow = 100, ncol = 10)
 #' colnames(exprs) <- paste0("Sample", 1:10)
 #' rownames(exprs) <- paste0("Gene", 1:100)
-#' classes <- c(rep("A", 5), rep("B", 5))
+#' classes <- sample(c("A", "B"), 10, replace = TRUE)
 #' ranks <- RunGSEAPreRank(exprs, case = "A", control = "B", classes = classes)
 #' genesets <- list(
-#'     set1 = c("Gene1", "Gene2", "Gene3"),
+#'     set1 = c("Gene73", "Gene30", "Gene97"),
 #'     set2 = c("Gene4", "Gene5", "Gene6"),
 #'     set3 = c("Gene7", "Gene8", "Gene9"),
 #'     set4 = c("Gene10", "Gene11", "Gene12"),
@@ -206,14 +210,17 @@ RunGSEA = function(ranks, genesets, ...) {
 #' r2 <- r
 #' r2$Group <- "B"
 #' r2$NES <- sample(r2$NES)
+#' r2$padj <- sample(r2$padj * .1)
 #' VizGSEA(rbind(r, r2), group_by = "Group", plot_type = "heatmap")
+#' VizGSEA(rbind(r, r2), group_by = "Group", plot_type = "heatmap", signif_only = FALSE)
 #' VizGSEA(rbind(r, r2), group_by = "Group", plot_type = "dot")
+#' VizGSEA(rbind(r, r2), group_by = "Group", plot_type = "dot", signif_only = FALSE)
 #' }
 VizGSEA <- function(
     gsea_results, plot_type = c("summary", "gsea", "heatmap", "dot"),
     gene_ranks = "@gene_ranks", gene_sets = "@gene_sets", gs = NULL,
     group_by = NULL, values_by = "NES", signif_by = "padj", signif_cutoff = 0.05,
-    ...
+    signif_only = TRUE, ...
 ) {
     plottype <- match.arg(plot_type)
 
@@ -225,6 +232,16 @@ VizGSEA <- function(
         stopifnot("[VizGSEA] 'group_by' is required for heatmap" = !is.null(group_by))
         if (!is.null(signif_by)) {
             cell_type = "label"
+            if (signif_only) {
+                # keep the results if it is significant in any group
+                signif_pw <- gsea_results %>%
+                    filter(!!sym(signif_by) < max(signif_cutoff)) %>%
+                    pull("pathway") %>%
+                    unique()
+                gsea_results <- gsea_results %>%
+                    filter(!!sym("pathway") %in% signif_pw)
+            }
+            gsea_results <- filter(gsea_results, !is.na(!!parse_expr(signif_by)))
             signif_df <- gsea_results[, c("pathway", group_by, signif_by), drop = FALSE] %>%
                 tidyr::pivot_wider(
                     names_from = group_by,
@@ -275,6 +292,15 @@ VizGSEA <- function(
         )
     } else if (plot_type == "dot") {
         stopifnot("[VizGSEA] 'group_by' is required for dot plot" = !is.null(group_by))
+        if (signif_only) {
+            # keep the results if it is significant in any group
+            signif_pw <- gsea_results %>%
+                filter(!!sym(signif_by) < max(signif_cutoff)) %>%
+                pull("pathway") %>%
+                unique()
+            gsea_results <- gsea_results %>%
+                filter(!!sym("pathway") %in% signif_pw)
+        }
         if (signif_by == "padj") {
             fill_by <- "-log10(padj)"
         } else if (signif_by == "pval") {
