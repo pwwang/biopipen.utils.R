@@ -10,6 +10,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ConvertAnnDataToSeurat.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ConvertSeuratToAnnData.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/FinishSeuratQC.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/GetIdentityColumn.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/LoadSeuratAndPerformQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/PerformGeneQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/PerformSeuratCellQC.html</loc></url>
@@ -48,7 +49,6 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-run_deseq2.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-run_edger.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-set_h5_seurat_project-set.html</loc></url>
-<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-size_compare.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/expand_cases.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/extract_vars.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/format_args.html</loc></url>
@@ -65,7 +65,6 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/list_update.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/list_update2.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/monkey_patch.html</loc></url>
-<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/mutate-helper-1.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/re-exports.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/read_save_object.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/repr.html</loc></url>
