@@ -164,8 +164,8 @@ VizDEGs <- function(
 #' @return The plot
 #' @export
 #' @importFrom rlang %||% sym
-#' @importFrom dplyr mutate if_else select all_of
-#' @importFrom tidyr pivot_longer
+#' @importFrom dplyr mutate if_else select all_of n
+#' @importFrom tidyr pivot_longer pivot_wider
 #' @importFrom plotthis ViolinPlot BoxPlot ScatterPlot RidgePlot BarPlot
 #' @examples
 #' \donttest{
