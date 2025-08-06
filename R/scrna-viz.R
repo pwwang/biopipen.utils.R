@@ -614,21 +614,8 @@ VizSeuratMap2Ref <- function(
         if (is.null(ident)) {
             if (plot_type != "dim") {
                 # Find the ident column in meta.data
-                ident_q <- ident_r <- NULL
-                for (name in colnames(query@meta.data)) {
-                    if (!is.factor(query@meta.data[[name]])) next
-                    if (all.equal(unname(Idents(query)), query@meta.data[[name]])) {
-                        ident_q <- name
-                        break
-                    }
-                }
-                for (name in colnames(ref@meta.data)) {
-                    if (!is.factor(ref@meta.data[[name]])) next
-                    if (all.equal(unname(Idents(ref)), ref@meta.data[[name]])) {
-                        ident_r <- name
-                        break
-                    }
-                }
+                ident_q <- GetIdentityColumn(query)
+                ident_r <- GetIdentityColumn(ref)
                 if (is.null(ident_q)) {
                     query@meta.data$Identity <- Idents(query)
                     ident_q <- "Identity"
