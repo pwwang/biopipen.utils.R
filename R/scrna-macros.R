@@ -1744,6 +1744,7 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
             object_or_file <- RenameAssays(object_or_file, RNAv3 = "RNA")
 
             log$debug("[ConvertSeuratToAnnData] Saving Seurat object to H5Seurat file ...")
+            object_or_file@commands <- list()
             SeuratDisk::SaveH5Seurat(object_or_file, h5seurat_file)
 
             rm(object_or_file)
