@@ -12,7 +12,8 @@ RunDEGAnalysis(
   paired_by = NULL,
   meta = "@meta",
   tool = c("DESeq2", "edgeR", "deseq2", "edger"),
-  log = get_logger()
+  log = get_logger(),
+  ncores = 1
 )
 }
 \arguments{
@@ -35,6 +36,11 @@ which is the column name in \code{exprs}.}
 Currently supports "DESeq2", "edgeR", and "limma".}
 
 \item{log}{Logger}
+
+\item{ncores}{Number of cores to use for parallel processing.
+If set to 1, the analysis will run in single-threaded mode.
+If set to a value greater than 1, the analysis will run in multi-threaded mode.
+This is only applicable for DESeq2.}
 }
 \value{
 A data frame with differential expression results.

@@ -4,7 +4,7 @@
 \alias{.run_deseq2}
 \title{Run DESeq2 differential expression analysis}
 \usage{
-.run_deseq2(exprs, meta, group_by, ident_1, ident_2, paired_by, log)
+.run_deseq2(exprs, meta, group_by, ident_1, ident_2, paired_by, log, ncores)
 }
 \arguments{
 \item{exprs}{Expression matrix with genes as rows and samples as columns.}
@@ -20,6 +20,8 @@
 \item{paired_by}{Column name in \code{meta} for paired samples.}
 
 \item{log}{Logger}
+
+\item{ncores}{Number of cores to use for parallel processing.}
 }
 \value{
 A data frame with DESeq2 differential expression results.

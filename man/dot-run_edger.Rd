@@ -4,7 +4,7 @@
 \alias{.run_edger}
 \title{Run edgeR differential expression analysis}
 \usage{
-.run_edger(exprs, meta, group_by, ident_1, ident_2, paired_by, log)
+.run_edger(exprs, meta, group_by, ident_1, ident_2, paired_by, log, ncores)
 }
 \arguments{
 \item{exprs}{Expression matrix with genes as rows and samples as columns.}
@@ -20,6 +20,8 @@
 \item{paired_by}{Column name in \code{meta} for paired samples.}
 
 \item{log}{Logger}
+
+\item{ncores}{Number of cores to use for parallel processing, not used in this function.}
 }
 \value{
 A data frame with edgeR differential expression results.

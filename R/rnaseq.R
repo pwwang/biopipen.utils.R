@@ -12,6 +12,10 @@
 #' @param tool Tool to use for differential expression analysis.
 #' Currently supports "DESeq2", "edgeR", and "limma".
 #' @param log Logger
+#' @param ncores Number of cores to use for parallel processing.
+#' If set to 1, the analysis will run in single-threaded mode.
+#' If set to a value greater than 1, the analysis will run in multi-threaded mode.
+#' This is only applicable for DESeq2.
 #' @return A data frame with differential expression results.
 #' With attributes:
 #' - `object`: The input expression matrix
@@ -23,7 +27,7 @@
 #' @export
 RunDEGAnalysis <- function(
     exprs, group_by, ident_1, ident_2 = NULL, paired_by = NULL, meta = "@meta",
-    tool = c("DESeq2", "edgeR", "deseq2", "edger"), log = get_logger()
+    tool = c("DESeq2", "edgeR", "deseq2", "edger"), log = get_logger(), ncores = 1
 ) {
     tool <- match.arg(tool)
 
@@ -71,10 +75,10 @@ RunDEGAnalysis <- function(
 
     # Run the differential expression analysis using the specified tool
     result <- switch(tool,
-        DESeq2 = .run_deseq2(exprs, meta, group_by, ident_1, ident_2, paired_by, log),
-        edgeR = .run_edger(exprs, meta, group_by, ident_1, ident_2, paired_by, log),
-        deseq2 = .run_deseq2(exprs, meta, group_by, ident_1, ident_2, paired_by, log),
-        edger = .run_edger(exprs, meta, group_by, ident_1, ident_2,paired_by,  log)
+        DESeq2 = .run_deseq2(exprs, meta, group_by, ident_1, ident_2, paired_by, log, ncores),
+        edgeR = .run_edger(exprs, meta, group_by, ident_1, ident_2, paired_by, log, ncores),
+        deseq2 = .run_deseq2(exprs, meta, group_by, ident_1, ident_2, paired_by, log, ncores),
+        edger = .run_edger(exprs, meta, group_by, ident_1, ident_2,paired_by,  log, ncores)
     )
 
     attr(result, "object") <- attr(exprs, "object") %||% exprs
@@ -98,9 +102,10 @@ RunDEGAnalysis <- function(
 #' @param ident_2 Second identity to compare against
 #' @param paired_by Column name in `meta` for paired samples.
 #' @param log Logger
+#' @param ncores Number of cores to use for parallel processing.
 #' @return A data frame with DESeq2 differential expression results.
 #' @keywords internal
-.run_deseq2 <- function(exprs, meta, group_by, ident_1, ident_2, paired_by, log) {
+.run_deseq2 <- function(exprs, meta, group_by, ident_1, ident_2, paired_by, log, ncores) {
     log$info("Running differential gene expression analysis using DESeq2...")
 
     if (is.null(paired_by)) {
@@ -110,8 +115,12 @@ RunDEGAnalysis <- function(
     }
     design <- stats::model.matrix(design, data = meta)
     dge <- DESeq2::DESeqDataSetFromMatrix(round(exprs), meta, design)
-    dge <- DESeq2::DESeq(dge)
-    d <- dge
+    if (ncores > 1) {
+        dge <- DESeq2::DESeq(dge, parallel = TRUE, BPPARAM = BiocParallel::MulticoreParam(ncores))
+    } else {
+        dge <- DESeq2::DESeq(dge)
+    }
+    # d <- dge
     allgene <- DESeq2::results(dge)
 
     allgene <- as.data.frame(allgene[order(allgene$pvalue), , drop=FALSE])
@@ -142,9 +151,10 @@ RunDEGAnalysis <- function(
 #' @param ident_2 Second identity to compare against
 #' @param paired_by Column name in `meta` for paired samples.
 #' @param log Logger
+#' @param ncores Number of cores to use for parallel processing, not used in this function.
 #' @return A data frame with edgeR differential expression results.
 #' @keywords internal
-.run_edger <- function(exprs, meta, group_by, ident_1, ident_2, paired_by, log) {
+.run_edger <- function(exprs, meta, group_by, ident_1, ident_2, paired_by, log, ncores) {
     log$info("Running differential gene expression analysis using edgeR...")
     if (is.null(paired_by)) {
         design <- stats::as.formula(paste("~", bQuote(group_by)))
