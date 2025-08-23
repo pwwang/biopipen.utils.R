@@ -127,6 +127,7 @@ VizDEGs <- function(
                     ident = group_by, show_row_names = show_row_names, show_column_names = show_column_names,
                     name = "Expression Level", ...)
             }
+            attr(p, "height") <- attr(p, "height") / 5
         } else {
             p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
                 ident = group_by, ...)
