@@ -13,6 +13,7 @@ RunDEGAnalysis(
   meta = "@meta",
   tool = c("DESeq2", "edgeR", "deseq2", "edger"),
   log = get_logger(),
+  cache = NULL,
   ncores = 1
 )
 }
@@ -36,6 +37,8 @@ which is the column name in \code{exprs}.}
 Currently supports "DESeq2", "edgeR", and "limma".}
 
 \item{log}{Logger}
+
+\item{cache}{Directory to store cache files. If NULL, a temporary directory will be used.}
 
 \item{ncores}{Number of cores to use for parallel processing.
 If set to 1, the analysis will run in single-threaded mode.

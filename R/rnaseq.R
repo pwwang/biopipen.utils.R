@@ -12,6 +12,7 @@
 #' @param tool Tool to use for differential expression analysis.
 #' Currently supports "DESeq2", "edgeR", and "limma".
 #' @param log Logger
+#' @param cache Directory to store cache files. If NULL, a temporary directory will be used.
 #' @param ncores Number of cores to use for parallel processing.
 #' If set to 1, the analysis will run in single-threaded mode.
 #' If set to a value greater than 1, the analysis will run in multi-threaded mode.
@@ -27,9 +28,20 @@
 #' @export
 RunDEGAnalysis <- function(
     exprs, group_by, ident_1, ident_2 = NULL, paired_by = NULL, meta = "@meta",
-    tool = c("DESeq2", "edgeR", "deseq2", "edger"), log = get_logger(), ncores = 1
+    tool = c("DESeq2", "edgeR", "deseq2", "edger"), log = get_logger(), cache = NULL, ncores = 1
 ) {
     tool <- match.arg(tool)
+
+    cache <- cache %||% gettempdir()
+    cached <- Cache$new(
+        list(exprs, group_by, ident_1, ident_2, paired_by, meta, tool),
+        prefix = "biopipen.utils.RunDEGAnalysis",
+        cache_dir = cache
+    )
+    if (cached$is_cached()) {
+        log$info("[RunDEGAnalysis] Using cached result.")
+        return(cached$restore())
+    }
 
     if (identical(meta, "@meta")) {
         meta <- attr(exprs, "meta")
@@ -90,6 +102,7 @@ RunDEGAnalysis <- function(
 
     class(result) <- c("BulkDEAnalysis", class(result))
 
+    cached$save(result)
     return(result)
 }
 
