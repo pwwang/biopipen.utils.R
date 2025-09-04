@@ -6,8 +6,8 @@
 \usage{
 VizDEGs(
   degs,
-  plot_type = c("volcano_pct", "volcano_log2fc", "violin", "box", "bar", "ridge", "dim",
-    "heatmap", "dot"),
+  plot_type = c("volcano_pct", "volcano_log2fc", "jitter_pct", "jitter_log2fc", "violin",
+    "box", "bar", "ridge", "dim", "heatmap", "dot"),
   order_by = "desc(abs(avg_log2FC))",
   genes = 10,
   outprefix = NULL,
@@ -23,7 +23,7 @@ VizDEGs(
 \item{degs}{DEGs from RunSeuratDEAnalysis}
 
 \item{plot_type}{Type of plot to generate
-One of 'volcano_pct', 'volcano_log2fc', 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot'}
+One of 'volcano_pct', 'volcano_log2fc', 'jitter_log2fc', 'jitter_pct', 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot'}
 
 \item{order_by}{An expression in string to order the genes}
 
@@ -46,6 +46,7 @@ Only works when plot_type is not a volcano plot}
 \item{...}{Additional arguments to pass to the plot function
 \itemize{
 \item For 'volcano_pct' and 'volcano_log2fc', additional arguments to pass to 'scplotter::VolcanoPlot'
+\item For 'jitter_pct' and 'jitter_log2fc', additional arguments to pass to 'plotthis::JitterPlot'
 \item For 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot', additional arguments to pass to 'scplotter::FeatureStatPlot'
 }}
 }
@@ -60,6 +61,7 @@ Visualize differentially expressed genes
 degs <- RunSeuratDEAnalysis(scplotter::pancreas_sub, "SubCellType")
 VizDEGs(degs, plot_type = "volcano_pct")
 VizDEGs(degs, plot_type = "volcano_log2fc")
+VizDEGs(degs, plot_type = "jitter_log2fc")
 VizDEGs(degs, plot_type = "violin", genes = 2)
 VizDEGs(degs, plot_type = "violin", stack = TRUE, genes = 2)
 VizDEGs(degs, plot_type = "box", genes = 2)

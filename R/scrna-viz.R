@@ -4,7 +4,7 @@
 #'
 #' @param degs DEGs from RunSeuratDEAnalysis
 #' @param plot_type Type of plot to generate
-#' One of 'volcano_pct', 'volcano_log2fc', 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot'
+#' One of 'volcano_pct', 'volcano_log2fc', 'jitter_log2fc', 'jitter_pct', 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot'
 #' @param order_by An expression in string to order the genes
 #' @param genes Number of genes genes to visualize (based on the 'order_by' expression)
 #' Or an expression in string to filter the genes (passed by [dplyr::filter])
@@ -17,6 +17,7 @@
 #' @param show_column_names Whether to show column names in the heatmap
 #' @param ... Additional arguments to pass to the plot function
 #' * For 'volcano_pct' and 'volcano_log2fc', additional arguments to pass to 'scplotter::VolcanoPlot'
+#' * For 'jitter_pct' and 'jitter_log2fc', additional arguments to pass to 'plotthis::JitterPlot'
 #' * For 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot', additional arguments to pass to 'scplotter::FeatureStatPlot'
 #' @return A ggplot object if 'outprefix' is NULL, otherwise, save the plot to the output directory
 #' @export
@@ -28,6 +29,7 @@
 #' degs <- RunSeuratDEAnalysis(scplotter::pancreas_sub, "SubCellType")
 #' VizDEGs(degs, plot_type = "volcano_pct")
 #' VizDEGs(degs, plot_type = "volcano_log2fc")
+#' VizDEGs(degs, plot_type = "jitter_log2fc")
 #' VizDEGs(degs, plot_type = "violin", genes = 2)
 #' VizDEGs(degs, plot_type = "violin", stack = TRUE, genes = 2)
 #' VizDEGs(degs, plot_type = "box", genes = 2)
@@ -38,7 +40,7 @@
 #' VizDEGs(degs, plot_type = "dot", genes = 5)
 #' }
 VizDEGs <- function(
-    degs, plot_type = c("volcano_pct", "volcano_log2fc", "violin", "box", "bar", "ridge", "dim", "heatmap", "dot"),
+    degs, plot_type = c("volcano_pct", "volcano_log2fc", "jitter_pct", "jitter_log2fc", "violin", "box", "bar", "ridge", "dim", "heatmap", "dot"),
     order_by = 'desc(abs(avg_log2FC))', genes = 10, outprefix = NULL,
     devpars = list(res = 100), more_formats = c(), save_code = FALSE,
     show_row_names = TRUE, show_column_names = TRUE, ...
@@ -63,6 +65,31 @@ VizDEGs <- function(
         args$y_cutoff <- args$y_cutoff %||% 0.05
         args$y_cutoff_name <- paste0("p_val_adj = ", args$y_cutoff)
         p <- do_call(VolcanoPlot, args)
+    } else if (plot_type %in% c("jitter_pct", "jitter_log2fc")) {
+        if (save_code) {
+            JitterPlot <- gglogger::register(plotthis::JitterPlot, "JitterPlot")
+        } else {
+            JitterPlot <- plotthis::JitterPlot
+        }
+        args <- rlang::dots_list(...)
+        if (are_allmarkers) {
+            args$x <- group_by
+            args$xlab <- args$xlab %||% group_by
+        } else {
+            degs$group <- "Markers"
+            args$x <- "group"
+            args$xlab <- args$xlab %||% ""
+        }
+        args$data <- degs
+        args$y <- ifelse(plot_type == "jitter_pct", "diff_pct", "avg_log2FC")
+        args$size_by <- "p_val_adj"
+        args$size_trans <- function(x) -log10(x)
+        args$shape <- args$shape %||% 16
+        args$x_text_angle <- args$x_text_angle %||% 90
+        args$label_by <- args$label_by %||% "gene"
+        args$add_hline <- args$add_hline %||% 0
+        args$hline_width <- args$hline_width %||% 0.1
+        p <- do_call(JitterPlot, args)
     } else {
         object <- attr(degs, "object")
         ident_1 <- attr(degs, "ident_1")
