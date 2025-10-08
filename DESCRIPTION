@@ -54,4 +54,4 @@ Remotes:
     chris-mcginnis-ucsf/DoubletFinder,
     mojaveazure/seurat-disk
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
