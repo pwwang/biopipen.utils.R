@@ -6,8 +6,8 @@
 \usage{
 VizDEGs(
   degs,
-  plot_type = c("volcano_pct", "volcano_log2fc", "jitter_pct", "jitter_log2fc", "violin",
-    "box", "bar", "ridge", "dim", "heatmap", "dot"),
+  plot_type = c("volcano_pct", "volcano_log2fc", "jitter_pct", "jitter_log2fc",
+    "heatmap", "heatmap_log2fc", "dot", "violin", "box", "bar", "ridge", "dim", "dot"),
   order_by = "desc(abs(avg_log2FC))",
   genes = 10,
   outprefix = NULL,
@@ -16,6 +16,7 @@ VizDEGs(
   save_code = FALSE,
   show_row_names = TRUE,
   show_column_names = TRUE,
+  cutoff = NULL,
   ...
 )
 }
@@ -23,7 +24,21 @@ VizDEGs(
 \item{degs}{DEGs from RunSeuratDEAnalysis}
 
 \item{plot_type}{Type of plot to generate
-One of 'volcano_pct', 'volcano_log2fc', 'jitter_log2fc', 'jitter_pct', 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot'}
+One of 'volcano_pct', 'volcano_log2fc', 'jitter_log2fc', 'jitter_pct', 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot', 'heatmap_log2fc'.
+\itemize{
+\item 'volcano_pct': Volcano plot with x-axis as percentage difference and y-axis as adjusted p-value
+\item 'volcano_log2fc': Volcano plot with x-axis as log2 fold change and y-axis as adjusted p-value
+\item 'jitter_pct': Jitter plot with x-axis as groups and y-axis as percentage difference
+\item 'jitter_log2fc': Jitter plot with x-axis as groups and y-axis as log2 fold change
+\item 'violin': Violin plot of gene expression
+\item 'box': Box plot of gene expression
+\item 'bar': Bar plot of average gene expression
+\item 'ridge': Ridge plot of gene expression
+\item 'dim': Dimensionality reduction plot of gene expression
+\item 'heatmap': Heatmap of gene expression, colors represent expression level
+\item 'dot': Dot plot of gene expression, colors represent expression level, size represent percentage of cells expressing the gene
+\item 'heatmap_log2fc': Heatmap of average log2 fold change of the genes in each group, colors represent log2 fold change
+}}
 
 \item{order_by}{An expression in string to order the genes}
 
@@ -39,15 +54,19 @@ Only works when plot_type is not a volcano plot}
 
 \item{save_code}{Whether to save the code to reproduce the plot}
 
-\item{show_row_names}{Whether to show row names in the heatmap}
+\item{show_row_names}{Whether to show row names in the heatmap/dotplot}
 
-\item{show_column_names}{Whether to show column names in the heatmap}
+\item{show_column_names}{Whether to show column names in the heatmap/dotplot}
+
+\item{cutoff}{Cutoff for adjusted p-value to show asterisk (*) in heatmap_log2fc}
 
 \item{...}{Additional arguments to pass to the plot function
 \itemize{
-\item For 'volcano_pct' and 'volcano_log2fc', additional arguments to pass to 'scplotter::VolcanoPlot'
-\item For 'jitter_pct' and 'jitter_log2fc', additional arguments to pass to 'plotthis::JitterPlot'
-\item For 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot', additional arguments to pass to 'scplotter::FeatureStatPlot'
+\item For 'volcano_pct' and 'volcano_log2fc', additional arguments to pass to \code{\link[plotthis:VolcanoPlot]{plotthis::VolcanoPlot()}}
+\item For 'jitter_pct' and 'jitter_log2fc', additional arguments to pass to \code{\link[plotthis:jitterplot]{plotthis::JitterPlot()}}
+\item For 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot', additional arguments to pass to
+\code{\link[scplotter:FeatureStatPlot]{scplotter::FeatureStatPlot()}}
+\item For 'heatmap_log2fc', additional arguments to pass to \code{\link[plotthis:Heatmap]{plotthis::Heatmap()}}.
 }}
 }
 \value{

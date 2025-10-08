@@ -4,7 +4,19 @@
 #'
 #' @param degs DEGs from RunSeuratDEAnalysis
 #' @param plot_type Type of plot to generate
-#' One of 'volcano_pct', 'volcano_log2fc', 'jitter_log2fc', 'jitter_pct', 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot'
+#' One of 'volcano_pct', 'volcano_log2fc', 'jitter_log2fc', 'jitter_pct', 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot', 'heatmap_log2fc'.
+#' * 'volcano_pct': Volcano plot with x-axis as percentage difference and y-axis as adjusted p-value
+#' * 'volcano_log2fc': Volcano plot with x-axis as log2 fold change and y-axis as adjusted p-value
+#' * 'jitter_pct': Jitter plot with x-axis as groups and y-axis as percentage difference
+#' * 'jitter_log2fc': Jitter plot with x-axis as groups and y-axis as log2 fold change
+#' * 'violin': Violin plot of gene expression
+#' * 'box': Box plot of gene expression
+#' * 'bar': Bar plot of average gene expression
+#' * 'ridge': Ridge plot of gene expression
+#' * 'dim': Dimensionality reduction plot of gene expression
+#' * 'heatmap': Heatmap of gene expression, colors represent expression level
+#' * 'dot': Dot plot of gene expression, colors represent expression level, size represent percentage of cells expressing the gene
+#' * 'heatmap_log2fc': Heatmap of average log2 fold change of the genes in each group, colors represent log2 fold change
 #' @param order_by An expression in string to order the genes
 #' @param genes Number of genes genes to visualize (based on the 'order_by' expression)
 #' Or an expression in string to filter the genes (passed by [dplyr::filter])
@@ -13,12 +25,15 @@
 #' @param devpars List of parameters to save the plot
 #' @param more_formats Additional formats to save the plot in addition to 'png'
 #' @param save_code Whether to save the code to reproduce the plot
-#' @param show_row_names Whether to show row names in the heatmap
-#' @param show_column_names Whether to show column names in the heatmap
+#' @param show_row_names Whether to show row names in the heatmap/dotplot
+#' @param show_column_names Whether to show column names in the heatmap/dotplot
 #' @param ... Additional arguments to pass to the plot function
-#' * For 'volcano_pct' and 'volcano_log2fc', additional arguments to pass to 'scplotter::VolcanoPlot'
-#' * For 'jitter_pct' and 'jitter_log2fc', additional arguments to pass to 'plotthis::JitterPlot'
-#' * For 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot', additional arguments to pass to 'scplotter::FeatureStatPlot'
+#' * For 'volcano_pct' and 'volcano_log2fc', additional arguments to pass to [plotthis::VolcanoPlot()]
+#' * For 'jitter_pct' and 'jitter_log2fc', additional arguments to pass to [plotthis::JitterPlot()]
+#' * For 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot', additional arguments to pass to
+#' [scplotter::FeatureStatPlot()]
+#' * For 'heatmap_log2fc', additional arguments to pass to [plotthis::Heatmap()].
+#' @param cutoff Cutoff for adjusted p-value to show asterisk (*) in heatmap_log2fc
 #' @return A ggplot object if 'outprefix' is NULL, otherwise, save the plot to the output directory
 #' @export
 #' @importFrom rlang sym
@@ -37,13 +52,19 @@
 #' VizDEGs(degs, plot_type = "ridge", genes = 2)
 #' VizDEGs(degs, plot_type = "dim", genes = 1)
 #' VizDEGs(degs, plot_type = "heatmap", genes = 5)
+#' VizDEGs(degs, plot_type = "heatmap_log2fc", cutoff = 0.05, genes = 5)
 #' VizDEGs(degs, plot_type = "dot", genes = 5)
 #' }
 VizDEGs <- function(
-    degs, plot_type = c("volcano_pct", "volcano_log2fc", "jitter_pct", "jitter_log2fc", "violin", "box", "bar", "ridge", "dim", "heatmap", "dot"),
+    degs, plot_type = c(
+        "volcano_pct", "volcano_log2fc",
+        "jitter_pct", "jitter_log2fc",
+        "heatmap", "heatmap_log2fc",
+        "dot", "violin", "box", "bar", "ridge", "dim", "dot"
+    ),
     order_by = 'desc(abs(avg_log2FC))', genes = 10, outprefix = NULL,
     devpars = list(res = 100), more_formats = c(), save_code = FALSE,
-    show_row_names = TRUE, show_column_names = TRUE, ...
+    show_row_names = TRUE, show_column_names = TRUE, cutoff = NULL, ...
 ) {
     # degs: p_val avg_log2FC pct.1 pct.2 p_val_adj gene group diff_pct
     stopifnot("[VizDEGs] Can only visualize object from RunSeuratDEAnalysis" = inherits(degs, "SeuratDEAnalysis"))
@@ -52,7 +73,61 @@ VizDEGs <- function(
     plot_type <- match.arg(plot_type)
     are_allmarkers <- !all(is.na(degs[[group_by]]))
 
-    if (plot_type %in% c("volcano_pct", "volcano_log2fc")) {
+    if (plot_type %in% c("heatmap_log2fc") && !are_allmarkers) {
+        stop("[VizDEGs] '", plot_type, "' only works when all markers are provided (i.e., group_by is not NA)")
+    }
+
+    if (plot_type %in% c("heatmap_log2fc")) {
+        if (is.numeric(genes)) {
+            # Select top 'genes' per group
+            features <- degs %>%
+                dplyr::group_by(!!sym(group_by)) %>%
+                arrange(!!rlang::parse_expr(order_by)) %>%
+                slice_head(n = genes) %>%
+                pull("gene") %>%
+                unique()
+        } else {
+            features <- degs %>%
+                dplyr::group_by(!!sym(group_by)) %>%
+                arrange(!!rlang::parse_expr(order_by)) %>%
+                filter(!!rlang::parse_expr(genes)) %>%
+                pull("gene") %>%
+                unique()
+        }
+        degs <- degs[degs$gene %in% features, , drop = FALSE]
+
+        args <- list(
+            data = degs,
+            in_form = "long",
+            rows_by = "gene",
+            values_by = "avg_log2FC",
+            columns_by = group_by,
+            values_fill = 0,
+            show_row_names = show_row_names,
+            show_column_names = show_column_names,
+            ...
+        )
+        if ((!is.null(cutoff) && plot_type == "heatmap_log2fc")) {
+            gene <- if (is.factor(degs$gene)) levels(degs$gene) else unique(degs$gene)
+            group <- if (is.factor(degs[[group_by]])) levels(degs[[group_by]]) else unique(degs[[group_by]])
+            adj_pval_data <- as.data.frame(
+                tidyr::pivot_wider(
+                    degs, id_cols = "gene", names_from = group_by, values_from = "p_val_adj", values_fill = 1
+                )
+            )
+            rownames(adj_pval_data) <- adj_pval_data$gene
+            adj_pval_data$gene <- NULL
+            adj_pval_data <- adj_pval_data[gene, group, drop = FALSE]
+            adj_pval_data <- as.matrix(adj_pval_data)
+            args$cell_type <- "label"
+            args$label <- function(v, i, j) {
+                pv <- ComplexHeatmap::pindex(adj_pval_data, i, j)
+                ifelse(is.na(pv) | pv >= cutoff, NA, "*")
+            }
+        }
+
+        p <- do_call(plotthis::Heatmap, args)
+    } else if (plot_type %in% c("volcano_pct", "volcano_log2fc")) {
         if (save_code) {
             VolcanoPlot <- gglogger::register(scplotter::VolcanoPlot, "VolcanoPlot")
         } else {
