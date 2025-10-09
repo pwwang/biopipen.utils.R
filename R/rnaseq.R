@@ -304,7 +304,7 @@ VizBulkDEGs <- function(
 
         feature_stat_plot <- utils::getFromNamespace(".feature_stat_plot", "scplotter")
         p <- feature_stat_plot(
-            data = object, features = features, plot_type = plot_type,
+            data = object, features = features, plot_type = plot_type, downsample = NULL,
             should_shrink = should_shrink, should_pivot = should_pivot,
             ident = group_by, ...
         )

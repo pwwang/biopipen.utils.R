@@ -88,6 +88,7 @@ VizDEGs(degs, plot_type = "bar", genes = 2, x_text_angle = 90)
 VizDEGs(degs, plot_type = "ridge", genes = 2)
 VizDEGs(degs, plot_type = "dim", genes = 1)
 VizDEGs(degs, plot_type = "heatmap", genes = 5)
+VizDEGs(degs, plot_type = "heatmap_log2fc", cutoff = 0.05, genes = 5)
 VizDEGs(degs, plot_type = "dot", genes = 5)
 }
 }
