@@ -24,7 +24,12 @@ save_plot <- function(plot, prefix, devpars = NULL, bg = "white", formats = c("p
 
     old_dev <- grDevices::dev.cur()
     prefix <- sub("\\.+$", "", prefix)
-    plot_dev <- getFromNamespace("plot_dev", "ggplot2")
+
+    if (utils::compareVersion(as.character(utils::packageVersion("ggplot2")), "4") < 0) {
+        plot_dev <- getFromNamespace("plot_dev", "ggplot2")
+    } else {
+        plot_dev <- getFromNamespace("validate_device", "ggplot2")
+    }
     plot_dim <- getFromNamespace("plot_dim", "ggplot2")
     for (fmt in formats) {
         filename = paste0(prefix, ".", fmt)
