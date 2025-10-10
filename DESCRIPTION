@@ -7,6 +7,10 @@ Authors@R:
 Description: Common utility used for biopipen processes to compose bioinformatics pipelines.
 License: MIT + file LICENSE
 Encoding: UTF-8
+URL: https://github.com/pwwang/biopipen.utils.R
+    https://pwwang.github.io/biopipen.utils.R/
+BugReports:
+    https://github.com/pwwang/biopipen.utils.R/issues
 Depends:
     R (>= 4.2.0)
 Imports:
@@ -50,6 +54,7 @@ Suggests:
     qs2
 Remotes:
     pwwang/enrichit,
+    pwwang/plotthis,
     pwwang/scplotter,
     chris-mcginnis-ucsf/DoubletFinder,
     mojaveazure/seurat-disk
