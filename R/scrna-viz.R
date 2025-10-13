@@ -2,239 +2,78 @@
 #'
 #' Visualize differentially expressed genes
 #'
-#' @param degs DEGs from RunSeuratDEAnalysis
-#' @param plot_type Type of plot to generate
-#' One of 'volcano_pct', 'volcano_log2fc', 'jitter_log2fc', 'jitter_pct', 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot', 'heatmap_log2fc'.
-#' * 'volcano_pct': Volcano plot with x-axis as percentage difference and y-axis as adjusted p-value
-#' * 'volcano_log2fc': Volcano plot with x-axis as log2 fold change and y-axis as adjusted p-value
-#' * 'jitter_pct': Jitter plot with x-axis as groups and y-axis as percentage difference
-#' * 'jitter_log2fc': Jitter plot with x-axis as groups and y-axis as log2 fold change
-#' * 'violin': Violin plot of gene expression
-#' * 'box': Box plot of gene expression
-#' * 'bar': Bar plot of average gene expression
-#' * 'ridge': Ridge plot of gene expression
-#' * 'dim': Dimensionality reduction plot of gene expression
-#' * 'heatmap': Heatmap of gene expression, colors represent expression level
-#' * 'dot': Dot plot of gene expression, colors represent expression level, size represent percentage of cells expressing the gene
-#' * 'heatmap_log2fc': Heatmap of average log2 fold change of the genes in each group, colors represent log2 fold change
-#' @param order_by An expression in string to order the genes
-#' @param genes Number of genes genes to visualize (based on the 'order_by' expression)
-#' Or an expression in string to filter the genes (passed by [dplyr::filter])
-#' Only works when plot_type is not a volcano plot
+#' @inheritParams scplotter::MarkersPlot
+#' @inheritDotParams scplotter::MarkersPlot
 #' @param outprefix Prefix of the output file
 #' @param devpars List of parameters to save the plot
 #' @param more_formats Additional formats to save the plot in addition to 'png'
 #' @param save_code Whether to save the code to reproduce the plot
-#' @param show_row_names Whether to show row names in the heatmap/dotplot
-#' @param show_column_names Whether to show column names in the heatmap/dotplot
-#' @param ... Additional arguments to pass to the plot function
-#' * For 'volcano_pct' and 'volcano_log2fc', additional arguments to pass to [plotthis::VolcanoPlot()]
-#' * For 'jitter_pct' and 'jitter_log2fc', additional arguments to pass to [plotthis::JitterPlot()]
-#' * For 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot', additional arguments to pass to
-#' [scplotter::FeatureStatPlot()]
-#' * For 'heatmap_log2fc', additional arguments to pass to [plotthis::Heatmap()].
-#' @param cutoff Cutoff for adjusted p-value to show asterisk (*) in heatmap_log2fc
 #' @return A ggplot object if 'outprefix' is NULL, otherwise, save the plot to the output directory
 #' @export
 #' @importFrom rlang sym
 #' @importFrom scales number
 #' @importFrom dplyr slice_head arrange pull filter rename
+#' @importFrom scplotter MarkersPlot
+#' @seealso [scplotter::MarkersPlot()]
 #' @examples
 #' \donttest{
 #' degs <- RunSeuratDEAnalysis(scplotter::pancreas_sub, "SubCellType")
 #' VizDEGs(degs, plot_type = "volcano_pct")
 #' VizDEGs(degs, plot_type = "volcano_log2fc")
-#' VizDEGs(degs, plot_type = "jitter_log2fc")
-#' VizDEGs(degs, plot_type = "violin", genes = 2)
-#' VizDEGs(degs, plot_type = "violin", stack = TRUE, genes = 2)
-#' VizDEGs(degs, plot_type = "box", genes = 2)
-#' VizDEGs(degs, plot_type = "bar", genes = 2, x_text_angle = 90)
-#' VizDEGs(degs, plot_type = "ridge", genes = 2)
-#' VizDEGs(degs, plot_type = "dim", genes = 1)
-#' VizDEGs(degs, plot_type = "heatmap", genes = 5)
-#' VizDEGs(degs, plot_type = "heatmap_log2fc", cutoff = 0.05, genes = 5)
-#' VizDEGs(degs, plot_type = "dot", genes = 5)
+#' VizDEGs(degs, plot_type = "jitter_log2fc", subset_by = "SubCellType")
+#' VizDEGs(degs, plot_type = "heatmap_log2fc", cutoff = 0.05,
+#'     select = 5, subset_by = "SubCellType")
+#'
+#' # Visualize expression of the top DEGs
+#' # Suppose we did comparison between G2M and S phase in each SubCellType
+#' degs$Phase <- "G2M:S"
+#'
+#' VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "violin",
+#'     select = 2, comparison_by = "Phase", subset_by = "SubCellType")
+#' VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "box",
+#'     select = 2, comparison_by = "Phase", subset_by = "SubCellType")
+#' VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "bar",
+#'     select = 2, comparison_by = "Phase", subset_by = "SubCellType")
+#' VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "ridge",
+#'     select = 1, comparison_by = "Phase", subset_by = "SubCellType")
+#' VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "heatmap",
+#'     cluster_columns = FALSE, comparison_by = "Phase", subset_by = "SubCellType")
+#' VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "dot",
+#'     select = 1, comparison_by = "Phase", subset_by = "SubCellType")
 #' }
 VizDEGs <- function(
-    degs, plot_type = c(
-        "volcano_pct", "volcano_log2fc",
-        "jitter_pct", "jitter_log2fc",
-        "heatmap", "heatmap_log2fc",
-        "dot", "violin", "box", "bar", "ridge", "dim", "dot"
-    ),
-    order_by = 'desc(abs(avg_log2FC))', genes = 10, outprefix = NULL,
+    markers,
+    object = NULL,
+    plot_type = c("volcano", "volcano_log2fc", "volcano_pct", "jitter", "jitter_log2fc",
+        "jitter_pct", "heatmap_log2fc", "heatmap_pct", "dot_log2fc", "dot_pct", "heatmap",
+        "violin", "box", "bar", "ridge", "dot"),
+    subset_by = NULL,
+    subset_as_facet = FALSE,
+    comparison_by = NULL,
+    p_adjust = TRUE,
+    cutoff = NULL,
+    order_by = NULL,
+    select = ifelse(plot_type %in% c("volcano", "volcano_log2fc", "volcano_pct",
+        "jitter", "jitter_log2fc", "jitter_pct"), 5, 10),
+    outprefix = NULL,
     devpars = list(res = 100), more_formats = c(), save_code = FALSE,
-    show_row_names = TRUE, show_column_names = TRUE, cutoff = NULL, ...
+    ...
 ) {
     # degs: p_val avg_log2FC pct.1 pct.2 p_val_adj gene group diff_pct
-    stopifnot("[VizDEGs] Can only visualize object from RunSeuratDEAnalysis" = inherits(degs, "SeuratDEAnalysis"))
     stopifnot("[VizDEGs] 'outprefix' must be provided to save code" = !save_code || !is.null(outprefix))
-    group_by <- attr(degs, "group_by")
-    plot_type <- match.arg(plot_type)
-    are_allmarkers <- !all(is.na(degs[[group_by]]))
 
-    if (plot_type %in% c("heatmap_log2fc") && !are_allmarkers) {
-        stop("[VizDEGs] '", plot_type, "' only works when all markers are provided (i.e., group_by is not NA)")
-    }
-
-    if (plot_type %in% c("heatmap_log2fc")) {
-        if (is.numeric(genes)) {
-            # Select top 'genes' per group
-            features <- degs %>%
-                dplyr::group_by(!!sym(group_by)) %>%
-                arrange(!!rlang::parse_expr(order_by)) %>%
-                slice_head(n = genes) %>%
-                pull("gene") %>%
-                unique()
-        } else {
-            features <- degs %>%
-                dplyr::group_by(!!sym(group_by)) %>%
-                arrange(!!rlang::parse_expr(order_by)) %>%
-                filter(!!rlang::parse_expr(genes)) %>%
-                pull("gene") %>%
-                unique()
-        }
-        degs <- degs[degs$gene %in% features, , drop = FALSE]
-
-        args <- list(
-            data = degs,
-            in_form = "long",
-            rows_by = "gene",
-            values_by = "avg_log2FC",
-            columns_by = group_by,
-            values_fill = 0,
-            show_row_names = show_row_names,
-            show_column_names = show_column_names,
-            ...
-        )
-        if ((!is.null(cutoff) && plot_type == "heatmap_log2fc")) {
-            gene <- if (is.factor(degs$gene)) levels(degs$gene) else unique(degs$gene)
-            group <- if (is.factor(degs[[group_by]])) levels(degs[[group_by]]) else unique(degs[[group_by]])
-            adj_pval_data <- as.data.frame(
-                tidyr::pivot_wider(
-                    degs, id_cols = "gene", names_from = group_by, values_from = "p_val_adj", values_fill = 1
-                )
-            )
-            rownames(adj_pval_data) <- adj_pval_data$gene
-            adj_pval_data$gene <- NULL
-            adj_pval_data <- adj_pval_data[gene, group, drop = FALSE]
-            adj_pval_data <- as.matrix(adj_pval_data)
-            args$cell_type <- "label"
-            args$label <- function(v, i, j) {
-                pv <- ComplexHeatmap::pindex(adj_pval_data, i, j)
-                ifelse(is.na(pv) | pv >= cutoff, NA, "*")
-            }
-        }
-
-        p <- do_call(plotthis::Heatmap, args)
-    } else if (plot_type %in% c("volcano_pct", "volcano_log2fc")) {
-        if (save_code) {
-            VolcanoPlot <- gglogger::register(scplotter::VolcanoPlot, "VolcanoPlot")
-        } else {
-            VolcanoPlot <- scplotter::VolcanoPlot
-        }
-
-        facet_by <- if (are_allmarkers) group_by else NULL
-        args <- list(data = degs, x = ifelse(plot_type == "volcano_pct", "diff_pct", "avg_log2FC"),
-            y = "p_val_adj", ylab = "-log10(p_val_adj)", facet_by = facet_by, label_by = "gene", ...)
-        args$y_cutoff <- args$y_cutoff %||% 0.05
-        args$y_cutoff_name <- paste0("p_val_adj = ", args$y_cutoff)
-        p <- do_call(VolcanoPlot, args)
-    } else if (plot_type %in% c("jitter_pct", "jitter_log2fc")) {
-        if (save_code) {
-            JitterPlot <- gglogger::register(plotthis::JitterPlot, "JitterPlot")
-        } else {
-            JitterPlot <- plotthis::JitterPlot
-        }
-        args <- rlang::dots_list(...)
-        if (are_allmarkers) {
-            args$x <- group_by
-            args$xlab <- args$xlab %||% group_by
-        } else {
-            degs$group <- "Markers"
-            args$x <- "group"
-            args$xlab <- args$xlab %||% ""
-        }
-        args$data <- degs
-        args$y <- ifelse(plot_type == "jitter_pct", "diff_pct", "avg_log2FC")
-        args$size_by <- "p_val_adj"
-        args$size_trans <- function(x) -log10(x)
-        args$shape <- args$shape %||% 16
-        args$x_text_angle <- args$x_text_angle %||% 90
-        args$label_by <- args$label_by %||% "gene"
-        args$add_hline <- args$add_hline %||% 0
-        args$hline_width <- args$hline_width %||% 0.1
-        p <- do_call(JitterPlot, args)
-    } else {
-        object <- attr(degs, "object")
-        ident_1 <- attr(degs, "ident_1")
-        ident_2 <- attr(degs, "ident_2")
-        if (!is.null(ident_1)) {
-            if (!is.null(ident_2)) {
-                object <- filter(object, !!sym(group_by) %in% c(ident_1, ident_2))
-            } else {
-                all_idents <- unique(as.character(object@meta.data[[group_by]]))
-                ident_2 <- setdiff(all_idents, ident_1)
-                if (length(ident_2) != 1) {
-                    ident_2 <- ifelse(ident_1 == "Others", "Rest", "Others")
-                }
-                object@meta.data[[group_by]] <- as.character(object@meta.data[[group_by]])
-                object@meta.data[[group_by]][object@meta.data[[group_by]] != ident_1] <- ident_2
-            }
-            object@meta.data[[group_by]] <- factor(object@meta.data[[group_by]], levels = c(ident_1, ident_2))
-        }
-
-        if (save_code) {
-            FeatureStatPlot <- gglogger::register(scplotter::FeatureStatPlot, "FeatureStatPlot")
-        } else {
-            FeatureStatPlot <- scplotter::FeatureStatPlot
-        }
-
-        if (is.numeric(genes)) {
-            features <- degs %>%
-                dplyr::group_by(!!sym(group_by)) %>%
-                arrange(!!parse_expr(order_by)) %>%
-                slice_head(n = genes) %>%
-                pull("gene") %>%
-                unique()
-        } else {
-            features <- degs %>%
-                dplyr::group_by(!!sym(group_by)) %>%
-                arrange(!!parse_expr(order_by)) %>%
-                filter(!!parse_expr(genes)) %>%
-                pull("gene") %>%
-                unique()
-        }
-
-        if (plot_type == "dim") {
-            p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
-                facet_by = group_by, split_by = TRUE, ...)
-        } else if (plot_type %in% c("heatmap", "dot")) {
-            if (is.null(ident_1)) {
-                deg_group_by <- paste0(" ", group_by)
-                fdata <- degs %>%
-                    dplyr::group_by(!!sym(group_by)) %>%
-                    arrange(!!parse_expr(order_by)) %>%
-                    slice_head(n = genes) %>%
-                    rename(Features = "gene", !!sym(deg_group_by) := group_by)
-
-                fdata[[deg_group_by]] <- factor(fdata[[deg_group_by]], levels = levels(object@meta.data[[group_by]]))
-
-                p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
-                    ident = group_by, show_row_names = show_row_names, show_column_names = show_column_names,
-                    rows_data = fdata, rows_split_by = paste0(deg_group_by), rows_name = "Features",
-                    name = "Expression Level", ...)
-            } else {
-                p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
-                    ident = group_by, show_row_names = show_row_names, show_column_names = show_column_names,
-                    name = "Expression Level", ...)
-            }
-            attr(p, "height") <- attr(p, "height") / 5
-        } else {
-            p <- FeatureStatPlot(object, features = features, plot_type = plot_type,
-                ident = group_by, ...)
-        }
-    }
+    p <- MarkersPlot(
+        markers = markers, object = object,
+        plot_type = plot_type,
+        subset_by = subset_by,
+        subset_as_facet = subset_as_facet,
+        comparison_by = comparison_by,
+        p_adjust = p_adjust,
+        cutoff = cutoff,
+        order_by = order_by,
+        select = select,
+        ...
+    )
 
     if (!is.null(outprefix)) {
         formats <- unique(c("png", more_formats))
@@ -243,7 +82,7 @@ VizDEGs <- function(
             args <- list(plot = p,
                 setup = c("library(rlang)", "library(dplyr)", "library(gglogger)", "library(scplotter)", "load('data.RData')"),
                 prefix = outprefix)
-            args <- c(args, setdiff(ls(), c("p", "args", "formats", "devpars", "more_formats", "save_code", "outprefix", "are_allmarkers")))
+            args <- c(args, setdiff(ls(), c("p", "args", "formats", "devpars", "more_formats", "save_code", "outprefix")))
             do_call(save_plotcode, args)
         }
         return(NULL)

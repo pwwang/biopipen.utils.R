@@ -260,9 +260,9 @@ VizBulkDEGs <- function(
 
     if (plot_type == "volcano") {
         if (save_code) {
-            VolcanoPlot <- gglogger::register(scplotter::VolcanoPlot, "VolcanoPlot")
+            VolcanoPlot <- gglogger::register(plotthis::VolcanoPlot, "VolcanoPlot")
         } else {
-            VolcanoPlot <- scplotter::VolcanoPlot
+            VolcanoPlot <- plotthis::VolcanoPlot
         }
 
         facet_by <- if (are_allmarkers) group_by else NULL

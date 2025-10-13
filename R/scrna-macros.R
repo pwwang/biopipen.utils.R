@@ -206,7 +206,7 @@ RunSeuratDEAnalysis <- function(
                 assay = assay, ...
             )
             degs$gene <- rownames(degs)
-            degs[[group_by]] <- NA
+            degs[[group_by]] <- paste0(ident_2, ":", ident_1)
         }
         class(degs) <- c("SeuratDEAnalysis", class(degs))
 
@@ -238,12 +238,6 @@ RunSeuratDEAnalysis <- function(
             }
         )
     }
-
-    degs$diff_pct <- degs$pct.1 - degs$pct.2
-    attr(degs, "object") <- object
-    attr(degs, "group_by") <- group_by
-    attr(degs, "ident_1") <- ident_1
-    attr(degs, "ident_2") <- ident_2
 
     cached$save(degs)
     degs

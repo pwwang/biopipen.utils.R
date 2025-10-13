@@ -5,46 +5,88 @@
 \title{Visualize DEGs}
 \usage{
 VizDEGs(
-  degs,
-  plot_type = c("volcano_pct", "volcano_log2fc", "jitter_pct", "jitter_log2fc",
-    "heatmap", "heatmap_log2fc", "dot", "violin", "box", "bar", "ridge", "dim", "dot"),
-  order_by = "desc(abs(avg_log2FC))",
-  genes = 10,
+  markers,
+  object = NULL,
+  plot_type = c("volcano", "volcano_log2fc", "volcano_pct", "jitter", "jitter_log2fc",
+    "jitter_pct", "heatmap_log2fc", "heatmap_pct", "dot_log2fc", "dot_pct", "heatmap",
+    "violin", "box", "bar", "ridge", "dot"),
+  subset_by = NULL,
+  subset_as_facet = FALSE,
+  comparison_by = NULL,
+  p_adjust = TRUE,
+  cutoff = NULL,
+  order_by = NULL,
+  select = ifelse(plot_type \%in\% c("volcano", "volcano_log2fc", "volcano_pct",
+    "jitter", "jitter_log2fc", "jitter_pct"), 5, 10),
   outprefix = NULL,
   devpars = list(res = 100),
   more_formats = c(),
   save_code = FALSE,
-  show_row_names = TRUE,
-  show_column_names = TRUE,
-  cutoff = NULL,
   ...
 )
 }
 \arguments{
-\item{degs}{DEGs from RunSeuratDEAnalysis}
+\item{markers}{A data frame of markers, typically identified by \code{\link[Seurat:FindMarkers]{Seurat::FindMarkers()}} or \code{\link[Seurat:FindAllMarkers]{Seurat::FindAllMarkers()}}.}
 
-\item{plot_type}{Type of plot to generate
-One of 'volcano_pct', 'volcano_log2fc', 'jitter_log2fc', 'jitter_pct', 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot', 'heatmap_log2fc'.
+\item{object}{A Seurat object. Required for some plot types, see \code{plot_type}.}
+
+\item{plot_type}{Type of plot to generate. Options include:
 \itemize{
-\item 'volcano_pct': Volcano plot with x-axis as percentage difference and y-axis as adjusted p-value
-\item 'volcano_log2fc': Volcano plot with x-axis as log2 fold change and y-axis as adjusted p-value
-\item 'jitter_pct': Jitter plot with x-axis as groups and y-axis as percentage difference
-\item 'jitter_log2fc': Jitter plot with x-axis as groups and y-axis as log2 fold change
-\item 'violin': Violin plot of gene expression
-\item 'box': Box plot of gene expression
-\item 'bar': Bar plot of average gene expression
-\item 'ridge': Ridge plot of gene expression
-\item 'dim': Dimensionality reduction plot of gene expression
-\item 'heatmap': Heatmap of gene expression, colors represent expression level
-\item 'dot': Dot plot of gene expression, colors represent expression level, size represent percentage of cells expressing the gene
-\item 'heatmap_log2fc': Heatmap of average log2 fold change of the genes in each group, colors represent log2 fold change
+\item \code{volcano}/\code{volcano_log2fc}: Volcano plot with log2 fold change on x-axis and -log10(p-value) on y-axis.
+If \code{p_adjust} is TRUE, -log10(adjusted p-value) is used instead.
+\item \code{volcano_pct}: Volcano plot with difference in percentage of cells expressing the gene between two groups on x-axis and -log10(p-value) on y-axis.
+If \code{p_adjust} is TRUE, -log10(adjusted p-value) is used instead.
+\item \code{jitter}/\code{jitter_log2fc}: Jitter plot of log2 fold change for each gene.
+The x-axis is the groups defined by \code{subset_by}, and the y-axis is log2 fold change.
+The size of the dots represents -log10(p-value) or -log10(adjusted p-value) if \code{p_adjust} is TRUE.
+\item \code{jitter_pct}: Jitter plot of difference in percentage of cells expressing the gene between two groups for each gene.
+The x-axis is the groups defined by \code{subset_by}, and the y-axis is the difference in percentage of cells expressing the gene between two groups.
+The size of the dots represents -log10(p-value) or -log10(adjusted p-value) if \code{p_adjust} is TRUE.
+\item \code{heatmap_log2fc}: Heatmap of log2 fold change for each gene across groups defined by \code{subset_by}. By specifying \code{cutoff},
+The heatmap cells will be labeled with "*" for p-value < cutoff, if \code{p_adjust} is TRUE, adjusted p-value < cutoff.
+\item \code{heatmap_pct}: Heatmap of difference in percentage of cells expressing the gene between two groups for each gene across groups defined by \code{subset_by}.
+By specifying \code{cutoff}, The heatmap cells will be labeled with "*" for p-value < cutoff, if \code{p_adjust} is TRUE, adjusted p-value < cutoff.
+\item \code{dot_log2fc}: Dot plot of log2 fold change for each gene across groups defined by \code{subset_by}.
+The size of the dots represents -log10(p-value) or -log10(adjusted p-value) if \code{p_adjust} is TRUE.
+\item \code{dot_pct}: Dot plot of difference in percentage of cells expressing the gene between two groups for each gene across groups defined by \code{subset_by}.
+The size of the dots represents -log10(p-value) or -log10(adjusted p-value) if \code{p_adjust} is TRUE.
+\item \code{heatmap}: Heatmap of expression values for each gene across groups defined by \code{subset_by}. Requires \code{object}.
+\item \code{violin}: Violin plot of expression values for each gene across groups defined by \code{subset_by}. Requires \code{object}.
+\item \code{box}: Box plot of expression values for each gene across groups defined by \code{subset_by}. Requires \code{object}.
+\item \code{bar}: Bar plot of average expression values for each gene across groups defined by \code{subset_by}. Requires \code{object}.
+\item \code{ridge}: Ridge plot of expression values for each gene across groups defined by \code{subset_by}. Requires \code{object}.
+\item \code{dot}: Dot plot of expression values for each gene across groups defined by \code{subset_by}. Requires \code{object}.
 }}
 
-\item{order_by}{An expression in string to order the genes}
+\item{subset_by}{A column in markers indicating where the markers are identified from, e.g., cluster or condition.
+If object is provided, you can provide the corresponding metadata column in \code{subset_by} to merge the markers with the object's metadata, using \code{:} as separator. For example, if the markers are identified from different clusters (identified by \code{FindAllMarkers}), and the object's ident column is "RNA_snn_res.0.8", you can set \code{subset_by = "cluster:RNA_snn_res.0.8"}.
+Note that for other columns to be merged, only the first value of each group defined by \code{subset_by} will be used.
+For some plots, this is used to split the markers into multiple plots, e.g., one plot for each cluster.
+See \code{plot_type} for details.}
 
-\item{genes}{Number of genes genes to visualize (based on the 'order_by' expression)
-Or an expression in string to filter the genes (passed by \link[dplyr:filter]{dplyr::filter})
-Only works when plot_type is not a volcano plot}
+\item{subset_as_facet}{Logical, whether to facet the plots by \code{subset_by} if applicable.}
+
+\item{comparison_by}{The metadata column in markers indicating the comparion.
+When visualizing the expression values, this column should also be in the object's metadata.
+The values of this column should either a single value, indicating the comparison is between this group and all other cells (in the subset),
+Similar as \code{subset_by}, you can provide the corresponding object metadata column by using \code{:} as separator.
+If \code{NULL}, all markers are treated as from one comparison.}
+
+\item{p_adjust}{Logical, whether to use adjusted p-value for plots that involve p-values.
+Default is TRUE.}
+
+\item{cutoff}{Numeric, p-value or adjusted p-value cutoff to label significance in heatmap plots.
+Default is NULL, no cutoff.}
+
+\item{order_by}{A string of expression to order the markers within each group defined by \code{subset_by}.
+In addition to the columns in \code{markers}, you can also use the columns from the object's metadata if \code{object} is provided.
+The object's metadata will be merged with \code{markers} by \code{subset_by}. Be carefull that only the first value of other columns will be used.}
+
+\item{select}{Number of top markers (ordered by \code{order_by}) to select for each group defined by \code{subset_by} or a string of expression to filter markers.
+It will be evaluated by \code{\link[dplyr:filter]{dplyr::filter()}}.
+For \code{volcano}, \code{volcano_log2fc}, \code{volcano_pct}, \code{jitter}, \code{jitter_log2fc}, and \code{jitter_pct} plots, the selected markers will be labeled in the plot.
+FOr  other plot types, only the selected markers will be plotted.
+Default is 5 for \code{volcano}, \code{volcano_log2fc}, \code{volcano_pct}, \code{jitter}, \code{jitter_log2fc}, \code{jitter_pct}, and 10 for other plot types.}
 
 \item{outprefix}{Prefix of the output file}
 
@@ -54,20 +96,11 @@ Only works when plot_type is not a volcano plot}
 
 \item{save_code}{Whether to save the code to reproduce the plot}
 
-\item{show_row_names}{Whether to show row names in the heatmap/dotplot}
-
-\item{show_column_names}{Whether to show column names in the heatmap/dotplot}
-
-\item{cutoff}{Cutoff for adjusted p-value to show asterisk (*) in heatmap_log2fc}
-
-\item{...}{Additional arguments to pass to the plot function
-\itemize{
-\item For 'volcano_pct' and 'volcano_log2fc', additional arguments to pass to \code{\link[plotthis:VolcanoPlot]{plotthis::VolcanoPlot()}}
-\item For 'jitter_pct' and 'jitter_log2fc', additional arguments to pass to \code{\link[plotthis:jitterplot]{plotthis::JitterPlot()}}
-\item For 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot', additional arguments to pass to
-\code{\link[scplotter:FeatureStatPlot]{scplotter::FeatureStatPlot()}}
-\item For 'heatmap_log2fc', additional arguments to pass to \code{\link[plotthis:Heatmap]{plotthis::Heatmap()}}.
-}}
+\item{...}{
+  Arguments passed on to \code{\link[scplotter:MarkersPlot]{scplotter::MarkersPlot}}
+  \describe{
+    \item{\code{}}{}
+  }}
 }
 \value{
 A ggplot object if 'outprefix' is NULL, otherwise, save the plot to the output directory
@@ -80,15 +113,28 @@ Visualize differentially expressed genes
 degs <- RunSeuratDEAnalysis(scplotter::pancreas_sub, "SubCellType")
 VizDEGs(degs, plot_type = "volcano_pct")
 VizDEGs(degs, plot_type = "volcano_log2fc")
-VizDEGs(degs, plot_type = "jitter_log2fc")
-VizDEGs(degs, plot_type = "violin", genes = 2)
-VizDEGs(degs, plot_type = "violin", stack = TRUE, genes = 2)
-VizDEGs(degs, plot_type = "box", genes = 2)
-VizDEGs(degs, plot_type = "bar", genes = 2, x_text_angle = 90)
-VizDEGs(degs, plot_type = "ridge", genes = 2)
-VizDEGs(degs, plot_type = "dim", genes = 1)
-VizDEGs(degs, plot_type = "heatmap", genes = 5)
-VizDEGs(degs, plot_type = "heatmap_log2fc", cutoff = 0.05, genes = 5)
-VizDEGs(degs, plot_type = "dot", genes = 5)
+VizDEGs(degs, plot_type = "jitter_log2fc", subset_by = "SubCellType")
+VizDEGs(degs, plot_type = "heatmap_log2fc", cutoff = 0.05,
+    select = 5, subset_by = "SubCellType")
+
+# Visualize expression of the top DEGs
+# Suppose we did comparison between G2M and S phase in each SubCellType
+degs$Phase <- "G2M:S"
+
+VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "violin",
+    select = 2, comparison_by = "Phase", subset_by = "SubCellType")
+VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "box",
+    select = 2, comparison_by = "Phase", subset_by = "SubCellType")
+VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "bar",
+    select = 2, comparison_by = "Phase", subset_by = "SubCellType")
+VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "ridge",
+    select = 1, comparison_by = "Phase", subset_by = "SubCellType")
+VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "heatmap",
+    cluster_columns = FALSE, comparison_by = "Phase", subset_by = "SubCellType")
+VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "dot",
+    select = 1, comparison_by = "Phase", subset_by = "SubCellType")
 }
+}
+\seealso{
+\code{\link[scplotter:MarkersPlot]{scplotter::MarkersPlot()}}
 }
