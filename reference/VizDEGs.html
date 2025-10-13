@@ -39,18 +39,23 @@
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">VizDEGs</span><span class="op">(</span></span>
-<span>  <span class="va">degs</span>,</span>
-<span>  plot_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"volcano_pct"</span>, <span class="st">"volcano_log2fc"</span>, <span class="st">"jitter_pct"</span>, <span class="st">"jitter_log2fc"</span>,</span>
-<span>    <span class="st">"heatmap"</span>, <span class="st">"heatmap_log2fc"</span>, <span class="st">"dot"</span>, <span class="st">"violin"</span>, <span class="st">"box"</span>, <span class="st">"bar"</span>, <span class="st">"ridge"</span>, <span class="st">"dim"</span>, <span class="st">"dot"</span><span class="op">)</span>,</span>
-<span>  order_by <span class="op">=</span> <span class="st">"desc(abs(avg_log2FC))"</span>,</span>
-<span>  genes <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  <span class="va">markers</span>,</span>
+<span>  object <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  plot_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"volcano"</span>, <span class="st">"volcano_log2fc"</span>, <span class="st">"volcano_pct"</span>, <span class="st">"jitter"</span>, <span class="st">"jitter_log2fc"</span>,</span>
+<span>    <span class="st">"jitter_pct"</span>, <span class="st">"heatmap_log2fc"</span>, <span class="st">"heatmap_pct"</span>, <span class="st">"dot_log2fc"</span>, <span class="st">"dot_pct"</span>, <span class="st">"heatmap"</span>,</span>
+<span>    <span class="st">"violin"</span>, <span class="st">"box"</span>, <span class="st">"bar"</span>, <span class="st">"ridge"</span>, <span class="st">"dot"</span><span class="op">)</span>,</span>
+<span>  subset_by <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  subset_as_facet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  comparison_by <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  p_adjust <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  order_by <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">plot_type</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"volcano"</span>, <span class="st">"volcano_log2fc"</span>, <span class="st">"volcano_pct"</span>,</span>
+<span>    <span class="st">"jitter"</span>, <span class="st">"jitter_log2fc"</span>, <span class="st">"jitter_pct"</span><span class="op">)</span>, <span class="fl">5</span>, <span class="fl">10</span><span class="op">)</span>,</span>
 <span>  outprefix <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  devpars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>res <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>,</span>
 <span>  more_formats <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  save_code <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  show_row_names <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  show_column_names <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -59,35 +64,84 @@
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-degs">degs<a class="anchor" aria-label="anchor" href="#arg-degs"></a></dt>
-<dd><p>DEGs from RunSeuratDEAnalysis</p></dd>
+<dl><dt id="arg-markers">markers<a class="anchor" aria-label="anchor" href="#arg-markers"></a></dt>
+<dd><p>A data frame of markers, typically identified by <code><a href="https://satijalab.org/seurat/reference/FindMarkers.html" class="external-link">Seurat::FindMarkers()</a></code> or <code><a href="https://satijalab.org/seurat/reference/FindAllMarkers.html" class="external-link">Seurat::FindAllMarkers()</a></code>.</p></dd>
+
+
+<dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
+<dd><p>A Seurat object. Required for some plot types, see <code>plot_type</code>.</p></dd>
 
 
 <dt id="arg-plot-type">plot_type<a class="anchor" aria-label="anchor" href="#arg-plot-type"></a></dt>
-<dd><p>Type of plot to generate
-One of 'volcano_pct', 'volcano_log2fc', 'jitter_log2fc', 'jitter_pct', 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot', 'heatmap_log2fc'.</p><ul><li><p>'volcano_pct': Volcano plot with x-axis as percentage difference and y-axis as adjusted p-value</p></li>
-<li><p>'volcano_log2fc': Volcano plot with x-axis as log2 fold change and y-axis as adjusted p-value</p></li>
-<li><p>'jitter_pct': Jitter plot with x-axis as groups and y-axis as percentage difference</p></li>
-<li><p>'jitter_log2fc': Jitter plot with x-axis as groups and y-axis as log2 fold change</p></li>
-<li><p>'violin': Violin plot of gene expression</p></li>
-<li><p>'box': Box plot of gene expression</p></li>
-<li><p>'bar': Bar plot of average gene expression</p></li>
-<li><p>'ridge': Ridge plot of gene expression</p></li>
-<li><p>'dim': Dimensionality reduction plot of gene expression</p></li>
-<li><p>'heatmap': Heatmap of gene expression, colors represent expression level</p></li>
-<li><p>'dot': Dot plot of gene expression, colors represent expression level, size represent percentage of cells expressing the gene</p></li>
-<li><p>'heatmap_log2fc': Heatmap of average log2 fold change of the genes in each group, colors represent log2 fold change</p></li>
+<dd><p>Type of plot to generate. Options include:</p><ul><li><p><code>volcano</code>/<code>volcano_log2fc</code>: Volcano plot with log2 fold change on x-axis and -log10(p-value) on y-axis.
+If <code>p_adjust</code> is TRUE, -log10(adjusted p-value) is used instead.</p></li>
+<li><p><code>volcano_pct</code>: Volcano plot with difference in percentage of cells expressing the gene between two groups on x-axis and -log10(p-value) on y-axis.
+If <code>p_adjust</code> is TRUE, -log10(adjusted p-value) is used instead.</p></li>
+<li><p><code>jitter</code>/<code>jitter_log2fc</code>: Jitter plot of log2 fold change for each gene.
+The x-axis is the groups defined by <code>subset_by</code>, and the y-axis is log2 fold change.
+The size of the dots represents -log10(p-value) or -log10(adjusted p-value) if <code>p_adjust</code> is TRUE.</p></li>
+<li><p><code>jitter_pct</code>: Jitter plot of difference in percentage of cells expressing the gene between two groups for each gene.
+The x-axis is the groups defined by <code>subset_by</code>, and the y-axis is the difference in percentage of cells expressing the gene between two groups.
+The size of the dots represents -log10(p-value) or -log10(adjusted p-value) if <code>p_adjust</code> is TRUE.</p></li>
+<li><p><code>heatmap_log2fc</code>: Heatmap of log2 fold change for each gene across groups defined by <code>subset_by</code>. By specifying <code>cutoff</code>,
+The heatmap cells will be labeled with "*" for p-value &lt; cutoff, if <code>p_adjust</code> is TRUE, adjusted p-value &lt; cutoff.</p></li>
+<li><p><code>heatmap_pct</code>: Heatmap of difference in percentage of cells expressing the gene between two groups for each gene across groups defined by <code>subset_by</code>.
+By specifying <code>cutoff</code>, The heatmap cells will be labeled with "*" for p-value &lt; cutoff, if <code>p_adjust</code> is TRUE, adjusted p-value &lt; cutoff.</p></li>
+<li><p><code>dot_log2fc</code>: Dot plot of log2 fold change for each gene across groups defined by <code>subset_by</code>.
+The size of the dots represents -log10(p-value) or -log10(adjusted p-value) if <code>p_adjust</code> is TRUE.</p></li>
+<li><p><code>dot_pct</code>: Dot plot of difference in percentage of cells expressing the gene between two groups for each gene across groups defined by <code>subset_by</code>.
+The size of the dots represents -log10(p-value) or -log10(adjusted p-value) if <code>p_adjust</code> is TRUE.</p></li>
+<li><p><code>heatmap</code>: Heatmap of expression values for each gene across groups defined by <code>subset_by</code>. Requires <code>object</code>.</p></li>
+<li><p><code>violin</code>: Violin plot of expression values for each gene across groups defined by <code>subset_by</code>. Requires <code>object</code>.</p></li>
+<li><p><code>box</code>: Box plot of expression values for each gene across groups defined by <code>subset_by</code>. Requires <code>object</code>.</p></li>
+<li><p><code>bar</code>: Bar plot of average expression values for each gene across groups defined by <code>subset_by</code>. Requires <code>object</code>.</p></li>
+<li><p><code>ridge</code>: Ridge plot of expression values for each gene across groups defined by <code>subset_by</code>. Requires <code>object</code>.</p></li>
+<li><p><code>dot</code>: Dot plot of expression values for each gene across groups defined by <code>subset_by</code>. Requires <code>object</code>.</p></li>
 </ul></dd>
 
 
+<dt id="arg-subset-by">subset_by<a class="anchor" aria-label="anchor" href="#arg-subset-by"></a></dt>
+<dd><p>A column in markers indicating where the markers are identified from, e.g., cluster or condition.
+If object is provided, you can provide the corresponding metadata column in <code>subset_by</code> to merge the markers with the object's metadata, using <code>:</code> as separator. For example, if the markers are identified from different clusters (identified by <code>FindAllMarkers</code>), and the object's ident column is "RNA_snn_res.0.8", you can set <code>subset_by = "cluster:RNA_snn_res.0.8"</code>.
+Note that for other columns to be merged, only the first value of each group defined by <code>subset_by</code> will be used.
+For some plots, this is used to split the markers into multiple plots, e.g., one plot for each cluster.
+See <code>plot_type</code> for details.</p></dd>
+
+
+<dt id="arg-subset-as-facet">subset_as_facet<a class="anchor" aria-label="anchor" href="#arg-subset-as-facet"></a></dt>
+<dd><p>Logical, whether to facet the plots by <code>subset_by</code> if applicable.</p></dd>
+
+
+<dt id="arg-comparison-by">comparison_by<a class="anchor" aria-label="anchor" href="#arg-comparison-by"></a></dt>
+<dd><p>The metadata column in markers indicating the comparion.
+When visualizing the expression values, this column should also be in the object's metadata.
+The values of this column should either a single value, indicating the comparison is between this group and all other cells (in the subset),
+Similar as <code>subset_by</code>, you can provide the corresponding object metadata column by using <code>:</code> as separator.
+If <code>NULL</code>, all markers are treated as from one comparison.</p></dd>
+
+
+<dt id="arg-p-adjust">p_adjust<a class="anchor" aria-label="anchor" href="#arg-p-adjust"></a></dt>
+<dd><p>Logical, whether to use adjusted p-value for plots that involve p-values.
+Default is TRUE.</p></dd>
+
+
+<dt id="arg-cutoff">cutoff<a class="anchor" aria-label="anchor" href="#arg-cutoff"></a></dt>
+<dd><p>Numeric, p-value or adjusted p-value cutoff to label significance in heatmap plots.
+Default is NULL, no cutoff.</p></dd>
+
+
 <dt id="arg-order-by">order_by<a class="anchor" aria-label="anchor" href="#arg-order-by"></a></dt>
-<dd><p>An expression in string to order the genes</p></dd>
+<dd><p>A string of expression to order the markers within each group defined by <code>subset_by</code>.
+In addition to the columns in <code>markers</code>, you can also use the columns from the object's metadata if <code>object</code> is provided.
+The object's metadata will be merged with <code>markers</code> by <code>subset_by</code>. Be carefull that only the first value of other columns will be used.</p></dd>
 
 
-<dt id="arg-genes">genes<a class="anchor" aria-label="anchor" href="#arg-genes"></a></dt>
-<dd><p>Number of genes genes to visualize (based on the 'order_by' expression)
-Or an expression in string to filter the genes (passed by <a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">dplyr::filter</a>)
-Only works when plot_type is not a volcano plot</p></dd>
+<dt id="arg-select">select<a class="anchor" aria-label="anchor" href="#arg-select"></a></dt>
+<dd><p>Number of top markers (ordered by <code>order_by</code>) to select for each group defined by <code>subset_by</code> or a string of expression to filter markers.
+It will be evaluated by <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">dplyr::filter()</a></code>.
+For <code>volcano</code>, <code>volcano_log2fc</code>, <code>volcano_pct</code>, <code>jitter</code>, <code>jitter_log2fc</code>, and <code>jitter_pct</code> plots, the selected markers will be labeled in the plot.
+FOr  other plot types, only the selected markers will be plotted.
+Default is 5 for <code>volcano</code>, <code>volcano_log2fc</code>, <code>volcano_pct</code>, <code>jitter</code>, <code>jitter_log2fc</code>, <code>jitter_pct</code>, and 10 for other plot types.</p></dd>
 
 
 <dt id="arg-outprefix">outprefix<a class="anchor" aria-label="anchor" href="#arg-outprefix"></a></dt>
@@ -106,30 +160,21 @@ Only works when plot_type is not a volcano plot</p></dd>
 <dd><p>Whether to save the code to reproduce the plot</p></dd>
 
 
-<dt id="arg-show-row-names">show_row_names<a class="anchor" aria-label="anchor" href="#arg-show-row-names"></a></dt>
-<dd><p>Whether to show row names in the heatmap/dotplot</p></dd>
-
-
-<dt id="arg-show-column-names">show_column_names<a class="anchor" aria-label="anchor" href="#arg-show-column-names"></a></dt>
-<dd><p>Whether to show column names in the heatmap/dotplot</p></dd>
-
-
-<dt id="arg-cutoff">cutoff<a class="anchor" aria-label="anchor" href="#arg-cutoff"></a></dt>
-<dd><p>Cutoff for adjusted p-value to show asterisk (*) in heatmap_log2fc</p></dd>
-
-
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Additional arguments to pass to the plot function</p><ul><li><p>For 'volcano_pct' and 'volcano_log2fc', additional arguments to pass to <code><a href="https://pwwang.github.io/plotthis/reference/VolcanoPlot.html" class="external-link">plotthis::VolcanoPlot()</a></code></p></li>
-<li><p>For 'jitter_pct' and 'jitter_log2fc', additional arguments to pass to <code><a href="https://pwwang.github.io/plotthis/reference/jitterplot.html" class="external-link">plotthis::JitterPlot()</a></code></p></li>
-<li><p>For 'violin', 'box', 'bar', 'ridge', 'dim', 'heatmap', 'dot', additional arguments to pass to
-<code><a href="https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html" class="external-link">scplotter::FeatureStatPlot()</a></code></p></li>
-<li><p>For 'heatmap_log2fc', additional arguments to pass to <code><a href="https://pwwang.github.io/plotthis/reference/Heatmap.html" class="external-link">plotthis::Heatmap()</a></code>.</p></li>
-</ul></dd>
+<dd><p>Arguments passed on to <code><a href="https://pwwang.github.io/scplotter/reference/MarkersPlot.html" class="external-link">scplotter::MarkersPlot</a></code></p><dl><dt><code></code></dt>
+<dd></dd>
+
+
+</dl></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A ggplot object if 'outprefix' is NULL, otherwise, save the plot to the output directory</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="https://pwwang.github.io/scplotter/reference/MarkersPlot.html" class="external-link">scplotter::MarkersPlot()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -140,51 +185,166 @@ Only works when plot_type is not a volcano plot</p></dd>
 <span class="r-plt img"><img src="VizDEGs-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, plot_type <span class="op">=</span> <span class="st">"volcano_log2fc"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="VizDEGs-2.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, plot_type <span class="op">=</span> <span class="st">"jitter_log2fc"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, plot_type <span class="op">=</span> <span class="st">"jitter_log2fc"</span>, subset_by <span class="op">=</span> <span class="st">"SubCellType"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="VizDEGs-3.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, plot_type <span class="op">=</span> <span class="st">"violin"</span>, genes <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, plot_type <span class="op">=</span> <span class="st">"heatmap_log2fc"</span>, cutoff <span class="op">=</span> <span class="fl">0.05</span>,</span></span>
+<span class="r-in"><span>    select <span class="op">=</span> <span class="fl">5</span>, subset_by <span class="op">=</span> <span class="st">"SubCellType"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="VizDEGs-4.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, plot_type <span class="op">=</span> <span class="st">"violin"</span>, stack <span class="op">=</span> <span class="cn">TRUE</span>, genes <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Visualize expression of the top DEGs</span></span></span>
+<span class="r-in"><span><span class="co"># Suppose we did comparison between G2M and S phase in each SubCellType</span></span></span>
+<span class="r-in"><span><span class="va">degs</span><span class="op">$</span><span class="va">Phase</span> <span class="op">&lt;-</span> <span class="st">"G2M:S"</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"violin"</span>,</span></span>
+<span class="r-in"><span>    select <span class="op">=</span> <span class="fl">2</span>, comparison_by <span class="op">=</span> <span class="st">"Phase"</span>, subset_by <span class="op">=</span> <span class="st">"SubCellType"</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
 <span class="r-plt img"><img src="VizDEGs-5.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, plot_type <span class="op">=</span> <span class="st">"box"</span>, genes <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"box"</span>,</span></span>
+<span class="r-in"><span>    select <span class="op">=</span> <span class="fl">2</span>, comparison_by <span class="op">=</span> <span class="st">"Phase"</span>, subset_by <span class="op">=</span> <span class="st">"SubCellType"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="VizDEGs-6.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, plot_type <span class="op">=</span> <span class="st">"bar"</span>, genes <span class="op">=</span> <span class="fl">2</span>, x_text_angle <span class="op">=</span> <span class="fl">90</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"bar"</span>,</span></span>
+<span class="r-in"><span>    select <span class="op">=</span> <span class="fl">2</span>, comparison_by <span class="op">=</span> <span class="st">"Phase"</span>, subset_by <span class="op">=</span> <span class="st">"SubCellType"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="VizDEGs-7.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, plot_type <span class="op">=</span> <span class="st">"ridge"</span>, genes <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"ridge"</span>,</span></span>
+<span class="r-in"><span>    select <span class="op">=</span> <span class="fl">1</span>, comparison_by <span class="op">=</span> <span class="st">"Phase"</span>, subset_by <span class="op">=</span> <span class="st">"SubCellType"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.252</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.283</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0311</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0338</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.031</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.382</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.196</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.377</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.26</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.222</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.213</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.327</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.219</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.246</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.243</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.274</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.249</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0675</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.133</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.537</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.3</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.505</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.505</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.283</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.308</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.326</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.305</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.398</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.455</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.135</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.526</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.526</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.518</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.353</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>No shared levels found between `names(values)` of the manual scale and the</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> data's <span style="color: #00BB00;">fill</span> values.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.252</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.283</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0311</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0338</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.031</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.382</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.196</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.377</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.26</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.222</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.213</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.327</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.219</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.246</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.243</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.274</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.249</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0675</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.133</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.537</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.3</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.505</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.505</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.283</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.308</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.326</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.305</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.398</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.455</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.135</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.526</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.526</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.518</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.353</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>No shared levels found between `names(values)` of the manual scale and the</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> data's <span style="color: #00BB00;">fill</span> values.</span>
 <span class="r-plt img"><img src="VizDEGs-8.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, plot_type <span class="op">=</span> <span class="st">"dim"</span>, genes <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"heatmap"</span>,</span></span>
+<span class="r-in"><span>    cluster_columns <span class="op">=</span> <span class="cn">FALSE</span>, comparison_by <span class="op">=</span> <span class="st">"Phase"</span>, subset_by <span class="op">=</span> <span class="st">"SubCellType"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="VizDEGs-9.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, plot_type <span class="op">=</span> <span class="st">"heatmap"</span>, genes <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"dot"</span>,</span></span>
+<span class="r-in"><span>    select <span class="op">=</span> <span class="fl">1</span>, comparison_by <span class="op">=</span> <span class="st">"Phase"</span>, subset_by <span class="op">=</span> <span class="st">"SubCellType"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="VizDEGs-10.png" alt="" width="700" height="433"></span>
-<span class="r-plt img"><img src="VizDEGs-11.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, plot_type <span class="op">=</span> <span class="st">"heatmap_log2fc"</span>, cutoff <span class="op">=</span> <span class="fl">0.05</span>, genes <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="VizDEGs-12.png" alt="" width="700" height="433"></span>
-<span class="r-plt img"><img src="VizDEGs-13.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, plot_type <span class="op">=</span> <span class="st">"dot"</span>, genes <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="VizDEGs-14.png" alt="" width="700" height="433"></span>
-<span class="r-plt img"><img src="VizDEGs-15.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
