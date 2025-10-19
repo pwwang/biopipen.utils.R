@@ -64,7 +64,9 @@ If the path is a directory, the function will look for barcodes.tsv.gz, features
 The directory should be loaded by <a href="https://satijalab.org/seurat/reference/Read10X.html" class="external-link">Seurat::Read10X</a>. Sometimes, there may be prefix in the file names,
 e.g. "'prefix'.barcodes.tsv.gz", which is also supported.
 If the path is a file ending with ".loom", it will be loaded by <code><a href="https://mojaveazure.github.io/seurat-disk/reference/Connect.html" class="external-link">SeuratDisk::Connect()</a></code> and converted to a Seurat object.
-Otherwise, if the path is a file, it should be a h5 file that can be loaded by <code><a href="https://satijalab.org/seurat/reference/Read10X_h5.html" class="external-link">Seurat::Read10X_h5()</a></code></p></dd>
+Otherwise, if the path is a file, it should be a h5 file that can be loaded by <code><a href="https://satijalab.org/seurat/reference/Read10X_h5.html" class="external-link">Seurat::Read10X_h5()</a></code></p>
+<p>This can also be a Seurat object to perform QC on. It requires the "Sample" column in the meta.data slot
+specifying the sample for each cell.</p></dd>
 
 
 <dt id="arg-min-cells">min_cells<a class="anchor" aria-label="anchor" href="#arg-min-cells"></a></dt>
@@ -76,7 +78,7 @@ and the values are the minimum number of cells for each sample to load by
 <code><a href="https://satijalab.org/seurat/reference/reexports.html" class="external-link">Seurat::CreateSeuratObject()</a></code>.
 You can have a default value in the list with the name "DEFAULT" for the samples
 that are not listed.
-This won't work if data is loaded from a loom file.</p></dd>
+This won't work if data is loaded from a loom file or <code>meta</code> is a Seurat object.</p></dd>
 
 
 <dt id="arg-min-features">min_features<a class="anchor" aria-label="anchor" href="#arg-min-features"></a></dt>
@@ -88,7 +90,7 @@ and the values are the minimum number of features for each sample to load by
 <code><a href="https://satijalab.org/seurat/reference/reexports.html" class="external-link">Seurat::CreateSeuratObject()</a></code>.
 You can have a default value in the list with the name "DEFAULT" for the samples
 that are not listed.
-This won't work if data is loaded from a loom file.</p></dd>
+This won't work if data is loaded from a loom file or <code>meta</code> is a Seurat object.</p></dd>
 
 
 <dt id="arg-samples">samples<a class="anchor" aria-label="anchor" href="#arg-samples"></a></dt>
@@ -145,10 +147,10 @@ In slot <code>misc</code>, there are two fields: <code>cell_qc_df</code> and <co
 <span class="r-in"><span>    <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu">LoadSeuratAndPerformQC</span><span class="op">(</span><span class="va">meta</span>, cache <span class="op">=</span> <span class="cn">FALSE</span>, gene_qc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>min_cells <span class="op">=</span> <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-10-13 08:32:57] Loading each sample ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-10-13 08:32:57] - Loading Sample1 and performing QC ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-10-13 08:32:57] - Loading Sample2 and performing QC ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-10-13 08:32:57] Merging samples ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-10-19 05:58:42] Loading each sample ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-10-19 05:58:42] - Loading Sample1 and performing QC ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-10-19 05:58:42] - Loading Sample2 and performing QC ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-10-19 05:58:43] Merging samples ...</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">obj</span><span class="op">@</span><span class="va">misc</span><span class="op">$</span><span class="va">cell_qc_df</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">obj</span><span class="op">@</span><span class="va">misc</span><span class="op">$</span><span class="va">gene_qc</span><span class="op">)</span></span></span>
