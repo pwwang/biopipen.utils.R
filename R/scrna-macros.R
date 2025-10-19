@@ -330,6 +330,9 @@ PerformGeneQC <- function(object, gene_qc) {
 #' e.g. "'prefix'.barcodes.tsv.gz", which is also supported.
 #' If the path is a file ending with ".loom", it will be loaded by [SeuratDisk::Connect()] and converted to a Seurat object.
 #' Otherwise, if the path is a file, it should be a h5 file that can be loaded by [Seurat::Read10X_h5()]
+#'
+#' This can also be a Seurat object to perform QC on. It requires the "Sample" column in the meta.data slot
+#' specifying the sample for each cell.
 #' @param min_cells Include features detected in at least this many cells.
 #' This will be applied to all samples and passed to the [Seurat::CreateSeuratObject()] function.
 #' QCs can be further performed on the object after loading.
@@ -338,7 +341,7 @@ PerformGeneQC <- function(object, gene_qc) {
 #' [Seurat::CreateSeuratObject()].
 #' You can have a default value in the list with the name "DEFAULT" for the samples
 #' that are not listed.
-#' This won't work if data is loaded from a loom file.
+#' This won't work if data is loaded from a loom file or `meta` is a Seurat object.
 #' @param min_features Include cells where at least this many features are detected.
 #' This will be applied to all samples and passed to the [Seurat::CreateSeuratObject()] function.
 #' QCs can be further performed on the object after loading.
@@ -347,7 +350,7 @@ PerformGeneQC <- function(object, gene_qc) {
 #' [Seurat::CreateSeuratObject()].
 #' You can have a default value in the list with the name "DEFAULT" for the samples
 #' that are not listed.
-#' This won't work if data is loaded from a loom file.
+#' This won't work if data is loaded from a loom file or `meta` is a Seurat object.
 #' @param samples Samples to load. If NULL, all samples will be loaded
 #' @param cell_qc Cell QC criteria, a string of expression to pass to `dplyr::filter` function
 #' to filter the cells.
@@ -396,8 +399,13 @@ LoadSeuratAndPerformQC <- function(
     log = NULL,
     cache = NULL) {
     log <- log %||% get_logger()
-    meta <- as.data.frame(meta)
-    samples <- samples %||% meta$Sample
+    is_seurat <- inherits(meta, "Seurat")
+    if (!is_seurat) {
+        meta <- as.data.frame(meta)
+        samples <- samples %||% meta$Sample
+    } else {
+        samples <- samples %||% unique(meta@meta.data$Sample)
+    }
     stopifnot("No samples found" = length(samples) > 0)
 
     cache <- cache %||% gettempdir()
@@ -421,79 +429,87 @@ LoadSeuratAndPerformQC <- function(
     geneqc_df <- NULL
     for (sam in samples) {
         log$info("- Loading {sam} and performing QC ...")
-
-        mdata <- meta[meta$Sample == sam, , drop = TRUE]
-        if (is.data.frame(mdata) && nrow(mdata) == 0) {
-            log$warn("  No metadata found, skipping ...")
-            next
-        }
-
-        path <- as.character(mdata$RNAData)
-        if (is.na(path) || !is.character(path) || identical(path, "") || identical(path, "NA")) {
-            log$warn("  No path found, skipping ...")
-            next
-        }
-
-        if (dir.exists(path)) {
-            exprs <- tryCatch(
-                {
-                    Read10X(data.dir = path)
-                },
-                error = function(e) {
-                    tmpdatadir <- file.path(tmpdir, slugify(sam))
-                    if (dir.exists(tmpdatadir)) {
-                        unlink(tmpdatadir, recursive = TRUE)
-                    }
-                    dir.create(tmpdatadir, recursive = TRUE, showWarnings = FALSE)
-                    barcodefile <- Sys.glob(file.path(path, "*barcodes.tsv.gz"))[1]
-                    file.symlink(normalizePath(barcodefile), file.path(tmpdatadir, "barcodes.tsv.gz"))
-                    genefile <- glob(file.path(path, "*{genes,features}.tsv.gz"))[1]
-                    file.symlink(normalizePath(genefile), file.path(tmpdatadir, "features.tsv.gz"))
-                    matrixfile <- Sys.glob(file.path(path, "*matrix.mtx.gz"))[1]
-                    file.symlink(normalizePath(matrixfile), file.path(tmpdatadir, "matrix.mtx.gz"))
-                    Read10X(data.dir = tmpdatadir)
-                }
-            )
-        } else if (endsWith(path, ".loom")) {
-            LoadLoomArgs$file <- path
-            exprs <- do_call(SeuratDisk::LoadLoom, LoadLoomArgs)
-        } else if (file.exists(path)) {
-            exprs <- Read10X_h5(path)
-        } else {
-            stop("[LoadSeuratSample] {sample}: Path not found: {path}")
-        }
-
-        if ("Gene Expression" %in% names(exprs) && !inherits(exprs, "Seurat")) {
-            exprs <- exprs[["Gene Expression"]]
-        }
-
-        minc <- if (is.list(min_cells)) {
-            min_cells[[sam]] %||% min_cells$DEFAULT %||% 0
-        } else {
-            min_cells
-        }
-        minf <- if (is.list(min_features)) {
-            min_features[[sam]] %||% min_features$DEFAULT %||% 0
-        } else {
-            min_features
-        }
-        if (inherits(exprs, "Seurat")) {
-            obj <- exprs
-        } else {
-            obj <- CreateSeuratObject(exprs, project = sam, min.cells = minc, min.features = minf)
-        }
-        obj <- RenameCells(obj, add.cell.id = sam)
-        # Attach meta data
-        for (mname in names(mdata)) {
-            if (mname %in% c("RNAData", "TCRData", "BCRData")) {
+        if (is_seurat) {
+            obj <- filter(meta, !!sym("Sample") == sam)
+            if (nrow(obj@meta.data) == 0) {
+                log$warn("  No cells found for sample '{sam}', skipping ...")
                 next
             }
-            mdt <- mdata[[mname]]
-            if (is.factor(mdt)) {
-                mdt <- levels(mdt)[mdt]
+        } else {
+            mdata <- meta[meta$Sample == sam, , drop = TRUE]
+            if (is.data.frame(mdata) && nrow(mdata) == 0) {
+                log$warn("  No metadata found for sample '{sam}', skipping ...")
+                next
             }
 
-            obj[[mname]] <- mdt
+
+            path <- as.character(mdata$RNAData)
+            if (is.na(path) || !is.character(path) || identical(path, "") || identical(path, "NA")) {
+                log$warn("  No path found, skipping ...")
+                next
+            }
+
+            if (dir.exists(path)) {
+                exprs <- tryCatch(
+                    {
+                        Read10X(data.dir = path)
+                    },
+                    error = function(e) {
+                        tmpdatadir <- file.path(tmpdir, slugify(sam))
+                        if (dir.exists(tmpdatadir)) {
+                            unlink(tmpdatadir, recursive = TRUE)
+                        }
+                        dir.create(tmpdatadir, recursive = TRUE, showWarnings = FALSE)
+                        barcodefile <- Sys.glob(file.path(path, "*barcodes.tsv.gz"))[1]
+                        file.symlink(normalizePath(barcodefile), file.path(tmpdatadir, "barcodes.tsv.gz"))
+                        genefile <- glob(file.path(path, "*{genes,features}.tsv.gz"))[1]
+                        file.symlink(normalizePath(genefile), file.path(tmpdatadir, "features.tsv.gz"))
+                        matrixfile <- Sys.glob(file.path(path, "*matrix.mtx.gz"))[1]
+                        file.symlink(normalizePath(matrixfile), file.path(tmpdatadir, "matrix.mtx.gz"))
+                        Read10X(data.dir = tmpdatadir)
+                    }
+                )
+            } else if (endsWith(path, ".loom")) {
+                LoadLoomArgs$file <- path
+                exprs <- do_call(SeuratDisk::LoadLoom, LoadLoomArgs)
+            } else if (file.exists(path)) {
+                exprs <- Read10X_h5(path)
+            } else {
+                stop("[LoadSeuratSample] {sample}: Path not found: {path}")
+            }
+
+            if ("Gene Expression" %in% names(exprs) && !inherits(exprs, "Seurat")) {
+                exprs <- exprs[["Gene Expression"]]
+            }
+
+            minc <- if (is.list(min_cells)) {
+                min_cells[[sam]] %||% min_cells$DEFAULT %||% 0
+            } else {
+                min_cells
+            }
+            minf <- if (is.list(min_features)) {
+                min_features[[sam]] %||% min_features$DEFAULT %||% 0
+            } else {
+                min_features
+            }
+            if (inherits(exprs, "Seurat")) {
+                obj <- exprs
+            } else {
+                obj <- CreateSeuratObject(exprs, project = sam, min.cells = minc, min.features = minf)
+            }
+            obj <- RenameCells(obj, add.cell.id = sam)
+            # Attach meta data
+            for (mname in names(mdata)) {
+                if (mname %in% c("RNAData", "TCRData", "BCRData")) {
+                    next
+                }
+                mdt <- mdata[[mname]]
+                if (is.factor(mdt)) {
+                    mdt <- levels(mdt)[mdt]
+                }
+
+                obj[[mname]] <- mdt
+            }
         }
 
         # cell qc

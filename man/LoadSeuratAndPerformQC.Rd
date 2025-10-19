@@ -25,7 +25,10 @@ If the path is a directory, the function will look for barcodes.tsv.gz, features
 The directory should be loaded by \link[Seurat:Read10X]{Seurat::Read10X}. Sometimes, there may be prefix in the file names,
 e.g. "'prefix'.barcodes.tsv.gz", which is also supported.
 If the path is a file ending with ".loom", it will be loaded by \code{\link[SeuratDisk:Connect]{SeuratDisk::Connect()}} and converted to a Seurat object.
-Otherwise, if the path is a file, it should be a h5 file that can be loaded by \code{\link[Seurat:Read10X_h5]{Seurat::Read10X_h5()}}}
+Otherwise, if the path is a file, it should be a h5 file that can be loaded by \code{\link[Seurat:Read10X_h5]{Seurat::Read10X_h5()}}
+
+This can also be a Seurat object to perform QC on. It requires the "Sample" column in the meta.data slot
+specifying the sample for each cell.}
 
 \item{min_cells}{Include features detected in at least this many cells.
 This will be applied to all samples and passed to the \code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}} function.
@@ -35,7 +38,7 @@ and the values are the minimum number of cells for each sample to load by
 \code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}}.
 You can have a default value in the list with the name "DEFAULT" for the samples
 that are not listed.
-This won't work if data is loaded from a loom file.}
+This won't work if data is loaded from a loom file or \code{meta} is a Seurat object.}
 
 \item{min_features}{Include cells where at least this many features are detected.
 This will be applied to all samples and passed to the \code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}} function.
@@ -45,7 +48,7 @@ and the values are the minimum number of features for each sample to load by
 \code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}}.
 You can have a default value in the list with the name "DEFAULT" for the samples
 that are not listed.
-This won't work if data is loaded from a loom file.}
+This won't work if data is loaded from a loom file or \code{meta} is a Seurat object.}
 
 \item{samples}{Samples to load. If NULL, all samples will be loaded}
 
