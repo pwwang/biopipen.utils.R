@@ -303,6 +303,12 @@ read_obj <- function(file, type = c("auto", "qs2", "rds")) {
     }
 }
 
+#' Alias of read_obj
+#'
+#' @rdname read_save_object
+#' @export
+load_obj <- read_obj
+
 #' Save an object to a file
 #'
 #' @param obj The object to save
@@ -327,6 +333,12 @@ save_obj <- function(obj, file, type = c("auto", "qs2", "rds")) {
         stop("Unknown file type")
     }
 }
+
+#' Alias of save_obj
+#'
+#' @rdname read_save_object
+#' @export
+write_obj <- save_obj
 
 #' Get the path where biopipen is installed
 #'

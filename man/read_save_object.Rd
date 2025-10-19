@@ -2,12 +2,18 @@
 % Please edit documentation in R/misc.R
 \name{read_obj}
 \alias{read_obj}
+\alias{load_obj}
 \alias{save_obj}
+\alias{write_obj}
 \title{Read and write objects to/from files}
 \usage{
 read_obj(file, type = c("auto", "qs2", "rds"))
 
+load_obj(file, type = c("auto", "qs2", "rds"))
+
 save_obj(obj, file, type = c("auto", "qs2", "rds"))
+
+write_obj(obj, file, type = c("auto", "qs2", "rds"))
 }
 \arguments{
 \item{file}{The file to read or write}
@@ -23,5 +29,9 @@ The object read from the file or NULL if writing
 \description{
 Read and write objects to/from files
 
+Alias of read_obj
+
 Save an object to a file
+
+Alias of save_obj
 }
