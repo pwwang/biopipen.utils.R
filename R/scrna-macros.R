@@ -371,7 +371,8 @@ PerformGeneQC <- function(object, gene_qc) {
 #' @importFrom bracer glob
 #' @importFrom rlang sym
 #' @importFrom dplyr filter group_by summarise
-#' @importFrom Seurat CreateSeuratObject RenameCells Read10X Read10X_h5
+#' @importFrom Seurat CreateSeuratObject RenameCells Read10X Read10X_h5 SplitObject
+#' @importFrom SeuratObject UpdateSeuratObject
 #' @export
 #' @examples
 #' \donttest{
@@ -399,14 +400,6 @@ LoadSeuratAndPerformQC <- function(
     log = NULL,
     cache = NULL) {
     log <- log %||% get_logger()
-    is_seurat <- inherits(meta, "Seurat")
-    if (!is_seurat) {
-        meta <- as.data.frame(meta)
-        samples <- samples %||% meta$Sample
-    } else {
-        samples <- samples %||% unique(meta@meta.data$Sample)
-    }
-    stopifnot("No samples found" = length(samples) > 0)
 
     cache <- cache %||% gettempdir()
     cached <- Cache$new(
@@ -418,6 +411,21 @@ LoadSeuratAndPerformQC <- function(
         log$info("Initialized and QC'ed data loaded from cache")
         return(cached$restore())
     }
+    is_seurat <- inherits(meta, "Seurat")
+    if (!is_seurat) {
+        meta <- as.data.frame(meta)
+        samples <- samples %||% meta$Sample
+    } else {
+        meta <- UpdateSeuratObject(meta)
+        samples <- samples %||% unique(meta@meta.data$Sample)
+        # convert assays to v5 if they are not
+        assay <- DefaultAssay(meta)
+        if (!"Assay5" %in% class(meta[[assay]])) {
+            log$debug("Converting assay '{assay}' to Assay5 ...")
+            meta[[assay]] <- as(meta[[assay]], "Assay5")
+        }
+    }
+    stopifnot("No samples found" = length(samples) > 0)
 
     log$info("Loading each sample ...")
     tmpdir <- tmpdir %||% gettempdir()
