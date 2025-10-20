@@ -1088,6 +1088,7 @@ RunSeuratSubClustering <- function(
 #' @export
 #' @importFrom utils getFromNamespace
 #' @importFrom Seurat IntegrateLayers
+#' @importFrom rlang %||%
 #' @importFrom SeuratObject JoinLayers
 RunSeuratIntegration <- function(
     object, no_integration = FALSE, IntegrateLayersArgs = list(),
@@ -1128,7 +1129,8 @@ RunSeuratIntegration <- function(
             stop(paste0("Unknown integration method: ", method))
         )
         IntegrateLayersArgs$method <- getFromNamespace(method, "Seurat")
-        if (DefaultAssay(object) == "SCT") {
+        IntegrateLayersArgs$assay <- IntegrateLayersArgs$assay %||% DefaultAssay(object)
+        if (IntegrateLayersArgs$assay == "SCT") {
             IntegrateLayersArgs$normalization.method <- IntegrateLayersArgs$normalization.method %||% "SCT"
         }
 
