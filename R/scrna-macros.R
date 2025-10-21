@@ -483,7 +483,7 @@ LoadSeuratAndPerformQC <- function(
             } else if (file.exists(path)) {
                 exprs <- Read10X_h5(path)
             } else {
-                stop("[LoadSeuratSample] {sample}: Path not found: {path}")
+                stop("[LoadSeuratSample] {sam}: Path not found: {path}")
             }
 
             if ("Gene Expression" %in% names(exprs) && !inherits(exprs, "Seurat")) {
