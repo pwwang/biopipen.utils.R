@@ -213,31 +213,22 @@ RunSeuratDEAnalysis <- function(
         degs
     }
 
-    if (!error) {
-        degs <- tryCatch(
-            {
-                find_markers(recorrect_umi, ...)
-            },
-            error = function(e) {
+    degs <- tryCatch(
+        {
+            find_markers(recorrect_umi, ...)
+        },
+        error = function(e) {
+            if (grepl("PrepSCTFindMarkers", e$message) && isTRUE(recorrect_umi)) {
+                warning("[RunSeuratDEAnalysis] Still failing about PrepSCTFindMarkers, try recorrect_umi = FALSE", immediate. = TRUE)
+                find_markers(recorrect_umi = FALSE, ...)
+            } else if (error) {
+                stop(e)
+            } else {
                 warning("[RunSeuratDEAnalysis] Failed to run DE analysis: ", e$message, immediate. = TRUE)
                 empty
             }
-        )
-    } else {
-        degs <- tryCatch(
-            {
-                find_markers(recorrect_umi, ...)
-            },
-            error = function(e) {
-                if (grepl("PrepSCTFindMarkers", e$message) && isTRUE(recorrect_umi)) {
-                    warning("[RunSeuratDEAnalysis] Still failing about PrepSCTFindMarkers, try recorrect_umi = FALSE", immediate. = TRUE)
-                    find_markers(recorrect_umi = FALSE, ...)
-                } else {
-                    stop(e)
-                }
-            }
-        )
-    }
+        }
+    )
 
     cached$save(degs)
     degs
