@@ -161,9 +161,6 @@ RunSeuratDEAnalysis <- function(
     }
 
     stopifnot("'group_by' is not found in the object" = group_by %in% colnames(object@meta.data))
-    all_ident <- as.character(sort(unique(object@meta.data[[group_by]])))
-    stopifnot("'ident_1' is not found in 'group_by'" = is.null(ident_1) || ident_1 %in% all_ident)
-    stopifnot("'ident_2' is not found in 'group_by'" = is.null(ident_2) || ident_2 %in% all_ident)
     stopifnot("'ident_1' should be provided when 'ident_2' is provided" = is.null(ident_2) || !is.null(ident_1))
 
     assay <- assay %||% DefaultAssay(object)
@@ -188,6 +185,9 @@ RunSeuratDEAnalysis <- function(
     if (!is.null(subset)) {
         object <- filter(object, !!parse_expr(subset))
     }
+    all_ident <- as.character(sort(unique(object@meta.data[[group_by]])))
+    stopifnot("'ident_1' is not found in 'group_by'" = is.null(ident_1) || ident_1 %in% all_ident)
+    stopifnot("'ident_2' is not found in 'group_by'" = is.null(ident_2) || ident_2 %in% all_ident)
     # https://satijalab.org/seurat/archive/v4.3/sctransform_v2_vignette#identify-differential-expressed-genes-across-conditions
     recorrect_umi <- is.null(subset) && assay == "SCT"
 
