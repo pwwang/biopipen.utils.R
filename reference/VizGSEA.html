@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">biopipen.utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -151,6 +151,30 @@ to the heatmap.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Visualize the GSEA results</span></span></span>
 <span class="r-in"><span><span class="fu">VizGSEA</span><span class="op">(</span><span class="va">r</span>, plot_type <span class="op">=</span> <span class="st">"summary"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        log2err         ES        NES  size     ID Description       pvalue</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          &lt;num&gt;      &lt;num&gt;      &lt;num&gt; &lt;int&gt; &lt;fctr&gt;      &lt;char&gt;        &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  1: 0.04811840  0.2371134  0.4333708     3   set2        set2 9.895616e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  2: 0.04939101 -0.3680773 -0.6393930     3   set4        set4 8.747628e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  3: 0.05676724  0.3739484  0.6834633     3   set6        set6 8.204593e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  4: 0.08063885 -0.5967110 -1.0365565     3   set7        set7 4.611006e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  5: 0.11331291  0.6492783  1.1866820     3   set9        set9 2.922756e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  6: 0.12325723  0.6694030  1.2234639     3   set5        set5 2.526096e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  7: 0.12625399 -0.7323092 -1.2721062     3   set3        set3 2.201139e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  8: 0.25296112 -0.8450015 -1.4678660     3   set8        set8 6.072106e-02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  9: 0.35248786 -0.7730952 -1.5490196     5  set10       set10 2.855028e-02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10: 0.61052688  1.0000000  1.8276941     3   set1        set1 7.295427e-06</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         p.adjust      core_enrichment</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>            &lt;num&gt;               &lt;char&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  1: 9.895616e-01    Gene6/Gene4/Gene5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  2: 9.719587e-01               Gene10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  3: 9.719587e-01               Gene17</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  4: 6.587151e-01        Gene19/Gene21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  5: 4.871260e-01               Gene25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  6: 4.871260e-01        Gene13/Gene15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  7: 4.871260e-01                Gene8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  8: 2.024035e-01        Gene24/Gene22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  9: 1.427514e-01 Gene86/Gene83/Gene71</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10: 7.295427e-05 Gene73/Gene30/Gene97</span>
 <span class="r-plt img"><img src="VizGSEA-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu">VizGSEA</span><span class="op">(</span><span class="va">r</span>, plot_type <span class="op">=</span> <span class="st">"gsea"</span>, gs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"set10"</span>, <span class="st">"set2"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="VizGSEA-2.png" alt="" width="700" height="433"></span>
