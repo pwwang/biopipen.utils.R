@@ -1810,6 +1810,18 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
     for (cat in cats) {
         catname <- paste0("obs/__categories/", cat)
         obsname <- paste0("obs/", cat)
+        # Handle NA values in obs/cat
+        # by creating levels with <NA> in obs/__categories/cat
+        codes <- h5ad[[obsname]]$read()
+        if (any(is.na(codes) | codes < 0)) {
+            # add <NA> to levels (obs/__categories/cat)
+            levels <- h5ad[[catname]]$read()
+            levels <- c(levels, "<NA>")
+            h5ad[[catname]]$write(args = list(1:length(levels)), value = levels)
+            # update codes in obs/cat
+            codes <- ifelse(is.na(codes) | codes < 0, length(levels) - 1, codes)
+            h5ad[[obsname]]$write(args = list(1:length(codes)), value = codes)
+        }
         ref <- H5.create_reference(h5ad[[catname]])
         h5ad[[obsname]]$create_attr(
             attr_name = "categories",
