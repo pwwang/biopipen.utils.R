@@ -1749,10 +1749,12 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
             assay <- assay %||% DefaultAssay(object_or_file)
             # In order to convert to h5ad
             # https://github.com/satijalab/seurat/issues/8220#issuecomment-1871874649
-            object_or_file$RNAv3 <- as(object = object_or_file[[assay]], Class = "Assay")
-            DefaultAssay(object_or_file) <- "RNAv3"
-            object_or_file$RNA <- NULL
-            object_or_file <- RenameAssays(object_or_file, RNAv3 = "RNA")
+            if (assay == "RNA") {
+                object_or_file$RNAv3 <- as(object = object_or_file[[assay]], Class = "Assay")
+                DefaultAssay(object_or_file) <- "RNAv3"
+                object_or_file$RNA <- NULL
+                object_or_file <- RenameAssays(object_or_file, RNAv3 = "RNA")
+            }
 
             log$debug("[ConvertSeuratToAnnData] Saving Seurat object to H5Seurat file ...")
             object_or_file@commands <- list()
@@ -1772,7 +1774,8 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
         if (!is.null(subset)) {
             if (!file.exists(h5seurat_file)) {
                 log$debug("[ConvertSeuratToAnnData] Reading H5Seurat file for subsetting ...")
-                object_or_file <- SeuratDisk::LoadH5Seurat(object_or_file, assay = assay %||% "RNA")
+                object_or_file <- SeuratDisk::LoadH5Seurat(object_or_file)
+                assay <- assay %||% DefaultAssay(object_or_file)
                 object_or_file <- eval(parse(text = paste0("base::subset(object_or_file, subset = ", subset, ")")))
 
                 log$debug("[ConvertSeuratToAnnData] Saving Seurat object to H5Seurat file ...")
@@ -1781,9 +1784,15 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
             object_or_file <- h5seurat_file
         }
     }
+    if (is.null(assay)) {
+        object <- SeuratDisk::LoadH5Seurat(object_or_file)
+        assay <- DefaultAssay(object)
+        rm(object)
+        gc()
+    }
 
     log$debug("[ConvertSeuratToAnnData] Converting to AnnData ...")
-    SeuratDisk::Convert(object_or_file, dest = outfile, assay = assay %||% "RNA", overwrite = TRUE)
+    SeuratDisk::Convert(object_or_file, dest = outfile, assay = assay, overwrite = TRUE)
 
     log$debug("[ConvertSeuratToAnnData] Fixing categorical data ...")
     # See: https://github.com/mojaveazure/seurat-disk/issues/183
