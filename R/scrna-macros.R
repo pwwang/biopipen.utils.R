@@ -193,13 +193,29 @@ RunSeuratDEAnalysis <- function(
 
     find_markers <- function(recorrect_umi, ...) {
         if (is.null(ident_1)) {
+            logic_error <- NULL
             degs <- do_call(rbind, lapply(all_ident, function(ident) {
-                m <- FindMarkers(object, group.by = group_by, ident.1 = ident, recorrect_umi = recorrect_umi, assay = assay, ...)
+                m <- tryCatch({
+                    FindMarkers(object, group.by = group_by, ident.1 = ident, recorrect_umi = recorrect_umi, assay = assay, ...)
+                }, error = function(e) {
+                    if (grepl("has fewer than", e$message)) {
+                        warning("[RunSeuratDEAnalysis] Skipping DE analysis for group_by = ", group_by, ", ident_1 = ", ident, ": ", e$message, immediate. = TRUE)
+                        return(empty[0, , drop = FALSE])
+                    } else {
+                        logic_error <<- paste0(e$message, " (group_by = ", group_by, ", ident_1 = ", ident, ")")
+                    }
+                })
+                if (nrow(m) == 0) {
+                    return(m)
+                }
                 m$gene <- rownames(m)
                 rownames(m) <- NULL
                 m[[group_by]] <- ident
                 m
             }))
+            if (!is.null(logic_error)) {
+                stop(logic_error)
+            }
         } else {
             degs <- FindMarkers(object,
                 group.by = group_by, ident.1 = ident_1, ident.2 = ident_2, recorrect_umi = recorrect_umi,
