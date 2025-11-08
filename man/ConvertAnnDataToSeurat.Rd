@@ -4,7 +4,13 @@
 \alias{ConvertAnnDataToSeurat}
 \title{Convert an AnnData file (h5ad) to a Seurat object or an RDS/qs2 file}
 \usage{
-ConvertAnnDataToSeurat(infile, outfile = NULL, assay = "RNA", log = NULL)
+ConvertAnnDataToSeurat(
+  infile,
+  outfile = NULL,
+  assay = "RNA",
+  ident = NULL,
+  log = NULL
+)
 }
 \arguments{
 \item{infile}{Input file}
@@ -13,6 +19,8 @@ ConvertAnnDataToSeurat(infile, outfile = NULL, assay = "RNA", log = NULL)
 and saved and the Seurat object will be read from it.}
 
 \item{assay}{Assay naem to save in the Seurat object}
+
+\item{ident}{The name of the identity in metadata after conversion}
 
 \item{log}{Logger}
 }

@@ -1864,10 +1864,12 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
 #' @param outfile Output file. If "NULL" (default) is given, a temporary file will be created
 #' and saved and the Seurat object will be read from it.
 #' @param assay Assay naem to save in the Seurat object
+#' @param ident The name of the identity in metadata after conversion
 #' @param log Logger
+#' @importFrom rlang %||%
 #' @export
 #' @return The Seurat object if `outfile` is "<object>", otherwise NULL.
-ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", log = NULL) {
+ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", ident = NULL, log = NULL) {
     stopifnot(
         "[ConvertAnnDataToSeurat] 'infile' should be a file path with extension '.h5ad'" =
             is.character(infile) && endsWith(infile, ".h5ad")
@@ -1964,6 +1966,13 @@ ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", log = 
 
     log$debug("[ConvertAnnDataToSeurat] Loading h5seurat file ...")
     object <- SeuratDisk::LoadH5Seurat(destfile, misc = FALSE, tools = FALSE)
+    if (!is.null(ident)) {
+        if (ident %in% colnames(object@meta.data)) {
+            SeuratObject::Idents(object) <- ident
+        } else {
+            stop("[ConvertAnnDataToSeurat] 'ident' column '{ident}' not found in metadata/obs")
+        }
+    }
 
     if (return_object) {
         return(object)
