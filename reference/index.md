@@ -1,0 +1,171 @@
+# Package index
+
+## All functions
+
+- [`AddSeuratCommand()`](https://pwwang.github.io/biopipen.utils.R/reference/AddSeuratCommand.md)
+  :
+
+  Add a command to a Seurat object `@commands` slot
+
+- [`AggregateExpressionPseudobulk()`](https://pwwang.github.io/biopipen.utils.R/reference/AggregateExpressionPseudobulk.md)
+  : Aggregate expression of single cells into psedobulk expression
+  matrix
+
+- [`Cache`](https://pwwang.github.io/biopipen.utils.R/reference/Cache.md)
+  : Cache class for object, file or directory caching
+
+- [`ConvertAnnDataToSeurat()`](https://pwwang.github.io/biopipen.utils.R/reference/ConvertAnnDataToSeurat.md)
+  : Convert an AnnData file (h5ad) to a Seurat object or an RDS/qs2 file
+
+- [`ConvertSeuratToAnnData()`](https://pwwang.github.io/biopipen.utils.R/reference/ConvertSeuratToAnnData.md)
+  : Convert a Seurat object (or RDS/H5Seurat/qs2 file) to an AnnData
+  object file
+
+- [`FinishSeuratQC()`](https://pwwang.github.io/biopipen.utils.R/reference/FinishSeuratQC.md)
+  : Finish the QC process including the visualization
+
+- [`GetIdentityColumn()`](https://pwwang.github.io/biopipen.utils.R/reference/GetIdentityColumn.md)
+  : Get the column name in meta.data that works as identity
+
+- [`LoadSeuratAndPerformQC()`](https://pwwang.github.io/biopipen.utils.R/reference/LoadSeuratAndPerformQC.md)
+  : Load samples into a Seurat object
+
+- [`PerformGeneQC()`](https://pwwang.github.io/biopipen.utils.R/reference/PerformGeneQC.md)
+  : Perform gene QC
+
+- [`PerformSeuratCellQC()`](https://pwwang.github.io/biopipen.utils.R/reference/PerformSeuratCellQC.md)
+  : Perform cell QC
+
+- [`Reporter`](https://pwwang.github.io/biopipen.utils.R/reference/Reporter.md)
+  : Add and save report
+
+- [`RunDEGAnalysis()`](https://pwwang.github.io/biopipen.utils.R/reference/RunDEGAnalysis.md)
+  : Run differential gene expression analysis
+
+- [`RunGSEA()`](https://pwwang.github.io/biopipen.utils.R/reference/RunGSEA.md)
+  : Run GSEA using fgsea
+
+- [`RunGSEAPreRank()`](https://pwwang.github.io/biopipen.utils.R/reference/RunGSEAPreRank.md)
+  : Pre-rank genes based on expression data
+
+- [`RunSeuratClustering()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratClustering.md)
+  : Run seurat unsupervised clustering
+
+- [`RunSeuratDEAnalysis()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDEAnalysis.md)
+  : RunSeuratDEAnalysis
+
+- [`RunSeuratDoubletDetection()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDoubletDetection.md)
+  : Run doublet detection on a Seurat object
+
+- [`RunSeuratIntegration()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratIntegration.md)
+  : Run data integration on Seurat object
+
+- [`RunSeuratMap2Ref()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratMap2Ref.md)
+  : Run Seurat MapQuery to reference
+
+- [`RunSeuratSubClustering()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratSubClustering.md)
+  : Run subset clustering on a Seurat object
+
+- [`RunSeuratTransformation()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratTransformation.md)
+  : Run transformations on a Seurat object
+
+- [`RunSeuratUMAP()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratUMAP.md)
+  : Run seurat UMAP
+
+- [`ScRepMutate()`](https://pwwang.github.io/biopipen.utils.R/reference/ScRepMutate.md)
+  : Mutate scRepertorie object
+
+- [`ScRepSubset()`](https://pwwang.github.io/biopipen.utils.R/reference/ScRepSubset.md)
+  : Subset scRepertorie object
+
+- [`VizBulkDEGs()`](https://pwwang.github.io/biopipen.utils.R/reference/VizBulkDEGs.md)
+  : Visualize DEGs
+
+- [`VizDEGs()`](https://pwwang.github.io/biopipen.utils.R/reference/VizDEGs.md)
+  : Visualize DEGs
+
+- [`VizGSEA()`](https://pwwang.github.io/biopipen.utils.R/reference/VizGSEA.md)
+  : Visualize GSEA results
+
+- [`VizSeuratCellQC()`](https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratCellQC.md)
+  : Visualize Cell QC metrics of Seurat object
+
+- [`VizSeuratDoublets()`](https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratDoublets.md)
+  : Visualize detected doublets
+
+- [`VizSeuratGeneQC()`](https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratGeneQC.md)
+  : Visualize gene QC metrics of Seurat object
+
+- [`VizSeuratMap2Ref()`](https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratMap2Ref.md)
+  :
+
+  Visualize features between the query and reference Seurat objects by
+  [`RunSeuratMap2Ref()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratMap2Ref.md)
+
+- [`bQuote()`](https://pwwang.github.io/biopipen.utils.R/reference/bQuote.md)
+  : backtick quoting
+
+- [`case_info()`](https://pwwang.github.io/biopipen.utils.R/reference/case_info.md)
+  : Create information for a casename
+
+- [`do_call()`](https://pwwang.github.io/biopipen.utils.R/reference/do_call.md)
+  : Call a function with a list of arguments
+
+- [`expand_cases()`](https://pwwang.github.io/biopipen.utils.R/reference/expand_cases.md)
+  : Expand the cases with default values
+
+- [`extract_vars()`](https://pwwang.github.io/biopipen.utils.R/reference/extract_vars.md)
+  : Extract variables from a named list
+
+- [`gene_name_conversion()`](https://pwwang.github.io/biopipen.utils.R/reference/gene_name_conversion.md)
+  : Convert gene names between different formats
+
+- [`get_biopipen_dir()`](https://pwwang.github.io/biopipen.utils.R/reference/get_biopipen_dir.md)
+  : Get the path where biopipen is installed
+
+- [`get_logger()`](https://pwwang.github.io/biopipen.utils.R/reference/get_logger.md)
+  : Setup and return the logger
+
+- [`get_reporter()`](https://pwwang.github.io/biopipen.utils.R/reference/get_reporter.md)
+  : Get a reporter object
+
+- [`gettempdir()`](https://pwwang.github.io/biopipen.utils.R/reference/gettempdir.md)
+  :
+
+  Get the temporary directory, without suffix. It works like
+  `tempfile.gettempdir()` in Python.
+
+- [`html_escape()`](https://pwwang.github.io/biopipen.utils.R/reference/html_escape.md)
+  : Escape HTML entities
+
+- [`list_rename()`](https://pwwang.github.io/biopipen.utils.R/reference/list_rename.md)
+  : Rename to names of a list
+
+- [`list_update()`](https://pwwang.github.io/biopipen.utils.R/reference/list_update.md)
+  : Update the first list based on other lists
+
+- [`RunEnrichment()`](https://pwwang.github.io/biopipen.utils.R/reference/re-exports.md)
+  [`ParseGMT()`](https://pwwang.github.io/biopipen.utils.R/reference/re-exports.md)
+  [`VizEnrichment()`](https://pwwang.github.io/biopipen.utils.R/reference/re-exports.md)
+  : Re-exported functions from other packages
+
+- [`read_obj()`](https://pwwang.github.io/biopipen.utils.R/reference/read_save_object.md)
+  [`load_obj()`](https://pwwang.github.io/biopipen.utils.R/reference/read_save_object.md)
+  [`save_obj()`](https://pwwang.github.io/biopipen.utils.R/reference/read_save_object.md)
+  [`write_obj()`](https://pwwang.github.io/biopipen.utils.R/reference/read_save_object.md)
+  : Read and write objects to/from files
+
+- [`repr()`](https://pwwang.github.io/biopipen.utils.R/reference/repr.md)
+  : The string representation of an object
+
+- [`run_command()`](https://pwwang.github.io/biopipen.utils.R/reference/run_command.md)
+  : Run a command
+
+- [`save_plot()`](https://pwwang.github.io/biopipen.utils.R/reference/save_plot.md)
+  : Save the plot into multiple formats
+
+- [`save_plotcode()`](https://pwwang.github.io/biopipen.utils.R/reference/save_plotcode.md)
+  : Save the plot code and data to reproduce the plot
+
+- [`slugify()`](https://pwwang.github.io/biopipen.utils.R/reference/slugify.md)
+  : Slugify strings

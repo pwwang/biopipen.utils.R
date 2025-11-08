@@ -1,0 +1,45 @@
+# Run GSEA using fgsea
+
+Run GSEA using fgsea
+
+## Usage
+
+``` r
+RunGSEA(ranks, genesets, ...)
+```
+
+## Arguments
+
+- ranks:
+
+  A named numeric vector of gene ranks
+
+- genesets:
+
+  A list of gene sets
+
+- ...:
+
+  Additional arguments passed to
+  [`fgsea::fgsea()`](https://rdrr.io/pkg/fgsea/man/fgsea.html)
+
+## Value
+
+A data frame with the results of the fGSEA analysis
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+exprs <- matrix(rnorm(1000), nrow = 100, ncol = 10)
+colnames(exprs) <- paste0("Sample", 1:10)
+rownames(exprs) <- paste0("Gene", 1:100)
+classes <- c(rep("A", 5), rep("B", 5))
+ranks <- RunGSEAPreRank(exprs, case = "A", control = "B", classes = classes)
+genesets <- list(
+    set1 = c("Gene1", "Gene2", "Gene3"),
+    set2 = c("Gene4", "Gene5", "Gene6")
+)
+RunGSEA(ranks, genesets)
+} # }
+```
