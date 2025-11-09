@@ -1185,6 +1185,8 @@ RunSeuratIntegration <- function(
 #'
 #' @param object Seurat object
 #' @param ncores Number of cores to use
+#' @param ident Cluster identity to use for homotypic doublet proportion estimation.
+#' If NULL or not exists, will run clustering first to get cluster identities.
 #' @param PCs Number of statistically-significant principal components
 #' @param pN The number of generated artificial doublets, expressed as a proportion of the merged
 #' real-artificial data. Default is set to 0.25, based on observation that DoubletFinder
@@ -1196,16 +1198,21 @@ RunSeuratIntegration <- function(
 #' @importFrom rlang %||%
 #' @importFrom SeuratObject Idents<- Idents
 #' @importFrom grDevices pdf dev.off
-RunSeuratDoubletFinder <- function(object, ncores = 1, PCs = 30, pN = 0.25, doublets = 0.075, log = NULL, allow_warnings = FALSE) {
+RunSeuratDoubletFinder <- function(object, ident = NULL, ncores = 1, PCs = 30, pN = 0.25, doublets = 0.075, log = NULL, allow_warnings = FALSE) {
     log <- log %||% get_logger()
 
     log$info("- Preparing Seurat object ...")
     # More controls from args?
-    if (!"seurat_clusters" %in% colnames(object@meta.data)) {
+    if (is.null(ident) || !ident %in% colnames(object@meta.data)) {
+        if (!is.null(ident)) {
+            log$warn("  ident '{ident}' not found in metadata, running clustering to get identities")
+        } else {
+            log$info("  No ident provided, running clustering to get identities")
+        }
         object <- FindNeighbors(object, dims = 1:PCs)
         object <- FindClusters(object)
     } else {
-        Idents(object) <- "seurat_clusters"
+        Idents(object) <- ident
     }
 
     log$info("- pK Indentification ...")

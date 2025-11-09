@@ -6,6 +6,7 @@
 \usage{
 RunSeuratDoubletFinder(
   object,
+  ident = NULL,
   ncores = 1,
   PCs = 30,
   pN = 0.25,
@@ -16,6 +17,9 @@ RunSeuratDoubletFinder(
 }
 \arguments{
 \item{object}{Seurat object}
+
+\item{ident}{Cluster identity to use for homotypic doublet proportion estimation.
+If NULL or not exists, will run clustering first to get cluster identities.}
 
 \item{ncores}{Number of cores to use}
 
