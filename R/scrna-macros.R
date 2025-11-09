@@ -873,7 +873,7 @@ RunSeuratClustering <- function(
             stop("[RunSeuratClustering] 'FindClustersArgs$cluster.name' only supports a single name")
         }
         FindClustersArgs$cluster.name <- paste0(cluster_name, ".", FindClustersArgs$resolution)
-        FindClustersArgs$cluster.name[length(FindClustersArgs$cluster.name)] <- cluster_name
+        # FindClustersArgs$cluster.name[length(FindClustersArgs$cluster.name)] <- cluster_name
         log$info("  Using resolution(s): {paste(FindClustersArgs$resolution, collapse = ', ')}")
         object <- do_call(FindClusters, FindClustersArgs)
         FindClustersArgs$object <- NULL
@@ -882,6 +882,7 @@ RunSeuratClustering <- function(
         for (clname in FindClustersArgs$cluster.name) {
             object@meta.data[[clname]] <- .recode_clusters(object@meta.data[[clname]])
         }
+        object@meta.data[[cluster_name]] <- object@meta.data[[FindClustersArgs$cluster.name[length(FindClustersArgs$cluster.name)]]]
         # object@meta.data$seurat_clusters <- .recode_clusters(object@meta.data$seurat_clusters)
         Idents(object) <- cluster_name
 
