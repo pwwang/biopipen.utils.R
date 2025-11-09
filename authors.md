@@ -11,7 +11,7 @@ Source:
 [`DESCRIPTION`](https://github.com/pwwang/biopipen.utils.R/blob/master/DESCRIPTION)
 
 Wang P (2025). *biopipen.utils: Common Utility Functions for Biopipen*.
-R package version 0.3.1https://github.com/pwwang/biopipen.utils.R
+R package version 0.3.2https://github.com/pwwang/biopipen.utils.R
 https://pwwang.github.io/biopipen.utils.R/,
 [https://github.com/pwwang/biopipen.utils.R
 https://pwwang.github.io/biopipen.utils.R/](https://github.com/pwwang/biopipen.utils.R%20%20%20%20https://pwwang.github.io/biopipen.utils.R/).
@@ -20,7 +20,7 @@ https://pwwang.github.io/biopipen.utils.R/](https://github.com/pwwang/biopipen.u
       title = {biopipen.utils: Common Utility Functions for Biopipen},
       author = {Panwen Wang},
       year = {2025},
-      note = {R package version 0.3.1https://github.com/pwwang/biopipen.utils.R
+      note = {R package version 0.3.2https://github.com/pwwang/biopipen.utils.R
         https://pwwang.github.io/biopipen.utils.R/},
       url = {https://github.com/pwwang/biopipen.utils.R
         https://pwwang.github.io/biopipen.utils.R/},

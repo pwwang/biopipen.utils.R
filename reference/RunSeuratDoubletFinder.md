@@ -7,6 +7,7 @@ Run DoubletFinder on a Seurat object
 ``` r
 RunSeuratDoubletFinder(
   object,
+  ident = NULL,
   ncores = 1,
   PCs = 30,
   pN = 0.25,
@@ -21,6 +22,12 @@ RunSeuratDoubletFinder(
 - object:
 
   Seurat object
+
+- ident:
+
+  Cluster identity to use for homotypic doublet proportion estimation.
+  If NULL or not exists, will run clustering first to get cluster
+  identities.
 
 - ncores:
 

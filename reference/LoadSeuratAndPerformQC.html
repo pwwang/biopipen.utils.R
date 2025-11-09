@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">biopipen.utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -147,10 +147,10 @@ In slot <code>misc</code>, there are two fields: <code>cell_qc_df</code> and <co
 <span class="r-in"><span>    <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu">LoadSeuratAndPerformQC</span><span class="op">(</span><span class="va">meta</span>, cache <span class="op">=</span> <span class="cn">FALSE</span>, gene_qc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>min_cells <span class="op">=</span> <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-08 06:56:05] Loading each sample ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-08 06:56:05] - Loading Sample1 and performing QC ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-08 06:56:06] - Loading Sample2 and performing QC ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-08 06:56:07] Merging samples ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-09 07:09:14] Loading each sample ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-09 07:09:14] - Loading Sample1 and performing QC ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-09 07:09:15] - Loading Sample2 and performing QC ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-09 07:09:16] Merging samples ...</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">obj</span><span class="op">@</span><span class="va">misc</span><span class="op">$</span><span class="va">cell_qc_df</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">obj</span><span class="op">@</span><span class="va">misc</span><span class="op">$</span><span class="va">gene_qc</span><span class="op">)</span></span></span>

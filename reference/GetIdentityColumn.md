@@ -16,7 +16,8 @@ GetIdentityColumn(object)
 
 ## Value
 
-The column name in meta.data that works as identity
+The column name in meta.data that works as identity If there are
+multiple columns matching, return the shortest one.
 
 ## Examples
 
