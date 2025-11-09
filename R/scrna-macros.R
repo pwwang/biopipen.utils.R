@@ -64,6 +64,7 @@
 #'
 #' @param object Seurat object
 #' @return The column name in meta.data that works as identity
+#' If there are multiple columns matching, return the shortest one.
 #' @importFrom SeuratObject Idents
 #' @export
 #' @examples
@@ -73,13 +74,18 @@
 #' SeuratObject::Idents(obj) <- "groups"
 #' GetIdentityColumn(obj)
 GetIdentityColumn <- function(object) {
+    candidates <- c()
     for (name in colnames(object@meta.data)) {
         if (!is.character(object@meta.data[[name]]) && !is.factor(object@meta.data[[name]])) next
         if (isTRUE(all.equal(as.character(unname(Idents(object))), as.character(object@meta.data[[name]])))) {
-            return(name)
+            candidates <- c(candidates, name)
         }
     }
-    NULL
+    if (length(candidates) > 0) {
+        candidates[which.min(nchar(candidates))]
+    } else {
+        NULL
+    }
 }
 
 #' Add a command to a Seurat object `@commands` slot

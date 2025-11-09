@@ -11,6 +11,7 @@ GetIdentityColumn(object)
 }
 \value{
 The column name in meta.data that works as identity
+If there are multiple columns matching, return the shortest one.
 }
 \description{
 Get the column name in meta.data that works as identity
