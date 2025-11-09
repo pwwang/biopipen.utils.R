@@ -1036,7 +1036,7 @@ RunSeuratSubClustering <- function(
     FindClustersArgs$random.seed <- FindClustersArgs$random.seed %||% 8525
     FindClustersArgs$resolution <- .expand_findclusters_resolution(FindClustersArgs$resolution %||% 0.8)
     FindClustersArgs$cluster.name <- paste0(name, ".", FindClustersArgs$resolution)
-    FindClustersArgs$cluster.name[length(FindClustersArgs$cluster.name)] <- name
+    # FindClustersArgs$cluster.name[length(FindClustersArgs$cluster.name)] <- name
     log$info("  Using resolution(s): {paste(FindClustersArgs$resolution, collapse = ', ')}")
     log$debug("  Arguments: {format_args(FindClustersArgs)}")
     subobj <- do_call(FindClusters, FindClustersArgs)
@@ -1046,6 +1046,7 @@ RunSeuratSubClustering <- function(
     for (clname in FindClustersArgs$cluster.name) {
         subobj@meta.data[[clname]] <- .recode_clusters(subobj@meta.data[[clname]], prefix = "s")
     }
+    subobj@meta.data[[name]] <- subobj@meta.data[[FindClustersArgs$cluster.name[length(FindClustersArgs$cluster.name)]]]
     # subobj@meta.data[[name]] <- .recode_clusters(subobj@meta.data$seurat_clusters, prefix = "s")
     Idents(subobj) <- name
 
