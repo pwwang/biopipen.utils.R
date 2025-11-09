@@ -868,7 +868,12 @@ RunSeuratClustering <- function(
         FindClustersArgs$object <- object
         FindClustersArgs$random.seed <- FindClustersArgs$random.seed %||% 8525
         FindClustersArgs$resolution <- .expand_findclusters_resolution(FindClustersArgs$resolution %||% 0.8)
-        FindClustersArgs$cluster.name <- paste0("seurat_clusters.", FindClustersArgs$resolution)
+        cluster_name <- FindClustersArgs$cluster.name %||% "seurat_clusters"
+        if (length(cluster_name) > 1) {
+            stop("[RunSeuratClustering] 'FindClustersArgs$cluster.name' only supports a single name")
+        }
+        FindClustersArgs$cluster.name <- paste0(cluster_name, ".", FindClustersArgs$resolution)
+        FindClustersArgs$cluster.name[length(FindClustersArgs$cluster.name)] <- cluster_name
         log$info("  Using resolution(s): {paste(FindClustersArgs$resolution, collapse = ', ')}")
         object <- do_call(FindClusters, FindClustersArgs)
         FindClustersArgs$object <- NULL
@@ -877,10 +882,10 @@ RunSeuratClustering <- function(
         for (clname in FindClustersArgs$cluster.name) {
             object@meta.data[[clname]] <- .recode_clusters(object@meta.data[[clname]])
         }
-        object@meta.data$seurat_clusters <- .recode_clusters(object@meta.data$seurat_clusters)
-        Idents(object) <- "seurat_clusters"
+        # object@meta.data$seurat_clusters <- .recode_clusters(object@meta.data$seurat_clusters)
+        Idents(object) <- cluster_name
 
-        ident_table <- table(object@meta.data$seurat_clusters)
+        ident_table <- table(object@meta.data[[cluster_name]])
         ident_table <- paste0(names(ident_table), "(", ident_table, ")")
         log$info("  Found clusters (with resolution {FindClustersArgs$resolution[length(FindClustersArgs$resolution)]}):")
         # log every 5 clusters
