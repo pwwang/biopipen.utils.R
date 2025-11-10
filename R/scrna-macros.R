@@ -1799,6 +1799,14 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
 
             rm(object_or_file)
             gc()
+        } else if (is.null(assay)) {
+            if (inherits(object_or_file, "character")) {
+                log$debug("[ConvertSeuratToAnnData] Reading Seurat object from file to get default assay ...")
+                object <- read_obj(object_or_file)
+            }
+            assay <- DefaultAssay(object)
+            rm(object)
+            gc()
         }
         object_or_file <- h5seurat_file
     } else if (!endsWith(object_or_file, ".h5seurat")) {
