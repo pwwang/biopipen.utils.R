@@ -366,3 +366,178 @@ get_biopipen_dir <- function(python = "python") {
     }
     res
 }
+
+#' Require a package to be installed with optional version check
+#'
+#' This function checks if an R or Python package is installed and optionally
+#' verifies that it meets version requirements. For R packages, the version
+#' specifier should follow R's package_version comparison format (e.g., ">=1.2.3").
+#' For Python packages, it follows pip's format (e.g., ">=1.2.3,<2.0.0").
+#'
+#' @param package Character string specifying the package name to check
+#' @param version Optional character string specifying version requirements.
+#'   For R packages: Use comparison operators like ">=1.2.3" or multiple
+#'   requirements separated by commas (e.g., ">=1.2.3,<2.0.0").
+#'   For Python packages: Use pip-style specifiers (e.g., ">=1.2.3,<2.0.0").
+#' @param python Optional character string specifying the Python interpreter path.
+#'   If NULL (default), checks for an R package. If specified, checks for a
+#'   Python package using the given interpreter.
+#'
+#' @return NULL invisibly if the package meets requirements
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Check if an R package is installed
+#' require_package("dplyr")
+#'
+#' # Check if an R package meets version requirements
+#' require_package("dplyr", ">=1.0.0")
+#'
+#' # Check if a Python package is installed
+#' require_package("numpy", python = "python3")
+#'
+#' # Check if a Python package meets version requirements
+#' require_package("numpy", ">=1.20.0,<2.0.0", python = "python3")
+#' }
+require_package <- function(
+    package,
+    version = NULL,
+    python = NULL
+) {
+    if (is.null(python)) {
+        # Check R package
+        if (!requireNamespace(package, quietly = TRUE)) {
+            stop(sprintf("Package '%s' is required but not installed.", package))
+        }
+
+        if (!is.null(version)) {
+            installed_version <- as.character(packageVersion(package))
+
+            # Parse version requirements (support comma-separated specs)
+            specs <- strsplit(version, ",")[[1]]
+            specs <- trimws(specs)
+
+            for (spec in specs) {
+                # Extract operator and version
+                match <- regexec("^([><=!]+)(.+)$", spec)
+                parts <- regmatches(spec, match)[[1]]
+
+                if (length(parts) != 3) {
+                    stop(sprintf("Invalid version specifier: '%s'", spec))
+                }
+
+                operator <- parts[2]
+                required_ver <- parts[3]
+
+                # Compare versions
+                comparison <- switch(
+                    operator,
+                    ">=" = packageVersion(package) >= package_version(required_ver),
+                    ">" = packageVersion(package) > package_version(required_ver),
+                    "<=" = packageVersion(package) <= package_version(required_ver),
+                    "<" = packageVersion(package) < package_version(required_ver),
+                    "==" = packageVersion(package) == package_version(required_ver),
+                    "!=" = packageVersion(package) != package_version(required_ver),
+                    stop(sprintf("Unsupported operator: '%s'", operator))
+                )
+
+                if (!comparison) {
+                    stop(sprintf(
+                        "Package '%s' version '%s' does not satisfy the requirement '%s%s'.",
+                        package, installed_version, package, version
+                    ))
+                }
+            }
+        }
+    } else {
+        # Check Python package
+        # First, check if the Python interpreter exists
+        python_check <- tryCatch({
+            suppressWarnings(system2(python, "--version", stdout = TRUE, stderr = TRUE))
+        }, error = function(e) {
+            stop(sprintf("Python interpreter '%s' not found.", python))
+        })
+
+        if (!is.null(attr(python_check, "status")) && attr(python_check, "status") != 0) {
+            stop(sprintf("Python interpreter '%s' not found.", python))
+        }
+
+        # Check if package is installed
+        import_cmd <- sprintf("import %s", package)
+        result <- suppressWarnings(system2(
+            python,
+            c("-c", shQuote(import_cmd)),
+            stdout = TRUE,
+            stderr = TRUE
+        ))
+
+        if (!is.null(attr(result, "status")) && attr(result, "status") != 0) {
+            stop(sprintf(
+                "Package '%s' is required but not installed in %s.",
+                package, python
+            ))
+        }
+
+        if (!is.null(version)) {
+            # First check if packaging module is available
+            packaging_check <- suppressWarnings(system2(
+                python,
+                c("-c", shQuote("import packaging.specifiers")),
+                stdout = FALSE,
+                stderr = FALSE
+            ))
+
+            if (!is.null(attr(packaging_check, "status")) && attr(packaging_check, "status") != 0) {
+                stop(sprintf(
+                    "Python package 'packaging' is required for version checking but not installed in %s.",
+                    python
+                ))
+            }
+
+            # Get the installed version
+            version_cmd <- sprintf(
+                "from importlib.metadata import version; print(version('%s'))",
+                package
+            )
+            result <- suppressWarnings(system2(
+                python,
+                c("-c", shQuote(version_cmd)),
+                stdout = TRUE,
+                stderr = TRUE
+            ))
+
+            if (!is.null(attr(result, "status")) && attr(result, "status") != 0) {
+                stop(sprintf(
+                    "Failed to get version of package '%s' in %s.",
+                    package, python
+                ))
+            }
+
+            installed_version <- trimws(paste(result, collapse = ""))
+
+            # Check version using Python's packaging module
+            check_cmd <- sprintf(
+                "from packaging.specifiers import SpecifierSet; import sys; sys.exit(0 if '%s' in SpecifierSet('%s') else 1)",
+                installed_version, version
+            )
+            result <- suppressWarnings(system2(
+                python,
+                c("-c", shQuote(check_cmd)),
+                stdout = FALSE,
+                stderr = FALSE
+            ))
+
+            # When stdout and stderr are FALSE, system2 returns the exit code directly
+            if (result != 0) {
+                stop(sprintf(
+                    "Package '%s' version '%s' in %s does not satisfy the requirement '%s%s'.",
+                    package, installed_version, python, package, version
+                ))
+            }
+        }
+    }
+
+    invisible(NULL)
+}
+

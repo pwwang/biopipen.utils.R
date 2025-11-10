@@ -223,3 +223,112 @@ test_that("read_obj/save_obj: works with qs2 file", {
     expect_equal(read_obj(file), obj)
     unlink(file)
 })
+
+test_that("require_package: works for installed R packages", {
+    # testthat should be available since we're running tests
+    expect_invisible(require_package("testthat"))
+})
+
+test_that("require_package: errors for missing R packages", {
+    expect_error(
+        require_package("nonexistent_package_xyz123"),
+        "Package 'nonexistent_package_xyz123' is required but not installed."
+    )
+})
+
+test_that("require_package: checks R package version correctly", {
+    # Get current testthat version
+    current_version <- as.character(packageVersion("testthat"))
+
+    # These should pass
+    expect_invisible(require_package("testthat", sprintf(">=%s", current_version)))
+    expect_invisible(require_package("testthat", sprintf("==%s", current_version)))
+
+    # This should fail (requiring a future version)
+    expect_error(
+        require_package("testthat", ">999.0.0"),
+        "does not satisfy the requirement"
+    )
+})
+
+test_that("require_package: handles multiple version constraints for R packages", {
+    current_version <- as.character(packageVersion("testthat"))
+
+    # Should pass
+    expect_invisible(require_package("testthat", sprintf(">=%s,<999.0.0", current_version)))
+
+    # Should fail
+    expect_error(
+        require_package("testthat", ">999.0.0,<1000.0.0"),
+        "does not satisfy the requirement"
+    )
+})
+
+test_that("require_package: works for Python packages", {
+    skip_if_not(nzchar(Sys.which("python3")), "python3 not available")
+
+    # Check if sys module is available (should always be in standard library)
+    expect_invisible(require_package("sys", python = "python3"))
+})
+
+test_that("require_package: errors for missing Python packages", {
+    skip_if_not(nzchar(Sys.which("python3")), "python3 not available")
+
+    expect_error(
+        require_package("nonexistent_python_package_xyz123", python = "python3"),
+        "is required but not installed in python3"
+    )
+})
+
+test_that("require_package: errors for invalid Python interpreter", {
+    expect_error(
+        require_package("sys", python = "/nonexistent/python/path"),
+        "Python interpreter '/nonexistent/python/path' not found."
+    )
+})
+
+test_that("require_package: checks Python package version", {
+    skip_if_not(nzchar(Sys.which("python3")), "python3 not available")
+
+    # Check if packaging module is available
+    has_packaging <- tryCatch({
+        suppressWarnings(system2("python3", c("-c", shQuote("import packaging.specifiers")),
+                                 stdout = FALSE, stderr = FALSE))
+        TRUE
+    }, error = function(e) FALSE)
+
+    skip_if_not(has_packaging, "packaging module not available")
+
+    # Try with pip if available
+    has_pip <- tryCatch({
+        suppressWarnings(system2("python3", c("-c", shQuote("import pip")),
+                                 stdout = FALSE, stderr = FALSE))
+        TRUE
+    }, error = function(e) FALSE)
+
+    skip_if_not(has_pip, "pip not available")
+
+    # Get pip version
+    pip_version <- suppressWarnings(system2(
+        "python3",
+        c("-c", shQuote("from importlib.metadata import version; print(version('pip'))")),
+        stdout = TRUE,
+        stderr = TRUE
+    ))
+
+    skip_if(
+        !is.null(attr(pip_version, "status")) && attr(pip_version, "status") != 0,
+        "Cannot get pip version"
+    )
+
+    pip_version <- trimws(paste(pip_version, collapse = ""))
+
+    # Should pass
+    expect_invisible(require_package("pip", sprintf(">=%s", pip_version), python = "python3"))
+
+    # Should fail
+    expect_error(
+        require_package("pip", ">999.0.0", python = "python3"),
+        "does not satisfy the requirement"
+    )
+})
