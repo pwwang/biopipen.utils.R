@@ -123,30 +123,6 @@ r <- RunGSEA(ranks, genesets)
 
 # Visualize the GSEA results
 VizGSEA(r, plot_type = "summary")
-#>        log2err         ES        NES  size     ID Description       pvalue
-#>          <num>      <num>      <num> <int> <fctr>      <char>        <num>
-#>  1: 0.04811840  0.2371134  0.4333708     3   set2        set2 9.895616e-01
-#>  2: 0.04939101 -0.3680773 -0.6393930     3   set4        set4 8.747628e-01
-#>  3: 0.05676724  0.3739484  0.6834633     3   set6        set6 8.204593e-01
-#>  4: 0.08063885 -0.5967110 -1.0365565     3   set7        set7 4.611006e-01
-#>  5: 0.11331291  0.6492783  1.1866820     3   set9        set9 2.922756e-01
-#>  6: 0.12325723  0.6694030  1.2234639     3   set5        set5 2.526096e-01
-#>  7: 0.12625399 -0.7323092 -1.2721062     3   set3        set3 2.201139e-01
-#>  8: 0.25296112 -0.8450015 -1.4678660     3   set8        set8 6.072106e-02
-#>  9: 0.35248786 -0.7730952 -1.5490196     5  set10       set10 2.855028e-02
-#> 10: 0.61052688  1.0000000  1.8276941     3   set1        set1 7.295427e-06
-#>         p.adjust      core_enrichment
-#>            <num>               <char>
-#>  1: 9.895616e-01    Gene6/Gene4/Gene5
-#>  2: 9.719587e-01               Gene10
-#>  3: 9.719587e-01               Gene17
-#>  4: 6.587151e-01        Gene19/Gene21
-#>  5: 4.871260e-01               Gene25
-#>  6: 4.871260e-01        Gene13/Gene15
-#>  7: 4.871260e-01                Gene8
-#>  8: 2.024035e-01        Gene24/Gene22
-#>  9: 1.427514e-01 Gene86/Gene83/Gene71
-#> 10: 7.295427e-05 Gene73/Gene30/Gene97
 
 VizGSEA(r, plot_type = "gsea", gs = c("set10", "set2"))
 

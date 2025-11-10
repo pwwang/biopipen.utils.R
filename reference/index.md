@@ -158,6 +158,9 @@
 - [`repr()`](https://pwwang.github.io/biopipen.utils.R/reference/repr.md)
   : The string representation of an object
 
+- [`require_package()`](https://pwwang.github.io/biopipen.utils.R/reference/require_package.md)
+  : Require a package to be installed with optional version check
+
 - [`run_command()`](https://pwwang.github.io/biopipen.utils.R/reference/run_command.md)
   : Run a command
 

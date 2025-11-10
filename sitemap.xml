@@ -42,6 +42,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/do_call.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-AssembleAssay.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-H5ADToH5Seurat.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-H5SeuratToH5AD.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-dir.copy.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-expand_findclusters_resolution.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-expand_number.html</loc></url>
@@ -68,6 +69,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/re-exports.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/read_save_object.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/repr.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/require_package.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/run_command.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/save_plot.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/save_plotcode.html</loc></url>

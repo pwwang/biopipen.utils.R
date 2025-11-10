@@ -49,77 +49,11 @@ ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad")
 #> Registered S3 method overwritten by 'SeuratDisk':
 #>   method            from  
 #>   as.sparse.H5Group Seurat
-#> Validating h5Seurat file
-#> Initializing RNA with data
-#> Warning: The `slot` argument of `GetAssayData()` is deprecated as of SeuratObject 5.0.0.
-#> ℹ Please use the `layer` argument instead.
-#> ℹ The deprecated feature was likely used in the SeuratDisk package.
-#>   Please report the issue at
-#>   <https://github.com/mojaveazure/seurat-disk/issues>.
-#> Adding counts for RNA
-#> Warning: The `slot` argument of `SetAssayData()` is deprecated as of SeuratObject 5.0.0.
-#> ℹ Please use the `layer` argument instead.
-#> ℹ The deprecated feature was likely used in the SeuratDisk package.
-#>   Please report the issue at
-#>   <https://github.com/mojaveazure/seurat-disk/issues>.
-#> Adding scale.data for RNA
-#> Adding feature-level metadata for RNA
-#> Adding variable feature information for RNA
-#> Adding reduction pca
-#> Adding cell embeddings for pca
-#> Adding feature loadings for pca
-#> Adding projected loadings for pca
-#> Adding miscellaneous information for pca
-#> Loading JackStraw data for pca
-#> Adding reduction tsne
-#> Adding cell embeddings for tsne
-#> Adding miscellaneous information for tsne
-#> Adding graph RNA_snn
-#> Adding command information
-#> Adding cell-level metadata
-#> Adding miscellaneous information
-#> Adding tool-specific results
-#> Validating h5Seurat file
-#> Adding scale.data from RNA as X
-#> Transfering meta.features to var
-#> Adding data from RNA as raw
-#> Transfering meta.features to raw/var
-#> Transfering meta.data to obs
-#> Adding dimensional reduction information for pca
-#> Adding feature loadings for pca
-#> Adding dimensional reduction information for tsne
-#> Adding RNA_snn as neighbors
+#> Error in ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad"): object 'object' not found
 ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.g1.h5ad",
     subset = 'groups == "g1"'
 )
-#> Validating h5Seurat file
-#> Initializing RNA with data
-#> Adding counts for RNA
-#> Adding scale.data for RNA
-#> Adding feature-level metadata for RNA
-#> Adding variable feature information for RNA
-#> Adding reduction pca
-#> Adding cell embeddings for pca
-#> Adding feature loadings for pca
-#> Adding projected loadings for pca
-#> Adding miscellaneous information for pca
-#> Adding reduction tsne
-#> Adding cell embeddings for tsne
-#> Adding miscellaneous information for tsne
-#> Adding command information
-#> Adding cell-level metadata
-#> Adding miscellaneous information
-#> Adding tool-specific results
-#> Adding data that was not associated with an assay
-#> Validating h5Seurat file
-#> Adding scale.data from RNA as X
-#> Transfering meta.features to var
-#> Adding data from RNA as raw
-#> Transfering meta.features to raw/var
-#> Transfering meta.data to obs
-#> Adding dimensional reduction information for pca
-#> Adding feature loadings for pca
-#> Adding dimensional reduction information for tsne
+#> Error in ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.g1.h5ad",     subset = "groups == \"g1\""): object 'object' not found
 
 saveRDS(SeuratObject::pbmc_small, "/tmp/pbmc_small.rds")
 ConvertSeuratToAnnData("/tmp/pbmc_small.rds", "/tmp/pbmc_small.h5ad")
@@ -127,6 +61,11 @@ ConvertSeuratToAnnData("/tmp/pbmc_small.rds", "/tmp/pbmc_small.h5ad")
 #> Renaming default assay from RNAv3 to RNA
 #> Warning: Key ‘rnav3_’ taken, using ‘rna_’ instead
 #> Creating h5Seurat file for version 3.1.5.9900
+#> Warning: The `slot` argument of `GetAssayData()` is deprecated as of SeuratObject 5.0.0.
+#> ℹ Please use the `layer` argument instead.
+#> ℹ The deprecated feature was likely used in the SeuratDisk package.
+#>   Please report the issue at
+#>   <https://github.com/mojaveazure/seurat-disk/issues>.
 #> Adding counts for RNA
 #> Adding data for RNA
 #> Adding scale.data for RNA

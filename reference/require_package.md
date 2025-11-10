@@ -1,0 +1,54 @@
+# Require a package to be installed with optional version check
+
+This function checks if an R or Python package is installed and
+optionally verifies that it meets version requirements. For R packages,
+the version specifier should follow R's package_version comparison
+format (e.g., "\>=1.2.3"). For Python packages, it follows pip's format
+(e.g., "\>=1.2.3,\<2.0.0").
+
+## Usage
+
+``` r
+require_package(package, version = NULL, python = NULL)
+```
+
+## Arguments
+
+- package:
+
+  Character string specifying the package name to check
+
+- version:
+
+  Optional character string specifying version requirements. For R
+  packages: Use comparison operators like "\>=1.2.3" or multiple
+  requirements separated by commas (e.g., "\>=1.2.3,\<2.0.0"). For
+  Python packages: Use pip-style specifiers (e.g., "\>=1.2.3,\<2.0.0").
+
+- python:
+
+  Optional character string specifying the Python interpreter path. If
+  NULL (default), checks for an R package. If specified, checks for a
+  Python package using the given interpreter.
+
+## Value
+
+NULL invisibly if the package meets requirements
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# Check if an R package is installed
+require_package("dplyr")
+
+# Check if an R package meets version requirements
+require_package("dplyr", ">=1.0.0")
+
+# Check if a Python package is installed
+require_package("numpy", python = "python3")
+
+# Check if a Python package meets version requirements
+require_package("numpy", ">=1.20.0,<2.0.0", python = "python3")
+} # }
+```
