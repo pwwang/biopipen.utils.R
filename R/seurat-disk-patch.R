@@ -845,6 +845,7 @@ list_to_h5group <- function(h5fg, name, lst) {
   H5Path <- utils::getFromNamespace(x = "H5Path", ns = "SeuratDisk")
   Transpose <- utils::getFromNamespace(x = "Transpose", ns = "SeuratDisk")
   Dims <- utils::getFromNamespace(x = "Dims", ns = "SeuratDisk")
+  PadMatrix <- utils::getFromNamespace(x = "PadMatrix", ns = "SeuratDisk")
 
   rownames <- '_index'
   dfile <- hdf5r::H5File$new(filename = dest, mode = WriteMode(overwrite = FALSE))
