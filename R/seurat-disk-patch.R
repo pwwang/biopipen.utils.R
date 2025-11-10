@@ -820,3 +820,547 @@ list_to_h5group <- function(h5fg, name, lst) {
     }
     return(dfile)
 }
+
+#' patch to fix feature names not attached to the raw data
+#' @keywords internal
+.H5SeuratToH5AD <- function(
+  source,
+  dest,
+  assay = DefaultAssay(object = source),
+  overwrite = FALSE,
+  verbose = TRUE
+) {
+  if (file.exists(dest)) {
+    if (overwrite) {
+      file.remove(dest)
+    } else {
+      stop("Destination H5AD file exists", call. = FALSE)
+    }
+  }
+  WriteMode <- utils::getFromNamespace(x = "WriteMode", ns = "SeuratDisk")
+  Exists <- utils::getFromNamespace(x = "Exists", ns = "SeuratDisk")
+  GuessDType <- utils::getFromNamespace(x = "GuessDType", ns = "SeuratDisk")
+  Scalar <- utils::getFromNamespace(x = "Scalar", ns = "SeuratDisk")
+  IsFactor <- utils::getFromNamespace(x = "IsFactor", ns = "SeuratDisk")
+  H5Path <- utils::getFromNamespace(x = "H5Path", ns = "SeuratDisk")
+  Transpose <- utils::getFromNamespace(x = "Transpose", ns = "SeuratDisk")
+  Dims <- utils::getFromNamespace(x = "Dims", ns = "SeuratDisk")
+
+  rownames <- '_index'
+  dfile <- hdf5r::H5File$new(filename = dest, mode = WriteMode(overwrite = FALSE))
+  # Transfer data frames from h5Seurat files to H5AD files
+  #
+  # @param src Source dataset
+  # @param dname Name of destination
+  # @param index Integer values of rows to take
+  #
+  # @return Invisibly returns \code{NULL}
+  #
+  TransferDF <- function(src, dname, index) {
+    if (verbose) {
+      message("Transfering ", basename(path = src$get_obj_name()), " to ", dname)
+    }
+    if (inherits(x = src, what = 'H5D')) {
+      CompoundToGroup(
+        src = src,
+        dest = dfile,
+        dst.name = dname,
+        order = 'column-order',
+        index = index
+      )
+    } else {
+      dfile$create_group(name = dname)
+      for (i in src$names) {
+        if (IsFactor(x = src[[i]])) {
+          dfile[[dname]]$create_dataset(
+            name = i,
+            robj = src[[i]][['values']][index] - 1L,
+            dtype = src[[H5Path(i, 'values')]]$get_type()
+          )
+          if (!dfile[[dname]]$exists(name = '__categories')) {
+            dfile[[dname]]$create_group(name = '__categories')
+          }
+          dfile[[dname]][['__categories']]$create_dataset(
+            name = i,
+            robj = src[[i]][['levels']][],
+            dtype = src[[H5Path(i, 'levels')]]$get_type()
+          )
+        } else {
+          dfile[[dname]]$create_dataset(
+            name = i,
+            robj = src[[i]][index],
+            dtype = src[[i]]$get_type()
+          )
+        }
+      }
+      if (src$attr_exists(attr_name = 'colnames')) {
+        dfile[[dname]]$create_attr(
+          attr_name = 'column-order',
+          robj = hdf5r::h5attr(x = src, which = 'colnames'),
+          dtype = GuessDType(x = hdf5r::h5attr(x = src, which = 'colnames'))
+        )
+      }
+      encoding.info <- c('type' = 'dataframe', 'version' = '0.1.0')
+      names(x = encoding.info) <- paste0('encoding-', names(x = encoding.info))
+      for (i in seq_along(along.with = encoding.info)) {
+        attr.name <- names(x = encoding.info)[i]
+        attr.value <- encoding.info[i]
+        if (dfile[[dname]]$attr_exists(attr_name = attr.name)) {
+          dfile[[dname]]$attr_delete(attr_name = attr.name)
+        }
+        dfile[[dname]]$create_attr(
+          attr_name = attr.name,
+          robj = attr.value,
+          dtype = GuessDType(x = attr.value),
+          space = Scalar()
+        )
+      }
+    }
+    return(invisible(x = NULL))
+  }
+  # Because AnnData can't figure out that sparse matrices are stored as groups
+  AddEncoding <- function(dname) {
+    encoding.info <- c('type' = 'csr_matrix', 'version' = '0.1.0')
+    names(x = encoding.info) <- paste0('encoding-', names(x = encoding.info))
+    if (inherits(x = dfile[[dname]], what = 'H5Group')) {
+      for (i in seq_along(along.with = encoding.info)) {
+        attr.name <- names(x = encoding.info)[i]
+        attr.value <- encoding.info[i]
+        if (dfile[[dname]]$attr_exists(attr_name = attr.name)) {
+          dfile[[dname]]$attr_delete(attr_name = attr.name)
+        }
+        dfile[[dname]]$create_attr(
+          attr_name = attr.name,
+          robj = attr.value,
+          dtype = GuessDType(x = attr.value),
+          space = Scalar()
+        )
+      }
+      # dfile[[dname]]$create_attr(
+      #   attr_name = 'encoding-type',
+      #   robj = 'csr_matrix',
+      #   dtype = StringType(),
+      #   space = Scalar()
+      # )
+      # dfile[[dname]]$create_attr(
+      #   attr_name = 'encoding-version',
+      #   robj = '0.1.0',
+      #   dtype = StringType(),
+      #   space = Scalar()
+      # )
+    }
+    return(invisible(x = NULL))
+  }
+  # Add assay data
+  assay.group <- source[['assays']][[assay]]
+  if (source$index()[[assay]]$slots[['scale.data']]) {
+    x.data <- 'scale.data'
+    raw.data <- 'data'
+  } else {
+    x.data <- 'data'
+    raw.data <- if (source$index()[[assay]]$slots[['counts']]) {
+      'counts'
+    } else {
+      NULL
+    }
+  }
+  if (verbose) {
+    message("Adding ", x.data, " from ", assay, " as X")
+  }
+  assay.group$obj_copy_to(dst_loc = dfile, dst_name = 'X', src_name = x.data)
+  if (dfile[['X']]$attr_exists(attr_name = 'dims')) {
+    dims <- hdf5r::h5attr(x = dfile[['X']], which = 'dims')
+    dfile[['X']]$create_attr(
+      attr_name = 'shape',
+      robj = rev(x = dims),
+      dtype = GuessDType(x = dims)
+    )
+    dfile[['X']]$attr_delete(attr_name = 'dims')
+  }
+  AddEncoding(dname = 'X')
+  x.features <- switch(
+    EXPR = x.data,
+    'scale.data' = which(x = assay.group[['features']][] %in% assay.group[['scaled.features']][]),
+    seq.default(from = 1, to = assay.group[['features']]$dims)
+  )
+  # Add meta.features
+  if (assay.group$exists(name = 'meta.features')) {
+    TransferDF(
+      src = assay.group[['meta.features']],
+      dname = 'var',
+      index = x.features
+    )
+  } else {
+    dfile$create_group(name = 'var')
+  }
+  # Add feature names
+  if (Exists(x = dfile[['var']], name = rownames)) {
+    dfile[['var']]$link_delete(name = rownames)
+  }
+  dfile[['var']]$create_dataset(
+    name = rownames,
+    robj = assay.group[['features']][x.features],
+    dtype = GuessDType(x = assay.group[['features']][1])
+  )
+  dfile[['var']]$create_attr(
+    attr_name = rownames,
+    robj = rownames,
+    dtype = GuessDType(x = rownames),
+    space = Scalar()
+  )
+  # Because AnnData requries meta.features and can't build an empty data frame
+  if (!dfile[['var']]$attr_exists(attr_name = 'column-order')) {
+    var.cols <- setdiff(
+      x = names(x = dfile[['var']]),
+      y = c(rownames, '__categories')
+    )
+    if (!length(x = var.cols)) {
+      var.cols <- 'features'
+      dfile[['var']]$obj_copy_to(
+        dst_loc = dfile[['var']],
+        dst_name = var.cols,
+        src_name = rownames
+      )
+    }
+    dfile[['var']]$create_attr(
+      attr_name = 'column-order',
+      robj = var.cols,
+      dtype = GuessDType(x = var.cols)
+    )
+  }
+
+  # Add encoding, to ensure compatibility with python's anndata > 0.8.0:
+  encoding.info <- c('type' = 'dataframe', 'version' = '0.1.0')
+  names(x = encoding.info) <- paste0('encoding-', names(x = encoding.info))
+  for (i in seq_along(along.with = encoding.info)) {
+    attr.name <- names(x = encoding.info)[i]
+    attr.value <- encoding.info[i]
+    if (dfile[['var']]$attr_exists(attr_name = attr.name)) {
+      dfile[['var']]$attr_delete(attr_name = attr.name)
+    }
+    dfile[['var']]$create_attr(
+      attr_name = attr.name,
+      robj = attr.value,
+      dtype = GuessDType(x = attr.value),
+      space = Scalar()
+    )
+  }
+
+  # Add raw
+  if (!is.null(x = raw.data)) {
+    if (verbose) {
+      message("Adding ", raw.data, " from ", assay, " as raw")
+    }
+    dfile$create_group(name = 'raw')
+    assay.group$obj_copy_to(
+      dst_loc = dfile[['raw']],
+      dst_name = 'X',
+      src_name = raw.data
+    )
+    if (dfile[['raw/X']]$attr_exists(attr_name = 'dims')) {
+      dims <- hdf5r::h5attr(x = dfile[['raw/X']], which = 'dims')
+      dfile[['raw/X']]$create_attr(
+        attr_name = 'shape',
+        robj = rev(x = dims),
+        dtype = GuessDType(x = dims)
+      )
+      dfile[['raw/X']]$attr_delete(attr_name = 'dims')
+    }
+    AddEncoding(dname = 'raw/X')
+    # Add meta.features
+    if (assay.group$exists(name = 'meta.features')) {
+      TransferDF(
+        src = assay.group[['meta.features']],
+        dname = 'raw/var',
+        index = seq.default(from = 1, to = assay.group[['features']]$dims)
+      )
+    } else {
+      dfile[['raw']]$create_group(name = 'var')
+    }
+    # Add feature names
+    if (Exists(x = dfile[['raw/var']], name = rownames)) {
+      dfile[['raw/var']]$link_delete(name = rownames)
+    }
+    dfile[['raw/var']]$create_dataset(
+      name = rownames,
+      robj = assay.group[['features']][],
+      dtype = GuessDType(x = assay.group[['features']][1])
+    )
+    dfile[['raw/var']]$create_attr(
+      attr_name = rownames,
+      robj = rownames,
+      dtype = GuessDType(x = rownames),
+      space = Scalar()
+    )
+    # Add column-order for raw/var
+    if (!dfile[['raw/var']]$attr_exists(attr_name = 'column-order')) {
+      raw.var.cols <- setdiff(
+        x = names(x = dfile[['raw/var']]),
+        y = c(rownames, '__categories')
+      )
+      if (!length(x = raw.var.cols)) {
+        raw.var.cols <- 'features'
+        dfile[['raw/var']]$obj_copy_to(
+          dst_loc = dfile[['raw/var']],
+          dst_name = raw.var.cols,
+          src_name = rownames
+        )
+      }
+      dfile[['raw/var']]$create_attr(
+        attr_name = 'column-order',
+        robj = raw.var.cols,
+        dtype = GuessDType(x = raw.var.cols)
+      )
+    }
+    # Add encoding for raw/var
+    for (i in seq_along(along.with = encoding.info)) {
+      attr.name <- names(x = encoding.info)[i]
+      attr.value <- encoding.info[i]
+      if (dfile[['raw/var']]$attr_exists(attr_name = attr.name)) {
+        dfile[['raw/var']]$attr_delete(attr_name = attr.name)
+      }
+      dfile[['raw/var']]$create_attr(
+        attr_name = attr.name,
+        robj = attr.value,
+        dtype = GuessDType(x = attr.value),
+        space = Scalar()
+      )
+    }
+  }
+  # Add cell-level metadata
+  TransferDF(
+    src = source[['meta.data']],
+    dname = 'obs',
+    index = seq.default(from = 1, to = length(x = SeuratObject::Cells(x = source)))
+  )
+  if (Exists(x = dfile[['obs']], name = rownames)) {
+    dfile[['obs']]$link_delete(name = rownames)
+  }
+  dfile[['obs']]$create_dataset(
+    name = rownames,
+    robj = SeuratObject::Cells(x = source),
+    dtype = GuessDType(x = SeuratObject::Cells(x = source))
+  )
+  dfile[['obs']]$create_attr(
+    attr_name = rownames,
+    robj = rownames,
+    dtype = GuessDType(x = rownames),
+    space = Scalar()
+  )
+  # Add dimensional reduction information
+  obsm <- dfile$create_group(name = 'obsm')
+  varm <- dfile$create_group(name = 'varm')
+  reductions <- source$index()[[assay]]$reductions
+  for (reduc in names(x = reductions)) {
+    if (verbose) {
+      message("Adding dimensional reduction information for ", reduc)
+    }
+    Transpose(
+      x = source[[H5Path('reductions', reduc, 'cell.embeddings')]],
+      dest = obsm,
+      dname = paste0('X_', reduc),
+      verbose = FALSE
+    )
+    if (reductions[[reduc]]['feature.loadings']) {
+      if (verbose) {
+        message("Adding feature loadings for ", reduc)
+      }
+      loadings <- source[['reductions']][[reduc]][['feature.loadings']]
+      reduc.features <- loadings$dims[1]
+      x.features <- dfile[['var']][[rownames]]$dims
+      varm.name <- switch(EXPR = reduc, 'pca' = 'PCs', toupper(x = reduc))
+      # Because apparently AnnData requires nPCs == nrow(X)
+      if (reduc.features < x.features) {
+        pad <- paste0('pad_', varm.name)
+        PadMatrix(
+          src = loadings,
+          dest = dfile[['varm']],
+          dname = pad,
+          dims = c(x.features, loadings$dims[2]),
+          index = list(
+            match(
+              x = source[['reductions']][[reduc]][['features']][],
+              table = dfile[['var']][[rownames]][]
+            ),
+            seq.default(from = 1, to = loadings$dims[2])
+          )
+        )
+        loadings <- dfile[['varm']][[pad]]
+      }
+      Transpose(x = loadings, dest = varm, dname = varm.name, verbose = FALSE)
+      if (reduc.features < x.features) {
+        dfile$link_delete(name = loadings$get_obj_name())
+      }
+    }
+  }
+  # Add global dimensional reduction information
+  global.reduc <- source$index()[['global']][['reductions']]
+  for (reduc in global.reduc) {
+    if (reduc %in% names(x = reductions)) {
+      next
+    } else if (verbose) {
+      message("Adding dimensional reduction information for ", reduc, " (global)")
+    }
+    Transpose(
+      x = source[[H5Path('reductions', reduc, 'cell.embeddings')]],
+      dest = obsm,
+      dname = paste0('X_', reduc),
+      verbose = FALSE
+    )
+  }
+  # Create uns
+  dfile$create_group(name = 'uns')
+  # Add graph
+  graph <- source$index()[[assay]]$graphs
+  graph <- graph[length(x = graph)]
+  if (!is.null(x = graph)) {
+    if (verbose) {
+      message("Adding ", graph, " as neighbors")
+    }
+    dgraph <- dfile[['uns']]$create_group(name = 'neighbors')
+    source[['graphs']]$obj_copy_to(
+      dst_loc = dgraph,
+      dst_name = 'distances',
+      src_name = graph
+    )
+    if (source[['graphs']][[graph]]$attr_exists(attr_name = 'dims')) {
+      dims <- hdf5r::h5attr(x = source[['graphs']][[graph]], which = 'dims')
+      dgraph[['distances']]$create_attr(
+        attr_name = 'shape',
+        robj = rev(x = dims),
+        dtype = GuessDType(x = dims)
+      )
+    }
+    AddEncoding(dname = 'uns/neighbors/distances')
+    # Add parameters
+    dgraph$create_group(name = 'params')
+    dgraph[['params']]$create_dataset(
+      name = 'method',
+      robj = gsub(pattern = paste0('^', assay, '_'), replacement = '', x = graph),
+      dtype = GuessDType(x = graph)
+    )
+    cmdlog <- paste(
+      paste0('FindNeighbors.', assay),
+      unique(x = c(names(x = reductions), source$index()$global$reductions)),
+      sep = '.',
+      collapse = '|'
+    )
+    cmdlog <- grep(
+      pattern = cmdlog,
+      x = names(x = source[['commands']]),
+      value = TRUE
+    )
+    if (length(x = cmdlog) > 1) {
+      timestamps <- sapply(
+        X = cmdlog,
+        FUN = function(cmd) {
+          ts <- if (source[['commands']][[cmd]]$attr_exists(attr_name = 'time.stamp')) {
+            hdf5r::h5attr(x = source[['commands']][[cmd]], which = 'time.stamp')
+          } else {
+            NULL
+          }
+          return(ts)
+        },
+        simplify = TRUE,
+        USE.NAMES = FALSE
+      )
+      timestamps <- Filter(f = Negate(f = is.null), x = timestamps)
+      cmdlog <- cmdlog[order(timestamps, decreasing = TRUE)][1]
+    }
+    if (length(x = cmdlog) && !is.na(x = cmdlog)) {
+      cmdlog <- source[['commands']][[cmdlog]]
+      if ('k.param' %in% names(x = cmdlog)) {
+        dgraph[['params']]$obj_copy_from(
+          src_loc = cmdlog,
+          src_name = 'k.param',
+          dst_name = 'n_neighbors'
+        )
+      }
+    }
+  }
+  # Add layers
+  other.assays <- setdiff(
+    x = names(x = source$index()),
+    y = c(assay, 'global', 'no.assay')
+  )
+  if (length(x = other.assays)) {
+    # For hdf5r H5D objects, use $dims directly instead of Dims()
+    x.dims <- if (inherits(dfile[['X']], 'H5D')) {
+      dfile[['X']]$dims
+    } else {
+      Dims(x = dfile[['X']])
+    }
+    layers <- dfile$create_group(name = 'layers')
+    for (other in other.assays) {
+      layer.slot <- NULL
+      for (slot in c('scale.data', 'data')) {
+        slot.dims <- if (source$index()[[other]]$slots[[slot]]) {
+          slot.obj <- source[['assays']][[other]][[slot]]
+          if (inherits(slot.obj, 'H5D')) {
+            slot.obj$dims
+          } else {
+            Dims(x = slot.obj)
+          }
+        } else {
+          NA_integer_
+        }
+        if (isTRUE(all.equal(slot.dims, x.dims))) {
+          layer.slot <- slot
+          break
+        }
+      }
+      if (!is.null(x = layer.slot)) {
+        if (verbose) {
+          message("Adding ", layer.slot, " from ", other, " as a layer")
+        }
+        layers$obj_copy_from(
+          src_loc = source[['assays']][[other]],
+          src_name = layer.slot,
+          dst_name = other
+        )
+        if (layers[[other]]$attr_exists(attr_name = 'dims')) {
+          dims <- hdf5r::h5attr(x = layers[[other]], which = 'dims')
+          layers[[other]]$create_attr(
+            attr_name = 'shape',
+            robj = rev(x = dims),
+            dtype = GuessDType(x = dims)
+          )
+          layers[[other]]$attr_delete(attr_name = 'dims')
+        }
+        AddEncoding(dname = paste('layers', other, sep = '/'))
+        layer.features <- switch(
+          EXPR = layer.slot,
+          'scale.data' = 'scaled.features',
+          'features'
+        )
+        var.name <- paste0(other, '_features')
+        dfile[['var']]$obj_copy_from(
+          src_loc = source[['assays']][[other]],
+          src_name = layer.features,
+          dst_name = var.name
+        )
+        col.order <- hdf5r::h5attr(x = dfile[['var']], which = 'column-order')
+        col.order <- c(col.order, var.name)
+        dfile[['var']]$attr_rename(
+          old_attr_name = 'column-order',
+          new_attr_name = 'old-column-order'
+        )
+        dfile[['var']]$create_attr(
+          attr_name = 'column-order',
+          robj = col.order,
+          dtype = GuessDType(x = col.order)
+        )
+        dfile[['var']]$attr_delete(attr_name = 'old-column-order')
+      }
+    }
+    if (!length(x = names(x = layers))) {
+      dfile$link_delete(name = 'layers')
+    }
+  }
+  # Because AnnData can't handle an empty /uns
+  if (!length(x = names(x = dfile[['uns']]))) {
+    dfile$link_delete(name = 'uns')
+  }
+  dfile$flush()
+  return(dfile)
+}

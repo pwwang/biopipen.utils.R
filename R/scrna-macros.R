@@ -1756,6 +1756,7 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
         "[ConvertSeuratToAnnData] 'object_or_file' should be a Seurat object or a file path" =
             is.character(object_or_file) || inherits(object_or_file, "Seurat")
     )
+    monkey_patch("SeuratDisk", "H5SeuratToH5AD", .H5SeuratToH5AD)
 
     dig <- digest(capture.output(utils::str(list(object_or_file, assay, subset))), algo = "sha256")
     dig <- substr(dig, 1, 8)
