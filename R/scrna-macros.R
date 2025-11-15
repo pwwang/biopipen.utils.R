@@ -209,6 +209,7 @@ RunSeuratDEAnalysis <- function(
                         return(empty[0, , drop = FALSE])
                     } else {
                         logic_error <<- paste0(e$message, " (group_by = ", group_by, ", ident_1 = ", ident, ")")
+                        return(empty[0, , drop = FALSE])
                     }
                 })
                 if (nrow(m) == 0) {
@@ -244,7 +245,7 @@ RunSeuratDEAnalysis <- function(
                 warning("[RunSeuratDEAnalysis] Still failing about PrepSCTFindMarkers, try recorrect_umi = FALSE", immediate. = TRUE)
                 find_markers(recorrect_umi = FALSE, ...)
             } else if (error) {
-                stop(e)
+                stop(traceback(e))
             } else {
                 warning("[RunSeuratDEAnalysis] Failed to run DE analysis: ", e$message, immediate. = TRUE)
                 empty
