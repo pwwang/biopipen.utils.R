@@ -49,14 +49,6 @@ ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad")
 #> Registered S3 method overwritten by 'SeuratDisk':
 #>   method            from  
 #>   as.sparse.H5Group Seurat
-#> Error in ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad"): object 'object' not found
-ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.g1.h5ad",
-    subset = 'groups == "g1"'
-)
-#> Error in ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.g1.h5ad",     subset = "groups == \"g1\""): object 'object' not found
-
-saveRDS(SeuratObject::pbmc_small, "/tmp/pbmc_small.rds")
-ConvertSeuratToAnnData("/tmp/pbmc_small.rds", "/tmp/pbmc_small.h5ad")
 #> Warning: Key ‘rna_’ taken, using ‘rnav3_’ instead
 #> Renaming default assay from RNAv3 to RNA
 #> Warning: Key ‘rnav3_’ taken, using ‘rna_’ instead
@@ -66,6 +58,82 @@ ConvertSeuratToAnnData("/tmp/pbmc_small.rds", "/tmp/pbmc_small.h5ad")
 #> ℹ The deprecated feature was likely used in the SeuratDisk package.
 #>   Please report the issue at
 #>   <https://github.com/mojaveazure/seurat-disk/issues>.
+#> Adding counts for RNA
+#> Adding data for RNA
+#> Adding scale.data for RNA
+#> Adding variable features for RNA
+#> Adding feature-level metadata for RNA
+#> Adding cell embeddings for pca
+#> Adding loadings for pca
+#> Adding projected loadings for pca
+#> Adding standard deviations for pca
+#> Adding JackStraw information for pca
+#> Adding cell embeddings for tsne
+#> No loadings for tsne
+#> No projected loadings for tsne
+#> No standard deviations for tsne
+#> No JackStraw data for tsne
+#> Validating h5Seurat file
+#> Adding scale.data from RNA as X
+#> Transfering meta.features to var
+#> Adding data from RNA as raw
+#> Transfering meta.features to raw/var
+#> Transfering meta.data to obs
+#> Adding dimensional reduction information for pca
+#> Adding feature loadings for pca
+#> Adding dimensional reduction information for tsne
+#> Adding RNA_snn as neighbors
+ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.g1.h5ad",
+    subset = 'groups == "g1"'
+)
+#> Warning: Unquoting language objects with `!!!` is deprecated as of rlang 0.4.0. Please
+#> use `!!` instead.
+#> 
+#> # Bad: dplyr::select(data, !!!enquo(x))
+#> 
+#> # Good: dplyr::select(data, !!enquo(x)) # Unquote single quosure
+#> dplyr::select(data, !!!enquos(x)) # Splice list of quosures
+#> This warning is displayed once every 8 hours.
+#> Warning: `when()` was deprecated in purrr 1.0.0.
+#> ℹ Please use `if` instead.
+#> ℹ The deprecated feature was likely used in the tidyseurat package.
+#>   Please report the issue at
+#>   <https://github.com/stemangiola/tidyseurat/issues>.
+#> Warning: Key ‘rna_’ taken, using ‘rnav3_’ instead
+#> Renaming default assay from RNAv3 to RNA
+#> Warning: Key ‘rnav3_’ taken, using ‘rna_’ instead
+#> Creating h5Seurat file for version 3.1.5.9900
+#> Adding counts for RNA
+#> Adding data for RNA
+#> Adding scale.data for RNA
+#> Adding variable features for RNA
+#> Adding feature-level metadata for RNA
+#> Adding cell embeddings for pca
+#> Adding loadings for pca
+#> Adding projected loadings for pca
+#> Adding standard deviations for pca
+#> No JackStraw data for pca
+#> Adding cell embeddings for tsne
+#> No loadings for tsne
+#> No projected loadings for tsne
+#> No standard deviations for tsne
+#> No JackStraw data for tsne
+#> Validating h5Seurat file
+#> Adding scale.data from RNA as X
+#> Transfering meta.features to var
+#> Adding data from RNA as raw
+#> Transfering meta.features to raw/var
+#> Transfering meta.data to obs
+#> Adding dimensional reduction information for pca
+#> Adding feature loadings for pca
+#> Adding dimensional reduction information for tsne
+
+saveRDS(SeuratObject::pbmc_small, "/tmp/pbmc_small.rds")
+ConvertSeuratToAnnData("/tmp/pbmc_small.rds", "/tmp/pbmc_small.h5ad")
+#> Warning: Key ‘rna_’ taken, using ‘rnav3_’ instead
+#> Renaming default assay from RNAv3 to RNA
+#> Warning: Key ‘rnav3_’ taken, using ‘rna_’ instead
+#> Creating h5Seurat file for version 3.1.5.9900
 #> Adding counts for RNA
 #> Adding data for RNA
 #> Adding scale.data for RNA
