@@ -464,7 +464,7 @@ require_package <- function(
         }
 
         # Check if package is installed
-        import_cmd <- sprintf("import %s", package)
+        import_cmd <- sprintf("from importlib.metadata import distribution; distribution('%s')", package)
         result <- suppressWarnings(system2(
             python,
             c("-c", shQuote(import_cmd)),

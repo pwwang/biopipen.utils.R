@@ -268,7 +268,7 @@ test_that("require_package: works for Python packages", {
     skip_if_not(nzchar(Sys.which("python3")), "python3 not available")
 
     # Check if sys module is available (should always be in standard library)
-    expect_invisible(require_package("sys", python = "python3"))
+    expect_invisible(require_package("pip", python = "python3"))
 })
 
 test_that("require_package: errors for missing Python packages", {
@@ -282,7 +282,7 @@ test_that("require_package: errors for missing Python packages", {
 
 test_that("require_package: errors for invalid Python interpreter", {
     expect_error(
-        require_package("sys", python = "/nonexistent/python/path"),
+        require_package("pip", python = "/nonexistent/python/path"),
         "Python interpreter '/nonexistent/python/path' not found."
     )
 })
