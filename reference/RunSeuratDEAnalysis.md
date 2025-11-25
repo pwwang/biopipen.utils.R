@@ -67,6 +67,11 @@ RunSeuratDEAnalysis(
 
 ``` r
 RunSeuratDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2")
+#> Warning: `when()` was deprecated in purrr 1.0.0.
+#> ℹ Please use `if` instead.
+#> ℹ The deprecated feature was likely used in the tidyseurat package.
+#>   Please report the issue at
+#>   <https://github.com/stemangiola/tidyseurat/issues>.
 #>                    p_val avg_log2FC pct.1 pct.2 p_val_adj          gene groups
 #> NOSIP         0.02870319  1.2224797 0.455 0.194         1         NOSIP  g2:g1
 #> LYAR          0.02920961  0.8205500 0.159 0.389         1          LYAR  g2:g1
