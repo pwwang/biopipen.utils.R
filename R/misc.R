@@ -385,7 +385,7 @@ get_biopipen_dir <- function(python = "python") {
 #'
 #' @return NULL invisibly if the package meets requirements
 #' @export
-#'
+#' @importFrom utils packageVersion
 #' @examples
 #' \dontrun{
 #' # Check if an R package is installed
