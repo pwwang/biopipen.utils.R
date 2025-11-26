@@ -1802,6 +1802,7 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
             }
 
             assay <- assay %||% DefaultAssay(object_or_file)
+            active_ident <- GetIdentityColumn(object_or_file)
             # In order to convert to h5ad
             # https://github.com/satijalab/seurat/issues/8220#issuecomment-1871874649
             if (assay == "RNA") {
@@ -1821,8 +1822,11 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
             if (inherits(object_or_file, "character")) {
                 log$debug("[ConvertSeuratToAnnData] Reading Seurat object from file to get default assay ...")
                 object <- read_obj(object_or_file)
+            } else {
+                object <- object_or_file
             }
             assay <- DefaultAssay(object)
+            active_ident <- GetIdentityColumn(object)
             rm(object)
             gc()
         }
@@ -1839,6 +1843,7 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
                 log$debug("[ConvertSeuratToAnnData] Reading H5Seurat file for subsetting ...")
                 object_or_file <- SeuratDisk::LoadH5Seurat(object_or_file)
                 assay <- assay %||% DefaultAssay(object_or_file)
+                active_ident <- GetIdentityColumn(object_or_file)
                 object_or_file <- eval(parse(text = paste0("base::subset(object_or_file, subset = ", subset, ")")))
 
                 log$debug("[ConvertSeuratToAnnData] Saving Seurat object to H5Seurat file ...")
@@ -1850,6 +1855,7 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
     if (is.null(assay)) {
         object <- SeuratDisk::LoadH5Seurat(object_or_file)
         assay <- DefaultAssay(object)
+        active_ident <- GetIdentityColumn(object)
         rm(object)
         gc()
     }
@@ -1878,6 +1884,17 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
     }
 
     h5ad <- hdf5r::H5File$new(outfile, "r+")
+    # Save active assay and identity
+    h5ad$create_attr(
+        attr_name = "active_assay",
+        robj = assay,
+        space = hdf5r::H5S$new(type = "scalar")
+    )
+    h5ad$create_attr(
+        attr_name = "active_ident",
+        robj = active_ident,
+        space = hdf5r::H5S$new(type = "scalar")
+    )
     cats <- names(h5ad[["obs/__categories"]])
     for (cat in cats) {
         catname <- paste0("obs/__categories/", cat)
@@ -1910,13 +1927,13 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
 #' @param infile Input file
 #' @param outfile Output file. If "NULL" (default) is given, a temporary file will be created
 #' and saved and the Seurat object will be read from it.
-#' @param assay Assay naem to save in the Seurat object
+#' @param assay Assay name to save in the Seurat object
 #' @param ident The name of the identity in metadata after conversion
 #' @param log Logger
 #' @importFrom rlang %||%
 #' @export
 #' @return The Seurat object if `outfile` is "<object>", otherwise NULL.
-ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", ident = NULL, log = NULL) {
+ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = NULL, ident = NULL, log = NULL) {
     stopifnot(
         "[ConvertAnnDataToSeurat] 'infile' should be a file path with extension '.h5ad'" =
             is.character(infile) && endsWith(infile, ".h5ad")
@@ -1950,7 +1967,11 @@ ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", ident 
     }
 
     log$debug("[ConvertAnnDataToSeurat] Converting h5ad file to h5seurat file ...")
-    SeuratDisk::Convert(infile, destfile, assay = assay %||% "RNA", overwrite = TRUE)
+    fin <- hdf5r::H5File$new(infile, "r")
+    assay <- assay %||% hdf5r::h5attr(fin, "active_assay") %||% "RNA"
+    ident <- ident %||% hdf5r::h5attr(fin, "active_ident") %||% NULL
+    fin$close_all()
+    SeuratDisk::Convert(infile, destfile, assay = assay, overwrite = TRUE)
 
     # Fixing categorical data
     # See: https://github.com/mojaveazure/seurat-disk/issues/109#issuecomment-1722394184
@@ -2013,6 +2034,9 @@ ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = "RNA", ident 
 
     log$debug("[ConvertAnnDataToSeurat] Loading h5seurat file ...")
     object <- SeuratDisk::LoadH5Seurat(destfile, misc = FALSE, tools = FALSE)
+    if (!is.null(assay)) {
+        DefaultAssay(object) <- assay
+    }
     if (!is.null(ident)) {
         if (ident %in% colnames(object@meta.data)) {
             SeuratObject::Idents(object) <- ident

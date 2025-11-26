@@ -7,7 +7,7 @@
 ConvertAnnDataToSeurat(
   infile,
   outfile = NULL,
-  assay = "RNA",
+  assay = NULL,
   ident = NULL,
   log = NULL
 )
@@ -18,7 +18,7 @@ ConvertAnnDataToSeurat(
 \item{outfile}{Output file. If "NULL" (default) is given, a temporary file will be created
 and saved and the Seurat object will be read from it.}
 
-\item{assay}{Assay naem to save in the Seurat object}
+\item{assay}{Assay name to save in the Seurat object}
 
 \item{ident}{The name of the identity in metadata after conversion}
 
