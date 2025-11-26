@@ -91,10 +91,10 @@ pk/pK show the relationship between BC metric and pK when using DoubletFinder.</
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="LoadSeuratAndPerformQC.html">LoadSeuratAndPerformQC</a></span><span class="op">(</span><span class="va">meta</span>, cache <span class="op">=</span> <span class="cn">FALSE</span>, gene_qc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>min_cells <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    cell_qc <span class="op">=</span> <span class="st">"nFeature_RNA &gt; 500"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:48:51] Loading each sample ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:48:51] - Loading Sample1 and performing QC ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:48:51] - Loading Sample2 and performing QC ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:48:51] Merging samples ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:57:45] Loading each sample ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:57:45] - Loading Sample1 and performing QC ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:57:46] - Loading Sample2 and performing QC ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:57:46] Merging samples ...</span>
 <span class="r-in"><span><span class="fu"><a href="VizSeuratCellQC.html">VizSeuratCellQC</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="VizSeuratDoublets-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="VizSeuratCellQC.html">VizSeuratCellQC</a></span><span class="op">(</span><span class="va">obj</span>, plot_type <span class="op">=</span> <span class="st">"scatter"</span><span class="op">)</span></span></span>
@@ -118,16 +118,16 @@ pk/pK show the relationship between BC metric and pK when using DoubletFinder.</
 <span class="r-plt img"><img src="VizSeuratDoublets-4.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="RunSeuratTransformation.html">RunSeuratTransformation</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:48:56] Performing data transformation and scaling ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:48:56] - Running NormalizeData ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:57:50] Performing data transformation and scaling ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:57:50] - Running NormalizeData ...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Normalizing layer: counts.Sample1</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Normalizing layer: counts.Sample2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:48:58] - Running FindVariableFeatures ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:57:52] - Running FindVariableFeatures ...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Finding variable features for layer counts.Sample1</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Finding variable features for layer counts.Sample2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:48:59] - Running ScaleData ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:57:54] - Running ScaleData ...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Centering and scaling data matrix</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:49:00] - Running RunPCA ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:57:55] - Running RunPCA ...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> PC_ 1 </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  ENSG00000091513, ENSG00000171766, ENSG00000123560, ENSG00000230885, ENSG00000172005, ENSG00000173786, ENSG00000013297, ENSG00000174607, ENSG00000168314, ENSG00000105695 </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000167641, ENSG00000136541, ENSG00000103089, ENSG00000184221, ENSG00000197971, ENSG00000197430, ENSG00000139433, ENSG00000115290, ENSG00000159176, ENSG00000120913 </span>
@@ -164,8 +164,8 @@ pk/pK show the relationship between BC metric and pK when using DoubletFinder.</
 <span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000127540, ENSG00000102804, ENSG00000261857, ENSG00000113387, ENSG00000160213, ENSG00000157470, ENSG00000172809, ENSG00000174871, ENSG00000240972, ENSG00000112304 </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> 	   ENSG00000109846, ENSG00000090263, ENSG00000214736, ENSG00000145335, ENSG00000160194, ENSG00000152954, ENSG00000204856, ENSG00000161970, ENSG00000272835, ENSG00000169249 </span>
 <span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="RunSeuratIntegration.html">RunSeuratIntegration</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:49:01] Performing data integration ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:49:01] - Running IntegrateLayers (method = rpca) ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:57:56] Performing data integration ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:57:56] - Running IntegrateLayers (method = rpca) ...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Computing within dataset neighborhoods</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Finding all pairwise anchors</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Projecting new data onto SVD</span>
@@ -178,9 +178,9 @@ pk/pK show the relationship between BC metric and pK when using DoubletFinder.</
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Finding integration vectors</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Finding integration vector weights</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Integrating data</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:49:05] - Joining layers ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:58:00] - Joining layers ...</span>
 <span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="RunSeuratDoubletDetection.html">RunSeuratDoubletDetection</a></span><span class="op">(</span><span class="va">obj</span>, tool <span class="op">=</span> <span class="st">"scDblFinder"</span>, filter <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:49:06] Running doublet detection using scDblFinder ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2025-11-26 04:58:00] Running doublet detection using scDblFinder ...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Assuming the input to be a matrix of counts or expected counts.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Creating ~1500 artificial doublets...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Dimensional reduction</span>
