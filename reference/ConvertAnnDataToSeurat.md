@@ -8,7 +8,7 @@ Convert an AnnData file (h5ad) to a Seurat object or an RDS/qs2 file
 ConvertAnnDataToSeurat(
   infile,
   outfile = NULL,
-  assay = "RNA",
+  assay = NULL,
   ident = NULL,
   log = NULL
 )
@@ -27,7 +27,7 @@ ConvertAnnDataToSeurat(
 
 - assay:
 
-  Assay naem to save in the Seurat object
+  Assay name to save in the Seurat object
 
 - ident:
 

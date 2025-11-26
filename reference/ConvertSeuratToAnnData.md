@@ -49,11 +49,28 @@ ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad")
 #> Registered S3 method overwritten by 'SeuratDisk':
 #>   method            from  
 #>   as.sparse.H5Group Seurat
-#> Error in ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad"): object 'object' not found
+#> Validating h5Seurat file
+#> Adding scale.data from RNA as X
+#> Transfering meta.features to var
+#> Adding data from RNA as raw
+#> Transfering meta.features to raw/var
+#> Transfering meta.data to obs
+#> Adding dimensional reduction information for pca
+#> Adding feature loadings for pca
+#> Adding dimensional reduction information for tsne
+#> Adding RNA_snn as neighbors
 ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.g1.h5ad",
     subset = 'groups == "g1"'
 )
-#> Error in ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.g1.h5ad",     subset = "groups == \"g1\""): object 'object' not found
+#> Validating h5Seurat file
+#> Adding scale.data from RNA as X
+#> Transfering meta.features to var
+#> Adding data from RNA as raw
+#> Transfering meta.features to raw/var
+#> Transfering meta.data to obs
+#> Adding dimensional reduction information for pca
+#> Adding feature loadings for pca
+#> Adding dimensional reduction information for tsne
 
 saveRDS(SeuratObject::pbmc_small, "/tmp/pbmc_small.rds")
 ConvertSeuratToAnnData("/tmp/pbmc_small.rds", "/tmp/pbmc_small.h5ad")
