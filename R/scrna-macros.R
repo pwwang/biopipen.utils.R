@@ -194,7 +194,11 @@ RunSeuratDEAnalysis <- function(
     all_ident <- as.character(sort(unique(object@meta.data[[group_by]])))
     if (!is.null(ident_1) && !ident_1 %in% all_ident) {
         if (isTRUE(error)) {
-            stop("'", ident_1, "' (ident_1) is not found in '", group_by, "' (group_by)")
+            msg <- paste0("'", ident_1, "' (ident_1) is not found in '", group_by, "' (group_by). ")
+            if (!is.null(ident_2) && ident_2 %in% all_ident) {
+                msg <- paste0(msg, "Do you have enough cells?")
+            }
+            stop(msg)
         } else {
             warning("[RunSeuratDEAnalysis] '", ident_1, "' (ident_1) is not found in '", group_by, "' (group_by), returning empty result", immediate. = TRUE)
             cached$save(empty)
@@ -203,7 +207,11 @@ RunSeuratDEAnalysis <- function(
     }
     if (!is.null(ident_2) && !ident_2 %in% all_ident) {
         if (isTRUE(error)) {
-            stop("'", ident_2, "' (ident_2) is not found in '", group_by, "' (group_by)")
+            msg <- paste0("'", ident_2, "' (ident_2) is not found in '", group_by, "' (group_by). ")
+            if (ident_1 %in% all_ident) {
+                msg <- paste0(msg, "Do you have enough cells?")
+            }
+            stop(msg)
         } else {
             warning("[RunSeuratDEAnalysis] '", ident_2, "' (ident_2) is not found in '", group_by, "' (group_by), returning empty result", immediate. = TRUE)
             cached$save(empty)
