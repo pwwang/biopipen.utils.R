@@ -1762,7 +1762,6 @@ RunSeuratMap2Ref <- function(
 #' @return No return value
 #' @importFrom rlang %||%
 #' @importFrom Seurat DefaultAssay DefaultAssay<-
-#' @importFrom SeuratObject RenameAssays
 #' @importFrom digest digest
 #' @importFrom methods as
 #' @examples
@@ -1813,11 +1812,8 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
             active_ident <- GetIdentityColumn(object_or_file)
             # In order to convert to h5ad
             # https://github.com/satijalab/seurat/issues/8220#issuecomment-1871874649
-            if (assay == "RNA") {
-                object_or_file$RNAv3 <- as(object = object_or_file[[assay]], Class = "Assay")
-                DefaultAssay(object_or_file) <- "RNAv3"
-                object_or_file$RNA <- NULL
-                object_or_file <- RenameAssays(object_or_file, RNAv3 = "RNA")
+            if ("RNA" %in% names(object_or_file@assays)) {
+                object_or_file$RNA <- as(object = object_or_file$RNA, Class = "Assay")
             }
 
             log$debug("[ConvertSeuratToAnnData] Saving Seurat object to H5Seurat file ...")

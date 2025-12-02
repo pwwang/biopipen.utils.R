@@ -1300,6 +1300,8 @@ list_to_h5group <- function(h5fg, name, lst) {
           slot.obj <- source[['assays']][[other]][[slot]]
           if (inherits(slot.obj, 'H5D')) {
             slot.obj$dims
+          } else if (inherits(slot.obj, "H5Group")) {
+            slot.obj[['data']]$dims
           } else {
             Dims(x = slot.obj)
           }
