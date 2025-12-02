@@ -74,9 +74,6 @@ ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.g1.h5ad",
 
 saveRDS(SeuratObject::pbmc_small, "/tmp/pbmc_small.rds")
 ConvertSeuratToAnnData("/tmp/pbmc_small.rds", "/tmp/pbmc_small.h5ad")
-#> Warning: Key ‘rna_’ taken, using ‘rnav3_’ instead
-#> Renaming default assay from RNAv3 to RNA
-#> Warning: Key ‘rnav3_’ taken, using ‘rna_’ instead
 #> Creating h5Seurat file for version 3.1.5.9900
 #> Warning: The `slot` argument of `GetAssayData()` is deprecated as of SeuratObject 5.0.0.
 #> ℹ Please use the `layer` argument instead.
