@@ -18,6 +18,8 @@ or a list with the following fields:
 If \code{RunUMAPArgs$features} is a list, it will run \code{\link[=RunSeuratDEAnalysis]{RunSeuratDEAnalysis()}} to get the markers
 for each group, and then select the top \code{n}/\code{ngroups} features for each group
 based on the \code{order} field.
+If \code{RunUMAPArgs$features} is a numeric value, it will be treated as the \code{n} field
+in the list above, with the default \code{order} being "desc(abs(avg_log2FC))".
 }}
 
 \item{cache}{Directory to cache the all markers, which can be reused later if
@@ -31,4 +33,11 @@ The Seurat object with UMAP results
 \description{
 In additional to \code{\link[Seurat:RunUMAP]{Seurat::RunUMAP()}}, we provide an additional arguments to use
 markers as features for UMAP, which makes the UMAP more separated for different clusters.
+}
+\details{
+When both \code{RunUMAPArgs$features} and \code{RunUMAPArgs$dims} are provided,
+\code{RunUMAPArgs$dims} will be ignored.
+If neither \code{RunUMAPArgs$features} nor \code{RunUMAPArgs$dims} is provided,
+\code{RunUMAPArgs$dims} will be set to \code{1:min(30, ceiling(ncells/3), ncol(object@reductions[[reduction]]))},
+where \code{ncells} is the number of cells in the object, and \code{reduction} is \code{RunUMAPArgs$reduction} (default: "pca").
 }

@@ -44,3 +44,10 @@ The Seurat object with clustering results
 \description{
 Run seurat unsupervised clustering
 }
+\examples{
+\donttest{
+RunSeuratClustering(SeuratObject::pbmc_small)
+GetIdentityColumn(obj)
+table(obj$seurat_clusters)
+}
+}

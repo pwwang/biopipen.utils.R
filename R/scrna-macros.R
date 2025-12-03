@@ -738,6 +738,15 @@ RunSeuratTransformation <- function(
 #' If `RunUMAPArgs$features` is a list, it will run [RunSeuratDEAnalysis()] to get the markers
 #' for each group, and then select the top `n`/`ngroups` features for each group
 #' based on the `order` field.
+#' If `RunUMAPArgs$features` is a numeric value, it will be treated as the `n` field
+#' in the list above, with the default `order` being "desc(abs(avg_log2FC))".
+#' @details
+#' When both `RunUMAPArgs$features` and `RunUMAPArgs$dims` are provided,
+#' `RunUMAPArgs$dims` will be ignored.
+#' If neither `RunUMAPArgs$features` nor `RunUMAPArgs$dims` is provided,
+#' `RunUMAPArgs$dims` will be set to `1:min(30, ceiling(ncells/3), ncol(object@reductions[[reduction]]))`,
+#' where `ncells` is the number of cells in the object, and `reduction` is `RunUMAPArgs$reduction` (default: "pca").
+#' @export
 #' @param cache Directory to cache the all markers, which can be reused later if
 #' DE analysis is desired.
 #' @param log The logger to use. If NULL, a default logger will be used.
@@ -748,6 +757,12 @@ RunSeuratTransformation <- function(
 #' @importFrom dplyr arrange group_by slice_head pull
 RunSeuratUMAP <- function(object, RunUMAPArgs = list(), cache = NULL, log = NULL) {
     log <- log %||% get_logger()
+    if (length(RunUMAPArgs$features) == 1 && is.numeric(RunUMAPArgs$features)) {
+        RunUMAPArgs$features <- list(
+            order = "desc(abs(avg_log2FC))",
+            n = RunUMAPArgs$features
+        )
+    }
     if (is.list(RunUMAPArgs$features)) {
         log$info("  Running RunSeuratDEAnalysis to get markers for UMAP ...")
         ident <- GetIdentityColumn(object)
