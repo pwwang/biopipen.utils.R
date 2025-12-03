@@ -750,19 +750,19 @@ RunSeuratUMAP <- function(object, RunUMAPArgs = list(), cache = NULL, log = NULL
     log <- log %||% get_logger()
     if (is.list(RunUMAPArgs$features)) {
         log$info("  Running RunSeuratDEAnalysis to get markers for UMAP ...")
-        object$Identity <- Idents(object)
-        markers <- RunSeuratDEAnalysis(object, group_by = "Identity", cache = cache)
+        ident <- GetIdentityColumn(object)
+        markers <- RunSeuratDEAnalysis(object, group_by = ident, cache = cache)
         attr(markers, "object") <- NULL
         gc()
 
         RunUMAPArgs$features$order <- RunUMAPArgs$features$order %||% "desc(abs(avg_log2FC))"
         RunUMAPArgs$features$n <- RunUMAPArgs$features$n %||% 30
 
-        ngroups <- length(unique(markers$Identity))
+        ngroups <- length(unique(markers[[ident]]))
         each_n <- ceiling(RunUMAPArgs$features$n / ngroups)
         RunUMAPArgs$features <- markers %>%
             arrange(!!parse_expr(RunUMAPArgs$features$order)) %>%
-            group_by(!!sym("Identity")) %>%
+            group_by(!!sym(ident)) %>%
             slice_head(n = each_n) %>%
             pull("gene") %>%
             unique()
