@@ -70,7 +70,7 @@ The Seurat object with clustering results
 ``` r
 # \donttest{
 RunSeuratClustering(SeuratObject::pbmc_small)
-#> INFO    [2025-12-03 03:23:20] Running RunPCA ...
+#> INFO    [2025-12-03 04:01:24] Running RunPCA ...
 #> Warning: You're computing too large a percentage of total singular values, use a standard svd instead.
 #> Warning: Requested number is larger than the number of available items (20). Setting to 20.
 #> Warning: Requested number is larger than the number of available items (20). Setting to 20.
@@ -92,11 +92,11 @@ RunSeuratClustering(SeuratObject::pbmc_small)
 #> PC_ 5 
 #> Positive:  MYL9, PARVB, IGLL5, TREML1, AKR1C3, PGRMC1, HLA-DPB1, S100A9, TUBB1, PF4 
 #> Negative:  VDAC3, RP11-290F20.3, RUFY1, CD1C, HLA-DQA1, CA2, S100A8, PPBP, GNLY, SDPR 
-#> INFO    [2025-12-03 03:23:21] Running FindNeighbors ...
+#> INFO    [2025-12-03 04:01:25] Running FindNeighbors ...
 #> Computing nearest neighbor graph
 #> Computing SNN
-#> INFO    [2025-12-03 03:23:22] Running FindClusters ...
-#> INFO    [2025-12-03 03:23:22]   Using resolution(s): 0.8
+#> INFO    [2025-12-03 04:01:26] Running FindClusters ...
+#> INFO    [2025-12-03 04:01:26]   Using resolution(s): 0.8
 #> Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
 #> 
 #> Number of nodes: 80
@@ -106,16 +106,16 @@ RunSeuratClustering(SeuratObject::pbmc_small)
 #> Maximum modularity in 10 random starts: 0.4014
 #> Number of communities: 2
 #> Elapsed time: 0 seconds
-#> INFO    [2025-12-03 03:23:23]   Found clusters (with resolution 0.8):
-#> INFO    [2025-12-03 03:23:23]    | c1(44), c2(36)
-#> INFO    [2025-12-03 03:23:23] Running RunUMAP ...
+#> INFO    [2025-12-03 04:01:27]   Found clusters (with resolution 0.8):
+#> INFO    [2025-12-03 04:01:27]    | c1(44), c2(36)
+#> INFO    [2025-12-03 04:01:27] Running RunUMAP ...
 #> Warning: The default method for RunUMAP has changed from calling Python UMAP via reticulate to the R-native UWOT using the cosine metric
 #> To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to 'correlation'
 #> This message will be shown once per session
-#> 03:23:23 UMAP embedding parameters a = 0.9922 b = 1.112
-#> 03:23:23 Read 80 rows and found 19 numeric columns
-#> 03:23:23 Using Annoy for neighbor search, n_neighbors = 30
-#> 03:23:23 Building Annoy index with metric = cosine, n_trees = 50
+#> 04:01:27 UMAP embedding parameters a = 0.9922 b = 1.112
+#> 04:01:27 Read 80 rows and found 19 numeric columns
+#> 04:01:27 Using Annoy for neighbor search, n_neighbors = 30
+#> 04:01:27 Building Annoy index with metric = cosine, n_trees = 50
 #> 0%   10   20   30   40   50   60   70   80   90   100%
 #> [----|----|----|----|----|----|----|----|----|----|
 #> *
@@ -169,16 +169,16 @@ RunSeuratClustering(SeuratObject::pbmc_small)
 #> *
 #> *
 #> |
-#> 03:23:23 Writing NN index file to temp file /tmp/RtmpADgOal/file253c6e4b9913
-#> 03:23:23 Searching Annoy index using 1 thread, search_k = 3000
-#> 03:23:23 Annoy recall = 100%
-#> 03:23:24 Commencing smooth kNN distance calibration using 1 thread
+#> 04:01:27 Writing NN index file to temp file /tmp/RtmpxbGdCp/file250b6d98b85c
+#> 04:01:27 Searching Annoy index using 1 thread, search_k = 3000
+#> 04:01:27 Annoy recall = 100%
+#> 04:01:28 Commencing smooth kNN distance calibration using 1 thread
 #>  with target n_neighbors = 30
-#> 03:23:24 7 smooth knn distance failures
-#> 03:23:25 Initializing from normalized Laplacian + noise (using RSpectra)
-#> 03:23:25 Commencing optimization for 500 epochs, with 2664 positive edges
-#> 03:23:25 Using rng type: pcg
-#> 03:23:26 Optimization finished
+#> 04:01:28 7 smooth knn distance failures
+#> 04:01:29 Initializing from normalized Laplacian + noise (using RSpectra)
+#> 04:01:29 Commencing optimization for 500 epochs, with 2664 positive edges
+#> 04:01:29 Using rng type: pcg
+#> 04:01:30 Optimization finished
 #> Warning: `when()` was deprecated in purrr 1.0.0.
 #> ℹ Please use `if` instead.
 #> ℹ The deprecated feature was likely used in the tidyseurat package.
