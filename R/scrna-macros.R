@@ -836,7 +836,7 @@ RunSeuratUMAP <- function(object, RunUMAPArgs = list(), cache = NULL, log = NULL
 #' @importFrom rlang %||%
 #' @examples
 #' \donttest{
-#' RunSeuratClustering(SeuratObject::pbmc_small)
+#' obj <- RunSeuratClustering(SeuratObject::pbmc_small)
 #' GetIdentityColumn(obj)
 #' table(obj$seurat_clusters)
 #' }
