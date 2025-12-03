@@ -93,17 +93,14 @@ results in `@meta.data` and `@reductions`.
 obj <- SeuratObject::pbmc_small
 # Just run UMAP to compare with the subclusters
 obj <- suppressMessages(Seurat::RunUMAP(obj, dims = 1:10))
-#> Warning: The default method for RunUMAP has changed from calling Python UMAP via reticulate to the R-native UWOT using the cosine metric
-#> To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to 'correlation'
-#> This message will be shown once per session
 obj <- suppressWarnings(suppressMessages(RunSeuratSubClustering(
    obj, subset = "groups == 'g1'", name = "g1subcluster"
 )))
-#> INFO    [2025-12-02 16:13:46] Subsetting seurat object ...
-#> INFO    [2025-12-02 16:13:46] - Running RunPCA ...
-#> INFO    [2025-12-02 16:13:47] - Running FindNeighbors ...
-#> INFO    [2025-12-02 16:13:48] - Running FindClusters ...
-#> INFO    [2025-12-02 16:13:48]   Using resolution(s): 0.8
+#> INFO    [2025-12-03 03:23:36] Subsetting seurat object ...
+#> INFO    [2025-12-03 03:23:36] - Running RunPCA ...
+#> INFO    [2025-12-03 03:23:37] - Running FindNeighbors ...
+#> INFO    [2025-12-03 03:23:38] - Running FindClusters ...
+#> INFO    [2025-12-03 03:23:38]   Using resolution(s): 0.8
 #> Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
 #> 
 #> Number of nodes: 44
@@ -113,9 +110,9 @@ obj <- suppressWarnings(suppressMessages(RunSeuratSubClustering(
 #> Maximum modularity in 10 random starts: 0.2121
 #> Number of communities: 2
 #> Elapsed time: 0 seconds
-#> INFO    [2025-12-02 16:13:49]   Found subclusters (with resolution 0.8):
-#> INFO    [2025-12-02 16:13:49]    | s1(25), s2(19)
-#> INFO    [2025-12-02 16:13:49] - Running RunUMAP ...
+#> INFO    [2025-12-03 03:23:39]   Found subclusters (with resolution 0.8):
+#> INFO    [2025-12-03 03:23:39]    | s1(25), s2(19)
+#> INFO    [2025-12-03 03:23:39] - Running RunUMAP ...
 
 scplotter::CellDimPlot(
     obj, reduction = "umap", group_by = "groups",
