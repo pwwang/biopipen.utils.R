@@ -771,10 +771,11 @@ RunSeuratUMAP <- function(object, RunUMAPArgs = list(), cache = NULL, log = NULL
         gc()
     }
     ncells <- ncol(object)
+    reduction <- RunUMAPArgs$reduction %||% "pca"
     if (!is.null(RunUMAPArgs$features) && !is.null(RunUMAPArgs$dims)) {
         log$warn("  'RunUMAPArgs$features' and 'RunUMAPArgs$dims' are both set, 'RunUMAPArgs$dims' will be ignored")
     } else if (is.null(RunUMAPArgs$features)) {
-        RunUMAPArgs$dims <- RunUMAPArgs$dims %||% 1:min(30, ceiling(ncells / 3))
+        RunUMAPArgs$dims <- RunUMAPArgs$dims %||% 1:min(30, ncol(object@reductions[[reduction]]))
         RunUMAPArgs$dims <- .expand_number(RunUMAPArgs$dims)
     }
     RunUMAPArgs$umap.method <- RunUMAPArgs$umap.method %||% "uwot"
@@ -818,6 +819,12 @@ RunSeuratUMAP <- function(object, RunUMAPArgs = list(), cache = NULL, log = NULL
 #' @importFrom Seurat FindVariableFeatures ScaleData RunPCA
 #' @importFrom SeuratObject DefaultAssay
 #' @importFrom rlang %||%
+#' @examples
+#' \donttest{
+#' RunSeuratClustering(SeuratObject::pbmc_small)
+#' GetIdentityColumn(obj)
+#' table(obj$seurat_clusters)
+#' }
 RunSeuratClustering <- function(
     object,
     RunPCAArgs = list(),
