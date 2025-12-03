@@ -31,7 +31,10 @@ RunSeuratUMAP(object, RunUMAPArgs = list(), cache = NULL, log = NULL)
     `RunUMAPArgs$features` is a list, it will run
     [`RunSeuratDEAnalysis()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDEAnalysis.md)
     to get the markers for each group, and then select the top
-    `n`/`ngroups` features for each group based on the `order` field.
+    `n`/`ngroups` features for each group based on the `order` field. If
+    `RunUMAPArgs$features` is a numeric value, it will be treated as the
+    `n` field in the list above, with the default `order` being
+    "desc(abs(avg_log2FC))".
 
 - cache:
 
@@ -45,3 +48,12 @@ RunSeuratUMAP(object, RunUMAPArgs = list(), cache = NULL, log = NULL)
 ## Value
 
 The Seurat object with UMAP results
+
+## Details
+
+When both `RunUMAPArgs$features` and `RunUMAPArgs$dims` are provided,
+`RunUMAPArgs$dims` will be ignored. If neither `RunUMAPArgs$features`
+nor `RunUMAPArgs$dims` is provided, `RunUMAPArgs$dims` will be set to
+`1:min(30, ceiling(ncells/3), ncol(object@reductions[[reduction]]))`,
+where `ncells` is the number of cells in the object, and `reduction` is
+`RunUMAPArgs$reduction` (default: "pca").

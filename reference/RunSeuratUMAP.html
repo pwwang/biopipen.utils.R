@@ -59,7 +59,9 @@ or a list with the following fields:</p><ul><li><p><code>order</code>: The order
 <li><p><code>n</code>: The number of total features to use for UMAP, e.g. 30
 If <code>RunUMAPArgs$features</code> is a list, it will run <code><a href="RunSeuratDEAnalysis.html">RunSeuratDEAnalysis()</a></code> to get the markers
 for each group, and then select the top <code>n</code>/<code>ngroups</code> features for each group
-based on the <code>order</code> field.</p></li>
+based on the <code>order</code> field.
+If <code>RunUMAPArgs$features</code> is a numeric value, it will be treated as the <code>n</code> field
+in the list above, with the default <code>order</code> being "desc(abs(avg_log2FC))".</p></li>
 </ul></dd>
 
 
@@ -75,6 +77,14 @@ DE analysis is desired.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The Seurat object with UMAP results</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>When both <code>RunUMAPArgs$features</code> and <code>RunUMAPArgs$dims</code> are provided,
+<code>RunUMAPArgs$dims</code> will be ignored.
+If neither <code>RunUMAPArgs$features</code> nor <code>RunUMAPArgs$dims</code> is provided,
+<code>RunUMAPArgs$dims</code> will be set to <code>1:min(30, ceiling(ncells/3), ncol(object@reductions[[reduction]]))</code>,
+where <code>ncells</code> is the number of cells in the object, and <code>reduction</code> is <code>RunUMAPArgs$reduction</code> (default: "pca").</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
