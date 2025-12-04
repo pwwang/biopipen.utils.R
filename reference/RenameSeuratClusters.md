@@ -99,7 +99,6 @@ GetIdentityColumn(object1)
 # Rename using RenameSeuratClusters
 object1 <- RenameSeuratClusters(object, `2` = 'Alpha', `1` = 'Beta')
 #> [1] "seurat_clusters"
-#> [1] 999
 # The order of identities is preserved
 table(SeuratObject::Idents(object1))
 #> 
@@ -122,7 +121,6 @@ table(object$CellType)
 object1 <- RenameSeuratClusters(
     object, Ductal = 'C1', `Endocrine` = 'C1', ident = 'CellType')
 #> [1] "CellType"
-#> [1] 999
 table(object1$CellType)
 #> 
 #>          C1.1   Ngn3 low EP  Ngn3 high EP Pre-endocrine          C1.2 
@@ -131,7 +129,7 @@ table(object1$seurat_clusters)
 #> 
 #>   0   1   2   3   4   5   6 
 #> 186 180 157 157 126 100  94 
-# Identity column is changed
+# Identity column is not changed
 GetIdentityColumn(object1)
 #> [1] "seurat_clusters"
 
@@ -139,7 +137,6 @@ GetIdentityColumn(object1)
 object1 <- RenameSeuratClusters(
    object, Ductal = 'C1', `Endocrine` = 'C1', ident = 'CellType', merge = TRUE)
 #> [1] "CellType"
-#> [1] 999
 table(object1$CellType)
 #> 
 #>            C1   Ngn3 low EP  Ngn3 high EP Pre-endocrine 
@@ -149,7 +146,6 @@ table(object1$CellType)
 object1 <- RenameSeuratClusters(
    object, Ductal = 'C1', `Endocrine` = NA, ident = 'CellType')
 #> [1] "CellType"
-#> [1] 999
 #> Warning: [RenameSeuratClusters] The following clusters will be excluded: Endocrine
 table(object1$CellType)
 #> 
