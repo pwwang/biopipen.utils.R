@@ -4,7 +4,14 @@
 \alias{RenameSeuratIdents}
 \title{Rename cluster names}
 \usage{
-RenameSeuratIdents(object, ident = NULL, save_as = NULL, merge = FALSE, ...)
+RenameSeuratIdents(
+  object,
+  ident = NULL,
+  save_as = NULL,
+  merge = FALSE,
+  backup = NULL,
+  ...
+)
 }
 \arguments{
 \item{object}{Seurat object}
@@ -19,6 +26,11 @@ If NULL, will overwrite the original \code{ident} column.}
 \item{merge}{Whether to merge the clusters with the same new name.
 Default is FALSE. Otherwise, the clusters with the same new name will be suffixed
 with ".1", ".2", etc. to make them unique.}
+
+\item{backup}{If not NULL, the original \code{ident} column will be backed up
+to this new column before renaming.
+Default is NULL, which means no backup will be made.
+Note that if the column name already exists, it will be overwritten.}
 
 \item{...}{Additional arguments.
 If named arguments are provided, they will be used as the mapping from old cluster names to new cluster names.

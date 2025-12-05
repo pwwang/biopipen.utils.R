@@ -1156,6 +1156,10 @@ RunSeuratSubClustering <- function(
 #' @param merge Whether to merge the clusters with the same new name.
 #' Default is FALSE. Otherwise, the clusters with the same new name will be suffixed
 #' with ".1", ".2", etc. to make them unique.
+#' @param backup If not NULL, the original `ident` column will be backed up
+#' to this new column before renaming.
+#' Default is NULL, which means no backup will be made.
+#' Note that if the column name already exists, it will be overwritten.
 #' @param ... Additional arguments.
 #' If named arguments are provided, they will be used as the mapping from old cluster names to new cluster names.
 #' * If a named argument's name does not exist in the original cluster names, it will be ignored.
@@ -1220,7 +1224,7 @@ RunSeuratSubClustering <- function(
 #'    object, Ductal = 'C1', `Endocrine` = NA, ident = 'CellType')
 #' table(object1$CellType)
 #' }
-RenameSeuratIdents <- function(object, ident = NULL, save_as = NULL, merge = FALSE, ...) {
+RenameSeuratIdents <- function(object, ident = NULL, save_as = NULL, merge = FALSE, backup = NULL, ...) {
     ident <- ident %||% GetIdentityColumn(object)
     if (is.null(ident)) {
         stop("[RenameSeuratIdents] Cannot determine the identity column. Please provide the 'ident' argument.")
@@ -1233,7 +1237,11 @@ RenameSeuratIdents <- function(object, ident = NULL, save_as = NULL, merge = FAL
     }
     dots <- rlang::dots_list(...)
 
-    if (length(dots) == 1 && (is.null(names(dots)) || identical(names(dots), "")) && is.list(dots[[1]])) {
+    if (
+        length(dots) == 1 &&
+        (is.null(names(dots)) || identical(names(dots), "") || identical(names(dots), "mapping")) &&
+        is.list(dots[[1]])
+    ) {
         mapping <- dots[[1]]
     } else if (length(dots) >= 1) {
         mapping <- dots
@@ -1270,6 +1278,13 @@ RenameSeuratIdents <- function(object, ident = NULL, save_as = NULL, merge = FAL
             mapping <- as.list(new_names)
             names(mapping) <- names(new_names)
         }
+    }
+
+    if (!is.null(backup)) {
+        if (backup %in% colnames(object@meta.data)) {
+            warning(paste0("[RenameSeuratIdents] Backup column '", backup, "' already exists. It will be overwritten."), immediate. = TRUE)
+        }
+        object@meta.data[[backup]] <- object@meta.data[[ident]]
     }
 
     new_levels <- unique(unlist(mapping))
