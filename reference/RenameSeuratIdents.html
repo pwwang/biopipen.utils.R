@@ -38,7 +38,14 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RenameSeuratIdents</span><span class="op">(</span><span class="va">object</span>, ident <span class="op">=</span> <span class="cn">NULL</span>, save_as <span class="op">=</span> <span class="cn">NULL</span>, merge <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RenameSeuratIdents</span><span class="op">(</span></span>
+<span>  <span class="va">object</span>,</span>
+<span>  ident <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  save_as <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  merge <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  backup <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -64,6 +71,13 @@ If NULL, will overwrite the original <code>ident</code> column.</p></dd>
 <dd><p>Whether to merge the clusters with the same new name.
 Default is FALSE. Otherwise, the clusters with the same new name will be suffixed
 with ".1", ".2", etc. to make them unique.</p></dd>
+
+
+<dt id="arg-backup">backup<a class="anchor" aria-label="anchor" href="#arg-backup"></a></dt>
+<dd><p>If not NULL, the original <code>ident</code> column will be backed up
+to this new column before renaming.
+Default is NULL, which means no backup will be made.
+Note that if the column name already exists, it will be overwritten.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

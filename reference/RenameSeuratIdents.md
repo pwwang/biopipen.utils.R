@@ -5,7 +5,14 @@ Rename cluster names
 ## Usage
 
 ``` r
-RenameSeuratIdents(object, ident = NULL, save_as = NULL, merge = FALSE, ...)
+RenameSeuratIdents(
+  object,
+  ident = NULL,
+  save_as = NULL,
+  merge = FALSE,
+  backup = NULL,
+  ...
+)
 ```
 
 ## Arguments
@@ -32,6 +39,13 @@ RenameSeuratIdents(object, ident = NULL, save_as = NULL, merge = FALSE, ...)
   Whether to merge the clusters with the same new name. Default is
   FALSE. Otherwise, the clusters with the same new name will be suffixed
   with ".1", ".2", etc. to make them unique.
+
+- backup:
+
+  If not NULL, the original `ident` column will be backed up to this new
+  column before renaming. Default is NULL, which means no backup will be
+  made. Note that if the column name already exists, it will be
+  overwritten.
 
 - ...:
 
