@@ -36,7 +36,7 @@
 - [`PerformSeuratCellQC()`](https://pwwang.github.io/biopipen.utils.R/reference/PerformSeuratCellQC.md)
   : Perform cell QC
 
-- [`RenameSeuratClusters()`](https://pwwang.github.io/biopipen.utils.R/reference/RenameSeuratClusters.md)
+- [`RenameSeuratIdents()`](https://pwwang.github.io/biopipen.utils.R/reference/RenameSeuratIdents.md)
   : Rename cluster names
 
 - [`Reporter`](https://pwwang.github.io/biopipen.utils.R/reference/Reporter.md)

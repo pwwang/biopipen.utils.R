@@ -14,7 +14,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/LoadSeuratAndPerformQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/PerformGeneQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/PerformSeuratCellQC.html</loc></url>
-<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RenameSeuratClusters.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RenameSeuratIdents.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/Reporter.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunDEGAnalysis.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunGSEA.html</loc></url>
