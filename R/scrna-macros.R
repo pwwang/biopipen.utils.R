@@ -66,6 +66,7 @@
 #' @return The column name in meta.data that works as identity
 #' If there are multiple columns matching, return the shortest one.
 #' @importFrom SeuratObject Idents
+#' @importFrom rlang %||%
 #' @export
 #' @examples
 #' obj <- SeuratObject::pbmc_small
@@ -81,8 +82,21 @@ GetIdentityColumn <- function(object) {
             candidates <- c(candidates, name)
         }
     }
-    if (length(candidates) > 0) {
-        candidates[which.min(nchar(candidates))]
+    if (length(candidates) == 1) {
+        return(candidates[1])
+    } else if (length(candidates) > 0) {
+        # Choose the one with "cluster" or "annotation" or "type" in the name
+        outcol <- NULL
+        for (keyword in c("cluster", "annotation", "type")) {
+            keyword_candidates <- candidates[grepl(keyword, tolower(candidates))]
+            if (length(keyword_candidates) > 0) {
+                outcol <- keyword_candidates[which.min(nchar(keyword_candidates))]
+                break
+            }
+        }
+        outcol <- outcol %||% candidates[which.min(nchar(candidates))]
+        warning("[GetIdentityColumn] Using '", outcol, "' as the identity column, other candidates: ", paste(setdiff(candidates, outcol), collapse = ", "), immediate. = TRUE)
+        outcol
     } else {
         NULL
     }
