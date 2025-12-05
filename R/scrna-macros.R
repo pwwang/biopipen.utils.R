@@ -1145,6 +1145,151 @@ RunSeuratSubClustering <- function(
 }
 
 
+#' Rename cluster names
+#'
+#' @param object Seurat object
+#' @param ident Column name in `@meta.data` to rename
+#' Defaults to the identity column (from `GetIdentityColumn()`)
+#' When `ident` is not identical as the column identified by `GetIdentityColumn()`,
+#' @param save_as If not NULL, save the renamed clusters to this new column.
+#' If NULL, will overwrite the original `ident` column.
+#' @param merge Whether to merge the clusters with the same new name.
+#' Default is FALSE. Otherwise, the clusters with the same new name will be suffixed
+#' with ".1", ".2", etc. to make them unique.
+#' @param ... Additional arguments.
+#' If named arguments are provided, they will be used as the mapping from old cluster names to new cluster names.
+#' * If a named argument's name does not exist in the original cluster names, it will be ignored.
+#' * If a original cluster name does not have a corresponding named argument, it will be kept unchanged.
+#' * If you want to exclude some clusters, you can set their new names to `NA`.
+#' If unnamed arguments are provided, it must be a single list of mappings.
+#' with the names being the original cluster names, and the values being the new cluster names.
+#' @details
+#' This function provides a convenient way to rename clusters in a Seurat object.
+#' You can provide the mapping of old cluster names to new cluster names either
+#' as named arguments or as a single list.
+#' Unlike [Seurat::RenameIdents()], this function also renames the cluster names in the metadata column,
+#' so that the changes are persistent. If `save_as` is provided, the renamed clusters will be saved
+#' to a new column, otherwise the original column will be overwritten.
+#' In addition, the order of the clusters will be preserved based on the order of the original cluster names.
+#' For the default identities (`Idents(object)`), it is only changed when `ident` is NULL or identical
+#' to the identity column (`GetIdentityColumn(object)`).
+#' @return The Seurat object with renamed clusters
+#' @export
+#' @importFrom SeuratObject Idents
+#' @importFrom rlang %||%
+#' @examples
+#' \donttest{
+#' object <- scplotter::pancreas_sub
+#' GetIdentityColumn(object)
+#' table(object$seurat_clusters)
+#'
+#' # Rename using Seurat::RenameIdents
+#' object1 <- Seurat::RenameIdents(object, `2` = 'Alpha', `1` = 'Beta')
+#' # The order of identities is changed
+#' table(SeuratObject::Idents(object1))
+#' # The identity column is not changed
+#' table(object1$seurat_clusters)
+#' # Since the inconsistency, GetIdentityColumn can't determine the identity column
+#' GetIdentityColumn(object1)
+#'
+#' # Rename using RenameSeuratIdents
+#' object1 <- RenameSeuratIdents(object, `2` = 'Alpha', `1` = 'Beta')
+#' # The order of identities is preserved
+#' table(SeuratObject::Idents(object1))
+#' # The identity column is also changed
+#' table(object1$seurat_clusters)
+#' # Since the consistency, GetIdentityColumn can still determine the identity column
+#' GetIdentityColumn(object1)
+#'
+#' # Rename a non-identity column
+#' table(object$CellType)
+#' object1 <- RenameSeuratIdents(
+#'     object, Ductal = 'C1', `Endocrine` = 'C1', ident = 'CellType')
+#' table(object1$CellType)
+#' table(object1$seurat_clusters)
+#' # Identity column is not changed
+#' GetIdentityColumn(object1)
+#'
+#' # Merge clusters with the same new name
+#' object1 <- RenameSeuratIdents(
+#'    object, Ductal = 'C1', `Endocrine` = 'C1', ident = 'CellType', merge = TRUE)
+#' table(object1$CellType)
+#'
+#' # Exclude some clusters by setting their new names to NA
+#' object1 <- RenameSeuratIdents(
+#'    object, Ductal = 'C1', `Endocrine` = NA, ident = 'CellType')
+#' table(object1$CellType)
+#' }
+RenameSeuratIdents <- function(object, ident = NULL, save_as = NULL, merge = FALSE, ...) {
+    ident <- ident %||% GetIdentityColumn(object)
+    if (is.null(ident)) {
+        stop("[RenameSeuratIdents] Cannot determine the identity column. Please provide the 'ident' argument.")
+    }
+    if (!ident %in% colnames(object@meta.data)) {
+        object@meta.data[[ident]] <- Idents(object)
+    }
+    if (!is.factor(object@meta.data[[ident]])) {
+        object@meta.data[[ident]] <- as.factor(object@meta.data[[ident]])
+    }
+    dots <- rlang::dots_list(...)
+
+    if (length(dots) == 1 && (is.null(names(dots)) || identical(names(dots), "")) && is.list(dots[[1]])) {
+        mapping <- dots[[1]]
+    } else if (length(dots) >= 1) {
+        mapping <- dots
+    } else {
+        stop("[RenameSeuratIdents] No mapping provided to rename clusters")
+    }
+
+    unchanged <- setdiff(levels(object@meta.data[[ident]]), names(mapping))
+    if (length(unchanged) > 0) {
+        for (cl in unchanged) { mapping[[cl]] <- cl}
+    }
+
+    # Preserve the order of the original levels
+    mapping <- mapping[levels(object@meta.data[[ident]])]
+    if (anyNA(unlist(mapping))) {
+        na_clusters <- names(mapping)[is.na(unlist(mapping))]
+        warning(paste0("[RenameSeuratIdents] The following clusters will be excluded: ", paste(na_clusters, collapse = ", ")))
+        remaining_clusters <- setdiff(names(mapping), na_clusters)
+        subset_seurat <- utils::getFromNamespace("subset_seurat", "scplotter")
+        object <- subset_seurat(object, subset = !!rlang::sym(ident) %in% remaining_clusters)
+        mapping <- mapping[remaining_clusters]
+    }
+
+    if (!isTRUE(merge)) {
+        new_names <- unlist(mapping)
+        dup_names <- new_names[duplicated(new_names)]
+        if (length(dup_names) > 0) {
+            for (dup in unique(dup_names)) {
+                indices <- which(new_names == dup)
+                for (i in seq_along(indices)) {
+                    new_names[indices[i]] <- paste0(dup, ".", i)
+                }
+            }
+            mapping <- as.list(new_names)
+            names(mapping) <- names(new_names)
+        }
+    }
+
+    new_levels <- unique(unlist(mapping))
+
+    # Now perform the renaming
+    idents <- object@meta.data[[ident]]
+    rev_mapping <- setNames(names(mapping), as.character(unlist(mapping)))
+    idents <- forcats::fct_recode(idents, !!!rev_mapping)
+    idents <- factor(idents, levels = new_levels)
+
+    if (identical(ident, GetIdentityColumn(object))) {
+        Idents(object) <- idents
+    }
+    save_as <- save_as %||% ident
+    object@meta.data[[save_as]] <- idents
+
+    object
+}
+
+
 #' Run data integration on Seurat object
 #'
 #' @param object Seurat object

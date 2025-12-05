@@ -22,6 +22,7 @@ Imports:
     tibble,
     dplyr,
     tidyr,
+    forcats,
     logger,
     ggplot2,
     jsonlite,
