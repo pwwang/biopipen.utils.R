@@ -291,6 +291,22 @@ RunSeuratDEAnalysis <- function(
         }
     )
 
+    # Fix +Inf/-Inf avg_log2FC to make sure visualization works
+    # +Inf -> max(abs(is.finite(avg_log2FC))) + 1
+    # -Inf -> -max(abs(is.finite(avg_log2FC))) - 1
+    # When there is no finite value, set to 9/-9
+    if (nrow(degs) > 0) {
+        finite_vals <- degs$avg_log2FC[is.finite(degs$avg_log2FC)]
+        if (length(finite_vals) > 0) {
+            max_finite <- max(abs(finite_vals))
+            degs$avg_log2FC[degs$avg_log2FC == Inf] <- max_finite + 1
+            degs$avg_log2FC[degs$avg_log2FC == -Inf] <- -max_finite - 1
+        } else {
+            degs$avg_log2FC[degs$avg_log2FC == Inf] <- 9
+            degs$avg_log2FC[degs$avg_log2FC == -Inf] <- -9
+        }
+    }
+
     cached$save(degs)
     degs
 }
