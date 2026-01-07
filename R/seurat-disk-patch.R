@@ -1368,3 +1368,114 @@ list_to_h5group <- function(h5fg, name, lst) {
   dfile$flush()
   return(dfile)
 }
+
+WriteH5Group.Seurat <- function(x, name, hgroup, verbose = TRUE) {
+  IsMatrixEmpty <- utils::getFromNamespace(x = "IsMatrixEmpty", ns = "SeuratDisk")
+  Key <- utils::getFromNamespace(x = "Key", ns = "SeuratObject")
+  GuessDType <- utils::getFromNamespace(x = "GuessDType", ns = "SeuratDisk")
+  xgroup <- hgroup$create_group(name = name)
+  # Write out expression data
+  # TODO: determine if empty matrices should be present
+  for (i in c('counts', 'data', 'scale.data')) {
+    # Change slot to layer
+    # dat <- SeuratObject::GetAssayData(object = x, slot = i)
+    dat <- SeuratObject::GetAssayData(object = x, layer = i)
+    if (!IsMatrixEmpty(x = dat)) {
+      if (verbose) {
+        message("Adding ", i, " for ", name)
+      }
+      SeuratDisk::WriteH5Group(x = dat, name = i, hgroup = xgroup, verbose = verbose)
+    }
+    # For scale.data, ensure we have the features used
+    if (i == 'scale.data') {
+      SeuratDisk::WriteH5Group(
+        x = rownames(x = dat),
+        name = 'scaled.features',
+        hgroup = xgroup,
+        verbose = verbose
+      )
+    }
+  }
+  # Write out feature names
+  SeuratDisk::WriteH5Group(
+    x = rownames(x = x),
+    name = 'features',
+    hgroup = xgroup,
+    verbose = verbose
+  )
+  # Write out the key
+  xgroup$create_attr(
+    attr_name = 'key',
+    robj = Key(object = x),
+    dtype = GuessDType(x = Key(object = x))
+  )
+  # Write out variable features
+  if (length(x = SeuratObject::VariableFeatures(object = x))) {
+    if (verbose) {
+      message("Adding variable features for ", name)
+    }
+    SeuratDisk::WriteH5Group(
+      x = SeuratObject::VariableFeatures(object = x),
+      name = 'variable.features',
+      hgroup = xgroup,
+      verbose = verbose
+    )
+  } else if (verbose) {
+    message("No variable features found for ", name)
+  }
+  # Write out meta.features
+  if (ncol(x = x[[]])) {
+    if (verbose) {
+      message("Adding feature-level metadata for ", name)
+    }
+    SeuratDisk::WriteH5Group(
+      x = x[[]],
+      name = 'meta.features',
+      hgroup = xgroup,
+      verbose = verbose
+    )
+  } else if (verbose) {
+    message("No feature-level metadata found for ", name)
+  }
+  # Write out miscellaneous data
+  SeuratDisk::WriteH5Group(
+    x = SeuratObject::Misc(object = x),
+    name = 'misc',
+    hgroup = xgroup,
+    verbose = verbose
+  )
+  # Write out other slots for extended assay objects
+  if (class(x = x)[1] != 'Assay') {
+    # extclass <- GetClass(class = class(x = x))
+    extclass <- attr(x = SeuratObject::S4ToList(object = x), which = 'classDef')
+    xgroup$create_attr(
+      attr_name = 's4class',
+      robj = extclass,
+      dtype = GuessDType(x = extclass)
+    )
+    slots.extended <- setdiff(
+      x = methods::slotNames(x = x),
+      # y = slotNames(x = tryNew(Class = 'Assay'))
+      y = methods::slotNames(x = methods::getClassDef(Class = 'Assay'))
+    )
+    for (slot in slots.extended) {
+      if (verbose) {
+        message("Writing out ", slot, " for ", name)
+      }
+      SeuratDisk::WriteH5Group(
+        x = slot(object = x, name = slot),
+        name = slot,
+        hgroup = xgroup,
+        verbose = verbose
+      )
+    }
+  }
+  return(invisible(x = NULL))
+}
+
+# SeuratObject 5.3.0 raises an error with SeuratDisk::WriteH5Group() for Assay objects
+setMethod(
+  f = utils::getFromNamespace("WriteH5Group", "SeuratDisk"),
+  signature = c('x' = 'Assay'),
+  definition = WriteH5Group.Seurat
+)
