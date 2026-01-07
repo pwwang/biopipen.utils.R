@@ -1474,8 +1474,11 @@ WriteH5Group.Seurat <- function(x, name, hgroup, verbose = TRUE) {
 }
 
 # SeuratObject 5.3.0 raises an error with SeuratDisk::WriteH5Group() for Assay objects
-setMethod(
-  f = utils::getFromNamespace("WriteH5Group", "SeuratDisk"),
-  signature = c('x' = 'Assay'),
-  definition = WriteH5Group.Seurat
-)
+# Only register this method if SeuratDisk is available
+if (requireNamespace("SeuratDisk", quietly = TRUE)) {
+  setMethod(
+    f = utils::getFromNamespace("WriteH5Group", "SeuratDisk"),
+    signature = c('x' = 'Assay'),
+    definition = WriteH5Group.Seurat
+  )
+}
