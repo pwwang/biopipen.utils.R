@@ -75,11 +75,6 @@ ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.g1.h5ad",
 saveRDS(SeuratObject::pbmc_small, "/tmp/pbmc_small.rds")
 ConvertSeuratToAnnData("/tmp/pbmc_small.rds", "/tmp/pbmc_small.h5ad")
 #> Creating h5Seurat file for version 3.1.5.9900
-#> Warning: The `slot` argument of `GetAssayData()` is deprecated as of SeuratObject 5.0.0.
-#> ℹ Please use the `layer` argument instead.
-#> ℹ The deprecated feature was likely used in the SeuratDisk package.
-#>   Please report the issue at
-#>   <https://github.com/mojaveazure/seurat-disk/issues>.
 #> Adding counts for RNA
 #> Adding data for RNA
 #> Adding scale.data for RNA

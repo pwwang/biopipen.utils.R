@@ -70,7 +70,7 @@ The Seurat object with clustering results
 ``` r
 # \donttest{
 obj <- RunSeuratClustering(SeuratObject::pbmc_small)
-#> INFO    [2025-12-05 16:27:57] Running RunPCA ...
+#> INFO    [2026-01-08 02:28:32] Running RunPCA ...
 #> Warning: You're computing too large a percentage of total singular values, use a standard svd instead.
 #> Warning: Requested number is larger than the number of available items (20). Setting to 20.
 #> Warning: Requested number is larger than the number of available items (20). Setting to 20.
@@ -92,11 +92,11 @@ obj <- RunSeuratClustering(SeuratObject::pbmc_small)
 #> PC_ 5 
 #> Positive:  MYL9, PARVB, IGLL5, TREML1, AKR1C3, PGRMC1, HLA-DPB1, S100A9, TUBB1, PF4 
 #> Negative:  VDAC3, RP11-290F20.3, RUFY1, CD1C, HLA-DQA1, CA2, S100A8, PPBP, GNLY, SDPR 
-#> INFO    [2025-12-05 16:27:58] Running FindNeighbors ...
+#> INFO    [2026-01-08 02:28:33] Running FindNeighbors ...
 #> Computing nearest neighbor graph
 #> Computing SNN
-#> INFO    [2025-12-05 16:27:59] Running FindClusters ...
-#> INFO    [2025-12-05 16:27:59]   Using resolution(s): 0.8
+#> INFO    [2026-01-08 02:28:34] Running FindClusters ...
+#> INFO    [2026-01-08 02:28:34]   Using resolution(s): 0.8
 #> Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
 #> 
 #> Number of nodes: 80
@@ -106,16 +106,16 @@ obj <- RunSeuratClustering(SeuratObject::pbmc_small)
 #> Maximum modularity in 10 random starts: 0.4014
 #> Number of communities: 2
 #> Elapsed time: 0 seconds
-#> INFO    [2025-12-05 16:28:00]   Found clusters (with resolution 0.8):
-#> INFO    [2025-12-05 16:28:00]    | c1(44), c2(36)
-#> INFO    [2025-12-05 16:28:00] Running RunUMAP ...
+#> INFO    [2026-01-08 02:28:35]   Found clusters (with resolution 0.8):
+#> INFO    [2026-01-08 02:28:35]    | c1(44), c2(36)
+#> INFO    [2026-01-08 02:28:35] Running RunUMAP ...
 #> Warning: The default method for RunUMAP has changed from calling Python UMAP via reticulate to the R-native UWOT using the cosine metric
 #> To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to 'correlation'
 #> This message will be shown once per session
-#> 16:28:00 UMAP embedding parameters a = 0.9922 b = 1.112
-#> 16:28:00 Read 80 rows and found 19 numeric columns
-#> 16:28:00 Using Annoy for neighbor search, n_neighbors = 30
-#> 16:28:00 Building Annoy index with metric = cosine, n_trees = 50
+#> 02:28:35 UMAP embedding parameters a = 0.9922 b = 1.112
+#> 02:28:35 Read 80 rows and found 19 numeric columns
+#> 02:28:35 Using Annoy for neighbor search, n_neighbors = 30
+#> 02:28:35 Building Annoy index with metric = cosine, n_trees = 50
 #> 0%   10   20   30   40   50   60   70   80   90   100%
 #> [----|----|----|----|----|----|----|----|----|----|
 #> *
@@ -169,16 +169,16 @@ obj <- RunSeuratClustering(SeuratObject::pbmc_small)
 #> *
 #> *
 #> |
-#> 16:28:00 Writing NN index file to temp file /tmp/RtmpWi8BeT/file252b4f119bfc
-#> 16:28:00 Searching Annoy index using 1 thread, search_k = 3000
-#> 16:28:00 Annoy recall = 100%
-#> 16:28:01 Commencing smooth kNN distance calibration using 1 thread
+#> 02:28:35 Writing NN index file to temp file /tmp/RtmpaDkazH/file28471925bd3d
+#> 02:28:35 Searching Annoy index using 1 thread, search_k = 3000
+#> 02:28:35 Annoy recall = 100%
+#> 02:28:35 Commencing smooth kNN distance calibration using 1 thread
 #>  with target n_neighbors = 30
-#> 16:28:01 7 smooth knn distance failures
-#> 16:28:02 Initializing from normalized Laplacian + noise (using RSpectra)
-#> 16:28:02 Commencing optimization for 500 epochs, with 2664 positive edges
-#> 16:28:02 Using rng type: pcg
-#> 16:28:03 Optimization finished
+#> 02:28:35 7 smooth knn distance failures
+#> 02:28:37 Initializing from normalized Laplacian + noise (using RSpectra)
+#> 02:28:37 Commencing optimization for 500 epochs, with 2664 positive edges
+#> 02:28:37 Using rng type: pcg
+#> 02:28:38 Optimization finished
 GetIdentityColumn(obj)
 #> Warning: [GetIdentityColumn] Using 'seurat_clusters' as the identity column, other candidates: seurat_clusters.0.8
 #> [1] "seurat_clusters"
