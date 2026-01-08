@@ -1369,6 +1369,14 @@ list_to_h5group <- function(h5fg, name, lst) {
   return(dfile)
 }
 
+#' Patch to fix SeuratDisk::WriteH5Group for Assay objects
+#' SeuratObject 5.3.0 raises an error with SeuratDisk::WriteH5Group() for Assay objects
+#' @keywords internal
+#' @param x Assay object
+#' @param name Name of the group to create
+#' @param hgroup HDF5 group to write to
+#' @param verbose Whether to print messages
+#' @return Invisibly returns \code{NULL}
 WriteH5Group.Seurat <- function(x, name, hgroup, verbose = TRUE) {
   IsMatrixEmpty <- utils::getFromNamespace(x = "IsMatrixEmpty", ns = "SeuratDisk")
   Key <- utils::getFromNamespace(x = "Key", ns = "SeuratObject")
@@ -1472,10 +1480,3 @@ WriteH5Group.Seurat <- function(x, name, hgroup, verbose = TRUE) {
   }
   return(invisible(x = NULL))
 }
-
-# SeuratObject 5.3.0 raises an error with SeuratDisk::WriteH5Group() for Assay objects
-setMethod(
-  f = utils::getFromNamespace("WriteH5Group", "SeuratDisk"),
-  signature = c('x' = 'Assay'),
-  definition = WriteH5Group.Seurat
-)

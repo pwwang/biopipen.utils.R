@@ -1993,6 +1993,12 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
             is.character(object_or_file) || inherits(object_or_file, "Seurat")
     )
     monkey_patch("SeuratDisk", "H5SeuratToH5AD", .H5SeuratToH5AD)
+    methods::setMethod(
+        f = utils::getFromNamespace("WriteH5Group", "SeuratDisk"),
+        signature = c('x' = 'Assay'),
+        definition = WriteH5Group.Seurat,
+        where = .GlobalEnv
+    )
 
     dig <- digest(capture.output(utils::str(list(object_or_file, assay, subset))), algo = "sha256")
     dig <- substr(dig, 1, 8)
