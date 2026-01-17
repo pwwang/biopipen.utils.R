@@ -944,15 +944,26 @@ RunSeuratClustering <- function(
         # FindClustersArgs$graph.name <- FindClustersArgs$graph.name %||% "RNA_snn"
         FindClustersArgs$object <- object
         FindClustersArgs$random.seed <- FindClustersArgs$random.seed %||% 8525
-        FindClustersArgs$resolution <- .expand_findclusters_resolution(FindClustersArgs$resolution %||% 0.8)
+        resolution <- .expand_findclusters_resolution(FindClustersArgs$resolution %||% 0.8)
         cluster_name <- FindClustersArgs$cluster.name %||% "seurat_clusters"
         if (length(cluster_name) > 1) {
             stop("[RunSeuratClustering] 'FindClustersArgs$cluster.name' only supports a single name")
         }
-        FindClustersArgs$cluster.name <- paste0(cluster_name, ".", FindClustersArgs$resolution)
+        # cluster.name <- paste0(cluster_name, ".", FindClustersArgs$resolution)
         # FindClustersArgs$cluster.name[length(FindClustersArgs$cluster.name)] <- cluster_name
-        log$info("  Using resolution(s): {paste(FindClustersArgs$resolution, collapse = ', ')}")
-        object <- do_call(FindClusters, FindClustersArgs)
+        # log$info("  Using resolution(s): {paste(FindClustersArgs$resolution, collapse = ', ')}")
+        for (i in seq_along(resolution)) {
+            if (i == length(resolution)) {
+                log$info("  applying resolution (final): {resolution[i]}")
+            } else {
+                log$info("  applying resolution: {resolution[i]}")
+            }
+            FindClustersArgs$resolution <- resolution[i]
+            FindClustersArgs$cluster.name <- paste0(cluster_name, ".", resolution[i])
+            FindClustersArgs$object <- do_call(FindClusters, FindClustersArgs)
+        }
+        # object <- do_call(FindClusters, FindClustersArgs)
+        object <- FindClustersArgs$object
         FindClustersArgs$object <- NULL
         gc()
 
