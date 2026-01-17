@@ -953,11 +953,7 @@ RunSeuratClustering <- function(
         # FindClustersArgs$cluster.name[length(FindClustersArgs$cluster.name)] <- cluster_name
         # log$info("  Using resolution(s): {paste(FindClustersArgs$resolution, collapse = ', ')}")
         for (i in seq_along(resolution)) {
-            if (i == length(resolution)) {
-                log$info("  applying resolution (final): {resolution[i]}")
-            } else {
-                log$info("  applying resolution: {resolution[i]}")
-            }
+            log$info("  applying resolution: {resolution[i]}")
             FindClustersArgs$resolution <- resolution[i]
             FindClustersArgs$cluster.name <- paste0(cluster_name, ".", resolution[i])
             FindClustersArgs$object <- do_call(FindClusters, FindClustersArgs)
@@ -1123,12 +1119,19 @@ RunSeuratSubClustering <- function(
     log$info("- Running FindClusters ...")
     FindClustersArgs$object <- subobj
     FindClustersArgs$random.seed <- FindClustersArgs$random.seed %||% 8525
-    FindClustersArgs$resolution <- .expand_findclusters_resolution(FindClustersArgs$resolution %||% 0.8)
-    FindClustersArgs$cluster.name <- paste0(name, ".", FindClustersArgs$resolution)
+    resolution <- .expand_findclusters_resolution(FindClustersArgs$resolution %||% 0.8)
+    cluster_name <- paste0(name, ".", FindClustersArgs$resolution)
     # FindClustersArgs$cluster.name[length(FindClustersArgs$cluster.name)] <- name
-    log$info("  Using resolution(s): {paste(FindClustersArgs$resolution, collapse = ', ')}")
+    # log$info("  Using resolution(s): {paste(FindClustersArgs$resolution, collapse = ', ')}")
     log$debug("  Arguments: {format_args(FindClustersArgs)}")
-    subobj <- do_call(FindClusters, FindClustersArgs)
+    # subobj <- do_call(FindClusters, FindClustersArgs)
+    for (i in seq_along(resolution)) {
+        log$info("  applying resolution: {resolution[i]}")
+        FindClustersArgs$resolution <- resolution[i]
+        FindClustersArgs$cluster.name <- paste0(name, ".", resolution[i])
+        FindClustersArgs$object <- do_call(FindClusters, FindClustersArgs)
+    }
+    subobj <- FindClustersArgs$object
     FindClustersArgs$object <- NULL
     gc()
 
