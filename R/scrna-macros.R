@@ -205,7 +205,12 @@ RunSeuratDEAnalysis <- function(
     if (!is.null(subset)) {
         object <- filter(object, !!parse_expr(subset))
     }
-    all_ident <- as.character(sort(unique(object@meta.data[[group_by]])))
+    # all_ident <- as.character(sort(unique(object@meta.data[[group_by]])))
+    all_ident <- if (is.factor(object@meta.data[[group_by]])) {
+        levels(object@meta.data[[group_by]])
+    } else {
+        as.character(sort(unique(object@meta.data[[group_by]])))
+    }
     if (!is.null(ident_1) && !ident_1 %in% all_ident) {
         if (isTRUE(error)) {
             msg <- paste0("'", ident_1, "' (ident_1) is not found in '", group_by, "' (group_by). ")
@@ -258,6 +263,7 @@ RunSeuratDEAnalysis <- function(
                 m[[group_by]] <- ident
                 m
             }))
+            degs[[group_by]] <- factor(degs[[group_by]], levels = all_ident)
             if (!is.null(logic_error)) {
                 stop(logic_error)
             }
