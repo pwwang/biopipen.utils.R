@@ -273,7 +273,7 @@ RunSeuratDEAnalysis <- function(
                 assay = assay, ...
             )
             degs$gene <- rownames(degs)
-            degs[[group_by]] <- ifelse(!is.null(ident_2), paste0(ident_2, ":", ident_1), ident_1)
+            degs[[group_by]] <- ifelse(!is.null(ident_2), paste0(ident_1, ":", ident_2), ident_1)
         }
         class(degs) <- c("SeuratDEAnalysis", class(degs))
 
