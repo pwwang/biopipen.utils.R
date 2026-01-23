@@ -822,7 +822,7 @@ RunSeuratUMAP <- function(object, RunUMAPArgs = list(), cache = NULL, log = NULL
         gc()
     }
     ncells <- ncol(object)
-    reduction <- RunUMAPArgs$reduction %||% "pca"
+    reduction <- RunUMAPArgs$reduction %||% object@misc$integrated_new_reduction %||% "pca"
     if (!is.null(RunUMAPArgs$features) && !is.null(RunUMAPArgs$dims)) {
         log$warn("  'RunUMAPArgs$features' and 'RunUMAPArgs$dims' are both set, 'RunUMAPArgs$dims' will be ignored")
     } else if (is.null(RunUMAPArgs$features)) {
