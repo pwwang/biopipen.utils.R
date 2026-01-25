@@ -822,7 +822,7 @@ RunSeuratUMAP <- function(object, RunUMAPArgs = list(), cache = NULL, log = NULL
         gc()
     }
     ncells <- ncol(object)
-    reduction <- RunUMAPArgs$reduction %||% object@misc$integrated_new_reduction %||% "pca"
+    reduction <- RunUMAPArgs[['reduction']] %||% object@misc$integrated_new_reduction %||% "pca"
     if (!is.null(RunUMAPArgs$features) && !is.null(RunUMAPArgs$dims)) {
         log$warn("  'RunUMAPArgs$features' and 'RunUMAPArgs$dims' are both set, 'RunUMAPArgs$dims' will be ignored")
     } else if (is.null(RunUMAPArgs$features)) {
@@ -923,7 +923,7 @@ RunSeuratClustering <- function(
         object <- caching$restore()
     } else {
         log$debug("  Arguments: {format_args(FindNeighborsArgs)}")
-        FindNeighborsArgs$reduction <- FindNeighborsArgs$reduction %||% object@misc$integrated_new_reduction %||% "pca"
+        FindNeighborsArgs$reduction <- FindNeighborsArgs[['reduction']] %||% object@misc$integrated_new_reduction %||% "pca"
         if (!is.null(FindNeighborsArgs$dims)) {
             FindNeighborsArgs$dims <- .expand_number(FindNeighborsArgs$dims)
         }
@@ -1113,7 +1113,7 @@ RunSeuratSubClustering <- function(
 
     log$info("- Running FindNeighbors ...")
     FindNeighborsArgs$object <- subobj
-    FindNeighborsArgs$reduction <- FindNeighborsArgs$reduction %||% subobj@misc$integrated_new_reduction %||% "pca"
+    FindNeighborsArgs$reduction <- FindNeighborsArgs[['reduction']] %||% subobj@misc$integrated_new_reduction %||% "pca"
     if (!is.null(FindNeighborsArgs$dims)) {
         FindNeighborsArgs$dims <- .expand_number(FindNeighborsArgs$dims)
     }
@@ -1158,7 +1158,7 @@ RunSeuratSubClustering <- function(
 
     log$info("- Running RunUMAP ...")
     RunUMAPArgs$reduction.key <- RunUMAPArgs$reduction.key %||% paste0(toupper(name), "UMAP_")
-    RunUMAPArgs$reduction <- RunUMAPArgs$reduction %||% object@misc$integrated_new_reduction %||% "pca"
+    RunUMAPArgs$reduction <- RunUMAPArgs[['reduction']] %||% object@misc$integrated_new_reduction %||% "pca"
     log$debug("  Arguments: {format_args(RunUMAPArgs)}")
     subobj <- RunSeuratUMAP(
         subobj,
