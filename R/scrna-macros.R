@@ -1158,6 +1158,7 @@ RunSeuratSubClustering <- function(
 
     log$info("- Running RunUMAP ...")
     RunUMAPArgs$reduction.key <- RunUMAPArgs$reduction.key %||% paste0(toupper(name), "UMAP_")
+    RunUMAPArgs$reduction <- RunUMAPArgs$reduction %||% object@misc$integrated_new_reduction %||% "pca"
     log$debug("  Arguments: {format_args(RunUMAPArgs)}")
     subobj <- RunSeuratUMAP(
         subobj,
