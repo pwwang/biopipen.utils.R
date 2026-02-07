@@ -51,9 +51,6 @@
 - [`RunGSEAPreRank()`](https://pwwang.github.io/biopipen.utils.R/reference/RunGSEAPreRank.md)
   : Pre-rank genes based on expression data
 
-- [`RunSeuratCellCycleScoring()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratCellCycleScoring.md)
-  : Run Seurat CellCycleScoring
-
 - [`RunSeuratClustering()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratClustering.md)
   : Run seurat unsupervised clustering
 

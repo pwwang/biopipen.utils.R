@@ -12,6 +12,7 @@ LoadSeuratAndPerformQC(
   samples = NULL,
   cell_qc = NULL,
   gene_qc = NULL,
+  ccs_args = NULL,
   LoadLoomArgs = list(),
   tmpdir = NULL,
   log = NULL,
@@ -95,6 +96,12 @@ LoadSeuratAndPerformQC(
     expressions are supported. Multiple strings can also be separated by
     commas in a single string.
 
+- ccs_args:
+
+  Arguments to pass to
+  [`RunSeuratCellCycleScoring()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratCellCycleScoring.md)
+  to perform cell cycle scoring after the data has been QC'ed.
+
 - LoadLoomArgs:
 
   Arguments to pass to
@@ -132,10 +139,10 @@ meta <- data.frame(
     )
 )
 obj <- LoadSeuratAndPerformQC(meta, cache = FALSE, gene_qc = list(min_cells = 3))
-#> INFO    [2026-02-07 06:04:48] Loading each sample ...
-#> INFO    [2026-02-07 06:04:48] - Loading Sample1 and performing QC ...
-#> INFO    [2026-02-07 06:04:48] - Loading Sample2 and performing QC ...
-#> INFO    [2026-02-07 06:04:49] Merging samples ...
+#> INFO    [2026-02-07 08:22:57] Loading each sample ...
+#> INFO    [2026-02-07 08:22:57] - Loading Sample1 and performing QC ...
+#> INFO    [2026-02-07 08:22:57] - Loading Sample2 and performing QC ...
+#> INFO    [2026-02-07 08:22:58] Merging samples ...
 head(obj@misc$cell_qc_df)
 #> NULL
 print(obj@misc$gene_qc)

@@ -14,6 +14,7 @@ RunSeuratTransformation(
   ScaleDataArgs = list(),
   RunPCAArgs = list(),
   log = NULL,
+  from_ccs = FALSE,
   cache = NULL
 )
 ```
@@ -58,6 +59,11 @@ RunSeuratTransformation(
 
   Logger
 
+- from_ccs:
+
+  Whether this is called from
+  [RunSeuratCellCycleScoring](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratCellCycleScoring.md).
+
 - cache:
 
   Directory to cache the results. Set to `FALSE` to disable caching
@@ -71,12 +77,12 @@ The transformed Seurat object
 ``` r
 # \donttest{
 RunSeuratTransformation(SeuratObject::pbmc_small)
-#> INFO    [2026-02-07 06:05:18] Performing data transformation and scaling ...
-#> INFO    [2026-02-07 06:05:18] - Running NormalizeData ...
-#> INFO    [2026-02-07 06:05:19] - Running FindVariableFeatures ...
-#> INFO    [2026-02-07 06:05:20] - Running ScaleData ...
+#> INFO    [2026-02-07 08:23:26] Performing data transformation and scaling ...
+#> INFO    [2026-02-07 08:23:26] - Running NormalizeData ...
+#> INFO    [2026-02-07 08:23:27] - Running FindVariableFeatures ...
+#> INFO    [2026-02-07 08:23:28] - Running ScaleData ...
 #> Centering and scaling data matrix
-#> INFO    [2026-02-07 06:05:21] - Running RunPCA ...
+#> INFO    [2026-02-07 08:23:29] - Running RunPCA ...
 #> Warning: You're computing too large a percentage of total singular values, use a standard svd instead.
 #> PC_ 1 
 #> Positive:  TYMP, LST1, AIF1, CST3, IFITM3, LYZ, FCGRT, GRN, BID, SERPINA1 

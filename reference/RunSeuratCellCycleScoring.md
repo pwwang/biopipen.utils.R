@@ -12,7 +12,9 @@ RunSeuratCellCycleScoring(
   s.features = NULL,
   g2m.features = NULL,
   species = "auto",
-  log = NULL
+  trans_args = list(),
+  log = NULL,
+  cache = NULL
 )
 ```
 
@@ -47,6 +49,11 @@ RunSeuratCellCycleScoring(
   The species of the data, either "human" or "mouse". Default is "auto".
   If "auto" is given, the function will try to guess the species based
   on the gene names in the data.
+
+- trans_args:
+
+  A list of additional arguments to be passed to
+  `RunSeuratTransformation` before running CellCycleScoring.
 
 - log:
 
