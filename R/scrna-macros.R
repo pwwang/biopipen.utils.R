@@ -2510,6 +2510,19 @@ RunSeuratCellCycleScoring <- function(
     #   SCT ---> RNA ---> Further normalize with the availability to regress out cell cycle scores if needed
     DefaultAssay(object) <- orig_assay
 
+    # Clean up the object to save memory and speed up merging
+    # Remove the assays other than original assay
+    # If no other assays, remove layers: data and scale.data
+    assays_to_remove <- setdiff(names(object@assays), orig_assay)
+    if (length(assays_to_remove) > 0) {
+        object@assays[assays_to_remove] <- NULL
+    } else {
+        object[[orig_assay]]$data <- NULL
+        object[[orig_assay]]$scale.data <- NULL
+    }
+    gc()
+    o2 <<- object
+
     object <- AddSeuratCommand(
         object,
         "CellCycleScoring",
