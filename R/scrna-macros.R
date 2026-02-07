@@ -398,9 +398,9 @@ PerformGeneQC <- function(object, gene_qc) {
 #' Cell QC will be performed, either per-sample or on the whole object
 #' @param meta Metadata of the samples
 #' Required columns: Sample, RNAData.
-#' The RNAData column should contain the path to the 10X data, either a directory or a file
+#' The RNAData column should contain the path to the 10X or ParseBio data, either a directory or a file
 #' If the path is a directory, the function will look for barcodes.tsv.gz, features.tsv.gz and matrix.mtx.gz.
-#' The directory should be loaded by [Seurat::Read10X]. Sometimes, there may be prefix in the file names,
+#' The directory should be loaded by [Seurat::Read10X] or [Seurat::ReadParseBio]. Sometimes, there may be prefix in the file names,
 #' e.g. "'prefix'.barcodes.tsv.gz", which is also supported.
 #' If the path is a file ending with ".loom", it will be loaded by [SeuratDisk::Connect()] and converted to a Seurat object.
 #' Otherwise, if the path is a file, it should be a h5 file that can be loaded by [Seurat::Read10X_h5()]
@@ -445,7 +445,7 @@ PerformGeneQC <- function(object, gene_qc) {
 #' @importFrom bracer glob
 #' @importFrom rlang sym
 #' @importFrom dplyr filter group_by summarise
-#' @importFrom Seurat CreateSeuratObject RenameCells Read10X Read10X_h5 SplitObject
+#' @importFrom Seurat CreateSeuratObject RenameCells Read10X Read10X_h5 SplitObject ReadParseBio
 #' @importFrom SeuratObject UpdateSeuratObject
 #' @export
 #' @examples
@@ -532,25 +532,37 @@ LoadSeuratAndPerformQC <- function(
             }
 
             if (dir.exists(path)) {
-                exprs <- tryCatch(
-                    {
-                        Read10X(data.dir = path)
-                    },
-                    error = function(e) {
-                        tmpdatadir <- file.path(tmpdir, slugify(sam))
-                        if (dir.exists(tmpdatadir)) {
-                            unlink(tmpdatadir, recursive = TRUE)
+                if (
+                    file.exists(file.path(path, "all_genes.csv")) &&
+                    file.exists(file.path(path, "cell_metadata.csv")) &&
+                    file.exists(file.path(path, "count_matrix.mtx"))
+                ) {
+                    exprs <- ReadParseBio(path)
+                    # Remove empty rows with empty genes
+                    exprs <- exprs[nchar(rownames(exprs)) > 0, , drop = FALSE]
+                    cell_meta <- read.csv(file.path(path, "cell_metadata.csv"), row.names = 1)
+                } else {
+                    exprs <- tryCatch(
+                        {
+                            Read10X(data.dir = path)
+                        },
+                        error = function(e) {
+                            tmpdatadir <- file.path(tmpdir, slugify(sam))
+                            if (dir.exists(tmpdatadir)) {
+                                unlink(tmpdatadir, recursive = TRUE)
+                            }
+                            dir.create(tmpdatadir, recursive = TRUE, showWarnings = FALSE)
+                            barcodefile <- Sys.glob(file.path(path, "*barcodes.tsv.gz"))[1]
+                            file.symlink(normalizePath(barcodefile), file.path(tmpdatadir, "barcodes.tsv.gz"))
+                            genefile <- glob(file.path(path, "*{genes,features}.tsv.gz"))[1]
+                            file.symlink(normalizePath(genefile), file.path(tmpdatadir, "features.tsv.gz"))
+                            matrixfile <- Sys.glob(file.path(path, "*matrix.mtx.gz"))[1]
+                            file.symlink(normalizePath(matrixfile), file.path(tmpdatadir, "matrix.mtx.gz"))
+                            Read10X(data.dir = tmpdatadir)
                         }
-                        dir.create(tmpdatadir, recursive = TRUE, showWarnings = FALSE)
-                        barcodefile <- Sys.glob(file.path(path, "*barcodes.tsv.gz"))[1]
-                        file.symlink(normalizePath(barcodefile), file.path(tmpdatadir, "barcodes.tsv.gz"))
-                        genefile <- glob(file.path(path, "*{genes,features}.tsv.gz"))[1]
-                        file.symlink(normalizePath(genefile), file.path(tmpdatadir, "features.tsv.gz"))
-                        matrixfile <- Sys.glob(file.path(path, "*matrix.mtx.gz"))[1]
-                        file.symlink(normalizePath(matrixfile), file.path(tmpdatadir, "matrix.mtx.gz"))
-                        Read10X(data.dir = tmpdatadir)
-                    }
-                )
+                    )
+                    cell_meta <- NULL
+                }
             } else if (endsWith(path, ".loom")) {
                 LoadLoomArgs$file <- path
                 exprs <- do_call(SeuratDisk::LoadLoom, LoadLoomArgs)
@@ -577,7 +589,10 @@ LoadSeuratAndPerformQC <- function(
             if (inherits(exprs, "Seurat")) {
                 obj <- exprs
             } else {
-                obj <- CreateSeuratObject(exprs, project = sam, min.cells = minc, min.features = minf)
+                obj <- CreateSeuratObject(
+                    exprs, project = sam,
+                    min.cells = minc, min.features = minf, meta.data = cell_meta
+                )
             }
             obj <- RenameCells(obj, add.cell.id = sam)
             # Attach meta data
