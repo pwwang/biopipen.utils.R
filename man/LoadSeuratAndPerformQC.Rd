@@ -20,9 +20,9 @@ LoadSeuratAndPerformQC(
 \arguments{
 \item{meta}{Metadata of the samples
 Required columns: Sample, RNAData.
-The RNAData column should contain the path to the 10X data, either a directory or a file
+The RNAData column should contain the path to the 10X or ParseBio data, either a directory or a file
 If the path is a directory, the function will look for barcodes.tsv.gz, features.tsv.gz and matrix.mtx.gz.
-The directory should be loaded by \link[Seurat:Read10X]{Seurat::Read10X}. Sometimes, there may be prefix in the file names,
+The directory should be loaded by \link[Seurat:Read10X]{Seurat::Read10X} or \link[Seurat:ReadParseBio]{Seurat::ReadParseBio}. Sometimes, there may be prefix in the file names,
 e.g. "'prefix'.barcodes.tsv.gz", which is also supported.
 If the path is a file ending with ".loom", it will be loaded by \code{\link[SeuratDisk:Connect]{SeuratDisk::Connect()}} and converted to a Seurat object.
 Otherwise, if the path is a file, it should be a h5 file that can be loaded by \code{\link[Seurat:Read10X_h5]{Seurat::Read10X_h5()}}
