@@ -2392,3 +2392,77 @@ AggregateExpressionPseudobulk <- function(
     attr(aggregated_matrix, "meta") <- meta_df
     return(aggregated_matrix)
 }
+
+#' Run Seurat CellCycleScoring
+#'
+#' This function will run Seurat's CellCycleScoring on the given Seurat object and add the scores and predicted cell cycle phase to the metadata.
+#' It also supports mouse data.
+#' @param object Seurat object
+#' @param s.features The gene names for S phase scoring.
+#' Default is `cc.genes$s.genes` for human and the following genes for mouse:
+#' Mcm5, Pcna, Tyms, Fen1, Mcm7, Mcm4, Rrm1, Ung, Gins2, Mcm6, Cdca7, Dtl, Prim1, Uhrf1,
+#' Cenpu, Hells, Rfc2, Polr1b, Nasp, Rad51ap1, Gmnn, Wdr76, Slbp, Ccne2, Ubr7, Msh2, Rad51,
+#' Rrm2, Cdc45, Cdc6, Exo1, Tipin, Dscc1, Blm, Casp8ap2, Usp1, Clspn, Pola1, Chaf1b, Mrpl36, E2f8
+#' @param g2m.features The gene names for G2/M phase scoring.
+#' Default is `cc.genes$g2m.genes` for human and the following genes for mouse:
+#' Hmgb2, Cdk1, Nusap1, Ube2c, Birc5, Tpx2, Top2a, Ndc80, Cks2, Nuf2, Cks1b, Mki67, Tmpo, Cenpf,
+#' Tacc3, Pimreg, Smc4, Ccnb2, Ckap2l, Ckap2, Aurkb, Bub1, Kif11, Anp32e, Tubb4b, Gtse1, Kif20b,
+#' Hjurp, Cdca3, Jpt1, Cdc20, Ttk, Cdc25c, Kif2c, Rangap1, Ncapd2, Dlgap5, Cdca2, Cdca8, Ect2, Kif23,
+#' Hmmr, Aurka, Psrc1, Anln, Lbr, Ckap5, Cenpe, Ctcf, Nek2, G2e3, Gas2l3, Cbx5, Cenpa
+#' @param species The species of the data, either "human" or "mouse". Default is "auto".
+#' If "auto" is given, the function will try to guess the species based on the gene names in the data.
+#' @param log Logger
+#' @return The Seurat object with the cell cycle scores and predicted phase added to the metadata.
+#' Literally, columns "S.Score", "G2M.Score" and "Phase" will be added to the metadata.
+#' @export
+#' @importFrom Seurat CellCycleScoring
+#' @importFrom rlang %||%
+RunSeuratCellCycleScoring <- function(object, s.features = NULL, g2m.features = NULL, species = "auto", log = NULL) {
+    log <- log %||% get_logger()
+    s.genes.mouse <- c(
+        "Mcm5", "Pcna", "Tyms", "Fen1", "Mcm7", "Mcm4", "Rrm1", "Ung", "Gins2", "Mcm6",
+        "Cdca7", "Dtl", "Prim1", "Uhrf1", "Cenpu", "Hells", "Rfc2", "Polr1b", "Nasp",
+        "Rad51ap1", "Gmnn", "Wdr76", "Slbp", "Ccne2", "Ubr7", "Msh2", "Rad51", "Rrm2",
+        "Cdc45", "Cdc6", "Exo1", "Tipin", "Dscc1", "Blm", "Casp8ap2", "Usp1", "Clspn",
+        "Pola1", "Chaf1b", "Mrpl36", "E2f8"
+    )
+    g2m.genes.mouse <- c(
+        "Hmgb2", "Cdk1", "Nusap1", "Ube2c", "Birc5", "Tpx2", "Top2a", "Ndc80", "Cks2",
+        "Nuf2", "Cks1b", "Mki67", "Tmpo", "Cenpf", "Tacc3", "Pimreg", "Smc4", "Ccnb2",
+        "Ckap2l", "Ckap2", "Aurkb", "Bub1", "Kif11", "Anp32e", "Tubb4b", "Gtse1",
+        "Kif20b",  "Hjurp", "Cdca3", "Jpt1", "Cdc20", "Ttk", "Cdc25c", "Kif2c", "Rangap1",
+        "Ncapd2", "Dlgap5", "Cdca2", "Cdca8", "Ect2", "Kif23",  "Hmmr", "Aurka", "Psrc1",
+        "Anln", "Lbr", "Ckap5", "Cenpe", "Ctcf", "Nek2", "G2e3", "Gas2l3", "Cbx5", "Cenpa"
+    )
+    cc.genes <- Seurat::cc.genes
+    if (species == "auto") {
+        gene_names <- rownames(object)
+        human_genes <- c(cc.genes$s.genes, cc.genes$g2m.genes)
+        mouse_genes <- c(s.genes.mouse, g2m.genes.mouse)
+        human_overlap <- sum(gene_names %in% human_genes)
+        mouse_overlap <- sum(gene_names %in% mouse_genes)
+        if (human_overlap >= mouse_overlap) {
+            species <- "human"
+        } else {
+            species <- "mouse"
+        }
+    }
+    species <- match.arg(species, choices = c("human", "mouse"))
+    if (species == "human") {
+        s.features <- s.features %||% cc.genes$s.genes
+        g2m.features <- g2m.features %||% cc.genes$g2m.genes
+    } else {
+        s.features <- s.features %||% s.genes.mouse
+        g2m.features <- g2m.features %||% g2m.genes.mouse
+    }
+    log$info("Running CellCycleScoring with {length(s.features)} S phase genes and {length(g2m.features)} G2/M phase genes (species = {species}) ...")
+    object <- CellCycleScoring(object, s.features = s.features, g2m.features = g2m.features, set.ident = FALSE)
+    object <- AddSeuratCommand(
+        object,
+        "CellCycleScoring",
+        paste0(
+            "CellCycleScoring(object, s.features = s.features, g2m.features = g2m.features, set.ident = FALSE)"
+        )
+    )
+    return(object)
+}
