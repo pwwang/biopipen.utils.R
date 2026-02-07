@@ -11,6 +11,7 @@ LoadSeuratAndPerformQC(
   samples = NULL,
   cell_qc = NULL,
   gene_qc = NULL,
+  ccs_args = NULL,
   LoadLoomArgs = list(),
   tmpdir = NULL,
   log = NULL,
@@ -65,6 +66,9 @@ A list containing the following fields:
 \item excludes: A string or strings to exclude certain genes. Regular expressions are supported.
 Multiple strings can also be separated by commas in a single string.
 }}
+
+\item{ccs_args}{Arguments to pass to \code{\link[=RunSeuratCellCycleScoring]{RunSeuratCellCycleScoring()}} to perform cell cycle scoring after the data
+has been QC'ed.}
 
 \item{LoadLoomArgs}{Arguments to pass to \code{\link[SeuratDisk:LoadLoom]{SeuratDisk::LoadLoom()}} when loading loom files.}
 

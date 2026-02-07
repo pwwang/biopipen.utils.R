@@ -9,7 +9,9 @@ RunSeuratCellCycleScoring(
   s.features = NULL,
   g2m.features = NULL,
   species = "auto",
-  log = NULL
+  trans_args = list(),
+  log = NULL,
+  cache = NULL
 )
 }
 \arguments{
@@ -31,6 +33,8 @@ Hmmr, Aurka, Psrc1, Anln, Lbr, Ckap5, Cenpe, Ctcf, Nek2, G2e3, Gas2l3, Cbx5, Cen
 \item{species}{The species of the data, either "human" or "mouse". Default is "auto".
 If "auto" is given, the function will try to guess the species based on the gene names in the data.}
 
+\item{trans_args}{A list of additional arguments to be passed to \code{RunSeuratTransformation} before running CellCycleScoring.}
+
 \item{log}{Logger}
 }
 \value{
@@ -41,3 +45,4 @@ Literally, columns "S.Score", "G2M.Score" and "Phase" will be added to the metad
 This function will run Seurat's CellCycleScoring on the given Seurat object and add the scores and predicted cell cycle phase to the metadata.
 It also supports mouse data.
 }
+\keyword{internal}

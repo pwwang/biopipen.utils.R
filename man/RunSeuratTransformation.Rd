@@ -13,6 +13,7 @@ RunSeuratTransformation(
   ScaleDataArgs = list(),
   RunPCAArgs = list(),
   log = NULL,
+  from_ccs = FALSE,
   cache = NULL
 )
 }
@@ -32,6 +33,8 @@ RunSeuratTransformation(
 \item{RunPCAArgs}{Arguments to pass to \link[Seurat:RunPCA]{Seurat::RunPCA}}
 
 \item{log}{Logger}
+
+\item{from_ccs}{Whether this is called from \link{RunSeuratCellCycleScoring}.}
 
 \item{cache}{Directory to cache the results. Set to \code{FALSE} to disable caching}
 }

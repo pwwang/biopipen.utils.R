@@ -436,6 +436,8 @@ PerformGeneQC <- function(object, gene_qc) {
 #' * min_cells: Minimum number of cells a gene should be expressed in to be kept
 #' * excludes: A string or strings to exclude certain genes. Regular expressions are supported.
 #' Multiple strings can also be separated by commas in a single string.
+#' @param ccs_args Arguments to pass to [RunSeuratCellCycleScoring()] to perform cell cycle scoring after the data
+#' has been QC'ed.
 #' @param LoadLoomArgs Arguments to pass to [SeuratDisk::LoadLoom()] when loading loom files.
 #' @param tmpdir Temporary directory to store intermediate files when there are prefix in the file names
 #' @param log Logger
@@ -469,6 +471,7 @@ LoadSeuratAndPerformQC <- function(
     samples = NULL,
     cell_qc = NULL,
     gene_qc = NULL,
+    ccs_args = NULL,
     LoadLoomArgs = list(),
     tmpdir = NULL,
     log = NULL,
@@ -540,7 +543,7 @@ LoadSeuratAndPerformQC <- function(
                     exprs <- ReadParseBio(path)
                     # Remove empty rows with empty genes
                     exprs <- exprs[nchar(rownames(exprs)) > 0, , drop = FALSE]
-                    cell_meta <- read.csv(file.path(path, "cell_metadata.csv"), row.names = 1)
+                    cell_meta <- utils::read.csv(file.path(path, "cell_metadata.csv"), row.names = 1)
                 } else {
                     exprs <- tryCatch(
                         {
@@ -616,6 +619,15 @@ LoadSeuratAndPerformQC <- function(
             geneqc_df <- rbind(geneqc_df, PerformGeneQC(obj, gene_qc))
         }
 
+        if (length(ccs_args) > 0) {
+            ccs_args$object <- obj
+            ccs_args$log <- log
+            ccs_args$cache <- cache
+            obj <- do_call(RunSeuratCellCycleScoring, ccs_args)
+            ccs_args$object <- NULL
+            gc()
+        }
+
         object_list[[sam]] <- obj
     }
 
@@ -677,6 +689,7 @@ FinishSeuratQC <- function(object) {
 #' @param FindVariableFeaturesArgs Arguments to pass to [Seurat::FindVariableFeatures]
 #' @param ScaleDataArgs Arguments to pass to [Seurat::ScaleData]
 #' @param RunPCAArgs Arguments to pass to [Seurat::RunPCA]
+#' @param from_ccs Whether this is called from [RunSeuratCellCycleScoring].
 #' @param log Logger
 #' @param cache Directory to cache the results. Set to `FALSE` to disable caching
 #' @return The transformed Seurat object
@@ -695,6 +708,7 @@ RunSeuratTransformation <- function(
     ScaleDataArgs = list(),
     RunPCAArgs = list(),
     log = NULL,
+    from_ccs = FALSE,
     cache = NULL) {
     log <- log %||% get_logger()
     cache <- cache %||% gettempdir()
@@ -705,21 +719,34 @@ RunSeuratTransformation <- function(
             NormalizeDataArgs,
             FindVariableFeaturesArgs,
             ScaleDataArgs,
-            RunPCAArgs
+            RunPCAArgs,
+            from_ccs
         ),
         prefix = "biopipen.utils.RunSeuratTransformations",
         cache_dir = cache
     )
     if (cached$is_cached()) {
-        log$info("Transformed data loaded from cache")
+        if (from_ccs) {
+            log$info("  Transformed data loaded from cache")
+        } else {
+            log$info("Transformed data loaded from cache")
+        }
         return(cached$restore())
     }
 
-    log$info("Performing data transformation and scaling ...")
+    if (from_ccs) {
+        run_pca <- FALSE
+        log_prefix <- "  "
+        log$info("  Performing transformations for cell cycle scoring ...")
+    } else {
+        run_pca <- TRUE
+        log_prefix <- "- "
+        log$info("Performing data transformation and scaling ...")
+    }
     # Not joined yet
     # object[["RNA"]] <- split(object[["RNA"]], f = object$Sample)
     if (use_sct) {
-        log$info("- Running SCTransform ...")
+        log$info("{log_prefix}Running SCTransform ...")
         # log to stdout but don't populate it to running log
         log$debug("  Arguments: {format_args(SCTransformArgs)}")
         SCTransformArgs$object <- object
@@ -727,21 +754,21 @@ RunSeuratTransformation <- function(
         SCTransformArgs$object <- NULL
         gc()
     } else {
-        log$info("- Running NormalizeData ...")
+        log$info("{log_prefix}Running NormalizeData ...")
         log$debug("  Arguments: {format_args(NormalizeDataArgs)}")
         NormalizeDataArgs$object <- object
         object <- do_call(NormalizeData, NormalizeDataArgs)
         NormalizeDataArgs$object <- NULL
         gc()
 
-        log$info("- Running FindVariableFeatures ...")
+        log$info("{log_prefix}Running FindVariableFeatures ...")
         log$debug("  Arguments: {format_args(FindVariableFeaturesArgs)}")
         FindVariableFeaturesArgs$object <- object
         object <- do_call(FindVariableFeatures, FindVariableFeaturesArgs)
         FindVariableFeaturesArgs$object <- NULL
         gc()
 
-        log$info("- Running ScaleData ...")
+        log$info("{log_prefix}Running ScaleData ...")
         log_debug("  Arguments: {format_args(ScaleDataArgs)}")
         ScaleDataArgs$object <- object
         object <- do_call(ScaleData, ScaleDataArgs)
@@ -749,26 +776,29 @@ RunSeuratTransformation <- function(
         gc()
     }
 
-    log$info("- Running RunPCA ...")
-    RunPCAArgs$npcs <- min(RunPCAArgs$npcs %||% 50, ncol(object) - 1, nrow(object) - 1)
+    if (run_pca) {
+        log$info("{log_prefix}Running RunPCA ...")
+        RunPCAArgs$npcs <- min(RunPCAArgs$npcs %||% 50, ncol(object) - 1, nrow(object) - 1)
 
-    log$debug("  RunPCA: {format_args(RunPCAArgs)}")
-    RunPCAArgs$object <- object
-    object <- do_call(RunPCA, RunPCAArgs)
-    RunPCAArgs$object <- NULL
-    gc()
+        log$debug("  RunPCA: {format_args(RunPCAArgs)}")
+        RunPCAArgs$object <- object
+        object <- do_call(RunPCA, RunPCAArgs)
+        RunPCAArgs$object <- NULL
+        gc()
+    }
 
     object <- AddSeuratCommand(
         object,
         name = "RunSeuratTransformations",
-        call.string = "RunSeuratTransformations(object, use_sct, SCTransformArgs, NormalizeDataArgs, FindVariableFeaturesArgs, ScaleDataArgs, RunPCAArgs)",
+        call.string = "RunSeuratTransformations(object, use_sct, SCTransformArgs, NormalizeDataArgs, FindVariableFeaturesArgs, ScaleDataArgs, RunPCAArgs, run_pca)",
         params = list(
             use_sct = use_sct,
             SCTransformArgs = SCTransformArgs,
             NormalizeDataArgs = NormalizeDataArgs,
             FindVariableFeaturesArgs = FindVariableFeaturesArgs,
             ScaleDataArgs = ScaleDataArgs,
-            RunPCAArgs = RunPCAArgs
+            RunPCAArgs = RunPCAArgs,
+            from_ccs = from_ccs
         )
     )
     cached$save(object)
@@ -2411,14 +2441,28 @@ AggregateExpressionPseudobulk <- function(
 #' Hmmr, Aurka, Psrc1, Anln, Lbr, Ckap5, Cenpe, Ctcf, Nek2, G2e3, Gas2l3, Cbx5, Cenpa
 #' @param species The species of the data, either "human" or "mouse". Default is "auto".
 #' If "auto" is given, the function will try to guess the species based on the gene names in the data.
+#' @param trans_args A list of additional arguments to be passed to `RunSeuratTransformation` before running CellCycleScoring.
 #' @param log Logger
 #' @return The Seurat object with the cell cycle scores and predicted phase added to the metadata.
 #' Literally, columns "S.Score", "G2M.Score" and "Phase" will be added to the metadata.
-#' @export
+#' @keywords internal
 #' @importFrom Seurat CellCycleScoring
+#' @importFrom SeuratObject DefaultAssay
 #' @importFrom rlang %||%
-RunSeuratCellCycleScoring <- function(object, s.features = NULL, g2m.features = NULL, species = "auto", log = NULL) {
+RunSeuratCellCycleScoring <- function(
+    object, s.features = NULL, g2m.features = NULL,
+    species = "auto", trans_args = list(), log = NULL, cache = NULL
+) {
     log <- log %||% get_logger()
+    orig_assay <- DefaultAssay(object)
+
+    trans_args$object <- object
+    trans_args$from_ccs <- TRUE
+    trans_args$cache <- cache
+    object <- do_call(RunSeuratTransformation, trans_args)
+    trans_args$object <- NULL
+    gc()
+
     s.genes.mouse <- c(
         "Mcm5", "Pcna", "Tyms", "Fen1", "Mcm7", "Mcm4", "Rrm1", "Ung", "Gins2", "Mcm6",
         "Cdca7", "Dtl", "Prim1", "Uhrf1", "Cenpu", "Hells", "Rfc2", "Polr1b", "Nasp",
@@ -2455,8 +2499,17 @@ RunSeuratCellCycleScoring <- function(object, s.features = NULL, g2m.features = 
         s.features <- s.features %||% s.genes.mouse
         g2m.features <- g2m.features %||% g2m.genes.mouse
     }
-    log$info("Running CellCycleScoring with {length(s.features)} S phase genes and {length(g2m.features)} G2/M phase genes (species = {species}) ...")
+    log$info("  Running CellCycleScoring with {length(s.features)}/{length(g2m.features)} S/G2M phase genes (species = {species}) ...")
     object <- CellCycleScoring(object, s.features = s.features, g2m.features = g2m.features, set.ident = FALSE)
+
+    # Restore the default assay if it was changed by transformation
+    # which needs to be later normalized
+    # Illustration:
+    #   RNA ---SCTransform---> SCT ---CellCycleScoring---> SCT (default assay changed to SCT)
+    #   Here we change it back to RNA:
+    #   SCT ---> RNA ---> Further normalize with the availability to regress out cell cycle scores if needed
+    DefaultAssay(object) <- orig_assay
+
     object <- AddSeuratCommand(
         object,
         "CellCycleScoring",
