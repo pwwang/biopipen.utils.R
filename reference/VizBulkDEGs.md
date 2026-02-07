@@ -96,7 +96,7 @@ meta <- data.frame(
 
 degs <- RunDEGAnalysis(data, meta = meta,
  group_by = "Condition", ident_1 = "Treatment", tool = "edger")
-#> INFO    [2026-01-25 05:24:17] Running differential gene expression analysis using edgeR...
+#> INFO    [2026-02-07 04:26:10] Running differential gene expression analysis using edgeR...
 VizBulkDEGs(degs, plot_type = "volcano", legend.position = "top", y_cutoff = 0.25)
 
 VizBulkDEGs(degs, plot_type = "violin", genes = 2)
@@ -108,10 +108,10 @@ VizBulkDEGs(degs, plot_type = "box", genes = 2)
 VizBulkDEGs(degs, plot_type = "bar", genes = 2, x_text_angle = 90)
 
 VizBulkDEGs(degs, plot_type = "ridge", genes = 2)
-#> Picking joint bandwidth of 2.34
 #> Picking joint bandwidth of 0.935
 #> Picking joint bandwidth of 2.34
 #> Picking joint bandwidth of 0.935
+#> Picking joint bandwidth of 2.34
 
 VizBulkDEGs(degs, plot_type = "heatmap", genes = 5)
 

@@ -24,11 +24,13 @@ LoadSeuratAndPerformQC(
 - meta:
 
   Metadata of the samples Required columns: Sample, RNAData. The RNAData
-  column should contain the path to the 10X data, either a directory or
-  a file If the path is a directory, the function will look for
-  barcodes.tsv.gz, features.tsv.gz and matrix.mtx.gz. The directory
+  column should contain the path to the 10X or ParseBio data, either a
+  directory or a file If the path is a directory, the function will look
+  for barcodes.tsv.gz, features.tsv.gz and matrix.mtx.gz. The directory
   should be loaded by
-  [Seurat::Read10X](https://satijalab.org/seurat/reference/Read10X.html).
+  [Seurat::Read10X](https://satijalab.org/seurat/reference/Read10X.html)
+  or
+  [Seurat::ReadParseBio](https://satijalab.org/seurat/reference/ReadParseBio.html).
   Sometimes, there may be prefix in the file names, e.g.
   "'prefix'.barcodes.tsv.gz", which is also supported. If the path is a
   file ending with ".loom", it will be loaded by
@@ -130,10 +132,10 @@ meta <- data.frame(
     )
 )
 obj <- LoadSeuratAndPerformQC(meta, cache = FALSE, gene_qc = list(min_cells = 3))
-#> INFO    [2026-01-25 05:23:43] Loading each sample ...
-#> INFO    [2026-01-25 05:23:43] - Loading Sample1 and performing QC ...
-#> INFO    [2026-01-25 05:23:44] - Loading Sample2 and performing QC ...
-#> INFO    [2026-01-25 05:23:44] Merging samples ...
+#> INFO    [2026-02-07 04:25:36] Loading each sample ...
+#> INFO    [2026-02-07 04:25:36] - Loading Sample1 and performing QC ...
+#> INFO    [2026-02-07 04:25:36] - Loading Sample2 and performing QC ...
+#> INFO    [2026-02-07 04:25:37] Merging samples ...
 head(obj@misc$cell_qc_df)
 #> NULL
 print(obj@misc$gene_qc)

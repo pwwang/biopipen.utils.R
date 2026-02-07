@@ -72,18 +72,18 @@ VizSeuratCellQC(sobj, plot_type = "scatter")
 VizSeuratCellQC(sobj, plot_type = "bar")
 
 VizSeuratCellQC(sobj, plot_type = "ridge")
-#> Picking joint bandwidth of 501
 #> Picking joint bandwidth of 509
-#> Picking joint bandwidth of 0.125
-#> Picking joint bandwidth of 0.0973
-#> Picking joint bandwidth of 0.12
-#> Picking joint bandwidth of 0.128
 #> Picking joint bandwidth of 501
-#> Picking joint bandwidth of 509
-#> Picking joint bandwidth of 0.125
 #> Picking joint bandwidth of 0.0973
-#> Picking joint bandwidth of 0.12
 #> Picking joint bandwidth of 0.128
+#> Picking joint bandwidth of 0.125
+#> Picking joint bandwidth of 0.12
+#> Picking joint bandwidth of 509
+#> Picking joint bandwidth of 501
+#> Picking joint bandwidth of 0.0973
+#> Picking joint bandwidth of 0.128
+#> Picking joint bandwidth of 0.125
+#> Picking joint bandwidth of 0.12
 
 VizSeuratCellQC(sobj, features = c("percent.mt", "percent.ribo"))
 
