@@ -19,6 +19,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunDEGAnalysis.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunGSEA.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunGSEAPreRank.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratCellCycleScoring.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratClustering.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDEAnalysis.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDoubletDetection.html</loc></url>
