@@ -777,9 +777,11 @@ RunSeuratTransformation <- function(
     }
 
     if (run_pca) {
-        log$info("{log_prefix}Running RunPCA ...")
+        RunPCAArgs$dims <- RunPCAArgs$dims %||% 1:min(30, ncol(object) - 1)
+        RunPCAArgs$dims <- .expand_number(RunPCAArgs$dims)
+        # https://github.com/satijalab/seurat/issues/1914#issuecomment-1008728797
         RunPCAArgs$npcs <- min(RunPCAArgs$npcs %||% 50, ncol(object) - 1, nrow(object) - 1)
-
+        log$info("{log_prefix}Running RunPCA (npcs={RunPCAArgs$npcs}) ...")
         log$debug("  RunPCA: {format_args(RunPCAArgs)}")
         RunPCAArgs$object <- object
         object <- do_call(RunPCA, RunPCAArgs)
@@ -868,17 +870,23 @@ RunSeuratUMAP <- function(object, RunUMAPArgs = list(), cache = NULL, log = NULL
     }
     ncells <- ncol(object)
     reduction <- RunUMAPArgs[['reduction']] %||% object@misc$integrated_new_reduction %||% "pca"
+    log_piece <- paste0("reduction=", reduction)
     if (!is.null(RunUMAPArgs$features) && !is.null(RunUMAPArgs$dims)) {
         log$warn("  'RunUMAPArgs$features' and 'RunUMAPArgs$dims' are both set, 'RunUMAPArgs$dims' will be ignored")
+        log_piece <- c(log_piece, paste0("features=", length(RunUMAPArgs$features)))
     } else if (is.null(RunUMAPArgs$features)) {
         RunUMAPArgs$dims <- RunUMAPArgs$dims %||% 1:min(30, ceiling(ncells / 3), ncol(object@reductions[[reduction]]))
         RunUMAPArgs$dims <- .expand_number(RunUMAPArgs$dims)
+        log_piece <- c(log_piece, paste0("dims=1:", max(RunUMAPArgs$dims)))
     }
     RunUMAPArgs$umap.method <- RunUMAPArgs$umap.method %||% "uwot"
+    log_piece <- c(log_piece, paste0("umap.method=", RunUMAPArgs$umap.method))
     if (RunUMAPArgs$umap.method == "uwot") {
         # https://github.com/satijalab/seurat/issues/4312
         RunUMAPArgs$n.neighbors <- RunUMAPArgs$n.neighbors %||% min(ncells - 1, 30)
+        log_piece <- c(log_piece, paste0("n.neighbors=", RunUMAPArgs$n.neighbors))
     }
+    log$info("  {paste(log_piece, collapse=', ')}")
     RunUMAPArgs$object <- object
     object <- do_call(RunUMAP, RunUMAPArgs)
     RunUMAPArgs$object <- NULL
@@ -932,7 +940,6 @@ RunSeuratClustering <- function(
     log <- log %||% get_logger()
     cache <- cache %||% gettempdir()
 
-    log$info("Running RunPCA ...")
     caching <- Cache$new(
         list(object, RunPCAArgs),
         prefix = "biopipen.utils.RunSeuratClustering.RunPCA",
@@ -944,12 +951,13 @@ RunSeuratClustering <- function(
         log$info("PCA results loaded from cache")
         object <- caching$restore()
     } else {
-        log$debug("  Arguments: {format_args(RunPCAArgs)}")
         RunPCAArgs$dims <- RunPCAArgs$dims %||% 1:min(30, ncells - 1)
         RunPCAArgs$dims <- .expand_number(RunPCAArgs$dims)
         # https://github.com/satijalab/seurat/issues/1914#issuecomment-1008728797
         RunPCAArgs$npcs <- min(RunPCAArgs$npcs %||% 50, ncol(object) - 1, nrow(object) - 1)
         RunPCAArgs$object <- object
+        log$info("Running RunPCA (npcs={RunPCAArgs$npcs}, dims=1:{max(RunPCAArgs$dims)}) ...")
+        log$debug("  Arguments: {format_args(RunPCAArgs)}")
         object <- do_call(RunPCA, RunPCAArgs)
         RunPCAArgs$object <- NULL
         gc()
@@ -957,7 +965,6 @@ RunSeuratClustering <- function(
         caching$save(object)
     }
 
-    log$info("Running FindNeighbors ...")
     caching <- Cache$new(
         list(object, FindNeighborsArgs),
         prefix = "biopipen.utils.RunSeuratClustering.FindNeighbors",
@@ -967,12 +974,15 @@ RunSeuratClustering <- function(
         log$info("FindNeighbors results loaded from cache")
         object <- caching$restore()
     } else {
-        log$debug("  Arguments: {format_args(FindNeighborsArgs)}")
         FindNeighborsArgs$reduction <- FindNeighborsArgs[['reduction']] %||% object@misc$integrated_new_reduction %||% "pca"
+        FindNeighborsArgs$object <- object
         if (!is.null(FindNeighborsArgs$dims)) {
             FindNeighborsArgs$dims <- .expand_number(FindNeighborsArgs$dims)
+            log$info("Running FindNeighbors (reduction={FindNeighborsArgs$reduction}, dims=1:{max(FindNeighborsArgs$dims)}) ...")
+        } else {
+            log$info("Running FindNeighbors (reduction={FindNeighborsArgs$reduction}) ...")
         }
-        FindNeighborsArgs$object <- object
+        log$debug("  Arguments: {format_args(FindNeighborsArgs)}")
         object <- do_call(FindNeighbors, FindNeighborsArgs)
         FindNeighborsArgs$object <- NULL
         gc()
@@ -980,7 +990,6 @@ RunSeuratClustering <- function(
         caching$save(object)
     }
 
-    log$info("Running FindClusters ...")
     caching <- Cache$new(
         list(object, FindClustersArgs),
         prefix = "biopipen.utils.RunSeuratClustering.FindClusters",
@@ -990,6 +999,7 @@ RunSeuratClustering <- function(
         log$info("FindClusters results loaded from cache")
         object <- caching$restore()
     } else {
+        log$info("Running FindClusters ...")
         log$debug("  Arguments: {format_args(FindClustersArgs)}")
 
         # FindClustersArgs$graph.name <- FindClustersArgs$graph.name %||% "RNA_snn"
@@ -1032,7 +1042,6 @@ RunSeuratClustering <- function(
         caching$save(object)
     }
 
-    log$info("Running RunUMAP ...")
     caching <- Cache$new(
         list(object, RunUMAPArgs),
         prefix = "biopipen.utils.RunSeuratClustering.RunSeuratUMAP",
@@ -1042,6 +1051,7 @@ RunSeuratClustering <- function(
         log$info("UMAP results loaded from cache")
         object <- caching$restore()
     } else {
+        log$info("Running RunUMAP ...")
         log$debug("  Arguments: {format_args(RunUMAPArgs)}")
         object <- RunSeuratUMAP(
             object,
@@ -1134,7 +1144,7 @@ RunSeuratSubClustering <- function(
         log$info("Subset clustering results loaded from cache")
         return(cached$restore())
     }
-    log$info("Subsetting seurat object ...")
+    log$info("Subsetting seurat object ({subset}) ...")
     subobj <- filter(object, !!rlang::parse_expr(subset))
     if (ncol(subobj) < 10) {
         stop("[RunSeuratSubClustering] Not enough (< 10) cells to perform clustering")
@@ -1144,23 +1154,25 @@ RunSeuratSubClustering <- function(
         stop(paste0("[RunSeuratSubClustering] Name '", name, "' already exists in the metadata. Please choose a different name."))
     }
 
-    log$info("- Running RunPCA ...")
     RunPCAArgs$object <- subobj
     RunPCAArgs$reduction.key <- RunPCAArgs$reduction.key %||% paste0(toupper(name), "PC_")
     RunPCAArgs$dims <- RunPCAArgs$dims %||% 1:min(30, ncol(subobj) - 1)
     RunPCAArgs$dims <- .expand_number(RunPCAArgs$dims)
     # https://github.com/satijalab/seurat/issues/1914#issuecomment-1008728797
     RunPCAArgs$npcs <- min(RunPCAArgs$npcs %||% 50, min(ncol(subobj), nrow(subobj)) - 1)
+    log$info("- Running RunPCA (reduction.key={RunPCAArgs$reduction.key}, dims=1:{max(RunPCAArgs$dims)}, npcs={RunPCAArgs$npcs}) ...")
     log$debug("  Arguments: {format_args(RunPCAArgs)}")
     subobj <- do_call(RunPCA, RunPCAArgs)
     RunPCAArgs$object <- NULL
     gc()
 
-    log$info("- Running FindNeighbors ...")
     FindNeighborsArgs$object <- subobj
     FindNeighborsArgs$reduction <- FindNeighborsArgs[['reduction']] %||% subobj@misc$integrated_new_reduction %||% "pca"
     if (!is.null(FindNeighborsArgs$dims)) {
         FindNeighborsArgs$dims <- .expand_number(FindNeighborsArgs$dims)
+        log$info("- Running FindNeighbors (reduction={FindNeighborsArgs$reduction}, dims=1:{max(FindNeighborsArgs$dims)}) ...")
+    } else {
+        log$info("- Running FindNeighbors (reduction={FindNeighborsArgs$reduction}) ...")
     }
     log$debug("  Arguments: {format_args(FindNeighborsArgs)}")
     subobj <- do_call(FindNeighbors, FindNeighborsArgs)
@@ -1201,9 +1213,9 @@ RunSeuratSubClustering <- function(
         log$info("   | {paste(ident_table[i:min(i + 4, length(ident_table))], collapse = ', ')}")
     }
 
-    log$info("- Running RunUMAP ...")
     RunUMAPArgs$reduction.key <- RunUMAPArgs$reduction.key %||% paste0(toupper(name), "UMAP_")
     RunUMAPArgs$reduction <- RunUMAPArgs[['reduction']] %||% object@misc$integrated_new_reduction %||% "pca"
+    log$info("- Running RunUMAP ...")
     log$debug("  Arguments: {format_args(RunUMAPArgs)}")
     subobj <- RunSeuratUMAP(
         subobj,
