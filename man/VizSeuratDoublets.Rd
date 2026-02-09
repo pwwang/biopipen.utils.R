@@ -45,8 +45,10 @@ meta <- data.frame(
     )
 )
 
-obj <- LoadSeuratAndPerformQC(meta, cache = FALSE, gene_qc = list(min_cells = 3),
-    cell_qc = "nFeature_RNA > 500")
+obj <- LoadSeuratAndPerformQC(meta,
+    cache = FALSE, gene_qc = list(min_cells = 3),
+    cell_qc = "nFeature_RNA > 500"
+)
 VizSeuratCellQC(obj)
 VizSeuratCellQC(obj, plot_type = "scatter")
 VizSeuratCellQC(obj, plot_type = "ridge")

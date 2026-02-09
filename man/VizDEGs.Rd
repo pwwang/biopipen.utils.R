@@ -17,7 +17,7 @@ VizDEGs(
   cutoff = NULL,
   order_by = NULL,
   select = ifelse(plot_type \%in\% c("volcano", "volcano_log2fc", "volcano_pct",
-    "jitter", "jitter_log2fc", "jitter_pct"), 5, 10),
+    "jitter", "jitter_log2fc", "jitter_pct", "heatmap_log2fc", "heatmap_pct"), 5, 10),
   outprefix = NULL,
   devpars = list(res = 100),
   more_formats = c(),
@@ -114,25 +114,39 @@ degs <- RunSeuratDEAnalysis(scplotter::pancreas_sub, "SubCellType")
 VizDEGs(degs, plot_type = "volcano_pct")
 VizDEGs(degs, plot_type = "volcano_log2fc")
 VizDEGs(degs, plot_type = "jitter_log2fc", subset_by = "SubCellType")
-VizDEGs(degs, plot_type = "heatmap_log2fc", cutoff = 0.05,
-    select = 5, subset_by = "SubCellType")
+VizDEGs(degs,
+    plot_type = "heatmap_log2fc", cutoff = 0.05,
+    select = 5, subset_by = "SubCellType"
+)
 
 # Visualize expression of the top DEGs
 # Suppose we did comparison between G2M and S phase in each SubCellType
 degs$Phase <- "G2M:S"
 
-VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "violin",
-    select = 2, comparison_by = "Phase", subset_by = "SubCellType")
-VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "box",
-    select = 2, comparison_by = "Phase", subset_by = "SubCellType")
-VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "bar",
-    select = 2, comparison_by = "Phase", subset_by = "SubCellType")
-VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "ridge",
-    select = 1, comparison_by = "Phase", subset_by = "SubCellType")
-VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "heatmap",
-    cluster_columns = FALSE, comparison_by = "Phase", subset_by = "SubCellType")
-VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "dot",
-    select = 1, comparison_by = "Phase", subset_by = "SubCellType")
+VizDEGs(degs,
+    object = scplotter::pancreas_sub, plot_type = "violin",
+    select = 2, comparison_by = "Phase", subset_by = "SubCellType"
+)
+VizDEGs(degs,
+    object = scplotter::pancreas_sub, plot_type = "box",
+    select = 2, comparison_by = "Phase", subset_by = "SubCellType"
+)
+VizDEGs(degs,
+    object = scplotter::pancreas_sub, plot_type = "bar",
+    select = 2, comparison_by = "Phase", subset_by = "SubCellType"
+)
+VizDEGs(degs,
+    object = scplotter::pancreas_sub, plot_type = "ridge",
+    select = 1, comparison_by = "Phase", subset_by = "SubCellType"
+)
+VizDEGs(degs,
+    object = scplotter::pancreas_sub, plot_type = "heatmap",
+    cluster_columns = FALSE, comparison_by = "Phase", subset_by = "SubCellType"
+)
+VizDEGs(degs,
+    object = scplotter::pancreas_sub, plot_type = "dot",
+    select = 1, comparison_by = "Phase", subset_by = "SubCellType"
+)
 }
 }
 \seealso{
