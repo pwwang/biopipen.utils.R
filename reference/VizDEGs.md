@@ -18,7 +18,7 @@ VizDEGs(
   cutoff = NULL,
   order_by = NULL,
   select = ifelse(plot_type %in% c("volcano", "volcano_log2fc", "volcano_pct",
-    "jitter", "jitter_log2fc", "jitter_pct"), 5, 10),
+    "jitter", "jitter_log2fc", "jitter_pct", "heatmap_log2fc", "heatmap_pct"), 5, 10),
   outprefix = NULL,
   devpars = list(res = 100),
   more_formats = c(),
@@ -205,16 +205,20 @@ VizDEGs(degs, plot_type = "volcano_log2fc")
 
 VizDEGs(degs, plot_type = "jitter_log2fc", subset_by = "SubCellType")
 
-VizDEGs(degs, plot_type = "heatmap_log2fc", cutoff = 0.05,
-    select = 5, subset_by = "SubCellType")
+VizDEGs(degs,
+    plot_type = "heatmap_log2fc", cutoff = 0.05,
+    select = 5, subset_by = "SubCellType"
+)
 
 
 # Visualize expression of the top DEGs
 # Suppose we did comparison between G2M and S phase in each SubCellType
 degs$Phase <- "G2M:S"
 
-VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "violin",
-    select = 2, comparison_by = "Phase", subset_by = "SubCellType")
+VizDEGs(degs,
+    object = scplotter::pancreas_sub, plot_type = "violin",
+    select = 2, comparison_by = "Phase", subset_by = "SubCellType"
+)
 #> Warning: Layer counts isn't present in the assay object; returning NULL
 #> Warning: Groups with fewer than two datapoints have been dropped.
 #> ℹ Set `drop = FALSE` to consider such groups for position adjustment purposes.
@@ -281,16 +285,22 @@ VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "violin",
 #> Warning: Groups with fewer than two datapoints have been dropped.
 #> ℹ Set `drop = FALSE` to consider such groups for position adjustment purposes.
 
-VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "box",
-    select = 2, comparison_by = "Phase", subset_by = "SubCellType")
+VizDEGs(degs,
+    object = scplotter::pancreas_sub, plot_type = "box",
+    select = 2, comparison_by = "Phase", subset_by = "SubCellType"
+)
 #> Warning: Layer counts isn't present in the assay object; returning NULL
 
-VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "bar",
-    select = 2, comparison_by = "Phase", subset_by = "SubCellType")
+VizDEGs(degs,
+    object = scplotter::pancreas_sub, plot_type = "bar",
+    select = 2, comparison_by = "Phase", subset_by = "SubCellType"
+)
 #> Warning: Layer counts isn't present in the assay object; returning NULL
 
-VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "ridge",
-    select = 1, comparison_by = "Phase", subset_by = "SubCellType")
+VizDEGs(degs,
+    object = scplotter::pancreas_sub, plot_type = "ridge",
+    select = 1, comparison_by = "Phase", subset_by = "SubCellType"
+)
 #> Warning: Layer counts isn't present in the assay object; returning NULL
 #> Picking joint bandwidth of 0.283
 #> Picking joint bandwidth of 0.252
@@ -361,12 +371,16 @@ VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "ridge",
 #> Warning: No shared levels found between `names(values)` of the manual scale and the
 #> data's fill values.
 
-VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "heatmap",
-    cluster_columns = FALSE, comparison_by = "Phase", subset_by = "SubCellType")
+VizDEGs(degs,
+    object = scplotter::pancreas_sub, plot_type = "heatmap",
+    cluster_columns = FALSE, comparison_by = "Phase", subset_by = "SubCellType"
+)
 #> Warning: Layer counts isn't present in the assay object; returning NULL
 
-VizDEGs(degs, object = scplotter::pancreas_sub, plot_type = "dot",
-    select = 1, comparison_by = "Phase", subset_by = "SubCellType")
+VizDEGs(degs,
+    object = scplotter::pancreas_sub, plot_type = "dot",
+    select = 1, comparison_by = "Phase", subset_by = "SubCellType"
+)
 #> Warning: Layer counts isn't present in the assay object; returning NULL
 
 # }

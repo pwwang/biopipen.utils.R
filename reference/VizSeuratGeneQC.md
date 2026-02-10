@@ -50,13 +50,13 @@ The plot
 set.seed(8525)
 sobj <- SeuratObject::pbmc_small
 sobj@misc$gene_qc <- data.frame(
-  Sample = rep(c("Sample1", "Sample2"), each = nrow(sobj)),
-  Feature = rep(rownames(sobj), 2),
-  Count = as.integer(runif(nrow(sobj) * 2, 0, 100))
+    Sample = rep(c("Sample1", "Sample2"), each = nrow(sobj)),
+    Feature = rep(rownames(sobj), 2),
+    Count = as.integer(runif(nrow(sobj) * 2, 0, 100))
 )
 sobj@misc$gene_qc$QC <- (
-  sobj@misc$gene_qc$Count >= 20 |
-     sample(c(TRUE, FALSE), nrow(sobj) * 2, prob = c(0.8, 0.2), replace = TRUE)
+    sobj@misc$gene_qc$Count >= 20 |
+        sample(c(TRUE, FALSE), nrow(sobj) * 2, prob = c(0.8, 0.2), replace = TRUE)
 )
 
 # Visualize gene QC metrics

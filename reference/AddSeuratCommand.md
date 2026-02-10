@@ -63,7 +63,7 @@ object <- AddSeuratCommand(
 )
 object@commands$RunSeuratDEAnalysis
 #> Command: RunSeuratDEAnalysis(object, group_by = 'groups', ident_1 = 'g1', ident_2 = 'g2')
-#> Time: 2026-02-08 01:21:08.779128
+#> Time: 2026-02-10 03:32:06.52968
 #> group_by : groups 
 #> ident_1 : g1 
 #> ident_2 : g2 
