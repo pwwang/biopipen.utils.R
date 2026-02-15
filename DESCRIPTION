@@ -1,6 +1,6 @@
 Package: biopipen.utils
 Title: Common Utility Functions for Biopipen
-Version: 0.3.5
+Version: 0.3.6
 Authors@R:
     person("Panwen", "Wang", , "pwwang@pwwang.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-4614-8970"))
