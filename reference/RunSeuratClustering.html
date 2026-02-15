@@ -97,7 +97,7 @@ based on the <code>order</code> field.</p></li>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu">RunSeuratClustering</span><span class="op">(</span><span class="fu">SeuratObject</span><span class="fu">::</span><span class="va"><a href="https://satijalab.github.io/seurat-object/reference/pbmc_small.html" class="external-link">pbmc_small</a></span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-15 06:42:41] Running RunPCA (npcs=50, dims=1:30) ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-15 07:06:29] Running RunPCA (npcs=50, dims=1:30) ...</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>You're computing too large a percentage of total singular values, use a standard svd instead.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Requested number is larger than the number of available items (20). Setting to 20.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Requested number is larger than the number of available items (20). Setting to 20.</span>
@@ -119,11 +119,11 @@ based on the <code>order</code> field.</p></li>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> PC_ 5 </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  MYL9, PARVB, IGLL5, TREML1, AKR1C3, PGRMC1, HLA-DPB1, S100A9, TUBB1, PF4 </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  VDAC3, RP11-290F20.3, RUFY1, CD1C, HLA-DQA1, CA2, S100A8, PPBP, GNLY, SDPR </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-15 06:42:42] Running FindNeighbors (reduction=pca) ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-15 07:06:30] Running FindNeighbors (reduction=pca) ...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Computing nearest neighbor graph</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Computing SNN</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-15 06:42:43] Running FindClusters ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-15 06:42:43]   applying resolution: 0.8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-15 07:06:31] Running FindClusters ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-15 07:06:31]   applying resolution: 0.8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Number of nodes: 80</span>
@@ -133,17 +133,17 @@ based on the <code>order</code> field.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Maximum modularity in 10 random starts: 0.4014</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Number of communities: 2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Elapsed time: 0 seconds</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-15 06:42:44]   Found clusters (with resolution 0.8):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-15 06:42:44]    | c1(44), c2(36)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-15 06:42:44] Running RunUMAP ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-15 06:42:44]   reduction=pca, dims=1:19, umap.method=uwot, n.neighbors=30</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-15 07:06:32]   Found clusters (with resolution 0.8):</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-15 07:06:32]    | c1(44), c2(36)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-15 07:06:32] Running RunUMAP ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-15 07:06:32]   reduction=pca, dims=1:19, umap.method=uwot, n.neighbors=30</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>The default method for RunUMAP has changed from calling Python UMAP via reticulate to the R-native UWOT using the cosine metric</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to 'correlation'</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> This message will be shown once per session</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:42:44 UMAP embedding parameters a = 0.9922 b = 1.112</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:42:44 Read 80 rows and found 19 numeric columns</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:42:44 Using Annoy for neighbor search, n_neighbors = 30</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:42:44 Building Annoy index with metric = cosine, n_trees = 50</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 07:06:32 UMAP embedding parameters a = 0.9922 b = 1.112</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 07:06:32 Read 80 rows and found 19 numeric columns</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 07:06:32 Using Annoy for neighbor search, n_neighbors = 30</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 07:06:32 Building Annoy index with metric = cosine, n_trees = 50</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> 0%   10   20   30   40   50   60   70   80   90   100%</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> [----|----|----|----|----|----|----|----|----|----|</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> *</span>
@@ -197,16 +197,16 @@ based on the <code>order</code> field.</p></li>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> *</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> *</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> |</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:42:44 Writing NN index file to temp file /tmp/RtmpOKQU1q/file26eb1d956efd</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:42:44 Searching Annoy index using 1 thread, search_k = 3000</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:42:44 Annoy recall = 100%</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:42:45 Commencing smooth kNN distance calibration using 1 thread</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 07:06:32 Writing NN index file to temp file /tmp/Rtmp1le3B2/file25f845d6a729</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 07:06:32 Searching Annoy index using 1 thread, search_k = 3000</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 07:06:32 Annoy recall = 100%</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 07:06:33 Commencing smooth kNN distance calibration using 1 thread</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  with target n_neighbors = 30</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:42:45 7 smooth knn distance failures</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:42:47 Initializing from normalized Laplacian + noise (using RSpectra)</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:42:47 Commencing optimization for 500 epochs, with 2664 positive edges</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:42:47 Using rng type: pcg</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:42:47 Optimization finished</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 07:06:33 7 smooth knn distance failures</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 07:06:34 Initializing from normalized Laplacian + noise (using RSpectra)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 07:06:34 Commencing optimization for 500 epochs, with 2664 positive edges</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 07:06:34 Using rng type: pcg</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 07:06:35 Optimization finished</span>
 <span class="r-in"><span><span class="fu"><a href="GetIdentityColumn.html">GetIdentityColumn</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>[GetIdentityColumn] Using 'seurat_clusters' as the identity column, other candidates: seurat_clusters.0.8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "seurat_clusters"</span>
