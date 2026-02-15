@@ -2533,7 +2533,6 @@ RunSeuratCellCycleScoring <- function(
         object[[orig_assay]]$scale.data <- NULL
     }
     gc()
-    o2 <<- object
 
     object <- AddSeuratCommand(
         object,
