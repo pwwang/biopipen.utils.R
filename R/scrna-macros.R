@@ -400,7 +400,7 @@ PerformGeneQC <- function(object, gene_qc) {
 #' Required columns: Sample, RNAData.
 #' The RNAData column should contain the path to the 10X or ParseBio data, either a directory or a file
 #' If the path is a directory, the function will look for barcodes.tsv.gz, features.tsv.gz and matrix.mtx.gz.
-#' The directory should be loaded by [Seurat::Read10X] or [Seurat::ReadParseBio]. Sometimes, there may be prefix in the file names,
+#' The directory should be loaded by [Seurat::Read10X], [Seurat::ReadParseBio] or the HIVE data. Sometimes, there may be prefix in the file names,
 #' e.g. "'prefix'.barcodes.tsv.gz", which is also supported.
 #' If the path is a file ending with ".loom", it will be loaded by [SeuratDisk::Connect()] and converted to a Seurat object.
 #' Otherwise, if the path is a file, it should be a h5 file that can be loaded by [Seurat::Read10X_h5()]
@@ -527,7 +527,6 @@ LoadSeuratAndPerformQC <- function(
                 next
             }
 
-
             path <- as.character(mdata$RNAData)
             if (is.na(path) || !is.character(path) || identical(path, "") || identical(path, "NA")) {
                 log$warn("  No path found, skipping ...")
@@ -544,6 +543,59 @@ LoadSeuratAndPerformQC <- function(
                     # Remove empty rows with empty genes
                     exprs <- exprs[nchar(rownames(exprs)) > 0, , drop = FALSE]
                     cell_meta <- utils::read.csv(file.path(path, "cell_metadata.csv"), row.names = 1)
+                } else if (
+                    length(Sys.glob(file.path(path, "*TCM.tsv.gz"))) > 0 &&
+                    length(Sys.glob(file.path(path, "*ReadsQC.tsv"))) > 0
+                ) {
+                    # HIVE data
+                    # see: file:///D:/Downloads/HC_seurat_vignette_v1.3.2_20231006.html
+                    cmfile <- Sys.glob(file.path(path, "*TCM.tsv.gz"))
+                    if (length(cmfile) > 1) {
+                        log$warn("  Multiple TCM files found, using the first one: {cmfiles[1]} ...")
+                        cmfile <- cmfile[1]
+                    }
+                    readsfile <- Sys.glob(file.path(path, "*ReadsQC.tsv"))
+                    if (length(readsfile) > 1) {
+                        log$warn("  Multiple ReadsQC files found, using the first one: {readsfile[1]} ...")
+                        readsfile <- readsfile[1]
+                    }
+                    exprs <- utils::read.table(
+                        cmfile,
+                        header = 1,
+                        row.names = 1,
+                        check.names = FALSE ,
+                        sep = "\t",
+                        quote = "",
+                        stringsAsFactors = FALSE
+                    )
+                    cells <- colnames(exprs)
+
+                    data_reads <- utils::read.table(readsfile, header = 1, row.names = 1)
+                    # Make sure order of read info matches order of TCM matrix
+                    # table(rownames(data_reads) == colnames(exprs))
+                    reads <- data_reads[rownames(data_reads) %in% cells, , drop = FALSE]
+
+                    # Calculate metadata info
+                    logtotreads <- log10(as.matrix(reads)[,1])
+                    readAll <- data_reads[,1]
+                    readMap <- reads[,2]
+                    readMapPct <- readMap/readAll
+                    readUnmap <- readAll-readMap
+                    readUnmapPct <- readUnmap/readAll
+                    readExon <- reads[,3]
+                    readExonPct <- readExon/readAll
+                    readExonMapPct <- readExon/readMap
+                    cell_meta <- data.frame(ExonReads = readExon, row.names = cells)
+                    cell_meta$Log.TotReads <- logtotreads
+                    cell_meta$ExonvMapped <- readExonMapPct
+                    cell_meta$ExonvTotal <- readExonPct
+                    cell_meta$reads.mapped <- readMap
+                    cell_meta$reads.Total <- readAll
+
+                    # Calculate complexity and add to metadata
+                    # comp <- obj@meta.data$ExonReads / obj@meta.data$nCount_RNA
+                    # names(comp) <- rownames(obj@meta.data)
+                    # obj <- AddMetaData(obj, comp, "Complexity")
                 } else {
                     exprs <- tryCatch(
                         {
@@ -598,6 +650,7 @@ LoadSeuratAndPerformQC <- function(
                 )
             }
             obj <- RenameCells(obj, add.cell.id = sam)
+
             # Attach meta data
             for (mname in names(mdata)) {
                 if (mname %in% c("RNAData", "TCRData", "BCRData")) {
