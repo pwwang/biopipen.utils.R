@@ -29,12 +29,11 @@ LoadSeuratAndPerformQC(
   directory or a file If the path is a directory, the function will look
   for barcodes.tsv.gz, features.tsv.gz and matrix.mtx.gz. The directory
   should be loaded by
-  [Seurat::Read10X](https://satijalab.org/seurat/reference/Read10X.html)
-  or
-  [Seurat::ReadParseBio](https://satijalab.org/seurat/reference/ReadParseBio.html).
-  Sometimes, there may be prefix in the file names, e.g.
-  "'prefix'.barcodes.tsv.gz", which is also supported. If the path is a
-  file ending with ".loom", it will be loaded by
+  [Seurat::Read10X](https://satijalab.org/seurat/reference/Read10X.html),
+  [Seurat::ReadParseBio](https://satijalab.org/seurat/reference/ReadParseBio.html)
+  or the HIVE data. Sometimes, there may be prefix in the file names,
+  e.g. "'prefix'.barcodes.tsv.gz", which is also supported. If the path
+  is a file ending with ".loom", it will be loaded by
   [`SeuratDisk::Connect()`](https://mojaveazure.github.io/seurat-disk/reference/Connect.html)
   and converted to a Seurat object. Otherwise, if the path is a file, it
   should be a h5 file that can be loaded by
@@ -139,10 +138,10 @@ meta <- data.frame(
     )
 )
 obj <- LoadSeuratAndPerformQC(meta, cache = FALSE, gene_qc = list(min_cells = 3))
-#> INFO    [2026-02-15 07:06:23] Loading each sample ...
-#> INFO    [2026-02-15 07:06:23] - Loading Sample1 and performing QC ...
-#> INFO    [2026-02-15 07:06:24] - Loading Sample2 and performing QC ...
-#> INFO    [2026-02-15 07:06:24] Merging samples ...
+#> INFO    [2026-02-17 05:59:24] Loading each sample ...
+#> INFO    [2026-02-17 05:59:24] - Loading Sample1 and performing QC ...
+#> INFO    [2026-02-17 05:59:24] - Loading Sample2 and performing QC ...
+#> INFO    [2026-02-17 05:59:24] Merging samples ...
 head(obj@misc$cell_qc_df)
 #> NULL
 print(obj@misc$gene_qc)

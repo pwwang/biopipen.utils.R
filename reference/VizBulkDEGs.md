@@ -96,7 +96,7 @@ meta <- data.frame(
 
 degs <- RunDEGAnalysis(data, meta = meta,
  group_by = "Condition", ident_1 = "Treatment", tool = "edger")
-#> INFO    [2026-02-15 07:06:58] Running differential gene expression analysis using edgeR...
+#> INFO    [2026-02-17 05:59:58] Running differential gene expression analysis using edgeR...
 VizBulkDEGs(degs, plot_type = "volcano", legend.position = "top", y_cutoff = 0.25)
 
 VizBulkDEGs(degs, plot_type = "violin", genes = 2)
