@@ -32,6 +32,8 @@ requirements:
     - pwwang::r-scplotter
     - pwwang::r-seuratdisk
     - r-qs2
+    - r-plotly
+    - r-htmlwidgets
 
   run:
     - r-base
@@ -53,6 +55,8 @@ requirements:
     - pwwang::r-scplotter
     - pwwang::r-seuratdisk
     - r-qs2
+    - r-plotly
+    - r-htmlwidgets
 
 test:
   commands:

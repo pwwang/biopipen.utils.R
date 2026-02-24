@@ -99,7 +99,11 @@ Reporter <- R6Class(
         },
 
         #' @description
-        #' Generate a report for an image to be added
+        #' Generate a report for an image to be added.
+        #' If `<prefix>.html` exists, the image is treated as an interactive (Plotly) plot
+        #' and a Plotly component schema is returned instead of an Image schema.
+        #' In that case, `more_formats` and `save_code` are not supported and a warning
+        #' is issued if they are provided.
         #' @param prefix The prefix of the image
         #' @param more_formats More formats of the image available
         #' @param save_code Whether to save the code to reproduce the plot
@@ -116,7 +120,32 @@ Reporter <- R6Class(
         #'   h1 = "Images",
         #'   h2 = "Image 1"
         #' )
-        image = function(prefix, more_formats, save_code, kind = "image", ...) {
+        image = function(prefix, more_formats = c(), save_code = FALSE, kind = "image", ...) {
+            more_formats_provided <- !missing(more_formats)
+            save_code_provided <- !missing(save_code)
+
+            # Check if this is an interactive (Plotly) plot
+            if (file.exists(paste0(prefix, ".html"))) {
+                if (more_formats_provided && length(more_formats) > 0) {
+                    warning(
+                        "more_formats is not supported for interactive plots: ",
+                        prefix, ".html"
+                    )
+                }
+                if (save_code_provided && isTRUE(save_code)) {
+                    warning(
+                        "save_code is not supported for interactive plots: ",
+                        prefix, ".html"
+                    )
+                }
+                return(list(
+                    kind = "plotly",
+                    src = paste0(prefix, ".html"),
+                    frameProps = list(class = "pipen-report-plotly-frame"),
+                    ...
+                ))
+            }
+
             out <- list(
                 kind = kind,
                 src = paste0(prefix, ".png"),

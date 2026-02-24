@@ -1,17 +1,23 @@
 
 #' Save the plot into multiple formats
 #'
-#' @param plot The plot object
+#' @param plot The plot object. Can be a ggplot2 object or a plotly/htmlwidget object.
+#' For plotly/htmlwidget objects, only `"html"` format is supported. If static formats are
+#' requested, a warning is issued and an HTML file is saved instead.
+#' For ggplot2 objects, `"html"` is also supported by converting the plot to a plotly object
+#' via `plotly::ggplotly` first.
 #' @param prefix The prefix of the file
 #' The ending `.` is removed from the prefix. So both `/path/to/file` and `/path/to/file.` are valid and will
 #' save the files as `/path/to/file.png`, `/path/to/file.pdf` and `/path/to/file.<format>` etc.
-#' @param formats The formats to save
+#' @param formats The formats to save. Use `"html"` to save as an interactive HTML file.
 #' @param bg The background color
 #' @param devpars The device parameters
+#' @param selfcontained Whether to save the HTML file as a self-contained file (only used when saving as HTML).
+#' Default is `TRUE`.
 #' @export
 #' @importFrom utils getFromNamespace
 #' @import ggplot2
-save_plot <- function(plot, prefix, devpars = NULL, bg = "white", formats = c("png", "pdf")) {
+save_plot <- function(plot, prefix, devpars = NULL, bg = "white", formats = c("png", "pdf"), selfcontained = TRUE) {
     devpars <- devpars %||% list()
     devpars$res <- devpars$res %||% 100
     if (!is.null(attr(plot, "width"))) {
@@ -25,20 +31,50 @@ save_plot <- function(plot, prefix, devpars = NULL, bg = "white", formats = c("p
     old_dev <- grDevices::dev.cur()
     prefix <- sub("\\.+$", "", prefix)
 
-    if (utils::compareVersion(as.character(utils::packageVersion("ggplot2")), "4") < 0) {
-        plot_dev <- getFromNamespace("plot_dev", "ggplot2")
-    } else {
-        plot_dev <- getFromNamespace("validate_device", "ggplot2")
+    is_plotly <- inherits(plot, "plotly") || inherits(plot, "htmlwidget")
+    html_formats <- formats[formats == "html"]
+    static_formats <- formats[formats != "html"]
+
+    # Handle HTML (interactive) formats
+    for (fmt in html_formats) {
+        filename <- paste0(prefix, ".", fmt)
+        if (is_plotly) {
+            plotly_plot <- plot
+        } else {
+            plotly_plot <- plotly::ggplotly(plot)
+        }
+        htmlwidgets::saveWidget(plotly_plot, filename, selfcontained = selfcontained)
     }
-    plot_dim <- getFromNamespace("plot_dim", "ggplot2")
-    for (fmt in formats) {
-        filename = paste0(prefix, ".", fmt)
-        dev <- plot_dev(fmt, filename, dpi = devpars$res)
-        dim <- plot_dim(c(devpars$width, devpars$height), units = "px", limitsize = FALSE, dpi = devpars$res)
-        dev(filename = filename, width = dim[1], height = dim[2], bg = bg)
-        print(plot)
-        grDevices::dev.off()
+
+    # Handle static formats
+    if (length(static_formats) > 0) {
+        if (is_plotly) {
+            warning(
+                "Static formats (",
+                paste(static_formats, collapse = ", "),
+                ") are not supported for interactive (plotly/htmlwidget) plots. ",
+                "Saving as HTML instead."
+            )
+            html_fallback <- paste0(prefix, ".html")
+            htmlwidgets::saveWidget(plot, html_fallback, selfcontained = selfcontained)
+        } else {
+            if (utils::compareVersion(as.character(utils::packageVersion("ggplot2")), "4") < 0) {
+                plot_dev <- getFromNamespace("plot_dev", "ggplot2")
+            } else {
+                plot_dev <- getFromNamespace("validate_device", "ggplot2")
+            }
+            plot_dim <- getFromNamespace("plot_dim", "ggplot2")
+            for (fmt in static_formats) {
+                filename <- paste0(prefix, ".", fmt)
+                dev <- plot_dev(fmt, filename, dpi = devpars$res)
+                dim <- plot_dim(c(devpars$width, devpars$height), units = "px", limitsize = FALSE, dpi = devpars$res)
+                dev(filename = filename, width = dim[1], height = dim[2], bg = bg)
+                print(plot)
+                grDevices::dev.off()
+            }
+        }
     }
+
     on.exit(utils::capture.output({
         # restore old device unless null device
         if (old_dev > 1) grDevices::dev.set(old_dev)  # nocov

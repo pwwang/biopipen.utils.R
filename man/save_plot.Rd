@@ -9,11 +9,16 @@ save_plot(
   prefix,
   devpars = NULL,
   bg = "white",
-  formats = c("png", "pdf")
+  formats = c("png", "pdf"),
+  selfcontained = TRUE
 )
 }
 \arguments{
-\item{plot}{The plot object}
+\item{plot}{The plot object. Can be a ggplot2 object or a plotly/htmlwidget object.
+For plotly/htmlwidget objects, only \code{"html"} format is supported. If static formats are
+requested, a warning is issued and an HTML file is saved instead.
+For ggplot2 objects, \code{"html"} is also supported by converting the plot to a plotly object
+via \code{plotly::ggplotly} first.}
 
 \item{prefix}{The prefix of the file
 The ending \code{.} is removed from the prefix. So both \verb{/path/to/file} and \verb{/path/to/file.} are valid and will
@@ -23,7 +28,10 @@ save the files as \verb{/path/to/file.png}, \verb{/path/to/file.pdf} and \verb{/
 
 \item{bg}{The background color}
 
-\item{formats}{The formats to save}
+\item{formats}{The formats to save. Use \code{"html"} to save as an interactive HTML file.}
+
+\item{selfcontained}{Whether to save the HTML file as a self-contained file (only used when saving as HTML).
+Default is \code{TRUE}.}
 }
 \description{
 Save the plot into multiple formats

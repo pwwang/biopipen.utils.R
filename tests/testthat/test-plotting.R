@@ -60,6 +60,74 @@ test_that("save_plotcode: works with variables", {
     unlink(zipfile)
 })
 
+test_that("save_plot: saves html for ggplot2 via plotly", {
+    skip_if_not_installed("plotly")
+    skip_if_not_installed("htmlwidgets")
+    plot <- qplot(1:10, 1:10)
+    prefix <- tempfile()
+    save_plot(plot, prefix, formats = "html")
+    htmlfile <- paste0(prefix, ".html")
+    expect_true(file.exists(htmlfile))
+    unlink(htmlfile)
+})
+
+test_that("save_plot: saves html and png for ggplot2", {
+    skip_if_not_installed("plotly")
+    skip_if_not_installed("htmlwidgets")
+    plot <- qplot(1:10, 1:10)
+    prefix <- tempfile()
+    save_plot(plot, prefix, formats = c("png", "html"))
+    pngfile <- paste0(prefix, ".png")
+    htmlfile <- paste0(prefix, ".html")
+    expect_true(file.exists(pngfile))
+    expect_true(file.exists(htmlfile))
+    unlink(pngfile)
+    unlink(htmlfile)
+})
+
+test_that("save_plot: saves html for plotly object", {
+    skip_if_not_installed("plotly")
+    skip_if_not_installed("htmlwidgets")
+    plot <- plotly::plot_ly(x = 1:10, y = 1:10, type = "scatter", mode = "markers")
+    prefix <- tempfile()
+    save_plot(plot, prefix, formats = "html")
+    htmlfile <- paste0(prefix, ".html")
+    expect_true(file.exists(htmlfile))
+    unlink(htmlfile)
+})
+
+test_that("save_plot: selfcontained=FALSE saves html with external libs", {
+    skip_if_not_installed("plotly")
+    skip_if_not_installed("htmlwidgets")
+    plot <- plotly::plot_ly(x = 1:10, y = 1:10, type = "scatter", mode = "markers")
+    prefix <- tempfile()
+    save_plot(plot, prefix, formats = "html", selfcontained = FALSE)
+    htmlfile <- paste0(prefix, ".html")
+    expect_true(file.exists(htmlfile))
+    content <- paste(readLines(htmlfile), collapse = "\n")
+    # self-contained html would have data URIs or inline scripts; non-selfcontained has external links
+    expect_match(content, "<html", fixed = TRUE)
+    unlink(htmlfile)
+    # clean up the libs directory that htmlwidgets creates
+    libsdir <- paste0(prefix, "_files")
+    if (dir.exists(libsdir)) unlink(libsdir, recursive = TRUE)
+})
+
+test_that("save_plot: warns on static formats for plotly object and saves html instead", {
+    skip_if_not_installed("plotly")
+    skip_if_not_installed("htmlwidgets")
+    plot <- plotly::plot_ly(x = 1:10, y = 1:10, type = "scatter", mode = "markers")
+    prefix <- tempfile()
+    expect_warning(
+        save_plot(plot, prefix, formats = c("png", "pdf")),
+        regexp = "not supported for interactive"
+    )
+    expect_false(file.exists(paste0(prefix, ".png")))
+    expect_false(file.exists(paste0(prefix, ".pdf")))
+    expect_true(file.exists(paste0(prefix, ".html")))
+    unlink(paste0(prefix, ".html"))
+})
+
 test_that("save_plotcode: saved code reproduces plot", {
     qplot2 <- gglogger::register(qplot)
     x <- y <- 1:10

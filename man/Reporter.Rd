@@ -108,9 +108,19 @@ headings will be \code{h1 = "Section1: Case1"} and \code{h2 = "A"} and \code{h3 
 \if{html}{\out{<a id="method-Reporter-image"></a>}}
 \if{latex}{\out{\hypertarget{method-Reporter-image}{}}}
 \subsection{Method \code{image()}}{
-Generate a report for an image to be added
+Generate a report for an image to be added.
+If \verb{<prefix>.html} exists, the image is treated as an interactive (Plotly) plot
+and a Plotly component schema is returned instead of an Image schema.
+In that case, \code{more_formats} and \code{save_code} are not supported and a warning
+is issued if they are provided.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Reporter$image(prefix, more_formats, save_code, kind = "image", ...)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Reporter$image(
+  prefix,
+  more_formats = c(),
+  save_code = FALSE,
+  kind = "image",
+  ...
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
