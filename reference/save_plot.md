@@ -10,7 +10,8 @@ save_plot(
   prefix,
   devpars = NULL,
   bg = "white",
-  formats = c("png", "pdf")
+  formats = c("png", "pdf"),
+  selfcontained = TRUE
 )
 ```
 
@@ -18,7 +19,13 @@ save_plot(
 
 - plot:
 
-  The plot object
+  The plot object. Can be a ggplot2 object or a plotly/htmlwidget
+  object. For plotly/htmlwidget objects, only `"html"` format is
+  supported. If static formats are requested, a warning is issued and an
+  HTML file is saved instead. For ggplot2 objects, `"html"` is also
+  supported by converting the plot to a plotly object via
+  [`plotly::ggplotly`](https://rdrr.io/pkg/plotly/man/ggplotly.html)
+  first.
 
 - prefix:
 
@@ -37,4 +44,9 @@ save_plot(
 
 - formats:
 
-  The formats to save
+  The formats to save. Use `"html"` to save as an interactive HTML file.
+
+- selfcontained:
+
+  Whether to save the HTML file as a self-contained file (only used when
+  saving as HTML). Default is `TRUE`.

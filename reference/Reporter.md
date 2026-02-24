@@ -108,11 +108,21 @@ sub-headings
 
 ### Method [`image()`](https://rdrr.io/r/graphics/image.html)
 
-Generate a report for an image to be added
+Generate a report for an image to be added. If `<prefix>.html` exists,
+the image is treated as an interactive (Plotly) plot and a Plotly
+component schema is returned instead of an Image schema. In that case,
+`more_formats` and `save_code` are not supported and a warning is issued
+if they are provided.
 
 #### Usage
 
-    Reporter$image(prefix, more_formats, save_code, kind = "image", ...)
+    Reporter$image(
+      prefix,
+      more_formats = c(),
+      save_code = FALSE,
+      kind = "image",
+      ...
+    )
 
 #### Arguments
 

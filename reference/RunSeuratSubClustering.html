@@ -124,11 +124,11 @@ results in <code>@meta.data</code> and <code>@reductions</code>.</p>
 <span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span><span class="fu">RunSeuratSubClustering</span><span class="op">(</span></span></span>
 <span class="r-in"><span>   <span class="va">obj</span>, subset <span class="op">=</span> <span class="st">"groups == 'g1'"</span>, name <span class="op">=</span> <span class="st">"g1subcluster"</span></span></span>
 <span class="r-in"><span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-17 05:59:44] Subsetting seurat object (groups == 'g1') ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-17 05:59:44] - Running RunPCA (reduction.key=G1SUBCLUSTERPC_, dims=1:30, npcs=43) ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-17 05:59:45] - Running FindNeighbors (reduction=pca) ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-17 05:59:46] - Running FindClusters ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-17 05:59:46]   applying resolution: 0.8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-24 21:56:11] Subsetting seurat object (groups == 'g1') ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-24 21:56:11] - Running RunPCA (reduction.key=G1SUBCLUSTERPC_, dims=1:30, npcs=43) ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-24 21:56:12] - Running FindNeighbors (reduction=pca) ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-24 21:56:13] - Running FindClusters ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-24 21:56:13]   applying resolution: 0.8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Number of nodes: 44</span>
@@ -138,10 +138,10 @@ results in <code>@meta.data</code> and <code>@reductions</code>.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Maximum modularity in 10 random starts: 0.2121</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Number of communities: 2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Elapsed time: 0 seconds</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-17 05:59:47]   Found subclusters (with resolution 0.8):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-17 05:59:47]    | s1(25), s2(19)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-17 05:59:47] - Running RunUMAP ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-17 05:59:47]   reduction=pca, dims=1:15, umap.method=uwot, n.neighbors=30</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-24 21:56:14]   Found subclusters (with resolution 0.8):</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-24 21:56:14]    | s1(25), s2(19)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-24 21:56:14] - Running RunUMAP ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-02-24 21:56:14]   reduction=pca, dims=1:15, umap.method=uwot, n.neighbors=30</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">scplotter</span><span class="fu">::</span><span class="fu"><a href="https://pwwang.github.io/scplotter/reference/CellDimPlot.html" class="external-link">CellDimPlot</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>    <span class="va">obj</span>, reduction <span class="op">=</span> <span class="st">"umap"</span>, group_by <span class="op">=</span> <span class="st">"groups"</span>,</span></span>
