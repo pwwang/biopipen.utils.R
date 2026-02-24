@@ -35,9 +35,7 @@ Imports:
     parallel,
     plotthis,
     scplotter,
-    enrichit,
-    plotly,
-    htmlwidgets
+    enrichit
 Suggests:
     mygene,
     zip,
@@ -54,7 +52,9 @@ Suggests:
     DESeq2,
     edgeR,
     ComplexHeatmap,
-    qs2
+    qs2,
+    plotly,
+    htmlwidgets
 Remotes:
     pwwang/enrichit,
     pwwang/plotthis,
