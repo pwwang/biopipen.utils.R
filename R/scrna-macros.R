@@ -533,6 +533,7 @@ LoadSeuratAndPerformQC <- function(
                 next
             }
 
+            cell_meta <- NULL
             if (dir.exists(path)) {
                 if (
                     file.exists(file.path(path, "all_genes.csv")) &&
@@ -616,7 +617,6 @@ LoadSeuratAndPerformQC <- function(
                             Read10X(data.dir = tmpdatadir)
                         }
                     )
-                    cell_meta <- NULL
                 }
             } else if (endsWith(path, ".loom")) {
                 LoadLoomArgs$file <- path
