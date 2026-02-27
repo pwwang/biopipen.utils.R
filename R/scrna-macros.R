@@ -933,6 +933,9 @@ RunSeuratUMAP <- function(object, RunUMAPArgs = list(), cache = NULL, log = NULL
         log_piece <- c(log_piece, paste0("dims=1:", max(RunUMAPArgs$dims)))
     }
     RunUMAPArgs$umap.method <- RunUMAPArgs$umap.method %||% "uwot"
+    if (identical(RunUMAPArgs$umap.method, "umap-learn")) {
+        RunUMAPArgs$metric <- RunUMAPArgs$metric %||% "correlation"
+    }
     log_piece <- c(log_piece, paste0("umap.method=", RunUMAPArgs$umap.method))
     if (RunUMAPArgs$umap.method == "uwot") {
         # https://github.com/satijalab/seurat/issues/4312
