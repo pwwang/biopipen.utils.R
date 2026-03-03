@@ -12,6 +12,8 @@
 #' @param formats The formats to save. Use `"html"` to save as an interactive HTML file.
 #' @param bg The background color
 #' @param devpars The device parameters
+#' * `res` is the resolution in pixels per inch (PPI) for raster formats (e.g. PNG). Default is 100.
+#' * `width` and `height` can be specified as absolute values (e.g. 800) or relative values (e.g. "+100", "-50", "x2", "/2") to the default size of the plot.
 #' @param selfcontained Whether to save the HTML file as a self-contained file (only used when saving as HTML).
 #' Default is `TRUE`.
 #' @export
@@ -21,8 +23,11 @@ save_plot <- function(plot, prefix, devpars = NULL, bg = "white", formats = c("p
     devpars <- devpars %||% list()
     devpars$res <- devpars$res %||% 100
     if (!is.null(attr(plot, "width"))) {
-        devpars$width <- devpars$width %||% (attr(plot, "width") * devpars$res)
-        devpars$height <- devpars$height %||% (attr(plot, "height") * devpars$res)
+        default_width <- attr(plot, "width") * devpars$res
+        devpars$width <- get_worh(default_width, devpars$width)
+
+        default_height <- attr(plot, "height") * devpars$res
+        devpars$height <- get_worh(default_height, devpars$height)
     } else {
         devpars$width <- devpars$width %||% 800
         devpars$height <- devpars$height %||% 600

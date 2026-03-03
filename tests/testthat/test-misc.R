@@ -332,3 +332,17 @@ test_that("require_package: checks Python package version", {
         "does not satisfy the requirement"
     )
 })
+
+test_that("get_worh: works", {
+    expect_null(get_worh(NULL, NULL))
+    expect_equal(get_worh(10, NULL), 10)
+    expect_equal(get_worh(10, 5), 5)
+    expect_equal(get_worh(10, 15), 15)
+    expect_equal(get_worh(10, "+1"), 11)
+    expect_equal(get_worh(10, "-1"), 9)
+    expect_equal(get_worh(10, "*2"), 20)
+    expect_equal(get_worh(10, "x2"), 20)
+    expect_equal(get_worh(10, "/2"), 5)
+    expect_error(get_worh(10, "invalid"))
+    expect_error(get_worh(10, c(1, 2)))
+})

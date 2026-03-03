@@ -24,7 +24,11 @@ via \code{plotly::ggplotly} first.}
 The ending \code{.} is removed from the prefix. So both \verb{/path/to/file} and \verb{/path/to/file.} are valid and will
 save the files as \verb{/path/to/file.png}, \verb{/path/to/file.pdf} and \verb{/path/to/file.<format>} etc.}
 
-\item{devpars}{The device parameters}
+\item{devpars}{The device parameters
+\itemize{
+\item \code{res} is the resolution in pixels per inch (PPI) for raster formats (e.g. PNG). Default is 100.
+\item \code{width} and \code{height} can be specified as absolute values (e.g. 800) or relative values (e.g. "+100", "-50", "x2", "/2") to the default size of the plot.
+}}
 
 \item{bg}{The background color}
 

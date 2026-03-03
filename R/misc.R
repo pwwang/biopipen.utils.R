@@ -541,3 +541,49 @@ require_package <- function(
     invisible(NULL)
 }
 
+#' Get the height or width of the plot by given default size and user-specified size
+#'
+#' @param default_size The default size of the plot
+#' @param user_size The user-specified size of the plot, can be NULL, a single number,
+#' or "+", "-", "*", "/" followed by a number to indicate relative size to the default size.
+#' @return The calculated size of the plot
+#' @keywords internal
+#' @examples
+#' \dontrun{
+#' get_worh(5, NULL)  # returns 5
+#' get_worh(5, 10)    # returns 10
+#' get_worh(5, "+2")  # returns 7
+#' get_worh(5, "-1")  # returns 4
+#' get_worh(5, "*2")  # returns 10
+#' get_worh(5, "/2")  # returns 2.5
+#' }
+get_worh <- function(default_size, user_size) {
+    if (is.null(user_size)) {
+        return(default_size)
+    } else if (is.null(default_size)) {
+        return(user_size)
+    } else if (is.numeric(user_size) && length(user_size) == 1) {
+        return(user_size)
+    } else if (is.character(user_size) && length(user_size) == 1) {
+        if (grepl("^[+*/x-]", user_size)) {
+            operator <- substr(user_size, 1, 1)
+            number <- as.numeric(substr(user_size, 2, nchar(user_size)))
+            if (is.na(number)) {
+                stop("Invalid user_size format: ", user_size)
+            }
+            return(switch(
+                operator,
+                "+" = default_size + number,
+                "-" = default_size - number,
+                "*" = default_size * number,
+                "x" = default_size * number,
+                "/" = default_size / number,
+                stop("Invalid operator in user_size: ", operator)
+            ))
+        } else {
+            stop("Invalid user_size format: ", user_size)
+        }
+    } else {
+        stop("Invalid user_size: ", user_size)
+    }
+}
