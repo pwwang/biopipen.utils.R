@@ -38,6 +38,13 @@ save_plot(
 
   The device parameters
 
+  - `res` is the resolution in pixels per inch (PPI) for raster formats
+    (e.g. PNG). Default is 100.
+
+  - `width` and `height` can be specified as absolute values (e.g. 800)
+    or relative values (e.g. "+100", "-50", "x2", "/2") to the default
+    size of the plot.
+
 - bg:
 
   The background color
