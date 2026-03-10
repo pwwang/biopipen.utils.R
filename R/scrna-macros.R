@@ -247,7 +247,7 @@ RunSeuratDEAnalysis <- function(
                 m <- tryCatch({
                     FindMarkers(object, group.by = group_by, ident.1 = ident, recorrect_umi = recorrect_umi, assay = assay, ...)
                 }, error = function(e) {
-                    if (grepl("has fewer than", e$message)) {
+                    if (grepl("has fewer than", e$message) || grepl("Cannot find the following identities in the object", e$message)) {
                         warning("[RunSeuratDEAnalysis] Skipping DE analysis for group_by = ", group_by, ", ident_1 = ", ident, ": ", e$message, immediate. = TRUE)
                         return(empty[0, , drop = FALSE])
                     } else {
