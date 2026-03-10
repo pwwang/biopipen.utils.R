@@ -57,10 +57,10 @@ obj <- SeuratObject::pbmc_small
 obj$Sample <- rep(paste0("S", 1:10), each = ncol(obj) / 10)
 obj$Condition <- rep(c("Control", "Treatment"), each = ncol(obj) / 2)
 result <- AggregateExpressionPseudobulk(obj, aggregate_by = c("Sample", "Condition"))
-#> INFO    [2026-03-10 19:38:25] Aggregating expression by: Sample, Condition
-#> INFO    [2026-03-10 19:38:25] Aggregating expression matrix ...
-#> INFO    [2026-03-10 19:38:25] Creating metadata for aggregated samples ...
-#> INFO    [2026-03-10 19:38:25] Aggregation complete. Matrix dimensions: 230 x 10
+#> INFO    [2026-03-10 23:27:01] Aggregating expression by: Sample, Condition
+#> INFO    [2026-03-10 23:27:01] Aggregating expression matrix ...
+#> INFO    [2026-03-10 23:27:01] Creating metadata for aggregated samples ...
+#> INFO    [2026-03-10 23:27:01] Aggregation complete. Matrix dimensions: 230 x 10
 head(result)
 #>          S1_Control S2_Control S3_Control S4_Control S5_Control S6_Treatment
 #> MS4A1             0         17         12          1          0            0
