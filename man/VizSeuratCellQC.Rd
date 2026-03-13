@@ -11,6 +11,8 @@ VizSeuratCellQC(
   plot_type = c("violin", "box", "scatter", "bar", "ridge", "table"),
   scatter_x = "nCount_RNA",
   palette = "Set1",
+  assay = "RNA",
+  layer = "counts",
   ...
 )
 }
@@ -28,6 +30,10 @@ before and after filtering}
 If it is one of the features, it will be removed from the features}
 
 \item{palette}{Color palette to use}
+
+\item{assay}{Assay used to extract expression if genes are included in features. Default is "RNA".}
+
+\item{layer}{Layer used to extract expression if genes are included in features. Default is "counts".}
 
 \item{...}{Additional arguments to pass to the plot function}
 }
