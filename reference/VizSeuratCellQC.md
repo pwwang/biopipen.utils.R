@@ -12,6 +12,8 @@ VizSeuratCellQC(
   plot_type = c("violin", "box", "scatter", "bar", "ridge", "table"),
   scatter_x = "nCount_RNA",
   palette = "Set1",
+  assay = "RNA",
+  layer = "counts",
   ...
 )
 ```
@@ -40,6 +42,16 @@ VizSeuratCellQC(
 - palette:
 
   Color palette to use
+
+- assay:
+
+  Assay used to extract expression if genes are included in features.
+  Default is "RNA".
+
+- layer:
+
+  Layer used to extract expression if genes are included in features.
+  Default is "counts".
 
 - ...:
 

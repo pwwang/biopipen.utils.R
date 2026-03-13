@@ -45,6 +45,8 @@
 <span>  plot_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"violin"</span>, <span class="st">"box"</span>, <span class="st">"scatter"</span>, <span class="st">"bar"</span>, <span class="st">"ridge"</span>, <span class="st">"table"</span><span class="op">)</span>,</span>
 <span>  scatter_x <span class="op">=</span> <span class="st">"nCount_RNA"</span>,</span>
 <span>  palette <span class="op">=</span> <span class="st">"Set1"</span>,</span>
+<span>  assay <span class="op">=</span> <span class="st">"RNA"</span>,</span>
+<span>  layer <span class="op">=</span> <span class="st">"counts"</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -75,6 +77,14 @@ If it is one of the features, it will be removed from the features</p></dd>
 
 <dt id="arg-palette">palette<a class="anchor" aria-label="anchor" href="#arg-palette"></a></dt>
 <dd><p>Color palette to use</p></dd>
+
+
+<dt id="arg-assay">assay<a class="anchor" aria-label="anchor" href="#arg-assay"></a></dt>
+<dd><p>Assay used to extract expression if genes are included in features. Default is "RNA".</p></dd>
+
+
+<dt id="arg-layer">layer<a class="anchor" aria-label="anchor" href="#arg-layer"></a></dt>
+<dd><p>Layer used to extract expression if genes are included in features. Default is "counts".</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
