@@ -19,7 +19,7 @@ VizSeuratCellQC(
 \arguments{
 \item{object}{A Seurat object with cell QC metrics}
 
-\item{features}{Features to visualize}
+\item{features}{Features to visualize, genes are supported.}
 
 \item{plot_type}{Type of plot to generate
 One of 'violin', 'box', 'scatter', 'bar', 'ridge' and 'table'
@@ -33,7 +33,10 @@ If it is one of the features, it will be removed from the features}
 
 \item{assay}{Assay used to extract expression if genes are included in features. Default is "RNA".}
 
-\item{layer}{Layer used to extract expression if genes are included in features. Default is "counts".}
+\item{layer}{Layer used to extract expression if genes are included in features. Default is "counts".
+If the specified layer is not found, it will look for layers with the specified layer as prefix, for example "counts.raw" or "counts.filtered".
+And then the corresponding features will be suffixed with the layer name, for example "MS4A1.counts.raw" or "MS4A1.counts.filtered".
+Note that if there are multiple layers with the specified layer as prefix, scatter_x cannot be a gene.}
 
 \item{...}{Additional arguments to pass to the plot function}
 }
