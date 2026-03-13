@@ -26,7 +26,7 @@ VizSeuratCellQC(
 
 - features:
 
-  Features to visualize
+  Features to visualize, genes are supported.
 
 - plot_type:
 
@@ -51,7 +51,12 @@ VizSeuratCellQC(
 - layer:
 
   Layer used to extract expression if genes are included in features.
-  Default is "counts".
+  Default is "counts". If the specified layer is not found, it will look
+  for layers with the specified layer as prefix, for example
+  "counts.raw" or "counts.filtered". And then the corresponding features
+  will be suffixed with the layer name, for example "MS4A1.counts.raw"
+  or "MS4A1.counts.filtered". Note that if there are multiple layers
+  with the specified layer as prefix, scatter_x cannot be a gene.
 
 - ...:
 

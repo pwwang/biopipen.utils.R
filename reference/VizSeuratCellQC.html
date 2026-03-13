@@ -60,7 +60,7 @@
 
 
 <dt id="arg-features">features<a class="anchor" aria-label="anchor" href="#arg-features"></a></dt>
-<dd><p>Features to visualize</p></dd>
+<dd><p>Features to visualize, genes are supported.</p></dd>
 
 
 <dt id="arg-plot-type">plot_type<a class="anchor" aria-label="anchor" href="#arg-plot-type"></a></dt>
@@ -84,7 +84,10 @@ If it is one of the features, it will be removed from the features</p></dd>
 
 
 <dt id="arg-layer">layer<a class="anchor" aria-label="anchor" href="#arg-layer"></a></dt>
-<dd><p>Layer used to extract expression if genes are included in features. Default is "counts".</p></dd>
+<dd><p>Layer used to extract expression if genes are included in features. Default is "counts".
+If the specified layer is not found, it will look for layers with the specified layer as prefix, for example "counts.raw" or "counts.filtered".
+And then the corresponding features will be suffixed with the layer name, for example "MS4A1.counts.raw" or "MS4A1.counts.filtered".
+Note that if there are multiple layers with the specified layer as prefix, scatter_x cannot be a gene.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
