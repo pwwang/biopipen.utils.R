@@ -51,12 +51,9 @@ VizSeuratCellQC(
 - layer:
 
   Layer used to extract expression if genes are included in features.
-  Default is "counts". If the specified layer is not found, it will look
-  for layers with the specified layer as prefix, for example
-  "counts.raw" or "counts.filtered". And then the corresponding features
-  will be suffixed with the layer name, for example "MS4A1.counts.raw"
-  or "MS4A1.counts.filtered". Note that if there are multiple layers
-  with the specified layer as prefix, scatter_x cannot be a gene.
+  Default is "counts". If the specified layer is not found, and there
+  are layers with the specified layer as prefix, it will join layers
+  first and try again.
 
 - ...:
 
