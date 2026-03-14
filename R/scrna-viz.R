@@ -126,9 +126,7 @@ VizDEGs <- function(
 #' @param palette Color palette to use
 #' @param assay Assay used to extract expression if genes are included in features. Default is "RNA".
 #' @param layer Layer used to extract expression if genes are included in features. Default is "counts".
-#' If the specified layer is not found, it will look for layers with the specified layer as prefix, for example "counts.raw" or "counts.filtered".
-#' And then the corresponding features will be suffixed with the layer name, for example "MS4A1.counts.raw" or "MS4A1.counts.filtered".
-#' Note that if there are multiple layers with the specified layer as prefix, scatter_x cannot be a gene.
+#' If the specified layer is not found, and there are layers with the specified layer as prefix, it will join layers first and try again.
 #' @param ... Additional arguments to pass to the plot function
 #' @return The plot
 #' @export
@@ -175,30 +173,23 @@ VizSeuratCellQC <- function(
         if (!assay %in% names(object@assays)) {
             stop(paste0("[VizSeuratQC] 'assay' not found in object: ", assay))
         }
-        layers <- SeuratObject::Layers(object@assays[[assay]])
-        orig_layer <- layer
-        if (!layer %in% layers) {
-            if (!any(startsWith(layers, paste0(layer, ".")))) {
-                stop(paste0("[VizSeuratQC] 'layer' or 'layer' with suffix not found in assay ", assay, ": ", layer))
-            }
-            # Multiple layers, could be raw data before merge/integration
-            layer <- layers[startsWith(layers, paste0(layer, "."))]
+        if (
+            !layer %in% SeuratObject::Layers(object@assays[[assay]]) &&
+            any(startsWith(SeuratObject::Layers(object@assays[[assay]]), paste0(layer, ".")))
+        ) {
+                warning(paste0("[VizSeuratQC] 'layer' not found in assay: ", layer, ". But found layers with the specified layer as prefix. Will join layers first."))
+                object <- SeuratObject::JoinLayers(object, assay = assay)
+                if (!layer %in% SeuratObject::Layers(object@assays[[assay]])) {
+                    stop(paste0("[VizSeuratQC] 'layer' not found in assay after joining layers: ", layer))
+                }
         }
-        for (ly in layer) {
-            expr_data <- SeuratObject::GetAssayData(object, assay = assay, layer = ly)
-            missing_genes <- setdiff(genes, rownames(expr_data))
-            if (length(missing_genes) > 0) {
-                stop(paste0("[VizSeuratQC] The following features are not found in either meta.data or assay data: ", paste(missing_genes, collapse = ", ")))
-            }
-            expr_data <- t(as.matrix(expr_data[genes, , drop = FALSE]))
-            if (length(layer) == 1) {
-                object@meta.data <- cbind(object@meta.data, expr_data)
-            } else {
-                colnames(expr_data) <- paste0(colnames(expr_data), ".", substring(ly, nchar(orig_layer) + 2))
-                object@meta.data <- cbind(object@meta.data, expr_data)
-                features <- unique(c(setdiff(features, genes), colnames(expr_data)))
-            }
+        expr_data <- SeuratObject::GetAssayData(object, assay = assay, layer = layer)
+        missing_genes <- setdiff(genes, rownames(expr_data))
+        if (length(missing_genes) > 0) {
+            stop(paste0("[VizSeuratQC] The following features are not found in either meta.data or assay data: ", paste(missing_genes, collapse = ", ")))
         }
+        expr_data <- t(as.matrix(expr_data[genes, , drop = FALSE]))
+        object@meta.data <- cbind(object@meta.data, expr_data)
     }
 
     plot_type <- match.arg(plot_type)
