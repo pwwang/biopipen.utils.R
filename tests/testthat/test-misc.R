@@ -49,6 +49,10 @@ test_that("slugify: works", {
     expect_equal(slugify("a 1", tolower = TRUE, non_alphanum_replace = "_", collapse_replace = FALSE), "a_1")
     expect_equal(slugify(c("a 1", "b 2", "c 3"), tolower = TRUE, non_alphanum_replace = "_", collapse_replace = FALSE), c("a_1", "b_2", "c_3"))
     expect_equal(slugify(c("A 1", "B 2", "C 3"), tolower = TRUE, non_alphanum_replace = "_", collapse_replace = FALSE), c("a_1", "b_2", "c_3"))
+    expect_equal(slugify("  a 1  ", non_alphanum_replace = "_", strip = "none"), "_a_1_")
+    expect_equal(slugify("  a 1  ", non_alphanum_replace = "_", strip = "both"), "a_1")
+    expect_equal(slugify("  a 1  ", non_alphanum_replace = "_", strip = "leading"), "a_1_")
+    expect_equal(slugify("  a 1  ", non_alphanum_replace = "_", strip = "trailing"), "_a_1")
 })
 
 test_that("html_escape: works", {

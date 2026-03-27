@@ -8,7 +8,8 @@ slugify(
   x,
   non_alphanum_replace = "-",
   collapse_replace = TRUE,
-  tolower = FALSE
+  tolower = FALSE,
+  strip = "both"
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ slugify(
 \item{collapse_replace}{Collapse consecutive non-alphanumeric character replacements}
 
 \item{tolower}{Convert to lowercase}
+
+\item{strip}{Whether to strip leading and trailing non-alphanumeric characters
+Possible values are "none", "both", "leading", "trailing". Default is "both".}
 }
 \value{
 slugified strings

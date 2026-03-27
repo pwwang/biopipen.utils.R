@@ -45,10 +45,12 @@ bQuote <- function(x, force = FALSE) {
 #' @param non_alphanum_replace Replace non-alphanumeric characters
 #' @param collapse_replace Collapse consecutive non-alphanumeric character replacements
 #' @param tolower Convert to lowercase
+#' @param strip Whether to strip leading and trailing non-alphanumeric characters
+#' Possible values are "none", "both", "leading", "trailing". Default is "both".
 #' @return slugified strings
 #' @export
 #' @importFrom stats setNames
-slugify <- function(x, non_alphanum_replace = "-", collapse_replace = TRUE, tolower = FALSE) {
+slugify <- function(x, non_alphanum_replace = "-", collapse_replace = TRUE, tolower = FALSE, strip = "both") {
     if (length(x) == 0) {
         return(x)
     }
@@ -86,11 +88,20 @@ slugify <- function(x, non_alphanum_replace = "-", collapse_replace = TRUE, tolo
             )
         }
         if (tolower) x <- tolower(x)
+        if (strip %in% c("both", "leading")) {
+            x <- sub(paste0("^", non_alphanum_replace, "+"), "", x)
+        }
+        if (strip %in% c("both", "trailing")) {
+            x <- sub(paste0(non_alphanum_replace, "+$"), "", x)
+        }
         ifelse(!is.null(xnames), setNames(x, xnames), x)
     } else {
         out <- sapply(
             x, slugify,
-            non_alphanum_replace = non_alphanum_replace, collapse_replace = collapse_replace, tolower = tolower
+            non_alphanum_replace = non_alphanum_replace,
+            collapse_replace = collapse_replace,
+            tolower = tolower,
+            strip = strip
         )
         if (is.null(names(x))) {
             unname(out)
