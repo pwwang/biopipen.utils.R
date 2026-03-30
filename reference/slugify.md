@@ -9,7 +9,8 @@ slugify(
   x,
   non_alphanum_replace = "-",
   collapse_replace = TRUE,
-  tolower = FALSE
+  tolower = FALSE,
+  strip = "both"
 )
 ```
 
@@ -30,6 +31,12 @@ slugify(
 - tolower:
 
   Convert to lowercase
+
+- strip:
+
+  Whether to strip leading and trailing non-alphanumeric characters
+  Possible values are "none", "both", "leading", "trailing". Default is
+  "both".
 
 ## Value
 

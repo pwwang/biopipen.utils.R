@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">biopipen.utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,8 @@
 <span>  <span class="va">x</span>,</span>
 <span>  non_alphanum_replace <span class="op">=</span> <span class="st">"-"</span>,</span>
 <span>  collapse_replace <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  tolower <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  tolower <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  strip <span class="op">=</span> <span class="st">"both"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -64,6 +65,11 @@
 
 <dt id="arg-tolower">tolower<a class="anchor" aria-label="anchor" href="#arg-tolower"></a></dt>
 <dd><p>Convert to lowercase</p></dd>
+
+
+<dt id="arg-strip">strip<a class="anchor" aria-label="anchor" href="#arg-strip"></a></dt>
+<dd><p>Whether to strip leading and trailing non-alphanumeric characters
+Possible values are "none", "both", "leading", "trailing". Default is "both".</p></dd>
 
 </dl></div>
     <div class="section level2">
