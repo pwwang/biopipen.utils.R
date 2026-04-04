@@ -2151,6 +2151,9 @@ RunSeuratMap2Ref <- function(
     object@meta.data[[paste0("predicted.", use)]] <- NULL
     object@meta.data[[ident]] <- factor(object@meta.data[[ident]], levels = unique(object@meta.data[[ident]]))
     Idents(object) <- ident
+    # TODO: Set default dim reduction to `ref.<MapQueryArgs$reduction.model>` if exists.
+    # Wait for SeuratObject v5.4.0
+    # See: https://github.com/satijalab/seurat-object/pull/268
 
     object <- AddMetaData(
         object,
