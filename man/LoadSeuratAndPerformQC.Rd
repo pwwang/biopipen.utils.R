@@ -8,6 +8,7 @@ LoadSeuratAndPerformQC(
   meta,
   min_cells = 0,
   min_features = 0,
+  features = NULL,
   samples = NULL,
   cell_qc = NULL,
   gene_qc = NULL,
@@ -50,6 +51,13 @@ and the values are the minimum number of features for each sample to load by
 You can have a default value in the list with the name "DEFAULT" for the samples
 that are not listed.
 This won't work if data is loaded from a loom file or \code{meta} is a Seurat object.}
+
+\item{features}{A named character vector/list or a file path to rename features.
+If a named vector/list is given, the names are the original feature names and the values are
+the new names.
+If a file path is given, it should be a TAB-delimited file with two columns (no header);
+lines beginning with '#' are ignored. The first column contains the original feature names
+and the second column the new names.}
 
 \item{samples}{Samples to load. If NULL, all samples will be loaded}
 

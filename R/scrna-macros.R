@@ -60,6 +60,41 @@
     rev(unique(rev(round(expanded_res, 2))))
 }
 
+#' Rename features in a Seurat object
+#' @param obj A Seurat object
+#' @param features_map A named character vector, where the names are the original feature names and the values are the new names
+#' @return A Seurat object with renamed features
+#' @keywords internal
+.rename_seurat_features <- function(obj, features_map) {
+    assay_name <- DefaultAssay(obj)
+    assay_obj <- obj[[assay_name]]
+    cur_names <- rownames(assay_obj)
+    mask <- cur_names %in% names(features_map)
+    if (!any(mask)) return(obj)
+    new_names <- cur_names
+    new_names[mask] <- features_map[cur_names[mask]]
+    if (inherits(assay_obj, "Assay5")) {
+        for (lyr in SeuratObject::Layers(assay_obj)) {
+            ldata <- SeuratObject::LayerData(obj, layer = lyr)
+            rownames(ldata) <- new_names
+            SeuratObject::LayerData(obj, layer = lyr) <- ldata
+        }
+    } else {
+        for (slt in c("counts", "data")) {
+            sdata <- methods::slot(assay_obj, slt)
+            if (!is.null(sdata) && prod(dim(sdata)) > 0) {
+                rownames(sdata) <- new_names
+                methods::slot(assay_obj, slt) <- sdata
+            }
+        }
+        if (!is.null(assay_obj@meta.features) && nrow(assay_obj@meta.features) > 0) {
+            rownames(assay_obj@meta.features) <- new_names
+        }
+        obj[[assay_name]] <- assay_obj
+    }
+    obj
+}
+
 #' Get the column name in meta.data that works as identity
 #'
 #' @param object Seurat object
@@ -431,6 +466,12 @@ PerformGeneQC <- function(object, gene_qc) {
 #' It can also be a list of expressions, where the names of the list are sample names.
 #' You can have a default expression in the list with the name "DEFAULT" for the samples
 #' that are not listed.
+#' @param features A named character vector/list or a file path to rename features.
+#' If a named vector/list is given, the names are the original feature names and the values are
+#' the new names.
+#' If a file path is given, it should be a TAB-delimited file with two columns (no header);
+#' lines beginning with '#' are ignored. The first column contains the original feature names
+#' and the second column the new names.
 #' @param gene_qc Gene QC criteria
 #' A list containing the following fields:
 #' * min_cells: Minimum number of cells a gene should be expressed in to be kept
@@ -468,6 +509,7 @@ LoadSeuratAndPerformQC <- function(
     meta,
     min_cells = 0,
     min_features = 0,
+    features = NULL,
     samples = NULL,
     cell_qc = NULL,
     gene_qc = NULL,
@@ -478,12 +520,35 @@ LoadSeuratAndPerformQC <- function(
     cache = NULL) {
     log <- log %||% get_logger()
 
+
+    features_map <- NULL
+    if (!is.null(features)) {
+        if (is.character(features) && length(features) == 1 && file.exists(features)) {
+            feat_lines <- readLines(features)
+            feat_lines <- feat_lines[!grepl("^#", feat_lines) & nzchar(feat_lines)]
+            feat_df <- utils::read.table(
+                text = paste(feat_lines, collapse = "\n"),
+                sep = "\t", header = FALSE, quote = "",
+                colClasses = "character", stringsAsFactors = FALSE
+            )
+            features_map <- stats::setNames(feat_df[[2]], feat_df[[1]])
+        } else {
+            if (is.list(features)) features <- unlist(features)
+            stopifnot(
+                "'features' must be a named vector/list or a file path to a TAB-delimited file" =
+                    is.character(features) && !is.null(names(features))
+            )
+            features_map <- features
+        }
+    }
+
     cache <- cache %||% gettempdir()
     cached <- Cache$new(
-        list(meta, min_cells, min_features, samples, cell_qc, gene_qc, LoadLoomArgs),
+        list(meta, min_cells, min_features, features_map, samples, cell_qc, gene_qc, LoadLoomArgs),
         prefix = "biopipen.utils.LoadSeuratAndPerformQC",
         cache_dir = cache
     )
+
     if (cached$is_cached()) {
         log$info("Initialized and QC'ed data loaded from cache")
         return(cached$restore())
@@ -643,7 +708,18 @@ LoadSeuratAndPerformQC <- function(
             }
             if (inherits(exprs, "Seurat")) {
                 obj <- exprs
+                if (!is.null(features_map)) {
+                    obj <- .rename_seurat_features(obj, features_map)
+                }
             } else {
+                if (!is.null(features_map)) {
+                    cur_names <- rownames(exprs)
+                    mask <- cur_names %in% names(features_map)
+                    if (any(mask)) {
+                        cur_names[mask] <- features_map[cur_names[mask]]
+                        rownames(exprs) <- cur_names
+                    }
+                }
                 obj <- CreateSeuratObject(
                     exprs, project = sam,
                     min.cells = minc, min.features = minf, meta.data = cell_meta
