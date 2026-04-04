@@ -9,6 +9,7 @@ LoadSeuratAndPerformQC(
   meta,
   min_cells = 0,
   min_features = 0,
+  features = NULL,
   samples = NULL,
   cell_qc = NULL,
   gene_qc = NULL,
@@ -70,6 +71,15 @@ LoadSeuratAndPerformQC(
   You can have a default value in the list with the name "DEFAULT" for
   the samples that are not listed. This won't work if data is loaded
   from a loom file or `meta` is a Seurat object.
+
+- features:
+
+  A named character vector/list or a file path to rename features. If a
+  named vector/list is given, the names are the original feature names
+  and the values are the new names. If a file path is given, it should
+  be a TAB-delimited file with two columns (no header); lines beginning
+  with '#' are ignored. The first column contains the original feature
+  names and the second column the new names.
 
 - samples:
 
@@ -138,10 +148,10 @@ meta <- data.frame(
     )
 )
 obj <- LoadSeuratAndPerformQC(meta, cache = FALSE, gene_qc = list(min_cells = 3))
-#> INFO    [2026-03-30 21:23:14] Loading each sample ...
-#> INFO    [2026-03-30 21:23:14] - Loading Sample1 and performing QC ...
-#> INFO    [2026-03-30 21:23:15] - Loading Sample2 and performing QC ...
-#> INFO    [2026-03-30 21:23:15] Merging samples ...
+#> INFO    [2026-04-04 05:33:32] Loading each sample ...
+#> INFO    [2026-04-04 05:33:32] - Loading Sample1 and performing QC ...
+#> INFO    [2026-04-04 05:33:32] - Loading Sample2 and performing QC ...
+#> INFO    [2026-04-04 05:33:33] Merging samples ...
 head(obj@misc$cell_qc_df)
 #> NULL
 print(obj@misc$gene_qc)

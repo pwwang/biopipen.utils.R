@@ -49,22 +49,6 @@ ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad")
 #> Registered S3 method overwritten by 'SeuratDisk':
 #>   method            from  
 #>   as.sparse.H5Group Seurat
-#> Creating h5Seurat file for version 3.1.5.9900
-#> Adding counts for RNA
-#> Adding data for RNA
-#> Adding scale.data for RNA
-#> Adding variable features for RNA
-#> Adding feature-level metadata for RNA
-#> Adding cell embeddings for pca
-#> Adding loadings for pca
-#> Adding projected loadings for pca
-#> Adding standard deviations for pca
-#> Adding JackStraw information for pca
-#> Adding cell embeddings for tsne
-#> No loadings for tsne
-#> No projected loadings for tsne
-#> No standard deviations for tsne
-#> No JackStraw data for tsne
 #> Validating h5Seurat file
 #> Adding scale.data from RNA as X
 #> Transfering meta.features to var
@@ -78,35 +62,6 @@ ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad")
 ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.g1.h5ad",
     subset = 'groups == "g1"'
 )
-#> Warning: Unquoting language objects with `!!!` is deprecated as of rlang 0.4.0. Please
-#> use `!!` instead.
-#> 
-#> # Bad: dplyr::select(data, !!!enquo(x))
-#> 
-#> # Good: dplyr::select(data, !!enquo(x)) # Unquote single quosure
-#> dplyr::select(data, !!!enquos(x)) # Splice list of quosures
-#> This warning is displayed once every 8 hours.
-#> Warning: `when()` was deprecated in purrr 1.0.0.
-#> ℹ Please use `if` instead.
-#> ℹ The deprecated feature was likely used in the tidyseurat package.
-#>   Please report the issue at
-#>   <https://github.com/stemangiola/tidyseurat/issues>.
-#> Creating h5Seurat file for version 3.1.5.9900
-#> Adding counts for RNA
-#> Adding data for RNA
-#> Adding scale.data for RNA
-#> Adding variable features for RNA
-#> Adding feature-level metadata for RNA
-#> Adding cell embeddings for pca
-#> Adding loadings for pca
-#> Adding projected loadings for pca
-#> Adding standard deviations for pca
-#> No JackStraw data for pca
-#> Adding cell embeddings for tsne
-#> No loadings for tsne
-#> No projected loadings for tsne
-#> No standard deviations for tsne
-#> No JackStraw data for tsne
 #> Validating h5Seurat file
 #> Adding scale.data from RNA as X
 #> Transfering meta.features to var
