@@ -70,11 +70,14 @@ VizSeuratMap2Ref(
 
 - reduction:
 
-  Dimensionality reduction to use for the plot. If NULL, the default
-  reduction will be used for both query and reference. If the format is
-  'reduction_q:reduction_r', the first part will be used for the query
-  and the second part for the reference. If the format is 'reduction',
-  the same reduction will be used for both query and reference.
+  Dimensionality reduction to use for the plot. Support `NULL`,
+  `reduction` and `reduction_q:reduction_r`. If `NULL`, the default
+  dimensionality reduction of reference will be used and then "single
+  reduction" rule will be applied. If a single reduction is provided,
+  `ref.<reduction>` will be used for query and `<reduction>` will be
+  used for reference. If the format is `reduction_q:reduction_r`,
+  `reduction_q` will be used for query and `reduction_r` will be used
+  for reference.
 
 - ident:
 
