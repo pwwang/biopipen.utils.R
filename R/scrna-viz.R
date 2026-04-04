@@ -441,9 +441,10 @@ VizSeuratDoublets <- function(object, plot_type = c("dim", "pie", "pk", "pK"), p
 #'   If the features are factor/character, [scplotter::CellDimPlot()] will be used.
 #' * other: [scplotter::FeatureStatPlot()] will be used.
 #' @param reduction Dimensionality reduction to use for the plot.
-#' If NULL, the default reduction will be used for both query and reference.
-#' If the format is 'reduction_q:reduction_r', the first part will be used for the query and the second part for the reference.
-#' If the format is 'reduction', the same reduction will be used for both query and reference.
+#' Support `NULL`, `reduction` and `reduction_q:reduction_r`.
+#' If `NULL`, the default dimensionality reduction of reference will be used and then "single reduction" rule will be applied.
+#' If a single reduction is provided, `ref.<reduction>` will be used for query and `<reduction>` will be used for reference.
+#' If the format is `reduction_q:reduction_r`, `reduction_q` will be used for query and `reduction_r` will be used for reference.
 #' @param ident Column name in the query and reference object to use for the plot.
 #' If NULL, the default identity will be used for both query and reference.
 #' If the format is 'ident_q:ident_r', the first part will be used for the query and the second part for the reference.
@@ -564,13 +565,14 @@ VizSeuratMap2Ref <- function(
     }
 
     if (is.null(reduction)) {
-        reduction_q <- DefaultDimReduc(query)
         reduction_r <- DefaultDimReduc(ref)
+        reduction_q <- paste0("ref.", reduction_r)
     } else if (grepl(":", reduction)) {
         reduction_q <- strsplit(reduction, ":")[[1]][1]
         reduction_r <- strsplit(reduction, ":")[[1]][2]
     } else {
-        reduction_q <- reduction_r <- reduction
+        reduction_q <- paste0("ref.", reduction)
+        reduction_r <- reduction
     }
 
     combine_plots <- getFromNamespace("combine_plots", "plotthis")

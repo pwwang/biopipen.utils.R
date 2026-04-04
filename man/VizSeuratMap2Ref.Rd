@@ -49,9 +49,10 @@ If the features are factor/character, \code{\link[scplotter:CellDimPlot]{scplott
 }}
 
 \item{reduction}{Dimensionality reduction to use for the plot.
-If NULL, the default reduction will be used for both query and reference.
-If the format is 'reduction_q:reduction_r', the first part will be used for the query and the second part for the reference.
-If the format is 'reduction', the same reduction will be used for both query and reference.}
+Support \code{NULL}, \code{reduction} and \code{reduction_q:reduction_r}.
+If \code{NULL}, the default dimensionality reduction of reference will be used and then "single reduction" rule will be applied.
+If a single reduction is provided, \verb{ref.<reduction>} will be used for query and \verb{<reduction>} will be used for reference.
+If the format is \code{reduction_q:reduction_r}, \code{reduction_q} will be used for query and \code{reduction_r} will be used for reference.}
 
 \item{ident}{Column name in the query and reference object to use for the plot.
 If NULL, the default identity will be used for both query and reference.
