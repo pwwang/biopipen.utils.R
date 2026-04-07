@@ -2081,8 +2081,11 @@ RunSeuratMap2Ref <- function(
     }
 
     log$info("Running FindTransferAnchors ...")
-    FindTransferAnchorsArgs$reference.reduction <- FindTransferAnchorsArgs$reference.reduction %||%
-        MapQueryArgs$reference.reduction %||% Reductions(reference)[1]
+    FindTransferAnchorsArgs$reduction <- FindTransferAnchorsArgs$reduction %||% "pcaproject"
+    if (!identical(FindTransferAnchorsArgs$reduction, "cca")) {
+        FindTransferAnchorsArgs$reference.reduction <- FindTransferAnchorsArgs$reference.reduction %||%
+            MapQueryArgs$reference.reduction %||% Reductions(reference)[1]
+    }
     if (!is.null(FindTransferAnchorsArgs$dims)) {
         FindTransferAnchorsArgs$dims <- .expand_number(FindTransferAnchorsArgs$dims)
     }
