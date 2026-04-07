@@ -470,7 +470,7 @@ VizSeuratDoublets <- function(object, plot_type = c("dim", "pie", "pk", "pK"), p
 #' @importFrom plotthis palette_this
 #' @importFrom scplotter CellDimPlot FeatureStatPlot
 VizSeuratMap2Ref <- function(
-    query, ref, features,
+    query, ref, features = NULL,
     split_by = NULL,
     plot_type = c("dim", "violin", "box", "bar", "ridge", "heatmap", "dot"),
     reduction = NULL,
@@ -485,8 +485,12 @@ VizSeuratMap2Ref <- function(
     design = NULL,
     ...) {
     stopifnot("[VizSeuratMap2Ref] 'query' and 'ref' must be Seurat objects" = inherits(query, "Seurat") && inherits(ref, "Seurat"))
-    stopifnot("[VizSeuratMap2Ref] 'features' must be a character vector" = is.character(features))
+    stopifnot("[VizSeuratMap2Ref] 'features' must be a character vector" = is.character(features) || is.null(features))
     stopifnot("[VizSeuratMap2Ref] 'split_by' is not supported" = is.null(split_by))
+
+    if (missing(features) || length(features) == 0) {
+        features <- paste0(ident_q, ":", ident_r)
+    }
 
     plot_type <- match.arg(plot_type)
     feat_types <- c()
