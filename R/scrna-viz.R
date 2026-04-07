@@ -488,6 +488,30 @@ VizSeuratMap2Ref <- function(
     stopifnot("[VizSeuratMap2Ref] 'features' must be a character vector" = is.character(features) || is.null(features))
     stopifnot("[VizSeuratMap2Ref] 'split_by' is not supported" = is.null(split_by))
 
+    if (is.null(ident)) {
+        # Find the ident column in meta.data
+        ident_q <- GetIdentityColumn(query)
+        ident_r <- GetIdentityColumn(ref)
+        if (is.null(ident_q)) {
+            query@meta.data$Identity <- Idents(query)
+            ident_q <- "Identity"
+        }
+        if (is.null(ident_r)) {
+            ref@meta.data$Identity <- Idents(ref)
+            ident_r <- "Identity"
+        }
+    } else if (grepl(":", ident)) {
+        ident_q <- strsplit(ident, ":")[[1]][1]
+        ident_r <- strsplit(ident, ":")[[1]][2]
+    } else {
+        ident_q <- ident_r <- ident
+    }
+    if (!is.factor(ref@meta.data[[ident_r]])) {
+        ref@meta.data[[ident_r]] <- factor(ref@meta.data[[ident_r]])
+    }
+    ref@meta.data[[ident_r]] <- droplevels(ref@meta.data[[ident_r]])
+    query@meta.data[[ident_q]] <- factor(query@meta.data[[ident_q]], levels = levels(ref@meta.data[[ident_r]]))
+
     if (missing(features) || length(features) == 0) {
         features <- paste0(ident_q, ":", ident_r)
     }
@@ -581,25 +605,14 @@ VizSeuratMap2Ref <- function(
 
     combine_plots <- getFromNamespace("combine_plots", "plotthis")
     if (isTRUE(is_mappingscore_case)) {
-        ident_r <- NULL
-        for (name in colnames(ref@meta.data)) {
-            if (!is.factor(ref@meta.data[[name]])) next
-            if (all(as.character(Idents(ref)) == as.character(ref@meta.data[[name]]))) {
-                ident_r <- name
-                break
-            }
-        }
-        if (is.null(ident_r)) {
-            ref@meta.data$Identity <- Idents(ref)
-            ident_r <- "Identity"
-        }
         p_q <- FeatureStatPlot(
             query,
             features = features_q,
             plot_type = plot_type,
-            ident = ident_r,
+            ident = ident_q,
             reduction = reduction_q,
             title = paste0("Query Dataset: ", features_q),
+            keep_empty = TRUE,
             ...
         )
         p_r <- CellDimPlot(
@@ -622,6 +635,7 @@ VizSeuratMap2Ref <- function(
                 group_by = feat,
                 reduction = reduction_q,
                 title = paste0("Query: ", feat),
+                keep_empty = TRUE,
                 ...
             )
         })
@@ -640,29 +654,6 @@ VizSeuratMap2Ref <- function(
             guides = guides, design = design
         )
     } else {
-        if (is.null(ident)) {
-            if (plot_type != "dim") {
-                # Find the ident column in meta.data
-                ident_q <- GetIdentityColumn(query)
-                ident_r <- GetIdentityColumn(ref)
-                if (is.null(ident_q)) {
-                    query@meta.data$Identity <- Idents(query)
-                    ident_q <- "Identity"
-                }
-                if (is.null(ident_r)) {
-                    ref@meta.data$Identity <- Idents(ref)
-                    ident_r <- "Identity"
-                }
-            } else {
-                # We don't need ident for feature dim plot
-                ident_q <- ident_r <- NULL
-            }
-        } else if (grepl(":", ident)) {
-            ident_q <- strsplit(ident, ":")[[1]][1]
-            ident_r <- strsplit(ident, ":")[[1]][2]
-        } else {
-            ident_q <- ident_r <- ident
-        }
         p_q <- FeatureStatPlot(
             query,
             features = features_q,
@@ -670,6 +661,7 @@ VizSeuratMap2Ref <- function(
             ident = ident_q,
             reduction = reduction_q,
             title = if (length(features_q) == 1) paste0("Query Dataset: ", features_q) else "Query Dataset",
+            keep_empty = TRUE,
             ...
         )
         p_r <- FeatureStatPlot(
