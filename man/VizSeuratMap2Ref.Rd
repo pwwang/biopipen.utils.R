@@ -7,7 +7,7 @@
 VizSeuratMap2Ref(
   query,
   ref,
-  features,
+  features = NULL,
   split_by = NULL,
   plot_type = c("dim", "violin", "box", "bar", "ridge", "heatmap", "dot"),
   reduction = NULL,
