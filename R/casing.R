@@ -75,7 +75,7 @@ case_info <- function(name, outdir, is_dir = TRUE, create = FALSE) {
     if (is.null(section)) {
         out$prefix <- file.path(outdir, out$slug)
     } else {
-        out$prefix <- file.path(outdir, paste(out$section_slug, collapse = "-"), out$slug)
+        out$prefix <- rlang::exec(file.path, !!!c(outdir, out$section_slug, out$slug))
     }
     if (isTRUE(create)) {
         if (isTRUE(is_dir)) {
