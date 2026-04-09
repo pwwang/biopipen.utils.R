@@ -10,13 +10,14 @@
 #' @export
 #' @importFrom rlang parse_expr
 #' @importFrom dplyr mutate
+#' @seealso [MutateSeuratMeta()]
 #' @examples
 #' \donttest{
 #' data(contig_list, package = "scRepertoire")
 #' screp <- scRepertoire::combineTCR(contig_list)
-#' head(ScRepMutate(screp, list(CTaa_len = "nchar(CTaa)"))[[1]])
+#' head(MutateScRep(screp, list(CTaa_len = "nchar(CTaa)"))[[1]])
 #' }
-ScRepMutate <- function(screp, mutaters, log = NULL) {
+MutateScRep <- function(screp, mutaters, log = NULL) {
     if (length(mutaters) == 0 || is.null(mutaters)) {
         return (screp)
     }
@@ -35,6 +36,11 @@ ScRepMutate <- function(screp, mutaters, log = NULL) {
 
     screp
 }
+
+#' Alias of MutateScRep
+#' @export
+#' @rdname MutateScRep
+ScRepMutate <- MutateScRep
 
 #' Subset scRepertorie object
 #'
