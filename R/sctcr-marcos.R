@@ -1,7 +1,11 @@
 #' Mutate scRepertorie object
 #'
 #' @param screp The scRepertorie object. It is either a Seurat object or a list of data.frames
-#' @param mutaters A list of expressions (in characters) to mutate the data
+#' @param mutaters A named list of mutater expressions, where the names are the new column names
+#' and the values are the expressions to mutate the columns
+#' The name with the suffix `:ident` will be used as the new identity column (only for Seurat object)
+#' The values can be either character strings of expressions to be parsed
+#' @param log Logger object to log the messages. If NULL, the default logger will be used.
 #' @return The mutated scRepertorie object
 #' @export
 #' @importFrom rlang parse_expr
@@ -12,15 +16,16 @@
 #' screp <- scRepertoire::combineTCR(contig_list)
 #' head(ScRepMutate(screp, list(CTaa_len = "nchar(CTaa)"))[[1]])
 #' }
-ScRepMutate <- function(screp, mutaters) {
+ScRepMutate <- function(screp, mutaters, log = NULL) {
     if (length(mutaters) == 0 || is.null(mutaters)) {
         return (screp)
     }
 
-    mutaters <- lapply(mutaters, parse_expr)
     if (inherits(screp, "Seurat")) {
-        screp@meta.data <- mutate(screp@meta.data, !!!mutaters)
+        screp <- MutateSeuratMeta(screp, mutaters, log = log)
     } else {
+        mutaters <- lapply(mutaters, as.character)
+        mutaters <- lapply(mutaters, parse_expr)
         screp <- sapply(names(screp), function(x) {
             y <- screp[[x]]
             y$Sample <- x

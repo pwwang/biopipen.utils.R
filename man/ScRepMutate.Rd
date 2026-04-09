@@ -4,12 +4,17 @@
 \alias{ScRepMutate}
 \title{Mutate scRepertorie object}
 \usage{
-ScRepMutate(screp, mutaters)
+ScRepMutate(screp, mutaters, log = NULL)
 }
 \arguments{
 \item{screp}{The scRepertorie object. It is either a Seurat object or a list of data.frames}
 
-\item{mutaters}{A list of expressions (in characters) to mutate the data}
+\item{mutaters}{A named list of mutater expressions, where the names are the new column names
+and the values are the expressions to mutate the columns
+The name with the suffix \verb{:ident} will be used as the new identity column (only for Seurat object)
+The values can be either character strings of expressions to be parsed}
+
+\item{log}{Logger object to log the messages. If NULL, the default logger will be used.}
 }
 \value{
 The mutated scRepertorie object
