@@ -248,6 +248,13 @@ VizGSEA <- function(
                     filter(!!sym("ID") %in% signif_pw)
             }
             gsea_results <- filter(gsea_results, !is.na(!!parse_expr(signif_by)))
+            if (nrow(gsea_results) == 0) {
+                stop(
+                    "[VizGSEA] No significant pathways found with the given cutoff (",
+                    signif_by, " < ", max(signif_cutoff), "). ",
+                    "Try adjusting the cutoff or setting 'signif_only = FALSE'."
+                )
+            }
             signif_df <- gsea_results[, c("ID", group_by, signif_by), drop = FALSE] %>%
                 tidyr::pivot_wider(
                     names_from = group_by,
