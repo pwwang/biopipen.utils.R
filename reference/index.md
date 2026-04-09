@@ -30,6 +30,13 @@
 - [`LoadSeuratAndPerformQC()`](https://pwwang.github.io/biopipen.utils.R/reference/LoadSeuratAndPerformQC.md)
   : Load samples into a Seurat object
 
+- [`MutateScRep()`](https://pwwang.github.io/biopipen.utils.R/reference/MutateScRep.md)
+  [`ScRepMutate()`](https://pwwang.github.io/biopipen.utils.R/reference/MutateScRep.md)
+  : Mutate scRepertorie object
+
+- [`MutateSeuratMeta()`](https://pwwang.github.io/biopipen.utils.R/reference/MutateSeuratMeta.md)
+  : Mutater the Seurat metadata
+
 - [`PerformGeneQC()`](https://pwwang.github.io/biopipen.utils.R/reference/PerformGeneQC.md)
   : Perform gene QC
 
@@ -74,9 +81,6 @@
 
 - [`RunSeuratUMAP()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratUMAP.md)
   : Run seurat UMAP
-
-- [`ScRepMutate()`](https://pwwang.github.io/biopipen.utils.R/reference/ScRepMutate.md)
-  : Mutate scRepertorie object
 
 - [`ScRepSubset()`](https://pwwang.github.io/biopipen.utils.R/reference/ScRepSubset.md)
   : Subset scRepertorie object
