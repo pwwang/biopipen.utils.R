@@ -95,6 +95,54 @@
     obj
 }
 
+#' Mutater the Seurat metadata
+#'
+#' @param object Seurat object
+#' @param mutaters A named list of mutater expressions, where the names are the new column names
+#' and the values are the expressions to mutate the columns
+#' The name with the suffix `:ident` will be used as the new identity column
+#' The values can be either character strings of expressions to be parsed
+#' @param log Logger object to log the messages. If NULL, the default logger will be used.
+#' @return A Seurat object with mutated metadata
+#' @importFrom dplyr mutate
+#' @importFrom rlang parse_expr %||%
+#' @importFrom SeuratObject Idents
+#' @export
+#' @examples
+#' \donttest{
+#' obj <- MutateSeuratMeta(
+#'     SeuratObject::pbmc_small,
+#'     list(a = 1, `g:ident` = "paste0(groups, '_ident')")
+#' )
+#' head(obj@meta.data[, c("a", "g")])
+#' GetIdentityColumn(obj)
+#' }
+MutateSeuratMeta <- function(object, mutaters, log = NULL) {
+    if (length(mutaters) == 0 || is.null(mutaters)) {
+        return (object)
+    }
+    ident_keys <- names(mutaters)[grepl(":ident$", names(mutaters))]
+    if (length(ident_keys) > 1) {
+        stop("Only one ident mutater is allowed, but found multiple: ", paste(ident_keys, collapse=", "))
+    }
+    log <- log %||% get_logger()
+    new_ident_col <- NULL
+    if (length(ident_keys) == 1) {
+        new_ident_col <- sub(":ident$", "", ident_keys[1])
+        mutaters[[new_ident_col]] <- mutaters[[ident_keys[1]]]
+        mutaters[[ident_keys[1]]] <- NULL
+    }
+    mutaters <- lapply(mutaters, as.character)
+    object@meta.data <- mutate(object@meta.data, !!!lapply(mutaters, parse_expr))
+
+    if (!is.null(new_ident_col)) {
+        log$info("Setting the new identity column to '{}'", new_ident_col)
+        Idents(object) <- new_ident_col
+    }
+
+    object
+}
+
 #' Get the column name in meta.data that works as identity
 #'
 #' @param object Seurat object
