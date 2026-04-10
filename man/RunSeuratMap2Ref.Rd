@@ -39,7 +39,12 @@ The same normalization method will be used for the query.
 \item "SCTransform": SCTransform (alias for SCT)
 }}
 
-\item{skip_if_normalized}{Skip normalization if the query is already normalized with the same method as the reference}
+\item{skip_if_normalized}{For LogNormalize, skip \code{\link[Seurat:NormalizeData]{Seurat::NormalizeData()}} if the query's default
+assay is already 'RNA' (i.e., already log-normalized).
+For SCT with \code{FindTransferAnchorsArgs$recompute.residuals = FALSE}, skip \code{\link[Seurat:SCTransform]{Seurat::SCTransform()}} if
+the default assay is already 'SCT'.
+This parameter has no effect in the default SCT case (\code{recompute.residuals = TRUE}), where
+\code{\link[Seurat:FindTransferAnchors]{Seurat::FindTransferAnchors()}} handles normalization internally using the reference model.}
 
 \item{split_by}{The name of the metadata to split the query object by and do the mapping separately}
 
@@ -51,7 +56,10 @@ The \code{use} argument will be added to the \code{refdata} list.}
 \item{FindTransferAnchorsArgs}{Arguments to pass to \code{\link[Seurat:FindTransferAnchors]{Seurat::FindTransferAnchors()}}.}
 
 \item{SCTransformArgs}{Arguments to pass to \code{\link[Seurat:SCTransform]{Seurat::SCTransform()}}.
-Will be used to normalize the query object if \code{refnorm} is set to "SCT"}
+Only used when \code{refnorm} is set to "SCT" AND \code{FindTransferAnchorsArgs$recompute.residuals} is
+explicitly set to \code{FALSE}. In the default case (\code{recompute.residuals = TRUE}),
+\code{\link[Seurat:FindTransferAnchors]{Seurat::FindTransferAnchors()}} recomputes query residuals from raw counts using the reference
+SCT model, making manual \code{\link[Seurat:SCTransform]{Seurat::SCTransform()}} on the query unnecessary.}
 
 \item{NormalizeDataArgs}{Arguments to pass to \code{\link[Seurat:NormalizeData]{Seurat::NormalizeData()}}.
 Will be used to normalize the query object if \code{refnorm} is set to "LogNormalize"}
@@ -64,8 +72,17 @@ Will be used to normalize the query object if \code{refnorm} is set to "LogNorma
 The Seurat object with the mapped data
 }
 \description{
-This will normalize the query object, find transfer anchors, and map the query to the reference.
+This will find transfer anchors between query and reference, and map the query to the reference.
+For SCT-normalized references, \code{\link[Seurat:FindTransferAnchors]{Seurat::FindTransferAnchors()}} handles query normalization internally
+by recomputing residuals using the reference's SCT model (\code{recompute.residuals = TRUE} by default),
+so a manual call to \code{\link[Seurat:SCTransform]{Seurat::SCTransform()}} on the query is NOT needed.
+For LogNormalize references, the query is normalized with \code{\link[Seurat:NormalizeData]{Seurat::NormalizeData()}} prior to anchor
+finding.
 }
 \seealso{
 https://satijalab.org/seurat/articles/integration_mapping.html
+
+https://satijalab.org/seurat/articles/multimodal_reference_mapping.html
+
+https://satijalab.org/seurat/articles/covid_sctmapping
 }

@@ -1898,8 +1898,15 @@ RunSeuratDoubletDetection <- function(
 
 #' Run Seurat MapQuery to reference
 #'
-#' This will normalize the query object, find transfer anchors, and map the query to the reference.
+#' This will find transfer anchors between query and reference, and map the query to the reference.
+#' For SCT-normalized references, [Seurat::FindTransferAnchors()] handles query normalization internally
+#' by recomputing residuals using the reference's SCT model (`recompute.residuals = TRUE` by default),
+#' so a manual call to [Seurat::SCTransform()] on the query is NOT needed.
+#' For LogNormalize references, the query is normalized with [Seurat::NormalizeData()] prior to anchor
+#' finding.
 #' @seealso https://satijalab.org/seurat/articles/integration_mapping.html
+#' @seealso https://satijalab.org/seurat/articles/multimodal_reference_mapping.html
+#' @seealso https://satijalab.org/seurat/articles/covid_sctmapping
 #'
 #' @param object Seurat object
 #' @param ref Reference Seurat object or a file path to a Seurat object with .rds or .h5seurat extension
@@ -1911,14 +1918,22 @@ RunSeuratDoubletDetection <- function(
 #' * "LogNormalize": LogNormalize
 #' * "SCT": SCTransform
 #' * "SCTransform": SCTransform (alias for SCT)
-#' @param skip_if_normalized Skip normalization if the query is already normalized with the same method as the reference
+#' @param skip_if_normalized For LogNormalize, skip [Seurat::NormalizeData()] if the query's default
+#' assay is already 'RNA' (i.e., already log-normalized).
+#' For SCT with `FindTransferAnchorsArgs$recompute.residuals = FALSE`, skip [Seurat::SCTransform()] if
+#' the default assay is already 'SCT'.
+#' This parameter has no effect in the default SCT case (`recompute.residuals = TRUE`), where
+#' [Seurat::FindTransferAnchors()] handles normalization internally using the reference model.
 #' @param split_by The name of the metadata to split the query object by and do the mapping separately
 #' @param ncores Number of cores to use for parallel processing for the split query objects
 #' @param MapQueryArgs Arguments to pass to [Seurat::MapQuery()].
 #' The `use` argument will be added to the `refdata` list.
 #' @param FindTransferAnchorsArgs Arguments to pass to [Seurat::FindTransferAnchors()].
 #' @param SCTransformArgs Arguments to pass to [Seurat::SCTransform()].
-#' Will be used to normalize the query object if `refnorm` is set to "SCT"
+#' Only used when `refnorm` is set to "SCT" AND `FindTransferAnchorsArgs$recompute.residuals` is
+#' explicitly set to `FALSE`. In the default case (`recompute.residuals = TRUE`),
+#' [Seurat::FindTransferAnchors()] recomputes query residuals from raw counts using the reference
+#' SCT model, making manual [Seurat::SCTransform()] on the query unnecessary.
 #' @param NormalizeDataArgs Arguments to pass to [Seurat::NormalizeData()].
 #' Will be used to normalize the query object if `refnorm` is set to "LogNormalize"
 #' @param log Logger
@@ -2078,13 +2093,27 @@ RunSeuratMap2Ref <- function(
         object <- SplitObject(object, split.by = split_by)
     }
 
-    if (refnorm == "SCT" && defassay == "SCT" && skip_if_normalized) {
+    # When normalization.method = "SCT" with recompute.residuals = TRUE (FindTransferAnchors default),
+    # the function internally computes query residuals using the reference's SCT model from raw counts.
+    # Manual SCTransform on the query is therefore NOT needed and would be redundant, since those
+    # residuals are overridden internally anyway. Manual SCTransform is only needed when
+    # recompute.residuals = FALSE is explicitly set by the user.
+    sct_needs_precompute <- isFALSE(FindTransferAnchorsArgs$recompute.residuals %||% TRUE)
+
+    if (refnorm == "SCT" && !sct_needs_precompute) {
+        log$info(paste0(
+            "Skipping manual SCT normalization of query: ",
+            "FindTransferAnchors will compute query residuals using the reference ",
+            "SCT model internally (recompute.residuals = TRUE)."
+        ))
+    } else if (refnorm == "SCT" && defassay == "SCT" && skip_if_normalized) {
         log$info("Skipping query normalization, already normalized with SCT")
     } else if (refnorm == "LogNormalize" && defassay == "RNA" && skip_if_normalized) {
         log$info("Skipping query normalization, already normalized with LogNormalize")
     } else {
         if (refnorm == "SCT") {
-            log$info("Normalizing query with SCT ...")
+            # Only reached when recompute.residuals = FALSE is explicitly set
+            log$info("Normalizing query with SCT (recompute.residuals = FALSE) ...")
             if (!is.null(split_by)) {
                 object <- mclapply(
                     X = object,
@@ -2129,6 +2158,19 @@ RunSeuratMap2Ref <- function(
     }
 
     log$info("Running FindTransferAnchors ...")
+    # If the reference is LogNormalize but the query default assay is SCT, explicitly
+    # direct FindTransferAnchors to use the RNA assay to avoid the error:
+    # "An SCT assay was provided for query.assay but normalization.method was set as LogNormalize"
+    if (refnorm == "LogNormalize" && is.null(FindTransferAnchorsArgs$query.assay)) {
+        query_defassay <- if (is.list(object)) DefaultAssay(object[[1]]) else DefaultAssay(object)
+        if (query_defassay != "RNA") {
+            log$warn(paste0(
+                "Query default assay is '", query_defassay, "' but refnorm is 'LogNormalize'. ",
+                "Setting query.assay = 'RNA' for FindTransferAnchors."
+            ))
+            FindTransferAnchorsArgs$query.assay <- "RNA"
+        }
+    }
     FindTransferAnchorsArgs$reduction <- FindTransferAnchorsArgs$reduction %||% "pcaproject"
     if (!identical(FindTransferAnchorsArgs$reduction, "cca")) {
         FindTransferAnchorsArgs$reference.reduction <- FindTransferAnchorsArgs$reference.reduction %||%
