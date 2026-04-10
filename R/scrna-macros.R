@@ -2135,6 +2135,12 @@ RunSeuratMap2Ref <- function(
             }
         } else { # LogNormalize
             log$info("Normalizing query with LogNormalize ...")
+            # If the query's default assay is SCT, explicitly target the RNA assay so that
+            # NormalizeData operates on RNA rather than the SCT assay (which would be incorrect
+            # and leave the RNA assay un-normalized, causing CCA to crash on bad data).
+            if (is.null(NormalizeDataArgs$assay) && defassay != "RNA") {
+                NormalizeDataArgs$assay <- "RNA"
+            }
             if (!is.null(split_by)) {
                 object <- mclapply(
                     X = object,
