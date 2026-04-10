@@ -1,7 +1,16 @@
 # Run Seurat MapQuery to reference
 
-This will normalize the query object, find transfer anchors, and map the
-query to the reference.
+This will find transfer anchors between query and reference, and map the
+query to the reference. For SCT-normalized references,
+[`Seurat::FindTransferAnchors()`](https://satijalab.org/seurat/reference/FindTransferAnchors.html)
+handles query normalization internally by recomputing residuals using
+the reference's SCT model (`recompute.residuals = TRUE` by default), so
+a manual call to
+[`Seurat::SCTransform()`](https://satijalab.org/seurat/reference/SCTransform.html)
+on the query is NOT needed. For LogNormalize references, the query is
+normalized with
+[`Seurat::NormalizeData()`](https://satijalab.org/seurat/reference/NormalizeData.html)
+prior to anchor finding.
 
 ## Usage
 
@@ -60,8 +69,16 @@ RunSeuratMap2Ref(
 
 - skip_if_normalized:
 
-  Skip normalization if the query is already normalized with the same
-  method as the reference
+  For LogNormalize, skip
+  [`Seurat::NormalizeData()`](https://satijalab.org/seurat/reference/NormalizeData.html)
+  if the query's default assay is already 'RNA' (i.e., already
+  log-normalized). For SCT with
+  `FindTransferAnchorsArgs$recompute.residuals = FALSE`, skip
+  [`Seurat::SCTransform()`](https://satijalab.org/seurat/reference/SCTransform.html)
+  if the default assay is already 'SCT'. This parameter has no effect in
+  the default SCT case (`recompute.residuals = TRUE`), where
+  [`Seurat::FindTransferAnchors()`](https://satijalab.org/seurat/reference/FindTransferAnchors.html)
+  handles normalization internally using the reference model.
 
 - split_by:
 
@@ -88,8 +105,14 @@ RunSeuratMap2Ref(
 
   Arguments to pass to
   [`Seurat::SCTransform()`](https://satijalab.org/seurat/reference/SCTransform.html).
-  Will be used to normalize the query object if `refnorm` is set to
-  "SCT"
+  Only used when `refnorm` is set to "SCT" AND
+  `FindTransferAnchorsArgs$recompute.residuals` is explicitly set to
+  `FALSE`. In the default case (`recompute.residuals = TRUE`),
+  [`Seurat::FindTransferAnchors()`](https://satijalab.org/seurat/reference/FindTransferAnchors.html)
+  recomputes query residuals from raw counts using the reference SCT
+  model, making manual
+  [`Seurat::SCTransform()`](https://satijalab.org/seurat/reference/SCTransform.html)
+  on the query unnecessary.
 
 - NormalizeDataArgs:
 
@@ -113,3 +136,7 @@ The Seurat object with the mapped data
 ## See also
 
 https://satijalab.org/seurat/articles/integration_mapping.html
+
+https://satijalab.org/seurat/articles/multimodal_reference_mapping.html
+
+https://satijalab.org/seurat/articles/covid_sctmapping
