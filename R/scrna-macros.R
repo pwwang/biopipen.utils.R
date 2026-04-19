@@ -2253,6 +2253,7 @@ RunSeuratMap2Ref <- function(
     # TODO: Set default dim reduction to `ref.<MapQueryArgs$reduction.model>` if exists.
     # Wait for SeuratObject v5.4.0
     # See: https://github.com/satijalab/seurat-object/pull/268
+    scplotter:::default_dimreduc(object) <- paste0("ref.", MapQueryArgs$reduction.model)
 
     object <- AddMetaData(
         object,
