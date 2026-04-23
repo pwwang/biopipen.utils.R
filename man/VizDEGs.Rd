@@ -99,7 +99,13 @@ Default is 5 for \code{volcano}, \code{volcano_log2fc}, \code{volcano_pct}, \cod
 \item{...}{
   Arguments passed on to \code{\link[scplotter:MarkersPlot]{scplotter::MarkersPlot}}
   \describe{
-    \item{\code{}}{}
+    \item{\code{show_labels}}{Logical, whether to show the values in heatmap cells. Default is FALSE.
+Only works for \code{heatmap_log2fc} and \code{heatmap_pct}. If \code{cutoff} is provided, the significant cells will be labeled with \code{sig_mark}, otherwise all cells will be labeled with their values.}
+    \item{\code{sig_mark}}{Character, the symbol to use for significant markers in heatmap plots. Default is "\emph{".
+See \code{\link[plotthis:Heatmap]{plotthis::Heatmap()}} for more details.
+Note that "}" will not work if \code{show_labels} is TRUE, since they are both using \code{label} in \code{Heatmap}. Try
+other marks instead, e.g., \code{-}, \code{|}, \code{+}, \code{/}, \verb{\\\\}, \code{x}, \code{o}, or compound marks like \verb{[*]}, \verb{<*>}, \verb{(*)}, \verb{{*}}.
+Only works for \code{heatmap_log2fc} and \code{heatmap_pct}. If \code{cutoff} is provided, the significant cells will be labeled with \code{sig_mark}, otherwise all cells will be labeled with their values.}
   }}
 }
 \value{
