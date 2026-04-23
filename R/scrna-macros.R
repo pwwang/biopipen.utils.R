@@ -2260,7 +2260,8 @@ RunSeuratMap2Ref <- function(
         log$warn("Give up setting default reduction to '{new_reduc}'.")
     } else {
         log$info("Setting default reduction to '{new_reduc}' ...")
-        scplotter:::default_dimreduc(object) <- new_reduc
+        `default_dimreduc<-` <- utils::getFromNamespace("default_dimreduc<-", "scplotter")
+        default_dimreduc(object) <- new_reduc
     }
 
     object <- AddMetaData(
