@@ -161,8 +161,16 @@ Default is 5 for <code>volcano</code>, <code>volcano_log2fc</code>, <code>volcan
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Arguments passed on to <code><a href="https://pwwang.github.io/scplotter/reference/MarkersPlot.html" class="external-link">scplotter::MarkersPlot</a></code></p><dl><dt><code></code></dt>
-<dd></dd>
+<dd><p>Arguments passed on to <code><a href="https://pwwang.github.io/scplotter/reference/MarkersPlot.html" class="external-link">scplotter::MarkersPlot</a></code></p><dl><dt><code>show_labels</code></dt>
+<dd><p>Logical, whether to show the values in heatmap cells. Default is FALSE.
+Only works for <code>heatmap_log2fc</code> and <code>heatmap_pct</code>. If <code>cutoff</code> is provided, the significant cells will be labeled with <code>sig_mark</code>, otherwise all cells will be labeled with their values.</p></dd>
+
+    <dt><code>sig_mark</code></dt>
+<dd><p>Character, the symbol to use for significant markers in heatmap plots. Default is "<em>".
+See <code><a href="https://pwwang.github.io/plotthis/reference/Heatmap.html" class="external-link">plotthis::Heatmap()</a></code> for more details.
+Note that "</em>" will not work if <code>show_labels</code> is TRUE, since they are both using <code>label</code> in <code>Heatmap</code>. Try
+other marks instead, e.g., <code>-</code>, <code>|</code>, <code>+</code>, <code>/</code>, <code>\\</code>, <code>x</code>, <code>o</code>, or compound marks like <code>[*]</code>, <code>&lt;*&gt;</code>, <code>(*)</code>, <code>{*}</code>.
+Only works for <code>heatmap_log2fc</code> and <code>heatmap_pct</code>. If <code>cutoff</code> is provided, the significant cells will be labeled with <code>sig_mark</code>, otherwise all cells will be labeled with their values.</p></dd>
 
 
 </dl></dd>

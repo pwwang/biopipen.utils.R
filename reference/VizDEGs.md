@@ -183,7 +183,25 @@ VizDEGs(
   Arguments passed on to
   [`scplotter::MarkersPlot`](https://pwwang.github.io/scplotter/reference/MarkersPlot.html)
 
-  :   
+  `show_labels`
+
+  :   Logical, whether to show the values in heatmap cells. Default is
+      FALSE. Only works for `heatmap_log2fc` and `heatmap_pct`. If
+      `cutoff` is provided, the significant cells will be labeled with
+      `sig_mark`, otherwise all cells will be labeled with their values.
+
+  `sig_mark`
+
+  :   Character, the symbol to use for significant markers in heatmap
+      plots. Default is "*". See
+      [`plotthis::Heatmap()`](https://pwwang.github.io/plotthis/reference/Heatmap.html)
+      for more details. Note that "*" will not work if `show_labels` is
+      TRUE, since they are both using `label` in `Heatmap`. Try other
+      marks instead, e.g., `-`, `|`, `+`, `/`, `\\`, `x`, `o`, or
+      compound marks like `[*]`, `<*>`, `(*)`, `{*}`. Only works for
+      `heatmap_log2fc` and `heatmap_pct`. If `cutoff` is provided, the
+      significant cells will be labeled with `sig_mark`, otherwise all
+      cells will be labeled with their values.
 
 ## Value
 
