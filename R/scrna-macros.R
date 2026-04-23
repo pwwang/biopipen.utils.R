@@ -2253,7 +2253,15 @@ RunSeuratMap2Ref <- function(
     # TODO: Set default dim reduction to `ref.<MapQueryArgs$reduction.model>` if exists.
     # Wait for SeuratObject v5.4.0
     # See: https://github.com/satijalab/seurat-object/pull/268
-    scplotter:::default_dimreduc(object) <- paste0("ref.", MapQueryArgs$reduction.model)
+    ProjectUMAPArgs <- MapQueryArgs$projectumap.args %||% list()
+    new_reduc <- ProjectUMAPArgs$reduction.name %||% "ref.umap"
+    if (!new_reduc %in% Reductions(object)) {
+        log$warn("Can't find reduction '{new_reduc}' in the mapped object. Check the logs to make sure everything is correct.")
+        log$warn("Give up setting default reduction to '{new_reduc}'.")
+    } else {
+        log$info("Setting default reduction to '{new_reduc}' ...")
+        scplotter:::default_dimreduc(object) <- new_reduc
+    }
 
     object <- AddMetaData(
         object,
