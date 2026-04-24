@@ -146,6 +146,10 @@ MutateSeuratMeta <- function(object, mutaters, log = NULL) {
 #' Get the column name in meta.data that works as identity
 #'
 #' @param object Seurat object
+#' @param return_all Whether to return all candidate columns. If FALSE, only return the best candidate column with the shortest name.
+#' The best candidate column is the one that matches the Idents(object) and has the shortest name. If there are multiple columns with the same shortest name, return the one with "cluster" or "annotation" or "type" in the name. If there is still a tie, return the first one.
+#' If return_all is TRUE, return all candidate columns that match the Idents(object) as a character vector. The best candidate column will be the first one in the returned vector.
+#'
 #' @return The column name in meta.data that works as identity
 #' If there are multiple columns matching, return the shortest one.
 #' @importFrom SeuratObject Idents
@@ -157,7 +161,7 @@ MutateSeuratMeta <- function(object, mutaters, log = NULL) {
 #'
 #' SeuratObject::Idents(obj) <- "groups"
 #' GetIdentityColumn(obj)
-GetIdentityColumn <- function(object) {
+GetIdentityColumn <- function(object, return_all = FALSE) {
     candidates <- c()
     for (name in colnames(object@meta.data)) {
         if (!is.character(object@meta.data[[name]]) && !is.factor(object@meta.data[[name]])) next
@@ -168,6 +172,9 @@ GetIdentityColumn <- function(object) {
     if (length(candidates) == 1) {
         return(candidates[1])
     } else if (length(candidates) > 0) {
+        if (isTRUE(return_all)) {
+            return(candidates)
+        }
         # Choose the one with "cluster" or "annotation" or "type" in the name
         outcol <- NULL
         for (keyword in c("cluster", "annotation", "type")) {
