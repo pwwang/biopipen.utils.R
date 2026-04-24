@@ -46,9 +46,6 @@ No return value
 ``` r
 # \donttest{
 ConvertSeuratToAnnData(SeuratObject::pbmc_small, "/tmp/pbmc_small.h5ad")
-#> Registered S3 method overwritten by 'SeuratDisk':
-#>   method            from  
-#>   as.sparse.H5Group Seurat
 #> Validating h5Seurat file
 #> Adding scale.data from RNA as X
 #> Transfering meta.features to var
