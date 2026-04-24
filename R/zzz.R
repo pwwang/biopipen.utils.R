@@ -1,4 +1,8 @@
 .onAttach <- function(libname, pkgname) {
+    if (!requireNamespace("SeuratDisk", quietly = TRUE)) {
+        return(invisible())
+    }
+
     # SeuratDisk::LoadH5Seurat() will error, which passes slot instead layer to GetAssayData.Seurat() when assay is specified. This is because SeuratDisk::AssembleAssay() calls GetAssayData() with slot argument, which is not expected by SeuratObject::GetAssayData.Seurat()
     monkey_patch("SeuratDisk", "AssembleAssay", .AssembleAssay)
     # SeuratDisk::SaveH5Seurat() will error, which passes slot instead layer to GetAssayData.Seurat() when assay is specified. This is because SeuratDisk::SaveH5Seurat() calls GetAssayData() with slot argument, which is not expected by SeuratObject::GetAssayData.Seurat()
