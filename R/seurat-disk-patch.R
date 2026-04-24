@@ -100,7 +100,12 @@
         if (verbose) {
             message("Adding miscellaneous information for ", assay)
         }
-        methods::slot(object = obj, name = "misc") <- as.list(x = assay.group[["misc"]])
+        misc_obj <- assay.group[["misc"]]
+        methods::slot(object = obj, name = "misc") <- if (inherits(misc_obj, "H5Group")) {
+            h5group_to_list(misc_obj)
+        } else {
+            as.list(x = misc_obj)
+        }
     }
     if (assay.group$attr_exists(attr_name = "s4class")) {
         classdef <- unlist(x = strsplit(
@@ -118,7 +123,11 @@
         missing <- sapply(
             X = missing,
             FUN = function(x) {
-                return(as.list(x = assay.group[[x]]))
+                slot_obj <- assay.group[[x]]
+                if (inherits(slot_obj, "H5Group")) {
+                    return(h5group_to_list(slot_obj))
+                }
+                return(as.list(x = slot_obj))
             },
             simplify = FALSE
         )
@@ -137,30 +146,102 @@
 #' @return A list representation of the H5D or H5Group
 #' @keywords internal
 h5group_to_list <- function(h5group) {
-    result <- list()
-    for (name in names(h5group)) {
-        obj <- h5group[[name]]
-        if (inherits(obj, "H5D")) {
-            value <- obj$read()
-            # Optionally: preserve dataset-level attributes
-            attrs <- obj$attr
-            if (length(attrs) > 0) {
-                attributes(value) <- c(attributes(value), as.list(attrs))
-            }
-            result[[name]] <- value
-        } else if (inherits(obj, "H5Group")) {
-            result[[name]] <- h5group_to_list(obj)
-        } else {
-            result[[name]] <- NULL
+  AttrExists <- utils::getFromNamespace(x = "AttrExists", ns = "SeuratDisk")
+  IsDataFrame <- utils::getFromNamespace(x = "IsDataFrame", ns = "SeuratDisk")
+  IsFactor <- utils::getFromNamespace(x = "IsFactor", ns = "SeuratDisk")
+  IsLogical <- utils::getFromNamespace(x = "IsLogical", ns = "SeuratDisk")
+  IsMatrix <- utils::getFromNamespace(x = "IsMatrix", ns = "SeuratDisk")
+  as_data_frame_h5d <- utils::getFromNamespace(x = "as.data.frame.H5D", ns = "SeuratDisk")
+  as_data_frame_h5group <- utils::getFromNamespace(x = "as.data.frame.H5Group", ns = "SeuratDisk")
+  as_logical_h5d <- utils::getFromNamespace(x = "as.logical.H5D", ns = "SeuratDisk")
+  as_matrix_h5d <- utils::getFromNamespace(x = "as.matrix.H5D", ns = "SeuratDisk")
+  as_matrix_h5group <- utils::getFromNamespace(x = "as.matrix.H5Group", ns = "SeuratDisk")
+  as_factor_h5group <- methods::selectMethod(f = "as.factor", signature = c(x = "H5Group"))
+
+  list.names <- names(x = h5group)
+  is.vec.name <- grepl(
+    pattern = "__names__",
+    x = list.names,
+    ignore.case = FALSE,
+    perl = FALSE,
+    fixed = TRUE
+  )
+  vec.name.obj <- list.names[is.vec.name]
+  list.names <- list.names[!is.vec.name]
+  if (h5group$attr_exists(attr_name = "names")) {
+    list.order <- hdf5r::h5attr(x = h5group, which = "names")
+    missing.names <- setdiff(x = list.order, y = list.names)
+    if (length(x = missing.names)) {
+      if (length(x = missing.names) == length(x = list.order)) {
+        warning(
+          "None of the named entries specified by 'names' are present",
+          call. = FALSE,
+          immediate. = TRUE
+        )
+        list.order <- list.names
+      } else {
+        warning(
+          "The following named entries specified by 'names' are missing: ",
+          paste(missing.names, collapse = ", "),
+          call. = FALSE,
+          immediate. = TRUE
+        )
+        list.order <- setdiff(x = list.order, y = missing.names)
+      }
+    }
+    list.names <- c(list.order, list.names[!list.names %in% list.order])
+  }
+  data <- vector(mode = "list", length = length(x = list.names))
+  names(x = data) <- list.names
+  for (i in list.names) {
+    i_name <- paste0(i, "__names__")
+    obj <- h5group[[i]]
+    if (inherits(obj, "H5D")) {
+      data[[i]] <- if (IsDataFrame(x = obj)) {
+        as_data_frame_h5d(x = obj)
+      } else if (IsMatrix(x = obj)) {
+        as_matrix_h5d(x = obj)
+      } else if (IsLogical(x = obj)) {
+        v <- as_logical_h5d(x = obj)
+        if (i_name %in% vec.name.obj) {
+          names(x = v) <- h5group[[i_name]]$read()
         }
+        v
+      } else if (!obj$dims) {
+        NULL
+      } else {
+        v <- obj$read()
+        if (i_name %in% vec.name.obj) {
+          names(x = v) <- h5group[[i_name]]$read()
+        }
+        v
+      }
+    } else {
+      data[[i]] <- if (IsFactor(x = obj)) {
+        as_factor_h5group(x = obj)
+      } else if (IsDataFrame(x = obj)) {
+        as_data_frame_h5group(x = obj)
+      } else if (IsMatrix(x = obj)) {
+        as_matrix_h5group(x = obj)
+      } else {
+        h5group_to_list(obj)
+      }
     }
-
-    group_attrs <- h5group$attr
-    if (length(group_attrs) > 0) {
-        attributes(result) <- c(attributes(result), as.list(group_attrs))
+  }
+  if (h5group$attr_exists(attr_name = "s3class")) {
+    data <- structure(.Data = data, class = hdf5r::h5attr(x = h5group, which = "s3class"))
+  } else if (h5group$attr_exists(attr_name = "s4class")) {
+    attr(x = data, which = "classDef") <- hdf5r::h5attr(x = h5group, which = "s4class")
+    data <- SeuratObject::ListToS4(x = data)
+  }
+  if (isTRUE(x = AttrExists(x = h5group, name = "_index")) && inherits(data, "data.frame")) {
+    rowname_key <- hdf5r::h5attr(x = h5group, which = "_index")
+    if (rowname_key %in% names(x = h5group) && rowname_key %in% colnames(x = data)) {
+      rownames(x = data) <- data[[rowname_key]]
+      data[[rowname_key]] <- NULL
     }
-
-    return(result)
+  }
+  return(data)
 }
 
 #' Then write the list to a group
