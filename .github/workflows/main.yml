@@ -47,10 +47,15 @@ jobs:
           sudo apt-get update -y && sudo apt-get install -y libglpk40
         shell: bash
 
+      - name: Promote legacy C++11 builds to C++14
+        run: |
+          dir.create(path.expand("~/.R"), recursive = TRUE, showWarnings = FALSE)
+          writeLines("CXX11STD=-std=gnu++14", path.expand("~/.R/Makevars"))
+
       - name: Setup R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          cache-version: 2
+          cache-version: 1
           extra-packages: |
             any::remotes, any::devtools, any::pkgdown, any::testthat, any::gglogger, any::ComplexHeatmap,
             any::plotthis, any::scplotter, any::enrichR, github::immunogenomics/presto,
