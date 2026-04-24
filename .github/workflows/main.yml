@@ -31,7 +31,7 @@ jobs:
           - {r: '4.4.0'}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
