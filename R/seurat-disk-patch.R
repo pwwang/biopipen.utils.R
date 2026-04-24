@@ -1462,6 +1462,33 @@ WriteH5Group.Seurat <- function(x, name, hgroup, verbose = TRUE) {
   IsMatrixEmpty <- utils::getFromNamespace(x = "IsMatrixEmpty", ns = "SeuratDisk")
   Key <- utils::getFromNamespace(x = "Key", ns = "SeuratObject")
   GuessDType <- utils::getFromNamespace(x = "GuessDType", ns = "SeuratDisk")
+  slots.extended <- character(length = 0L)
+  if (class(x = x)[1] != 'Assay') {
+    normalize_extended_slot <- function(value) {
+      if (isS4(value)) {
+        return(tryCatch(
+          expr = SeuratObject::UpdateSlots(object = value),
+          error = function(e) value
+        ))
+      }
+      if (is.list(value)) {
+        normalized <- lapply(value, normalize_extended_slot)
+        attributes(normalized) <- attributes(value)
+        return(normalized)
+      }
+      value
+    }
+    slots.extended <- setdiff(
+      x = methods::slotNames(x = x),
+      y = methods::slotNames(x = methods::getClassDef(Class = 'Assay'))
+    )
+    for (slot_name in slots.extended) {
+      methods::slot(object = x, name = slot_name) <- normalize_extended_slot(
+        methods::slot(object = x, name = slot_name)
+      )
+    }
+    x <- SeuratObject::UpdateSlots(object = x)
+  }
   xgroup <- hgroup$create_group(name = name)
   # Write out expression data
   # TODO: determine if empty matrices should be present
@@ -1541,11 +1568,6 @@ WriteH5Group.Seurat <- function(x, name, hgroup, verbose = TRUE) {
       attr_name = 's4class',
       robj = extclass,
       dtype = GuessDType(x = extclass)
-    )
-    slots.extended <- setdiff(
-      x = methods::slotNames(x = x),
-      # y = slotNames(x = tryNew(Class = 'Assay'))
-      y = methods::slotNames(x = methods::getClassDef(Class = 'Assay'))
     )
     for (slot in slots.extended) {
       if (verbose) {
