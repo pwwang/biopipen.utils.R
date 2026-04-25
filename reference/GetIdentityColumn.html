@@ -38,7 +38,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">GetIdentityColumn</span><span class="op">(</span><span class="va">object</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">GetIdentityColumn</span><span class="op">(</span><span class="va">object</span>, return_all <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -47,6 +47,12 @@
 
 <dl><dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
 <dd><p>Seurat object</p></dd>
+
+
+<dt id="arg-return-all">return_all<a class="anchor" aria-label="anchor" href="#arg-return-all"></a></dt>
+<dd><p>Whether to return all candidate columns. If FALSE, only return the best candidate column with the shortest name.
+The best candidate column is the one that matches the Idents(object) and has the shortest name. If there are multiple columns with the same shortest name, return the one with "cluster" or "annotation" or "type" in the name. If there is still a tie, return the first one.
+If return_all is TRUE, return all candidate columns that match the Idents(object) as a character vector. The best candidate column will be the first one in the returned vector.</p></dd>
 
 </dl></div>
     <div class="section level2">
