@@ -262,7 +262,7 @@ RunSeuratDEAnalysis <- function(
     ident_1 = NULL, ident_2 = NULL, assay = NULL, subset = NULL, cache = NULL, error = TRUE, ...) {
     cache <- cache %||% gettempdir()
     cached <- Cache$new(
-        list(object, group_by, ident_1, ident_2, subset, ...),
+        list(object, group_by, ident_1, ident_2, subset, assay, ...),
         prefix = "biopipen.utils.RunSeuratDEAnalysis",
         cache_dir = cache,
     )
