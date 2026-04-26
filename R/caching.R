@@ -37,7 +37,7 @@
         list.len = 1e6,
         vec.len = 1e6,
         give.attr = FALSE,
-        strict.width = "cut"
+        strict.width = "wrap"
     ))
 }
 
