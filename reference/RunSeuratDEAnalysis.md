@@ -14,6 +14,7 @@ RunSeuratDEAnalysis(
   subset = NULL,
   cache = NULL,
   error = TRUE,
+  object_sig = NULL,
   ...
 )
 ```
@@ -57,6 +58,16 @@ RunSeuratDEAnalysis(
 
   Whether to raise an error if the analysis fails Otherwise, return an
   empty data frame
+
+- object_sig:
+
+  The signature of the object, used for caching. If NULL, it will be
+  generated from the object using
+  [`.sig_str()`](https://pwwang.github.io/biopipen.utils.R/reference/dot-sig_str.md).
+  You can provide a custom signature if you want to control the caching
+  behavior. Also if this function is called multiple times with the same
+  object but different arguments, providing a custom signature can help
+  to avoid redundant computation.
 
 - ...:
 

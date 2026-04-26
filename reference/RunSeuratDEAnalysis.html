@@ -47,6 +47,7 @@
 <span>  subset <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cache <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  error <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  object_sig <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -89,6 +90,14 @@ Anything changed in the object or arguments will trigger a re-run</p></dd>
 <dt id="arg-error">error<a class="anchor" aria-label="anchor" href="#arg-error"></a></dt>
 <dd><p>Whether to raise an error if the analysis fails
 Otherwise, return an empty data frame</p></dd>
+
+
+<dt id="arg-object-sig">object_sig<a class="anchor" aria-label="anchor" href="#arg-object-sig"></a></dt>
+<dd><p>The signature of the object, used for caching.
+If NULL, it will be generated from the object using <code><a href="dot-sig_str.html">.sig_str()</a></code>.
+You can provide a custom signature if you want to control the caching behavior.
+Also if this function is called multiple times with the same object
+but different arguments, providing a custom signature can help to avoid redundant computation.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
