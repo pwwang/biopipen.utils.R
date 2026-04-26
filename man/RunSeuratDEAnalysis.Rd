@@ -13,6 +13,7 @@ RunSeuratDEAnalysis(
   subset = NULL,
   cache = NULL,
   error = TRUE,
+  object_sig = NULL,
   ...
 )
 }
@@ -36,6 +37,12 @@ Anything changed in the object or arguments will trigger a re-run}
 
 \item{error}{Whether to raise an error if the analysis fails
 Otherwise, return an empty data frame}
+
+\item{object_sig}{The signature of the object, used for caching.
+If NULL, it will be generated from the object using \code{.sig_str()}.
+You can provide a custom signature if you want to control the caching behavior.
+Also if this function is called multiple times with the same object
+but different arguments, providing a custom signature can help to avoid redundant computation.}
 
 \item{...}{Additional arguments to pass to \code{\link[Seurat:FindMarkers]{Seurat::FindMarkers()}}}
 }

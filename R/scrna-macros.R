@@ -250,6 +250,11 @@ AddSeuratCommand <- function(
 #'  Anything changed in the object or arguments will trigger a re-run
 #' @param error Whether to raise an error if the analysis fails
 #'  Otherwise, return an empty data frame
+#' @param object_sig The signature of the object, used for caching.
+#' If NULL, it will be generated from the object using `.sig_str()`.
+#' You can provide a custom signature if you want to control the caching behavior.
+#' Also if this function is called multiple times with the same object
+#' but different arguments, providing a custom signature can help to avoid redundant computation.
 #' @param ... Additional arguments to pass to [Seurat::FindMarkers()]
 #' @export
 #' @import tidyseurat
@@ -258,8 +263,13 @@ AddSeuratCommand <- function(
 #' @examples
 #' RunSeuratDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2")
 RunSeuratDEAnalysis <- function(
-    object, group_by,
-    ident_1 = NULL, ident_2 = NULL, assay = NULL, subset = NULL, cache = NULL, error = TRUE, ...) {
+    object,
+    group_by, ident_1 = NULL, ident_2 = NULL,
+    assay = NULL, subset = NULL, cache = NULL, error = TRUE,
+    object_sig = NULL,
+    ...
+) {
+    object_sig <- object_sig %||% .sig_str(object)
     cache <- cache %||% gettempdir()
     cached <- Cache$new(
         list(object, group_by, ident_1, ident_2, subset, assay, ...),
