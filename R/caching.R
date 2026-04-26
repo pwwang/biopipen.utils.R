@@ -30,12 +30,10 @@
 #' @return A character vector representing the structure of the object
 #' @keywords internal
 .sig_str <- function(object) {
-    old_options <- options(width = max(10000L, getOption("width")))
-    on.exit(options(old_options), add = TRUE)
-
     capture.output(utils::str(
         object,
-        max.level = 100,
+        nchar.max = 9999L,
+        max.level = 999L,
         list.len = 1e6,
         vec.len = 1e6,
         give.attr = FALSE,
