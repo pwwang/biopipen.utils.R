@@ -14,6 +14,40 @@ test_that("caching: cached", {
     expect_equal(cached, obj)
 })
 
+test_that("caching: signature uses serialized object instead of truncated str output", {
+    obj1 <- list(value = paste0(strrep("a", 1200), "x"))
+    obj2 <- list(value = paste0(strrep("a", 1200), "y"))
+
+    expect_identical(capture.output(str(obj1)), capture.output(str(obj2)))
+
+    cache1 <- Cache$new(obj1, cache_dir = tempdir(), prefix = "test_sig_collision", kind = "object")
+    cache2 <- Cache$new(obj2, cache_dir = tempdir(), prefix = "test_sig_collision", kind = "object")
+
+    expect_false(identical(cache1$get_path(), cache2$get_path()))
+})
+
+test_that("caching: saved signature includes digest and preview", {
+    tmpdir <- tempfile()
+    dir.create(tmpdir)
+
+    cache <- Cache$new(
+        list(value = paste0(strrep("b", 1200), "z")),
+        cache_dir = tmpdir,
+        prefix = "test_sig_file",
+        kind = "object",
+        save_sig = TRUE
+    )
+
+    sig_file <- paste0(cache$get_path(), ".signature.txt")
+    expect_true(file.exists(sig_file))
+
+    sig_lines <- readLines(sig_file)
+    expect_match(sig_lines[[2]], "^digest: [0-9a-f]{8}$")
+    expect_true(any(grepl("__truncated__|chr \\\"", sig_lines, fixed = FALSE)))
+
+    unlink(tmpdir, recursive = TRUE)
+})
+
 test_that("caching: not cached after clear", {
     obj <- list(a = 1, b = 2)
     cache <- Cache$new(3, cache_dir = tempdir(), prefix = "test", kind = "object")

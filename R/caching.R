@@ -60,7 +60,7 @@ Cache <- R6::R6Class(
         #' This is required when `kind` is "file", "dir", or "prefix"
         #' @details
         #' The `sig_object` is used to generate a unique signature for the cache.
-        #' The signature is based on the structure of the object, which helps in
+        #' The signature is based on the serialized object, which helps in
         #' determining if the cached version is still valid.
         #' The `prefix` is used to create a unique identifier for the cached files.
         #' The `cache_dir` is the directory where the cached files will be stored.
@@ -100,11 +100,22 @@ Cache <- R6::R6Class(
             self$cache_dir <- cache_dir
             if (!is.null(cache_dir) && is.character(cache_dir) && nzchar(cache_dir)) {
                 dir.create(cache_dir, showWarnings = FALSE, recursive = TRUE)
-                full_sig <- capture.output(str(sig_object))
-                sig <- substr(digest(capture.output(str(sig_object)), algo = "md5"), 1, 8)
+                sig <- substr(digest::digest(sig_object, algo = "md5"), 1, 8)
                 if (save_sig) {
                     sig_file <- file.path(cache_dir, paste0(prefix, ".", sig, ".signature.txt"))
-                    writeLines(c(as.character(Sys.time()), "", full_sig), sig_file)
+                    writeLines(c(
+                        as.character(Sys.time()),
+                        paste0("digest: ", sig),
+                        "",
+                        capture.output(utils::str(
+                            sig_object,
+                            max.level = 100,
+                            list.len = 1e6,
+                            vec.len = 1e6,
+                            give.attr = FALSE,
+                            strict.width = "cut"
+                        ))
+                    ), sig_file)
                 }
                 private$prefix <- paste0(prefix, ".", sig)
 
