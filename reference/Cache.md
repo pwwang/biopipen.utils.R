@@ -89,7 +89,7 @@ Initialize a new Cache object
 #### Details
 
 The `sig_object` is used to generate a unique signature for the cache.
-The signature is based on the structure of the object, which helps in
+The signature is based on the serialized object, which helps in
 determining if the cached version is still valid. The `prefix` is used
 to create a unique identifier for the cached files. The `cache_dir` is
 the directory where the cached files will be stored. If `save_sig` is
