@@ -4,3 +4,4 @@ CRAN-SUBMISSION
 cran-comments.md
 *.Rcheck/
 biopipen.utils_*.tar.gz
+.vscode/
