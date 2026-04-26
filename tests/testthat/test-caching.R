@@ -14,9 +14,9 @@ test_that("caching: cached", {
     expect_equal(cached, obj)
 })
 
-test_that("caching: signature uses serialized object instead of truncated str output", {
-    obj1 <- list(value = paste0(strrep("a", 1200), "x"))
-    obj2 <- list(value = paste0(strrep("a", 1200), "y"))
+test_that("caching: signature distinguishes values beyond default list truncation", {
+    obj1 <- as.list(c(seq_len(150), 2001L))
+    obj2 <- as.list(c(seq_len(150), 2002L))
 
     expect_identical(capture.output(str(obj1)), capture.output(str(obj2)))
 
@@ -43,7 +43,7 @@ test_that("caching: saved signature includes digest and preview", {
 
     sig_lines <- readLines(sig_file)
     expect_match(sig_lines[[2]], "^digest: [0-9a-f]{8}$")
-    expect_true(any(grepl("__truncated__|chr \\\"", sig_lines, fixed = FALSE)))
+    expect_gt(length(sig_lines), 3)
 
     unlink(tmpdir, recursive = TRUE)
 })

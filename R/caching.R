@@ -21,6 +21,28 @@
     )
 }
 
+#' Generate a string representation of an R object for caching signature
+#'
+#' @description This function generates a string representation of an R object using `utils::str()`.
+#' The output is designed to be consistent and comprehensive for caching purposes.
+#' It captures the structure of the object, including its attributes, and is used to create a unique signature for caching.
+#' @param object The R object to generate the string representation for
+#' @return A character vector representing the structure of the object
+#' @keywords internal
+.sig_str <- function(object) {
+    old_options <- options(width = max(10000L, getOption("width")))
+    on.exit(options(old_options), add = TRUE)
+
+    capture.output(utils::str(
+        object,
+        max.level = 100,
+        list.len = 1e6,
+        vec.len = 1e6,
+        give.attr = FALSE,
+        strict.width = "cut"
+    ))
+}
+
 #' Cache class for object, file or directory caching
 #'
 #' @description
@@ -60,8 +82,8 @@ Cache <- R6::R6Class(
         #' This is required when `kind` is "file", "dir", or "prefix"
         #' @details
         #' The `sig_object` is used to generate a unique signature for the cache.
-        #' The signature is based on the serialized object, which helps in
-        #' determining if the cached version is still valid.
+        #' The signature is based on an expanded `utils::str()` representation of the object,
+        #' which helps in determining if the cached version is still valid.
         #' The `prefix` is used to create a unique identifier for the cached files.
         #' The `cache_dir` is the directory where the cached files will be stored.
         #' If `save_sig` is TRUE, the signature will be saved to a file in the cache directory.
@@ -100,21 +122,15 @@ Cache <- R6::R6Class(
             self$cache_dir <- cache_dir
             if (!is.null(cache_dir) && is.character(cache_dir) && nzchar(cache_dir)) {
                 dir.create(cache_dir, showWarnings = FALSE, recursive = TRUE)
-                sig <- substr(digest::digest(sig_object, algo = "md5"), 1, 8)
+                full_sig <- .sig_str(sig_object)
+                sig <- substr(digest::digest(full_sig, algo = "md5"), 1, 8)
                 if (save_sig) {
                     sig_file <- file.path(cache_dir, paste0(prefix, ".", sig, ".signature.txt"))
                     writeLines(c(
                         as.character(Sys.time()),
                         paste0("digest: ", sig),
                         "",
-                        capture.output(utils::str(
-                            sig_object,
-                            max.level = 100,
-                            list.len = 1e6,
-                            vec.len = 1e6,
-                            give.attr = FALSE,
-                            strict.width = "cut"
-                        ))
+                        full_sig
                     ), sig_file)
                 }
                 private$prefix <- paste0(prefix, ".", sig)

@@ -94,8 +94,8 @@ This is required when \code{kind} is "file", "dir", or "prefix"}
 }
 \subsection{Details}{
 The \code{sig_object} is used to generate a unique signature for the cache.
-The signature is based on the serialized object, which helps in
-determining if the cached version is still valid.
+The signature is based on an expanded \code{utils::str()} representation of the object,
+which helps in determining if the cached version is still valid.
 The \code{prefix} is used to create a unique identifier for the cached files.
 The \code{cache_dir} is the directory where the cached files will be stored.
 If \code{save_sig} is TRUE, the signature will be saved to a file in the cache directory.
