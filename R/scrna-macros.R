@@ -626,7 +626,7 @@ LoadSeuratAndPerformQC <- function(
 
     log$info("Loading each sample ...")
     tmpdir <- tmpdir %||% gettempdir()
-    dig <- digest::digest(meta, algo = "md5")
+    dig <- digest::digest(.sig_str(meta), algo = "md5")
     dig <- substr(dig, 1, 8)
     tmpdir <- file.path(tmpdir, paste0("biopipen.utils.LoadSeuratSamples.", dig))
 
@@ -2328,7 +2328,7 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
     #     where = .GlobalEnv
     # )
 
-    dig <- digest::digest(list(object_or_file, assay, subset), algo = "sha256")
+    dig <- digest::digest(.sig_str(list(object_or_file, assay, subset)), algo = "md5")
     dig <- substr(dig, 1, 8)
     outdir <- dirname(outfile)
     dir.create(outdir, showWarnings = FALSE)
