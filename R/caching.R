@@ -27,18 +27,28 @@
 #' The output is designed to be consistent and comprehensive for caching purposes.
 #' It captures the structure of the object, including its attributes, and is used to create a unique signature for caching.
 #' @param object The R object to generate the string representation for
+#' @param .level Internal parameter for tracking the indentation level (used for recursive calls)
 #' @return A character vector representing the structure of the object
 #' @keywords internal
-.sig_str <- function(object) {
-    capture.output(utils::str(
-        object,
-        nchar.max = 9999L,
-        max.level = 999L,
-        list.len = 1e6,
-        vec.len = 1e6,
-        give.attr = FALSE,
-        strict.width = "wrap"
-    ))
+.sig_str <- function(object, .level = 1) {
+    prefix <- paste0(rep("  ", .level - 1), collapse = "")
+    out <- paste0("[", paste(class(object), collapse = ","), "]")
+    if (is.list(object)) {
+        # For lists, we want to capture the names and the class of each element
+        if (is.null(names(object))) {
+            names(object) <- paste0("[[", seq_along(object), "]]")
+        }
+        object <- sapply(seq_along(object), function(i) {
+            paste0(names(object)[i], "  =", .sig_str(object[[i]], .level + 1))
+        })
+        out <- c(out, object)
+    } else if (is.character(object)) {
+        # Avoid truncating by utils::str() or glimpse
+        out <- c(out, object)
+    } else {
+        out <- c(out, R.utils::captureOutput(dplyr::glimpse(object)))
+    }
+    paste(sapply(out, function(x) paste0(prefix, x)), collapse = "\n")
 }
 
 #' Cache class for object, file or directory caching

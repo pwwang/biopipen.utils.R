@@ -4,10 +4,12 @@
 \alias{.sig_str}
 \title{Generate a string representation of an R object for caching signature}
 \usage{
-.sig_str(object)
+.sig_str(object, .level = 1)
 }
 \arguments{
 \item{object}{The R object to generate the string representation for}
+
+\item{.level}{Internal parameter for tracking the indentation level (used for recursive calls)}
 }
 \value{
 A character vector representing the structure of the object
