@@ -35,13 +35,22 @@
     out <- paste0("[", paste(class(object), collapse = ","), "]")
     if (is.list(object)) {
         # For lists, we want to capture the names and the class of each element
-        if (is.null(names(object))) {
-            names(object) <- paste0("[[", seq_along(object), "]]")
+        if (length(object) == 0) {
+            out <- c(out, "list()")
+        } else {
+            if (is.null(names(object))) {
+                names(object) <- paste0("[[", seq_along(object), "]]")
+            }
+            object <- sapply(seq_along(object), function(i) {
+                if (is.null(names(object)) || identical(names(object)[i], "")) {
+                    name <- paste0("[[", i, "]]")
+                } else {
+                    name <- names(object)[i]
+                }
+                paste0(name, "  =", .sig_str(object[[i]], .level + 1))
+            })
+            out <- c(out, object)
         }
-        object <- sapply(seq_along(object), function(i) {
-            paste0(names(object)[i], "  =", .sig_str(object[[i]], .level + 1))
-        })
-        out <- c(out, object)
     } else if (is.character(object)) {
         # Avoid truncating by utils::str() or glimpse
         out <- c(out, object)
