@@ -55,7 +55,7 @@
         # Avoid truncating by utils::str() or glimpse
         out <- c(out, object)
     } else {
-        out <- c(out, R.utils::captureOutput(dplyr::glimpse(object)))
+        out <- c(out, captureOutput(dplyr::glimpse(object)))
     }
     paste(sapply(out, function(x) paste0(prefix, x)), collapse = "\n")
 }
