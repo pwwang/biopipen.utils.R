@@ -9,7 +9,7 @@ used to create a unique signature for caching.
 ## Usage
 
 ``` r
-.sig_str(object)
+.sig_str(object, .level = 1)
 ```
 
 ## Arguments
@@ -17,6 +17,11 @@ used to create a unique signature for caching.
 - object:
 
   The R object to generate the string representation for
+
+- .level:
+
+  Internal parameter for tracking the indentation level (used for
+  recursive calls)
 
 ## Value
 
