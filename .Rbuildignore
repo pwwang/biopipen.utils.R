@@ -17,3 +17,5 @@
 ^.+\.Rcheck/.+$
 ^.+\.tar\.gz$
 ^Makefile$
+^\.vscode\/.*
+^\.vscode$
