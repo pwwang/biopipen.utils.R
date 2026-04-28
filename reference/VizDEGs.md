@@ -400,7 +400,6 @@ VizDEGs(degs,
     select = 1, comparison_by = "Phase", subset_by = "SubCellType"
 )
 #> Warning: Layer counts isn't present in the assay object; returning NULL
-#> Warning: [Heatmap] Unknown arguments to ComplexHeatmap::Heatmap(): row_name_annotation, column_name_annotation
 
 # }
 ```
