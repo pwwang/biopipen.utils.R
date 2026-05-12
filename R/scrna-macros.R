@@ -493,6 +493,124 @@ PerformGeneQC <- function(object, gene_qc) {
     )
 }
 
+#' Parse features argument into a named character vector
+#'
+#' @param features A named vector, list, or path to a TAB-delimited file
+#' @return A named character vector (old_name = new_name), or NULL
+#' @keywords internal
+.parse_features_map <- function(features) {
+    if (is.null(features)) return(NULL)
+    if (is.character(features) && length(features) == 1 && file.exists(features)) {
+        feat_lines <- readLines(features)
+        feat_lines <- feat_lines[!grepl("^#", feat_lines) & nzchar(feat_lines)]
+        feat_df <- utils::read.table(
+            text = paste(feat_lines, collapse = "\n"),
+            sep = "\t", header = FALSE, quote = "",
+            colClasses = "character", stringsAsFactors = FALSE
+        )
+        return(stats::setNames(feat_df[[2]], feat_df[[1]]))
+    }
+    if (is.list(features)) features <- unlist(features)
+    stopifnot(
+        "'features' must be a named vector/list or a file path to a TAB-delimited file" =
+            is.character(features) && !is.null(names(features))
+    )
+    features
+}
+
+#' Load expression data from a sample path
+#'
+#' Handles ParseBio, HIVE, 10X directory, loom, and h5 formats.
+#'
+#' @param path Path to the sample data
+#' @param sam Sample name
+#' @param tmpdir Temporary directory for symlink workaround
+#' @param LoadLoomArgs Arguments for SeuratDisk::LoadLoom
+#' @param log Logger
+#' @return A list with `exprs` (matrix or Seurat object) and `cell_meta` (data.frame or NULL)
+#' @keywords internal
+.load_expression_data <- function(path, sam, tmpdir, LoadLoomArgs, log) {
+    if (!dir.exists(path)) {
+        if (endsWith(path, ".loom")) {
+            LoadLoomArgs$file <- path
+            return(list(exprs = do_call(SeuratDisk::LoadLoom, LoadLoomArgs), cell_meta = NULL))
+        }
+        if (file.exists(path)) {
+            return(list(exprs = Read10X_h5(path), cell_meta = NULL))
+        }
+        stop("[LoadSeuratSample] {sam}: Path not found: {path}")
+    }
+
+    # Directory-based formats
+    if (
+        file.exists(file.path(path, "all_genes.csv")) &&
+        file.exists(file.path(path, "cell_metadata.csv")) &&
+        file.exists(file.path(path, "count_matrix.mtx"))
+    ) {
+        exprs <- ReadParseBio(path)
+        exprs <- exprs[nchar(rownames(exprs)) > 0, , drop = FALSE]
+        return(list(
+            exprs = exprs,
+            cell_meta = utils::read.csv(file.path(path, "cell_metadata.csv"), row.names = 1)
+        ))
+    }
+
+    if (
+        length(Sys.glob(file.path(path, "*TCM.tsv.gz"))) > 0 &&
+        length(Sys.glob(file.path(path, "*ReadsQC.tsv"))) > 0
+    ) {
+        cmfile <- Sys.glob(file.path(path, "*TCM.tsv.gz"))
+        if (length(cmfile) > 1) {
+            log$warn("  Multiple TCM files found, using the first one: {cmfile[1]} ...")
+            cmfile <- cmfile[1]
+        }
+        readsfile <- Sys.glob(file.path(path, "*ReadsQC.tsv"))
+        if (length(readsfile) > 1) {
+            log$warn("  Multiple ReadsQC files found, using the first one: {readsfile[1]} ...")
+            readsfile <- readsfile[1]
+        }
+        exprs <- utils::read.table(
+            cmfile, header = 1, row.names = 1,
+            check.names = FALSE, sep = "\t", quote = "", stringsAsFactors = FALSE
+        )
+        cells <- colnames(exprs)
+        data_reads <- utils::read.table(readsfile, header = 1, row.names = 1)
+        reads <- data_reads[rownames(data_reads) %in% cells, , drop = FALSE]
+        logtotreads <- log10(as.matrix(reads)[, 1])
+        readAll <- data_reads[, 1]
+        readMap <- reads[, 2]
+        readExon <- reads[, 3]
+        cell_meta <- data.frame(
+            ExonReads = readExon,
+            Log.TotReads = logtotreads,
+            ExonvMapped = readExon / readMap,
+            ExonvTotal = readExon / readAll,
+            reads.mapped = readMap,
+            reads.Total = readAll,
+            row.names = cells
+        )
+        return(list(exprs = exprs, cell_meta = cell_meta))
+    }
+
+    # Default: 10X format
+    exprs <- tryCatch(
+        { Read10X(data.dir = path) },
+        error = function(e) {
+            tmpdatadir <- file.path(tmpdir, slugify(sam))
+            if (dir.exists(tmpdatadir)) unlink(tmpdatadir, recursive = TRUE)
+            dir.create(tmpdatadir, recursive = TRUE, showWarnings = FALSE)
+            barcodefile <- Sys.glob(file.path(path, "*barcodes.tsv.gz"))[1]
+            file.symlink(normalizePath(barcodefile), file.path(tmpdatadir, "barcodes.tsv.gz"))
+            genefile <- glob(file.path(path, "*{genes,features}.tsv.gz"))[1]
+            file.symlink(normalizePath(genefile), file.path(tmpdatadir, "features.tsv.gz"))
+            matrixfile <- Sys.glob(file.path(path, "*matrix.mtx.gz"))[1]
+            file.symlink(normalizePath(matrixfile), file.path(tmpdatadir, "matrix.mtx.gz"))
+            Read10X(data.dir = tmpdatadir)
+        }
+    )
+    list(exprs = exprs, cell_meta = NULL)
+}
+
 #' Load samples into a Seurat object
 #'
 #' Cell QC will be performed, either per-sample or on the whole object
@@ -566,8 +684,12 @@ PerformGeneQC <- function(object, gene_qc) {
 #'         file.path(datadir, "Sample2")
 #'     )
 #' )
-#' obj <- LoadSeuratAndPerformQC(meta, cache = FALSE, gene_qc = list(min_cells = 3))
-#' head(obj@misc$cell_qc_df)
+#'
+#' obj <- LoadSeuratAndPerformQC(
+#'    meta, cache = FALSE, cell_qc = "nFeature_RNA > 1000",
+#'    gene_qc = list(min_cells = 3)
+#' )
+#' print(table(obj$.QC))
 #' print(obj@misc$gene_qc)
 #' }
 LoadSeuratAndPerformQC <- function(
@@ -580,32 +702,14 @@ LoadSeuratAndPerformQC <- function(
     gene_qc = NULL,
     ccs_args = NULL,
     LoadLoomArgs = list(),
+    ambient_removal = NULL,
+    decontXArgs = list(),
     tmpdir = NULL,
     log = NULL,
     cache = NULL) {
     log <- log %||% get_logger()
 
-
-    features_map <- NULL
-    if (!is.null(features)) {
-        if (is.character(features) && length(features) == 1 && file.exists(features)) {
-            feat_lines <- readLines(features)
-            feat_lines <- feat_lines[!grepl("^#", feat_lines) & nzchar(feat_lines)]
-            feat_df <- utils::read.table(
-                text = paste(feat_lines, collapse = "\n"),
-                sep = "\t", header = FALSE, quote = "",
-                colClasses = "character", stringsAsFactors = FALSE
-            )
-            features_map <- stats::setNames(feat_df[[2]], feat_df[[1]])
-        } else {
-            if (is.list(features)) features <- unlist(features)
-            stopifnot(
-                "'features' must be a named vector/list or a file path to a TAB-delimited file" =
-                    is.character(features) && !is.null(names(features))
-            )
-            features_map <- features
-        }
-    }
+    features_map <- .parse_features_map(features)
 
     cache <- cache %||% gettempdir()
     cached <- Cache$new(
@@ -625,7 +729,6 @@ LoadSeuratAndPerformQC <- function(
     } else {
         meta <- UpdateSeuratObject(meta)
         samples <- samples %||% unique(meta@meta.data$Sample)
-        # convert assays to v5 if they are not
         assay <- DefaultAssay(meta)
         if (!"Assay5" %in% class(meta[[assay]])) {
             log$debug("Converting assay '{assay}' to Assay5 ...")
@@ -663,99 +766,9 @@ LoadSeuratAndPerformQC <- function(
                 next
             }
 
-            cell_meta <- NULL
-            if (dir.exists(path)) {
-                if (
-                    file.exists(file.path(path, "all_genes.csv")) &&
-                    file.exists(file.path(path, "cell_metadata.csv")) &&
-                    file.exists(file.path(path, "count_matrix.mtx"))
-                ) {
-                    exprs <- ReadParseBio(path)
-                    # Remove empty rows with empty genes
-                    exprs <- exprs[nchar(rownames(exprs)) > 0, , drop = FALSE]
-                    cell_meta <- utils::read.csv(file.path(path, "cell_metadata.csv"), row.names = 1)
-                } else if (
-                    length(Sys.glob(file.path(path, "*TCM.tsv.gz"))) > 0 &&
-                    length(Sys.glob(file.path(path, "*ReadsQC.tsv"))) > 0
-                ) {
-                    # HIVE data
-                    # see: file:///D:/Downloads/HC_seurat_vignette_v1.3.2_20231006.html
-                    cmfile <- Sys.glob(file.path(path, "*TCM.tsv.gz"))
-                    if (length(cmfile) > 1) {
-                        log$warn("  Multiple TCM files found, using the first one: {cmfiles[1]} ...")
-                        cmfile <- cmfile[1]
-                    }
-                    readsfile <- Sys.glob(file.path(path, "*ReadsQC.tsv"))
-                    if (length(readsfile) > 1) {
-                        log$warn("  Multiple ReadsQC files found, using the first one: {readsfile[1]} ...")
-                        readsfile <- readsfile[1]
-                    }
-                    exprs <- utils::read.table(
-                        cmfile,
-                        header = 1,
-                        row.names = 1,
-                        check.names = FALSE ,
-                        sep = "\t",
-                        quote = "",
-                        stringsAsFactors = FALSE
-                    )
-                    cells <- colnames(exprs)
-
-                    data_reads <- utils::read.table(readsfile, header = 1, row.names = 1)
-                    # Make sure order of read info matches order of TCM matrix
-                    # table(rownames(data_reads) == colnames(exprs))
-                    reads <- data_reads[rownames(data_reads) %in% cells, , drop = FALSE]
-
-                    # Calculate metadata info
-                    logtotreads <- log10(as.matrix(reads)[,1])
-                    readAll <- data_reads[,1]
-                    readMap <- reads[,2]
-                    readMapPct <- readMap/readAll
-                    readUnmap <- readAll-readMap
-                    readUnmapPct <- readUnmap/readAll
-                    readExon <- reads[,3]
-                    readExonPct <- readExon/readAll
-                    readExonMapPct <- readExon/readMap
-                    cell_meta <- data.frame(ExonReads = readExon, row.names = cells)
-                    cell_meta$Log.TotReads <- logtotreads
-                    cell_meta$ExonvMapped <- readExonMapPct
-                    cell_meta$ExonvTotal <- readExonPct
-                    cell_meta$reads.mapped <- readMap
-                    cell_meta$reads.Total <- readAll
-
-                    # Calculate complexity and add to metadata
-                    # comp <- obj@meta.data$ExonReads / obj@meta.data$nCount_RNA
-                    # names(comp) <- rownames(obj@meta.data)
-                    # obj <- AddMetaData(obj, comp, "Complexity")
-                } else {
-                    exprs <- tryCatch(
-                        {
-                            Read10X(data.dir = path)
-                        },
-                        error = function(e) {
-                            tmpdatadir <- file.path(tmpdir, slugify(sam))
-                            if (dir.exists(tmpdatadir)) {
-                                unlink(tmpdatadir, recursive = TRUE)
-                            }
-                            dir.create(tmpdatadir, recursive = TRUE, showWarnings = FALSE)
-                            barcodefile <- Sys.glob(file.path(path, "*barcodes.tsv.gz"))[1]
-                            file.symlink(normalizePath(barcodefile), file.path(tmpdatadir, "barcodes.tsv.gz"))
-                            genefile <- glob(file.path(path, "*{genes,features}.tsv.gz"))[1]
-                            file.symlink(normalizePath(genefile), file.path(tmpdatadir, "features.tsv.gz"))
-                            matrixfile <- Sys.glob(file.path(path, "*matrix.mtx.gz"))[1]
-                            file.symlink(normalizePath(matrixfile), file.path(tmpdatadir, "matrix.mtx.gz"))
-                            Read10X(data.dir = tmpdatadir)
-                        }
-                    )
-                }
-            } else if (endsWith(path, ".loom")) {
-                LoadLoomArgs$file <- path
-                exprs <- do_call(SeuratDisk::LoadLoom, LoadLoomArgs)
-            } else if (file.exists(path)) {
-                exprs <- Read10X_h5(path)
-            } else {
-                stop("[LoadSeuratSample] {sam}: Path not found: {path}")
-            }
+            loaded <- .load_expression_data(path, sam, tmpdir, LoadLoomArgs, log)
+            exprs <- loaded$exprs
+            cell_meta <- loaded$cell_meta
 
             if ("Gene Expression" %in% names(exprs) && !inherits(exprs, "Seurat")) {
                 exprs <- exprs[["Gene Expression"]]
@@ -792,24 +805,16 @@ LoadSeuratAndPerformQC <- function(
             }
             obj <- RenameCells(obj, add.cell.id = sam)
 
-            # Attach meta data
             for (mname in names(mdata)) {
-                if (mname %in% c("RNAData", "TCRData", "BCRData")) {
-                    next
-                }
+                if (mname %in% c("RNAData", "TCRData", "BCRData")) next
                 mdt <- mdata[[mname]]
-                if (is.factor(mdt)) {
-                    mdt <- levels(mdt)[mdt]
-                }
-
+                if (is.factor(mdt)) mdt <- levels(mdt)[mdt]
                 obj[[mname]] <- mdt
             }
         }
 
-        # cell qc
         obj <- PerformSeuratCellQC(obj, cell_qc)
         if (!is.null(gene_qc) && length(gene_qc) > 0) {
-            # Sample, Feature, Count, QC
             geneqc_df <- rbind(geneqc_df, PerformGeneQC(obj, gene_qc))
         }
 

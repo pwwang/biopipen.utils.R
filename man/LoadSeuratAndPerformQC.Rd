@@ -103,8 +103,12 @@ meta <- data.frame(
         file.path(datadir, "Sample2")
     )
 )
-obj <- LoadSeuratAndPerformQC(meta, cache = FALSE, gene_qc = list(min_cells = 3))
-head(obj@misc$cell_qc_df)
+
+obj <- LoadSeuratAndPerformQC(
+   meta, cache = FALSE, cell_qc = "nFeature_RNA > 1000",
+   gene_qc = list(min_cells = 3)
+)
+print(table(obj$.QC))
 print(obj@misc$gene_qc)
 }
 }
