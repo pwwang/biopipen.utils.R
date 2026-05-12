@@ -4,10 +4,12 @@
 \alias{FinishSeuratQC}
 \title{Finish the QC process including the visualization}
 \usage{
-FinishSeuratQC(object)
+FinishSeuratQC(object, keep_contam_assay = FALSE)
 }
 \arguments{
 \item{object}{Seurat object}
+
+\item{keep_contam_assay}{A logic value to control where to keep the "Contaminated" assay}
 }
 \value{
 The Seurat object with the QC process finished
