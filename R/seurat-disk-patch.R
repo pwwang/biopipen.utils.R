@@ -207,7 +207,7 @@ h5group_to_list <- function(h5group) {
           names(x = v) <- h5group[[i_name]]$read()
         }
         v
-      } else if (!obj$dims) {
+      } else if (length(obj$dims) == 0) {
         NULL
       } else {
         v <- obj$read()

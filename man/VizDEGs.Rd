@@ -86,7 +86,16 @@ The object's metadata will be merged with \code{markers} by \code{subset_by}. Be
 It will be evaluated by \code{\link[dplyr:filter]{dplyr::filter()}}.
 For \code{volcano}, \code{volcano_log2fc}, \code{volcano_pct}, \code{jitter}, \code{jitter_log2fc}, and \code{jitter_pct} plots, the selected markers will be labeled in the plot.
 FOr  other plot types, only the selected markers will be plotted.
-Default is 5 for \code{volcano}, \code{volcano_log2fc}, \code{volcano_pct}, \code{jitter}, \code{jitter_log2fc}, \code{jitter_pct}, and 10 for other plot types.}
+Default is 5 for \code{volcano}, \code{volcano_log2fc}, \code{volcano_pct}, \code{jitter}, \code{jitter_log2fc}, \code{jitter_pct}, and 10 for other plot types.
+Note that if this is a numeric value, it will select the top N markers for each group defined by \code{subset_by}. If this is a string of expression, it will be evaluated by \code{\link[dplyr:filter]{dplyr::filter()}} to select markers.
+If this is an (character) expression, it will be used to only filter the markers.
+For example, if you want to plot the markers that are significant in cluster 0,
+you can set \code{select = "p_val_adj < 0.05 & cluster == '0'"} for the markers identified in cluster 0,
+but in the plot, other clusters will also be included if they have markers that satisfy the condition.
+If you want to filter the data by \code{subset_by}, you should use a multiple value expression
+like \code{select = c("p_val_adj < 0.05", "cluster == '0'")}, where \code{subset_by = "cluster"}.
+This also works: \code{select = c(5, "cluster \%in\% c('0', '1')")}, which will select top 5 markers in cluster 0 and 1,
+and keeps only cluster 0 and 1 in the plot.}
 
 \item{outprefix}{Prefix of the output file}
 
