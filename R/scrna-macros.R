@@ -409,14 +409,14 @@ PerformGeneQC <- function(object, gene_qc) {
 #' from the scCDC package: `scCDC::ContaminationDetection`, `scCDC::ContaminationQuantification` and `scCDC::ContaminationCorrection`.
 #' @return A Seurat object with contaminant RNA corrected counts in the "RNA" assay and the original counts in the "Contaminated" assay.
 #' @export
-RunSeuratAmbientRemoval <- function(
+RunSeuratContamCorrection <- function(
     object, method = "decontx",
     decontXArgs = list(),
     scCDCArgs = list(Detection = list(), Quantification = list(), Correction = list()
 )) {
     if (method == "decontx") {
         if (!requireNamespace("celda", quietly = TRUE)) {
-            stop("[RunSeuratAmbientRemoval] The 'celda' package is required for decontX contaminant RNA correction. Please install it first.")
+            stop("[RunSeuratContamCorrection] The 'celda' package is required for decontX contaminant RNA correction. Please install it first.")
         }
         # Run decontX
         decontXArgs$x <- SeuratObject::GetAssayData(object, assay = "RNA", layer = "counts")
@@ -434,7 +434,7 @@ RunSeuratAmbientRemoval <- function(
         return(object)
     } else if (method == "sccdc") {
         if (!requireNamespace("scCDC", quietly = TRUE)) {
-            stop("[RunSeuratAmbientRemoval] The 'scCDC' package is required for scCDC contaminant RNA correction. Please install it first.")
+            stop("[RunSeuratContamCorrection] The 'scCDC' package is required for scCDC contaminant RNA correction. Please install it first.")
         }
         # Quick clustering pass (needed if active.ident not already set)
         object <- Seurat::NormalizeData(object, normalization.method = "LogNormalize", scale.factor = 10000)
@@ -448,11 +448,13 @@ RunSeuratAmbientRemoval <- function(
         object <- Seurat::FindClusters(object, resolution = 0.5)
 
         # Detection + correction
+        scCDCArgs$Detection <- scCDCArgs$Detection %||% list()
         scCDCArgs$Detection$seuratobject <- object
         gcgs <- do_call(scCDC::ContaminationDetection, scCDCArgs$Detection)
         scCDCArgs$Detection$seuratobject <- NULL
         gc()
 
+        scCDCArgs$Quantification <- scCDCArgs$Quantification %||% list()
         scCDCArgs$Quantification$object <- object
         scCDCArgs$Quantification$cont_genes <- rownames(gcgs)
         contamination_ratio <- do_call(scCDC::ContaminationQuantification, scCDCArgs$Quantification)
@@ -465,6 +467,7 @@ RunSeuratAmbientRemoval <- function(
             contamination_ratio = contamination_ratio
         )
 
+        scCDCArgs$Correction <- scCDCArgs$Correction %||% list()
         scCDCArgs$Correction$object <- object
         scCDCArgs$Correction$cont_genes <- rownames(gcgs)
         object <- do_call(.scCDC.ContaminationCorrection, scCDCArgs$Correction)
@@ -473,7 +476,7 @@ RunSeuratAmbientRemoval <- function(
 
         return(object)
     } else {
-        stop("[RunSeuratAmbientRemoval] Unsupported contaminant RNA correction method: ", method)
+        stop("[RunSeuratContamCorrection] Unsupported contaminant RNA correction method: ", method)
     }
 }
 
@@ -701,7 +704,7 @@ LoadSeuratAndPerformQC <- function(
             contam_correction <- tolower(contam_correction)
             contam_correction <- match.arg(contam_correction, c("decontx", "sccdc"))
             log$info("  Performing contaminant RNA correction with method '{contam_correction}' ...")
-            obj <- RunSeuratAmbientRemoval(obj, method = contam_correction, decontXArgs = decontXArgs, scCDCArgs = scCDCArgs)
+            obj <- RunSeuratContamCorrection(obj, method = contam_correction, decontXArgs = decontXArgs, scCDCArgs = scCDCArgs)
             contamination_info[["tool"]] <- contam_correction
 
             if (contam_correction == "sccdc") {
