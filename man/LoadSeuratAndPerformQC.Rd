@@ -14,6 +14,8 @@ LoadSeuratAndPerformQC(
   gene_qc = NULL,
   ccs_args = NULL,
   LoadLoomArgs = list(),
+  ambient_removal = NULL,
+  decontXArgs = list(),
   tmpdir = NULL,
   log = NULL,
   cache = NULL

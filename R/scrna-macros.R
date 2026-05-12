@@ -611,6 +611,32 @@ PerformGeneQC <- function(object, gene_qc) {
     list(exprs = exprs, cell_meta = NULL)
 }
 
+#' Run ambient RNA removal on a Seurat object
+#'
+#' @param object Seurat object
+#' @param method Method to use for ambient RNA removal. Currently only "decontx" is supported.
+#' @param decontXArgs Arguments to pass to decontX functionn from the celda package. See `?celda::decontX` for details.
+#' @return A Seurat object with ambient RNA removed
+#' @export
+RunSeuratAmbientRemoval <- function(object, method = "decontx", decontXArgs = list()) {
+    if (method == "decontx") {
+        if (!requireNamespace("celda", quietly = TRUE)) {
+            stop("[RunSeuratAmbientRemoval] The 'celda' package is required for decontX ambient RNA removal. Please install it first.")
+        }
+        # Run decontX
+        decontXArgs$x <- SeuratObject::GetAssayData(object, assay = "RNA", layer = "counts")
+        decontx_res <- do_call(celda::decontX, decontXArgs)
+        # Update the counts with the decontaminated counts
+        object[["RNA"]] <- SeuratObject::CreateAssayObject(counts = decontx_res$decontXcounts)
+        # Store the contamination fraction in meta.data
+        object$decontX_contamination <- decontx_res$contamination
+        return(object)
+    } else {
+        stop("[RunSeuratAmbientRemoval] Unsupported ambient RNA removal method: ", method)
+    }
+}
+
+
 #' Load samples into a Seurat object
 #'
 #' Cell QC will be performed, either per-sample or on the whole object
@@ -816,6 +842,16 @@ LoadSeuratAndPerformQC <- function(
         obj <- PerformSeuratCellQC(obj, cell_qc)
         if (!is.null(gene_qc) && length(gene_qc) > 0) {
             geneqc_df <- rbind(geneqc_df, PerformGeneQC(obj, gene_qc))
+        }
+
+        if (!is.null(ambient_removal) && !isFALSE(ambient_removal)) {
+            if (isTRUE(ambient_removal)) {
+                ambient_removal <- "decontX"
+            }
+            ambient_removal <- tolower(ambient_removal)
+            ambient_removal <- match.arg(ambient_removal, c("decontx"))
+            log$info("  Performing ambient RNA removal with method '{ambient_removal}' ...")
+            obj <- RunSeuratAmbientRemoval(obj, method = ambient_removal, decontXArgs = decontXArgs)
         }
 
         if (length(ccs_args) > 0) {
