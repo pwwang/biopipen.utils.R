@@ -14,8 +14,9 @@ LoadSeuratAndPerformQC(
   gene_qc = NULL,
   ccs_args = NULL,
   LoadLoomArgs = list(),
-  ambient_removal = NULL,
+  contam_correction = NULL,
   decontXArgs = list(),
+  scCDCArgs = list(Detection = list(), Quantification = list(), Correction = list()),
   tmpdir = NULL,
   log = NULL,
   cache = NULL
@@ -81,6 +82,12 @@ Multiple strings can also be separated by commas in a single string.
 has been QC'ed.}
 
 \item{LoadLoomArgs}{Arguments to pass to \code{\link[SeuratDisk:LoadLoom]{SeuratDisk::LoadLoom()}} when loading loom files.}
+
+\item{contam_correction}{Whether to perform contaminant RNA correction. Supported methods: "decontx" (using decontX function from the celda package) and "sccdc" (using scCDC package).}
+
+\item{decontXArgs}{Arguments to pass to decontX function from the celda package when \code{contam_correction} is "decontx". See \code{?celda::decontX} for details.}
+
+\item{scCDCArgs}{Arguments to pass to scCDC package when \code{contam_correction} is "sccdc". It should be a list containing three sub-lists: Detection, Quantification and Correction, which are the arguments for \code{scCDC::ContaminationDetection}, \code{scCDC::ContaminationQuantification} and \code{scCDC::ContaminationCorrection} functions, respectively. See \code{?scCDC::ContaminationDetection}, \code{?scCDC::ContaminationQuantification} and \code{?scCDC::ContaminationCorrection} for details.}
 
 \item{tmpdir}{Temporary directory to store intermediate files when there are prefix in the file names}
 
