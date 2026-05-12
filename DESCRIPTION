@@ -53,6 +53,8 @@ Suggests:
     edgeR,
     ComplexHeatmap,
     qs2,
+    celda,
+    scCDC,
     plotly,
     htmlwidgets
 Remotes:
@@ -60,6 +62,7 @@ Remotes:
     pwwang/plotthis,
     pwwang/scplotter,
     chris-mcginnis-ucsf/DoubletFinder,
-    mojaveazure/seurat-disk
+    mojaveazure/seurat-disk,
+    ZJU-UoE-CCW-LAB/scCDC
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3

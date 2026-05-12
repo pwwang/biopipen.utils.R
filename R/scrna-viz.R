@@ -133,7 +133,7 @@ VizDEGs <- function(
 #' @importFrom rlang %||% sym
 #' @importFrom dplyr mutate if_else select all_of n
 #' @importFrom tidyr pivot_longer pivot_wider
-#' @importFrom plotthis ViolinPlot BoxPlot ScatterPlot RidgePlot BarPlot
+#' @importFrom plotthis ViolinPlot BoxPlot ScatterPlot BarPlot
 #' @examples
 #' \donttest{
 #' set.seed(8525)
@@ -237,7 +237,7 @@ VizSeuratCellQC <- function(
         args$palette <- palette
         do_call(BarPlot, args)
     } else if (plot_type == "ridge") {
-        RidgePlot(df,
+        plotthis::RidgePlot(df,
             x = "value", group_by = "QC", facet_by = "feature", palette = palette,
             facet_scales = "free_x", ...
         )
@@ -277,7 +277,7 @@ VizSeuratCellQC <- function(
 #' @param ... Additional arguments to pass to the plot function [plotthis::BarPlot()]
 #' @return The plot
 #' @export
-#' @importFrom plotthis Histogram BoxPlot ViolinPlot RidgePlot
+#' @importFrom plotthis Histogram BoxPlot ViolinPlot
 #' @examples
 #' \donttest{
 #' set.seed(8525)
@@ -323,7 +323,7 @@ VizSeuratGeneQC <- function(
             palette = palette, ylab = ylab, ...
         )
     } else if (plot_type == "ridge") {
-        RidgePlot(object@misc$gene_qc,
+        plotthis::RidgePlot(object@misc$gene_qc,
             x = "Count", group_by = "QC", facet_by = "Sample",
             palette = palette, xlab = ylab, ylab = "Number of features", ...
         )
@@ -354,6 +354,90 @@ VizSeuratGeneQC <- function(
         df <- df[order(df$Sample), , drop = FALSE]
         df
     }
+}
+
+#' Visualize contamination correction results of Seurat object
+#'
+#' @param object A Seurat object with contamination correction results
+#' @param plot_type Type of plot to generate
+#' @param metric Metric to visualize, one of "contam", "contamination" and "expression". "contam" is an alias of "contamination".
+#' For `scCDC`, only sample-level contamination fraction is available.
+#' For `decontX`, cell-level contamination fraction is available.
+#' @param markers List of marker genes to visualize expression of contamination genes.
+#' For `scCDC`, the `GCGs` will be used by default.
+#' @param ... Additional arguments to pass to the plot function.
+#' @export
+VizSeuratContamination <- function(
+    object,
+    plot_type = c("ridge", "histogram", "bar", "violin", "box", "heatmap", "dot"),
+    metric = c("contam", "contamination", "expr", "expression"),
+    markers = NULL,
+    ...
+) {
+    contam_info <- object@misc$contamination
+    if (is.null(contam_info) || is.null(contam_info$tool)) {
+        stop("[VizSeuratContamination] No contamination correction results found in the object. Please run [RunSeuratContaminationCorrection] first.")
+    }
+    plot_type <- match.arg(plot_type)
+    metric <- match.arg(metric)
+    if (metric == "contam") {
+        metric = "contamination"
+    }
+
+    if (metric == "contamination") {
+        contam_data <- if (contam_info$tool == "sccdc") {
+            contam_info$contamination_ratio
+        } else {
+            object@meta.data
+        }
+        contam_col <- if (contam_info$tool == "sccdc") {
+            "ContaminationRatio"
+        } else {
+            "decontX_contamination"
+        }
+
+        if (plot_type == "histogram") {
+            plotthis::Histogram(contam_data, x = contam_col, ...)
+        } else if (plot_type == "ridge") {
+            plotthis::RidgePlot(contam_data, x = contam_col, ...)
+        } else if (plot_type == "bar") {
+            stopifnot("[VizSeuratContamination] 'bar' contamination plot is only available for 'scCDC'" = contam_info$tool == "sccdc")
+            plotthis::BarPlot(contam_data, x = contam_col, ...)
+        } else if (plot_type == "violin") {
+            stopifnot("[VizSeuratContamination] 'violin' contamination plot is only available for 'decontX'" = contam_info$tool == "decontx")
+            plotthis::ViolinPlot(contam_data, x = "Sample", y = contam_col, ...)
+        } else if (plot_type == "box") {
+            stopifnot("[VizSeuratContamination] 'box' contamination plot is only available for 'decontX'" = contam_info$tool == "decontx")
+            plotthis::BoxPlot(contam_data, x = "Sample", y = contam_col, ...)
+        } else {
+            stop("[VizSeuratContamination] Unsupported plot_type '", plot_type, "' for contamination visualization")
+        }
+    } else {  # expression
+        if (is.null(markers) && contam_info$tool == "decontx") {
+            stop("[VizSeuratContamination] 'markers' must be provided to visualize expression of contamination genes.")
+        }
+        if (is.null(markers)) {
+            markers <- lapply(contam_info$GCGs, rownames)
+            markers <- unique(unlist(markers))
+        }
+
+        # Subset the object to keep only the Contaminated assay
+        obj_contam <- object
+        SeuratObject::DefaultAssay(obj_contam) <- "Contaminated"
+        obj_contam@assays$RNA <- NULL
+        gc()
+        obj_contam <- SeuratObject::RenameAssays(obj_contam, Contaminated = "RNA")
+        SeuratObject::DefaultAssay(obj_contam) <- "RNA"
+
+        object@assays$Contaminated <- NULL
+        gc()
+
+        obj <- merge(obj_contam, object, add.cell.ids = c("Contaminated", "Corrected"))
+        obj$Group <- ifelse(grepl("^Contaminated_", colnames(obj)), "Contaminated", "Corrected")
+
+        scplotter::FeatureStatPlot(obj, features = markers, ident = "Group", plot_type = plot_type, ...)
+    }
+
 }
 
 #' Visualize detected doublets
