@@ -178,7 +178,7 @@ RunGSEA = function(ranks, genesets, ...) {
 #' @return A ggplot object or a list of ggplot objects
 #' @importFrom rlang sym parse_expr
 #' @importFrom dplyr mutate %>% filter
-#' @importFrom plotthis GSEASummaryPlot GSEAPlot Heatmap DotPlot
+#' @importFrom plotthis GSEASummaryPlot GSEAPlot Heatmap
 #' @export
 #' @examples
 #' \donttest{
@@ -325,7 +325,7 @@ VizGSEA <- function(
             gsea_results,
             !!sym(fill_by) := !!parse_expr(fill_by)
         )
-        DotPlot(
+        plotthis::DotPlot(
             gsea_results,
             x = group_by,
             y = "ID",
