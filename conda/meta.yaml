@@ -1,6 +1,6 @@
 package:
   name: r-biopipen.utils
-  version: 0.4.0
+  version: 0.4.1
 
 source:
   path: ..
@@ -21,12 +21,14 @@ requirements:
     - r-jsonlite
     - r-logger
     - r-r6
+    - r-sccdc
     - r-seurat
     - r-testthat
     - r-tibble
     - r-tidyseurat
     - r-zip
     - bioconda::bioconductor-biocparallel
+    - bioconda::bioconductor-celda
     - bioconda::bioconductor-mygene
     - bioconda::bioconductor-scdblfinder
     - r-ggplot2 >4
@@ -45,12 +47,14 @@ requirements:
     - r-jsonlite
     - r-logger
     - r-r6
+    - r-sccdc
     - r-seurat
     - r-testthat
     - r-tibble
     - r-tidyseurat
     - r-zip
     - bioconda::bioconductor-biocparallel
+    - bioconda::bioconductor-celda
     - bioconda::bioconductor-mygene
     - bioconda::bioconductor-scdblfinder
     - r-ggplot2 >4
