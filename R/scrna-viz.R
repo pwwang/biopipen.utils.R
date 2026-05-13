@@ -401,8 +401,12 @@ VizSeuratContamination <- function(
         } else if (plot_type == "ridge") {
             plotthis::RidgePlot(contam_data, x = contam_col, ...)
         } else if (plot_type == "bar") {
-            stopifnot("[VizSeuratContamination] 'bar' contamination plot is only available for 'scCDC'" = contam_info$tool == "sccdc")
-            plotthis::BarPlot(contam_data, x = contam_col, ...)
+            if (contam_info$tool == "decontx") {
+                contam_data <- dplyr::group_by(contam_data, !!sym("Sample"))
+                contam_data <- dplyr::summarise(contam_data, !!sym(paste0(contam_col, " (mean)")) := mean(!!sym(contam_col)), .groups = "drop")
+                contam_col <- paste0(contam_col, " (mean)")
+            }
+            plotthis::BarPlot(contam_data, x = "Sample", y = contam_col, ...)
         } else if (plot_type == "violin") {
             stopifnot("[VizSeuratContamination] 'violin' contamination plot is only available for 'decontX'" = contam_info$tool == "decontx")
             plotthis::ViolinPlot(contam_data, x = "Sample", y = contam_col, ...)
