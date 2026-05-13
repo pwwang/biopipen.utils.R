@@ -427,7 +427,7 @@ RunSeuratContamCorrection <- function(
             assay.name = "RNA",
             new.assay.name = "Contaminated"
         )
-        object[["RNA"]] <- SeuratObject::CreateAssayObject(counts = decontx_res$decontXcounts)
+        object[["RNA"]] <- as(SeuratObject::CreateAssayObject(counts = decontx_res$decontXcounts), "Assay5")
         SeuratObject::DefaultAssay(object) <- "RNA"
         # Store the contamination fraction in meta.data
         object$decontX_contamination <- decontx_res$contamination
@@ -591,7 +591,7 @@ LoadSeuratAndPerformQC <- function(
 
     cache <- cache %||% gettempdir()
     cached <- Cache$new(
-        list(meta, min_cells, min_features, features_map, samples, cell_qc, gene_qc, LoadLoomArgs),
+        list(meta, min_cells, min_features, features_map, samples, cell_qc, gene_qc, LoadLoomArgs, ccs_args, contam_correction, decontXArgs, scCDCArgs),
         prefix = "biopipen.utils.LoadSeuratAndPerformQC",
         cache_dir = cache
     )

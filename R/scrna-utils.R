@@ -342,7 +342,7 @@
     # object@assays[['Corrected']] <- Corrected_Assay
     # # add the default key to avoid some version problems
     # object@assays$Corrected@key = "corrected_"
-    object@assays[['RNA']] <- Corrected_Assay
+    object@assays[['RNA']] <- as(Corrected_Assay, "Assay5")
     object@assays$RNA@key <- "RNA_"
     SeuratObject::DefaultAssay(object) <- "RNA"
     return(object)
