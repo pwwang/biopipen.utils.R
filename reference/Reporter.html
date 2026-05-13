@@ -50,91 +50,83 @@
 
 <div class="section">
 <h3 id="public-methods">Public methods<a class="anchor" aria-label="anchor" href="#public-methods"></a></h3>
-
-<ul><li><p><a href="#method-Reporter-new"><code>Reporter$new()</code></a></p></li>
+<p></p><ul><li><p><a href="#method-Reporter-initialize"><code>Reporter$new()</code></a></p></li>
 <li><p><a href="#method-Reporter-add"><code>Reporter$add()</code></a></p></li>
 <li><p><a href="#method-Reporter-add2"><code>Reporter$add2()</code></a></p></li>
 <li><p><a href="#method-Reporter-image"><code>Reporter$image()</code></a></p></li>
 <li><p><a href="#method-Reporter-clear"><code>Reporter$clear()</code></a></p></li>
 <li><p><a href="#method-Reporter-save"><code>Reporter$save()</code></a></p></li>
 <li><p><a href="#method-Reporter-clone"><code>Reporter$clone()</code></a></p></li>
-</ul></div><p></p><hr><a id="method-Reporter-new"></a><div class="section">
-<h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
+</ul></div><p></p><hr><a id="method-Reporter-initialize"></a><div class="section">
+<h3 id="reporter-new-"><code>Reporter$new()</code><a class="anchor" aria-label="anchor" href="#reporter-new-"></a></h3>
 <p>Initialize the reporter</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/Reporter.html">Reporter</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
+</div>
 
-</div><p></p><hr><a id="method-Reporter-add"></a><div class="section">
-<h3 id="method-add-">Method <code>add()</code><a class="anchor" aria-label="anchor" href="#method-add-"></a></h3>
+<p></p><hr><a id="method-Reporter-add"></a><div class="section">
+<h3 id="reporter-add-"><code>Reporter$add()</code><a class="anchor" aria-label="anchor" href="#reporter-add-"></a></h3>
 <p>Add a content to the report</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Reporter</span><span class="op">$</span><span class="fu">add</span><span class="op">(</span><span class="va">...</span>, <span class="va">h1</span>, h2 <span class="op">=</span> <span class="st">"#"</span>, h3 <span class="op">=</span> <span class="st">"#"</span>, ui <span class="op">=</span> <span class="st">"flat"</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
+</div><p></p><div class="section">
 <h4 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>...</code></dt>
 <dd><p>The content to add</p></dd>
 
-
-<dt><code>h1</code></dt>
+      <dt><code>h1</code></dt>
 <dd><p>The first level heading of the report</p></dd>
 
-
-<dt><code>h2</code></dt>
+      <dt><code>h2</code></dt>
 <dd><p>The second level heading of the report</p></dd>
 
-
-<dt><code>h3</code></dt>
+      <dt><code>h3</code></dt>
 <dd><p>The third level heading of the report</p></dd>
 
-
-<dt><code>ui</code></dt>
+      <dt><code>ui</code></dt>
 <dd><p>The user interface of the report</p></dd>
 
 
 </dl><p></p></div>
 </div>
 
-</div><p></p><hr><a id="method-Reporter-add2"></a><div class="section">
-<h3 id="method-add--1">Method <code>add2()</code><a class="anchor" aria-label="anchor" href="#method-add--1"></a></h3>
+</div>
+
+<p></p><hr><a id="method-Reporter-add2"></a><div class="section">
+<h3 id="reporter-add--1"><code>Reporter$add2()</code><a class="anchor" aria-label="anchor" href="#reporter-add--1"></a></h3>
 <p>Add a content to the report, but infer the headings from headings and sub-headings</p><div class="section">
 <h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Reporter</span><span class="op">$</span><span class="fu">add2</span><span class="op">(</span><span class="va">...</span>, <span class="va">hs</span>, hs2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, ui <span class="op">=</span> <span class="st">"flat"</span>, collapse <span class="op">=</span> <span class="st">": "</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
+</div><p></p><div class="section">
 <h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>...</code></dt>
 <dd><p>The content to add</p></dd>
 
-
-<dt><code>hs</code></dt>
+      <dt><code>hs</code></dt>
 <dd><p>The headings of the case</p></dd>
 
-
-<dt><code>hs2</code></dt>
+      <dt><code>hs2</code></dt>
 <dd><p>The headings that must be shown.
 When there are more items in <code>hs</code>, they will be concatenated.
 For example, if <code>hs = c("Section1", "Case1")</code>, and <code>hs2 = c("A", "B")</code>, then
 headings will be <code>h1 = "Section1: Case1"</code> and <code>h2 = "A"</code> and <code>h3 = "B"</code>.</p></dd>
 
-
-<dt><code>ui</code></dt>
+      <dt><code>ui</code></dt>
 <dd><p>The user interface of the report</p></dd>
 
-
-<dt><code>collapse</code></dt>
+      <dt><code>collapse</code></dt>
 <dd><p>The separator to concatenate the headings</p></dd>
 
 
 </dl><p></p></div>
 </div>
 
-</div><p></p><hr><a id="method-Reporter-image"></a><div class="section">
-<h3 id="method-image-">Method <code><a href="https://rdrr.io/r/graphics/image.html" class="external-link">image()</a></code><a class="anchor" aria-label="anchor" href="#method-image-"></a></h3>
+</div>
+
+<p></p><hr><a id="method-Reporter-image"></a><div class="section">
+<h3 id="reporter-image-"><code>Reporter$image()</code><a class="anchor" aria-label="anchor" href="#reporter-image-"></a></h3>
 <p>Generate a report for an image to be added.
 If <code>&lt;prefix&gt;.html</code> exists, the image is treated as an interactive (Plotly) plot
 and a Plotly component schema is returned instead of an Image schema.
@@ -148,37 +140,29 @@ is issued if they are provided.</p><div class="section">
 <span>  kind <span class="op">=</span> <span class="st">"image"</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
+</div><p></p><div class="section">
 <h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>prefix</code></dt>
 <dd><p>The prefix of the image</p></dd>
 
-
-<dt><code>more_formats</code></dt>
+      <dt><code>more_formats</code></dt>
 <dd><p>More formats of the image available</p></dd>
 
-
-<dt><code>save_code</code></dt>
+      <dt><code>save_code</code></dt>
 <dd><p>Whether to save the code to reproduce the plot</p></dd>
 
-
-<dt><code>kind</code></dt>
+      <dt><code>kind</code></dt>
 <dd><p>The kind of the report, default is "image"</p></dd>
 
-
-<dt><code>...</code></dt>
+      <dt><code>...</code></dt>
 <dd><p>Other arguments to add to the report</p></dd>
 
 
 </dl><p></p></div>
-</div>
-<div class="section">
+</div><p></p><div class="section">
 <h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
 <p>a list of the report for the image</p>
-</div>
-<div class="section">
+</div><p></p><div class="section">
 <h4 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="va">reporter</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_reporter.html">get_reporter</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">reporter</span><span class="op">$</span><span class="fu">add</span><span class="op">(</span></span>
@@ -191,45 +175,44 @@ is issued if they are provided.</p><div class="section">
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
+</div>
 
-</div><p></p><hr><a id="method-Reporter-clear"></a><div class="section">
-<h3 id="method-clear-">Method <code>clear()</code><a class="anchor" aria-label="anchor" href="#method-clear-"></a></h3>
+<p></p><hr><a id="method-Reporter-clear"></a><div class="section">
+<h3 id="reporter-clear-"><code>Reporter$clear()</code><a class="anchor" aria-label="anchor" href="#reporter-clear-"></a></h3>
 <p>Clear the report</p><div class="section">
 <h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Reporter</span><span class="op">$</span><span class="fu">clear</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
+</div>
 
-</div><p></p><hr><a id="method-Reporter-save"></a><div class="section">
-<h3 id="method-save-">Method <code><a href="https://rdrr.io/r/base/save.html" class="external-link">save()</a></code><a class="anchor" aria-label="anchor" href="#method-save-"></a></h3>
+<p></p><hr><a id="method-Reporter-save"></a><div class="section">
+<h3 id="reporter-save-"><code>Reporter$save()</code><a class="anchor" aria-label="anchor" href="#reporter-save-"></a></h3>
 <p>Save the report to a file</p><div class="section">
 <h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Reporter</span><span class="op">$</span><span class="fu">save</span><span class="op">(</span><span class="va">path</span>, clear <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
+</div><p></p><div class="section">
 <h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>path</code></dt>
 <dd><p>The path to save the report
 If the path is a directory, the report will be saved as <code>report.json</code> in the directory
 Otherwise, the report will be saved to the path</p></dd>
 
-
-<dt><code>clear</code></dt>
+      <dt><code>clear</code></dt>
 <dd><p>Whether to clear the report after saving</p></dd>
 
 
 </dl><p></p></div>
 </div>
 
-</div><p></p><hr><a id="method-Reporter-clone"></a><div class="section">
-<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
+</div>
+
+<p></p><hr><a id="method-Reporter-clone"></a><div class="section">
+<h3 id="reporter-clone-"><code>Reporter$clone()</code><a class="anchor" aria-label="anchor" href="#reporter-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
 <h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Reporter</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
+</div><p></p><div class="section">
 <h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
@@ -240,13 +223,14 @@ Otherwise, the report will be saved to the path</p></dd>
 
 </div>
 
+
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
-<span class="r-in"><span><span class="co">## Method `Reporter$image`</span></span></span>
+<span class="r-in"><span><span class="co">## Method `Reporter$image()`</span></span></span>
 <span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">reporter</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_reporter.html">get_reporter</a></span><span class="op">(</span><span class="op">)</span></span></span>

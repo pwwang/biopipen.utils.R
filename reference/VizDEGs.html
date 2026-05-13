@@ -141,7 +141,16 @@ The object's metadata will be merged with <code>markers</code> by <code>subset_b
 It will be evaluated by <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">dplyr::filter()</a></code>.
 For <code>volcano</code>, <code>volcano_log2fc</code>, <code>volcano_pct</code>, <code>jitter</code>, <code>jitter_log2fc</code>, and <code>jitter_pct</code> plots, the selected markers will be labeled in the plot.
 FOr  other plot types, only the selected markers will be plotted.
-Default is 5 for <code>volcano</code>, <code>volcano_log2fc</code>, <code>volcano_pct</code>, <code>jitter</code>, <code>jitter_log2fc</code>, <code>jitter_pct</code>, and 10 for other plot types.</p></dd>
+Default is 5 for <code>volcano</code>, <code>volcano_log2fc</code>, <code>volcano_pct</code>, <code>jitter</code>, <code>jitter_log2fc</code>, <code>jitter_pct</code>, and 10 for other plot types.
+Note that if this is a numeric value, it will select the top N markers for each group defined by <code>subset_by</code>. If this is a string of expression, it will be evaluated by <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">dplyr::filter()</a></code> to select markers.
+If this is an (character) expression, it will be used to only filter the markers.
+For example, if you want to plot the markers that are significant in cluster 0,
+you can set <code>select = "p_val_adj &lt; 0.05 &amp; cluster == '0'"</code> for the markers identified in cluster 0,
+but in the plot, other clusters will also be included if they have markers that satisfy the condition.
+If you want to filter the data by <code>subset_by</code>, you should use a multiple value expression
+like <code>select = c("p_val_adj &lt; 0.05", "cluster == '0'")</code>, where <code>subset_by = "cluster"</code>.
+This also works: <code>select = c(5, "cluster %in% c('0', '1')")</code>, which will select top 5 markers in cluster 0 and 1,
+and keeps only cluster 0 and 1 in the plot.</p></dd>
 
 
 <dt id="arg-outprefix">outprefix<a class="anchor" aria-label="anchor" href="#arg-outprefix"></a></dt>

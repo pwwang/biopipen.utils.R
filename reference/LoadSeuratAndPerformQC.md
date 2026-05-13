@@ -15,6 +15,9 @@ LoadSeuratAndPerformQC(
   gene_qc = NULL,
   ccs_args = NULL,
   LoadLoomArgs = list(),
+  contam_correction = NULL,
+  decontXArgs = list(),
+  scCDCArgs = list(Detection = list(), Quantification = list(), Correction = list()),
   tmpdir = NULL,
   log = NULL,
   cache = NULL
@@ -48,12 +51,12 @@ LoadSeuratAndPerformQC(
 
   Include features detected in at least this many cells. This will be
   applied to all samples and passed to the
-  [`Seurat::CreateSeuratObject()`](https://satijalab.org/seurat/reference/reexports.html)
+  [`Seurat::CreateSeuratObject()`](https://satijalab.github.io/seurat-object/reference/CreateSeuratObject.html)
   function. QCs can be further performed on the object after loading.
   You can also provide a list of values, where the names of the list are
   sample names and the values are the minimum number of cells for each
   sample to load by
-  [`Seurat::CreateSeuratObject()`](https://satijalab.org/seurat/reference/reexports.html).
+  [`Seurat::CreateSeuratObject()`](https://satijalab.github.io/seurat-object/reference/CreateSeuratObject.html).
   You can have a default value in the list with the name "DEFAULT" for
   the samples that are not listed. This won't work if data is loaded
   from a loom file or `meta` is a Seurat object.
@@ -62,12 +65,12 @@ LoadSeuratAndPerformQC(
 
   Include cells where at least this many features are detected. This
   will be applied to all samples and passed to the
-  [`Seurat::CreateSeuratObject()`](https://satijalab.org/seurat/reference/reexports.html)
+  [`Seurat::CreateSeuratObject()`](https://satijalab.github.io/seurat-object/reference/CreateSeuratObject.html)
   function. QCs can be further performed on the object after loading.
   You can also provide a list of values, where the names of the list are
   sample names and the values are the minimum number of features for
   each sample to load by
-  [`Seurat::CreateSeuratObject()`](https://satijalab.org/seurat/reference/reexports.html).
+  [`Seurat::CreateSeuratObject()`](https://satijalab.github.io/seurat-object/reference/CreateSeuratObject.html).
   You can have a default value in the list with the name "DEFAULT" for
   the samples that are not listed. This won't work if data is loaded
   from a loom file or `meta` is a Seurat object.
@@ -117,6 +120,35 @@ LoadSeuratAndPerformQC(
   [`SeuratDisk::LoadLoom()`](https://mojaveazure.github.io/seurat-disk/reference/LoadLoom.html)
   when loading loom files.
 
+- contam_correction:
+
+  Whether to perform contaminant RNA correction. Supported methods:
+  "decontx" (using decontX function from the celda package) and "sccdc"
+  (using scCDC package).
+
+- decontXArgs:
+
+  Arguments to pass to decontX function from the celda package when
+  `contam_correction` is "decontx". See
+  [`?celda::decontX`](https://rdrr.io/pkg/celda/man/decontX.html) for
+  details.
+
+- scCDCArgs:
+
+  Arguments to pass to scCDC package when `contam_correction` is
+  "sccdc". It should be a list containing three sub-lists: Detection,
+  Quantification and Correction, which are the arguments for
+  [`scCDC::ContaminationDetection`](https://rdrr.io/pkg/scCDC/man/ContaminationDetection.html),
+  [`scCDC::ContaminationQuantification`](https://rdrr.io/pkg/scCDC/man/ContaminationQuantification.html)
+  and
+  [`scCDC::ContaminationCorrection`](https://rdrr.io/pkg/scCDC/man/ContaminationCorrection.html)
+  functions, respectively. See
+  [`?scCDC::ContaminationDetection`](https://rdrr.io/pkg/scCDC/man/ContaminationDetection.html),
+  [`?scCDC::ContaminationQuantification`](https://rdrr.io/pkg/scCDC/man/ContaminationQuantification.html)
+  and
+  [`?scCDC::ContaminationCorrection`](https://rdrr.io/pkg/scCDC/man/ContaminationCorrection.html)
+  for details.
+
 - tmpdir:
 
   Temporary directory to store intermediate files when there are prefix
@@ -147,13 +179,19 @@ meta <- data.frame(
         file.path(datadir, "Sample2")
     )
 )
-obj <- LoadSeuratAndPerformQC(meta, cache = FALSE, gene_qc = list(min_cells = 3))
-#> INFO    [2026-04-28 05:48:53] Loading each sample ...
-#> INFO    [2026-04-28 05:48:53] - Loading Sample1 and performing QC ...
-#> INFO    [2026-04-28 05:48:54] - Loading Sample2 and performing QC ...
-#> INFO    [2026-04-28 05:48:54] Merging samples ...
-head(obj@misc$cell_qc_df)
-#> NULL
+
+obj <- LoadSeuratAndPerformQC(
+   meta, cache = FALSE, cell_qc = "nFeature_RNA > 1000",
+   gene_qc = list(min_cells = 3)
+)
+#> INFO    [2026-05-13 02:04:34] Loading each sample ...
+#> INFO    [2026-05-13 02:04:34] - Loading Sample1 and performing QC ...
+#> INFO    [2026-05-13 02:04:34] - Loading Sample2 and performing QC ...
+#> INFO    [2026-05-13 02:04:34] Merging samples ...
+print(table(obj$.QC))
+#> 
+#> FALSE  TRUE 
+#>   205   247 
 print(obj@misc$gene_qc)
 #>                   Sample         Feature Count    QC
 #> ENSG00000123560  Sample1 ENSG00000123560    54  TRUE

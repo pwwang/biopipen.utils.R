@@ -72,7 +72,7 @@ The Seurat object with renamed clusters
 This function provides a convenient way to rename clusters in a Seurat
 object. You can provide the mapping of old cluster names to new cluster
 names either as named arguments or as a single list. Unlike
-[`Seurat::RenameIdents()`](https://satijalab.org/seurat/reference/reexports.html),
+[`Seurat::RenameIdents()`](https://satijalab.github.io/seurat-object/reference/Idents.html),
 this function also renames the cluster names in the metadata column, so
 that the changes are persistent. If `save_as` is provided, the renamed
 clusters will be saved to a new column, otherwise the original column

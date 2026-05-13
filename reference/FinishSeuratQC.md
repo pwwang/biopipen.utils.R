@@ -6,7 +6,7 @@ also remove the intermediate data used for QC visualization.
 ## Usage
 
 ``` r
-FinishSeuratQC(object)
+FinishSeuratQC(object, keep_contam_assay = FALSE)
 ```
 
 ## Arguments
@@ -14,6 +14,10 @@ FinishSeuratQC(object)
 - object:
 
   Seurat object
+
+- keep_contam_assay:
+
+  A logic value to control where to keep the "Contaminated" assay
 
 ## Value
 

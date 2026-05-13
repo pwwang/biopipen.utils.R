@@ -12,7 +12,7 @@ Add report to a report.json to pipen-report to build a report
 
 ### Public methods
 
-- [`Reporter$new()`](#method-Reporter-new)
+- [`Reporter$new()`](#method-Reporter-initialize)
 
 - [`Reporter$add()`](#method-Reporter-add)
 
@@ -28,7 +28,7 @@ Add report to a report.json to pipen-report to build a report
 
 ------------------------------------------------------------------------
 
-### Method `new()`
+### `Reporter$new()`
 
 Initialize the reporter
 
@@ -38,7 +38,7 @@ Initialize the reporter
 
 ------------------------------------------------------------------------
 
-### Method `add()`
+### `Reporter$add()`
 
 Add a content to the report
 
@@ -70,7 +70,7 @@ Add a content to the report
 
 ------------------------------------------------------------------------
 
-### Method `add2()`
+### `Reporter$add2()`
 
 Add a content to the report, but infer the headings from headings and
 sub-headings
@@ -106,7 +106,7 @@ sub-headings
 
 ------------------------------------------------------------------------
 
-### Method [`image()`](https://rdrr.io/r/graphics/image.html)
+### `Reporter$image()`
 
 Generate a report for an image to be added. If `<prefix>.html` exists,
 the image is treated as an interactive (Plotly) plot and a Plotly
@@ -164,7 +164,7 @@ a list of the report for the image
 
 ------------------------------------------------------------------------
 
-### Method `clear()`
+### `Reporter$clear()`
 
 Clear the report
 
@@ -174,7 +174,7 @@ Clear the report
 
 ------------------------------------------------------------------------
 
-### Method [`save()`](https://rdrr.io/r/base/save.html)
+### `Reporter$save()`
 
 Save the report to a file
 
@@ -196,7 +196,7 @@ Save the report to a file
 
 ------------------------------------------------------------------------
 
-### Method `clone()`
+### `Reporter$clone()`
 
 The objects of this class are cloneable with this method.
 
@@ -214,7 +214,7 @@ The objects of this class are cloneable with this method.
 
 ``` r
 ## ------------------------------------------------
-## Method `Reporter$image`
+## Method `Reporter$image()`
 ## ------------------------------------------------
 
 reporter <- get_reporter()

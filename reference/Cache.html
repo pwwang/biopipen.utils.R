@@ -49,7 +49,7 @@ based on that signature.</p>
 <dd><p>Directory where cached files are stored</p></dd>
 
 
-<dt><code>source</code></dt>
+    <dt><code>source</code></dt>
 <dd><p>path to the original file/directory/prefix</p></dd>
 
 
@@ -60,8 +60,7 @@ based on that signature.</p>
 
 <div class="section">
 <h3 id="public-methods">Public methods<a class="anchor" aria-label="anchor" href="#public-methods"></a></h3>
-
-<ul><li><p><a href="#method-Cache-new"><code>Cache$new()</code></a></p></li>
+<p></p><ul><li><p><a href="#method-Cache-initialize"><code>Cache$new()</code></a></p></li>
 <li><p><a href="#method-Cache-clear"><code>Cache$clear()</code></a></p></li>
 <li><p><a href="#method-Cache-clear_all"><code>Cache$clear_all()</code></a></p></li>
 <li><p><a href="#method-Cache-restore"><code>Cache$restore()</code></a></p></li>
@@ -69,8 +68,8 @@ based on that signature.</p>
 <li><p><a href="#method-Cache-get_path"><code>Cache$get_path()</code></a></p></li>
 <li><p><a href="#method-Cache-save"><code>Cache$save()</code></a></p></li>
 <li><p><a href="#method-Cache-clone"><code>Cache$clone()</code></a></p></li>
-</ul></div><p></p><hr><a id="method-Cache-new"></a><div class="section">
-<h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
+</ul></div><p></p><hr><a id="method-Cache-initialize"></a><div class="section">
+<h3 id="cache-new-"><code>Cache$new()</code><a class="anchor" aria-label="anchor" href="#cache-new-"></a></h3>
 <p>Initialize a new Cache object</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/Cache.html">Cache</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
@@ -81,42 +80,34 @@ based on that signature.</p>
 <span>  kind <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"object"</span>, <span class="st">"file"</span>, <span class="st">"dir"</span>, <span class="st">"prefix"</span><span class="op">)</span>,</span>
 <span>  path <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
+</div><p></p><div class="section">
 <h4 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>sig_object</code></dt>
 <dd><p>Object used to generate the cache signature</p></dd>
 
-
-<dt><code>prefix</code></dt>
+      <dt><code>prefix</code></dt>
 <dd><p>Prefix for the cache filename</p></dd>
 
-
-<dt><code>cache_dir</code></dt>
+      <dt><code>cache_dir</code></dt>
 <dd><p>Directory where cached files are stored</p></dd>
 
-
-<dt><code>save_sig</code></dt>
+      <dt><code>save_sig</code></dt>
 <dd><p>Whether to save the signature to a file</p></dd>
 
-
-<dt><code>kind</code></dt>
+      <dt><code>kind</code></dt>
 <dd><p>Type of cache: "object", "file", "dir" or "prefix"</p><ul><li><p>object: cache an R object</p></li>
 <li><p>file: cache a file</p></li>
 <li><p>dir: cache a directory</p></li>
 <li><p>prefix: cache files/directories with the same prefix</p></li>
 </ul></dd>
 
-
-<dt><code>path</code></dt>
+      <dt><code>path</code></dt>
 <dd><p>Path to the file or directory to cache
 This is required when <code>kind</code> is "file", "dir", or "prefix"</p></dd>
 
 
 </dl><p></p></div>
-</div>
-<div class="section">
+</div><p></p><div class="section">
 <h4 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h4>
 <p>The <code>sig_object</code> is used to generate a unique signature for the cache.
 The signature is based on an expanded <code><a href="https://rdrr.io/r/utils/str.html" class="external-link">utils::str()</a></code> representation of the object,
@@ -132,95 +123,91 @@ The <code>path</code> parameter is required when <code>kind</code> is "file", "d
 It specifies the path to the file or directory to cache.
 If <code>cache_dir</code> is NULL or an empty string, caching will not be performed.
 If <code>cache_dir</code> is FALSE, caching will not be performed.</p></li>
-</ul></div>
-
-<div class="section">
+</ul><p></p>
+</div><p></p><div class="section">
 <h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
 <p>A new Cache object</p>
-</div>
-<div class="section">
+</div><p></p><div class="section">
 <h4 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a></h4>
-<p></p><div class="r example copy"><div class="sourceCode"><pre><code>\dontrun{
-# Create a Cache object for an R object
-cache &lt;- Cache$new(sig_object = mtcars, prefix = "mtcars_cache",
-                   cache_dir = tempdir(), save_sig = TRUE, kind = "object")
-# Save the object to cache
-cache$save(mtcars)
-# Restore the cached object
-cached_mtcars &lt;- cache$restore()
-# Check if the object is cached
-cache$is_cached()  # Should return TRUE
-# Clear the cache
-cache$clear()
-# Clear all cached objects in the cache directory
-cache$clear_all()
-}
-</code></pre></div><p></p></div>
+<p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="co"># Create a Cache object for an R object</span></span>
+<span><span class="va">cache</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/Cache.html">Cache</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>sig_object <span class="op">=</span> <span class="va">mtcars</span>, prefix <span class="op">=</span> <span class="st">"mtcars_cache"</span>,</span>
+<span>                   cache_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, save_sig <span class="op">=</span> <span class="cn">TRUE</span>, kind <span class="op">=</span> <span class="st">"object"</span><span class="op">)</span></span>
+<span><span class="co"># Save the object to cache</span></span>
+<span><span class="va">cache</span><span class="op">$</span><span class="fu">save</span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span></span>
+<span><span class="co"># Restore the cached object</span></span>
+<span><span class="va">cached_mtcars</span> <span class="op">&lt;-</span> <span class="va">cache</span><span class="op">$</span><span class="fu">restore</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co"># Check if the object is cached</span></span>
+<span><span class="va">cache</span><span class="op">$</span><span class="fu">is_cached</span><span class="op">(</span><span class="op">)</span>  <span class="co"># Should return TRUE</span></span>
+<span><span class="co"># Clear the cache</span></span>
+<span><span class="va">cache</span><span class="op">$</span><span class="fu">clear</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co"># Clear all cached objects in the cache directory</span></span>
+<span><span class="va">cache</span><span class="op">$</span><span class="fu">clear_all</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
+</div>
 
-</div><p></p><hr><a id="method-Cache-clear"></a><div class="section">
-<h3 id="method-clear-">Method <code>clear()</code><a class="anchor" aria-label="anchor" href="#method-clear-"></a></h3>
+<p></p><hr><a id="method-Cache-clear"></a><div class="section">
+<h3 id="cache-clear-"><code>Cache$clear()</code><a class="anchor" aria-label="anchor" href="#cache-clear-"></a></h3>
 <p>Clear the current cached object/file/directory</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Cache</span><span class="op">$</span><span class="fu">clear</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
+</div>
 
-</div><p></p><hr><a id="method-Cache-clear_all"></a><div class="section">
-<h3 id="method-clear-all-">Method <code>clear_all()</code><a class="anchor" aria-label="anchor" href="#method-clear-all-"></a></h3>
+<p></p><hr><a id="method-Cache-clear_all"></a><div class="section">
+<h3 id="cache-clear-all-"><code>Cache$clear_all()</code><a class="anchor" aria-label="anchor" href="#cache-clear-all-"></a></h3>
 <p>Clear all cached objects in the cache directory
 Be careful with this operation as it will remove all cached files in the cache directory</p><div class="section">
 <h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Cache</span><span class="op">$</span><span class="fu">clear_all</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
+</div>
 
-</div><p></p><hr><a id="method-Cache-restore"></a><div class="section">
-<h3 id="method-restore-">Method <code>restore()</code><a class="anchor" aria-label="anchor" href="#method-restore-"></a></h3>
+<p></p><hr><a id="method-Cache-restore"></a><div class="section">
+<h3 id="cache-restore-"><code>Cache$restore()</code><a class="anchor" aria-label="anchor" href="#cache-restore-"></a></h3>
 <p>Retrieve the cached object/file/directory
 When NULL is returned, it means the cache does not exist</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Cache</span><span class="op">$</span><span class="fu">restore</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
+</div><p></p><div class="section">
 <h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
 <p>The cached object if kind is "object", otherwise NULL</p>
 </div>
 
-</div><p></p><hr><a id="method-Cache-is_cached"></a><div class="section">
-<h3 id="method-is-cached-">Method <code>is_cached()</code><a class="anchor" aria-label="anchor" href="#method-is-cached-"></a></h3>
+</div>
+
+<p></p><hr><a id="method-Cache-is_cached"></a><div class="section">
+<h3 id="cache-is-cached-"><code>Cache$is_cached()</code><a class="anchor" aria-label="anchor" href="#cache-is-cached-"></a></h3>
 <p>Check if we have a cached object/file/directory</p><div class="section">
 <h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Cache</span><span class="op">$</span><span class="fu">is_cached</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
+</div><p></p><div class="section">
 <h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
 <p>TRUE if the cached object/file/directory exists, FALSE otherwise</p>
 </div>
 
-</div><p></p><hr><a id="method-Cache-get_path"></a><div class="section">
-<h3 id="method-get-path-">Method <code>get_path()</code><a class="anchor" aria-label="anchor" href="#method-get-path-"></a></h3>
+</div>
+
+<p></p><hr><a id="method-Cache-get_path"></a><div class="section">
+<h3 id="cache-get-path-"><code>Cache$get_path()</code><a class="anchor" aria-label="anchor" href="#cache-get-path-"></a></h3>
 <p>Get the path to the cached object/file/directory</p><div class="section">
 <h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Cache</span><span class="op">$</span><span class="fu">get_path</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
+</div><p></p><div class="section">
 <h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
 <p>The path to the cached object/file/directory</p>
 </div>
 
-</div><p></p><hr><a id="method-Cache-save"></a><div class="section">
-<h3 id="method-save-">Method <code><a href="https://rdrr.io/r/base/save.html" class="external-link">save()</a></code><a class="anchor" aria-label="anchor" href="#method-save-"></a></h3>
+</div>
+
+<p></p><hr><a id="method-Cache-save"></a><div class="section">
+<h3 id="cache-save-"><code>Cache$save()</code><a class="anchor" aria-label="anchor" href="#cache-save-"></a></h3>
 <p>Save an object/file/directory/prefix to cache</p><div class="section">
 <h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Cache</span><span class="op">$</span><span class="fu">save</span><span class="op">(</span>data <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
+</div><p></p><div class="section">
 <h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>data</code></dt>
 <dd><p>The object to cache, or NULL for non-"object" kinds</p></dd>
@@ -229,14 +216,14 @@ When NULL is returned, it means the cache does not exist</p><div class="section"
 </dl><p></p></div>
 </div>
 
-</div><p></p><hr><a id="method-Cache-clone"></a><div class="section">
-<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
+</div>
+
+<p></p><hr><a id="method-Cache-clone"></a><div class="section">
+<h3 id="cache-clone-"><code>Cache$clone()</code><a class="anchor" aria-label="anchor" href="#cache-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
 <h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">Cache</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
+</div><p></p><div class="section">
 <h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
@@ -247,13 +234,14 @@ When NULL is returned, it means the cache does not exist</p><div class="section"
 
 </div>
 
+
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
-<span class="r-in"><span><span class="co">## Method `Cache$new`</span></span></span>
+<span class="r-in"><span><span class="co">## Method `Cache$new()`</span></span></span>
 <span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>

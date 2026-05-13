@@ -61,6 +61,9 @@
 - [`RunSeuratClustering()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratClustering.md)
   : Run seurat unsupervised clustering
 
+- [`RunSeuratContamCorrection()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratContamCorrection.md)
+  : Run contaminant RNA correction on a Seurat object
+
 - [`RunSeuratDEAnalysis()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDEAnalysis.md)
   : RunSeuratDEAnalysis
 
@@ -96,6 +99,9 @@
 
 - [`VizSeuratCellQC()`](https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratCellQC.md)
   : Visualize Cell QC metrics of Seurat object
+
+- [`VizSeuratContamination()`](https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratContamination.md)
+  : Visualize contamination correction results of Seurat object
 
 - [`VizSeuratDoublets()`](https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratDoublets.md)
   : Visualize detected doublets

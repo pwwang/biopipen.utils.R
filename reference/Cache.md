@@ -18,7 +18,7 @@ versions based on that signature.
 
 ### Public methods
 
-- [`Cache$new()`](#method-Cache-new)
+- [`Cache$new()`](#method-Cache-initialize)
 
 - [`Cache$clear()`](#method-Cache-clear)
 
@@ -36,7 +36,7 @@ versions based on that signature.
 
 ------------------------------------------------------------------------
 
-### Method `new()`
+### `Cache$new()`
 
 Initialize a new Cache object
 
@@ -116,7 +116,6 @@ A new Cache object
 
 #### Examples
 
-    \dontrun{
     # Create a Cache object for an R object
     cache <- Cache$new(sig_object = mtcars, prefix = "mtcars_cache",
                        cache_dir = tempdir(), save_sig = TRUE, kind = "object")
@@ -130,11 +129,10 @@ A new Cache object
     cache$clear()
     # Clear all cached objects in the cache directory
     cache$clear_all()
-    }
 
 ------------------------------------------------------------------------
 
-### Method `clear()`
+### `Cache$clear()`
 
 Clear the current cached object/file/directory
 
@@ -144,7 +142,7 @@ Clear the current cached object/file/directory
 
 ------------------------------------------------------------------------
 
-### Method `clear_all()`
+### `Cache$clear_all()`
 
 Clear all cached objects in the cache directory Be careful with this
 operation as it will remove all cached files in the cache directory
@@ -155,7 +153,7 @@ operation as it will remove all cached files in the cache directory
 
 ------------------------------------------------------------------------
 
-### Method `restore()`
+### `Cache$restore()`
 
 Retrieve the cached object/file/directory When NULL is returned, it
 means the cache does not exist
@@ -170,7 +168,7 @@ The cached object if kind is "object", otherwise NULL
 
 ------------------------------------------------------------------------
 
-### Method `is_cached()`
+### `Cache$is_cached()`
 
 Check if we have a cached object/file/directory
 
@@ -184,7 +182,7 @@ TRUE if the cached object/file/directory exists, FALSE otherwise
 
 ------------------------------------------------------------------------
 
-### Method `get_path()`
+### `Cache$get_path()`
 
 Get the path to the cached object/file/directory
 
@@ -198,7 +196,7 @@ The path to the cached object/file/directory
 
 ------------------------------------------------------------------------
 
-### Method [`save()`](https://rdrr.io/r/base/save.html)
+### `Cache$save()`
 
 Save an object/file/directory/prefix to cache
 
@@ -214,7 +212,7 @@ Save an object/file/directory/prefix to cache
 
 ------------------------------------------------------------------------
 
-### Method `clone()`
+### `Cache$clone()`
 
 The objects of this class are cloneable with this method.
 
@@ -232,7 +230,7 @@ The objects of this class are cloneable with this method.
 
 ``` r
 ## ------------------------------------------------
-## Method `Cache$new`
+## Method `Cache$new()`
 ## ------------------------------------------------
 
 if (FALSE) { # \dontrun{
