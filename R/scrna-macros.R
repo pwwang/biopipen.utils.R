@@ -2285,7 +2285,26 @@ ConvertSeuratToAnnData <- function(object_or_file, outfile, assay = NULL, subset
             # In order to convert to h5ad
             # https://github.com/satijalab/seurat/issues/8220#issuecomment-1871874649
             if ("RNA" %in% names(object_or_file@assays)) {
-                object_or_file$RNA <- as(object = object_or_file$RNA, Class = "Assay")
+                rna_assay <- object_or_file$RNA
+                if (inherits(rna_assay, "Assay5")) {
+                    # SeuratObject's coerce method (Assay5 -> Assay) fails when
+                    # meta.features has 0 columns due to `1:ncol(value)` giving
+                    # `c(1, 0)` instead of `integer(0)` in the `[[<-.Assay` method.
+                    # Work around by temporarily adding a placeholder column.
+                    empty_meta <- ncol(rna_assay[[]]) == 0L
+                    if (empty_meta) {
+                        rna_assay[["__biopp_placeholder__"]] <- stats::setNames(
+                            rep(NA, nrow(rna_assay)),
+                            rownames(rna_assay)
+                        )
+                    }
+                    object_or_file$RNA <- as(object = rna_assay, Class = "Assay")
+                    if (empty_meta) {
+                        object_or_file$RNA[["__biopp_placeholder__"]] <- NULL
+                    }
+                } else {
+                    object_or_file$RNA <- as(object = object_or_file$RNA, Class = "Assay")
+                }
             }
 
             log$debug("[ConvertSeuratToAnnData] Saving Seurat object to H5Seurat file ...")
