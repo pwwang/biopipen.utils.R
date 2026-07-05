@@ -1367,9 +1367,19 @@ list_to_h5group <- function(h5fg, name, lst) {
     y = c(assay, 'global', 'no.assay')
   )
   if (length(x = other.assays)) {
-    # For hdf5r H5D objects, use $dims directly instead of Dims()
+    # Get dims from X: H5D uses $dims, H5Group uses dims/shape attributes
+    # Dims() S3 dispatch fails for H5Group because SeuratDisk doesn't register
+    # Dims.H5Group as an S3 method
     x.dims <- if (inherits(dfile[['X']], 'H5D')) {
       dfile[['X']]$dims
+    } else if (inherits(dfile[['X']], 'H5Group')) {
+      if (dfile[['X']]$attr_exists(attr_name = 'dims')) {
+        hdf5r::h5attr(x = dfile[['X']], which = 'dims')
+      } else if (dfile[['X']]$attr_exists(attr_name = 'shape')) {
+        rev(hdf5r::h5attr(x = dfile[['X']], which = 'shape'))
+      } else {
+        c(NA_integer_, NA_integer_)
+      }
     } else {
       Dims(x = dfile[['X']])
     }
