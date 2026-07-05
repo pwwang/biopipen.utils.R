@@ -290,11 +290,12 @@ monkey_patch <- function(namespace, function_name, new_function) {
 #'
 #' @rdname read_save_object
 #' @param file The file to read or write
-#' @param type The type of the file. Can be "auto", "qs2", "rds" or "h5seurat".
+#' @param type The type of the file. Can be "auto", "qs2", "rds", "h5seurat" or "h5ad".
 #' If "auto", the type will be inferred from the file extension.
+#' @param ... Additional arguments passed to the underlying read/write functions.
 #' @return The object read from the file or NULL if writing
 #' @export
-read_obj <- function(file, type = c("auto", "qs2", "rds", "h5seurat")) {
+read_obj <- function(file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad"), ...) {
     type <- match.arg(type)
     if (type == "auto") {
         if (grepl("\\.rds$", file, ignore.case = TRUE)) {
@@ -303,6 +304,8 @@ read_obj <- function(file, type = c("auto", "qs2", "rds", "h5seurat")) {
             type <- "qs2"
         } else if (grepl("\\.[Hh]5[Ss]eurat$", file)) {
             type <- "h5seurat"
+        } else if (grepl("\\.[Hh]5[Aa][Dd]$", file)) {
+            type <- "h5ad"
         } else {
             stop("Unknown file type")
         }
@@ -313,6 +316,8 @@ read_obj <- function(file, type = c("auto", "qs2", "rds", "h5seurat")) {
         qs2::qs_read(file)
     } else if (type == "h5seurat") {
         SeuratDisk::LoadH5Seurat(file)
+    } else if (type == "h5ad") {
+        ConvertAnnDataToSeurat(file, ...)
     } else {
         stop("Unknown file type")
     }
@@ -327,9 +332,14 @@ load_obj <- read_obj
 #' Save an object to a file
 #'
 #' @param obj The object to save
+#' @param file The file to save the object to
+#' @param type The type of the file. Can be "auto", "qs2", "rds", "h5seurat" or "h5ad".
+#' If "auto", the type will be inferred from the file extension.
+#' @param ... Additional arguments passed to the underlying save functions.
+#' @return NULL
 #' @rdname read_save_object
 #' @export
-save_obj <- function(obj, file, type = c("auto", "qs2", "rds", "h5seurat")) {
+save_obj <- function(obj, file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad"), ...) {
     type <- match.arg(type)
     if (type == "auto") {
         if (grepl("\\.rds$", file, ignore.case = TRUE)) {
@@ -338,6 +348,8 @@ save_obj <- function(obj, file, type = c("auto", "qs2", "rds", "h5seurat")) {
             type <- "qs2"
         } else if (grepl("\\.[Hh]5[Ss]eurat$", file)) {
             type <- "h5seurat"
+        } else if (grepl("\\.[Hh]5[Aa][Dd]$", file)) {
+            type <- "h5ad"
         } else {
             stop("Unknown file type")
         }
@@ -348,6 +360,8 @@ save_obj <- function(obj, file, type = c("auto", "qs2", "rds", "h5seurat")) {
         qs2::qs_save(obj, file)
     } else if (type == "h5seurat") {
         SeuratDisk::SaveH5Seurat(obj, file, overwrite = TRUE)
+    } else if (type == "h5ad") {
+        ConvertSeuratToAnnData(obj, file, ...)
     } else {
         stop("Unknown file type")
     }
