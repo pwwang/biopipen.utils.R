@@ -1392,7 +1392,15 @@ list_to_h5group <- function(h5fg, name, lst) {
           if (inherits(slot.obj, 'H5D')) {
             slot.obj$dims
           } else if (inherits(slot.obj, "H5Group")) {
-            slot.obj[['data']]$dims
+            # slot.obj[['data']]$dims gives n_nonzero for sparse matrices,
+            # not the matrix dims. Read dims/shape attr from the H5Group itself.
+            if (slot.obj$attr_exists(attr_name = 'dims')) {
+              hdf5r::h5attr(x = slot.obj, which = 'dims')
+            } else if (slot.obj$attr_exists(attr_name = 'shape')) {
+              rev(hdf5r::h5attr(x = slot.obj, which = 'shape'))
+            } else {
+              c(NA_integer_, NA_integer_)
+            }
           } else {
             Dims(x = slot.obj)
           }
