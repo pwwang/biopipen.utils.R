@@ -7,19 +7,21 @@
 \alias{write_obj}
 \title{Read and write objects to/from files}
 \usage{
-read_obj(file, type = c("auto", "qs2", "rds", "h5seurat"))
+read_obj(file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad"), ...)
 
-load_obj(file, type = c("auto", "qs2", "rds", "h5seurat"))
+load_obj(file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad"), ...)
 
-save_obj(obj, file, type = c("auto", "qs2", "rds", "h5seurat"))
+save_obj(obj, file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad"), ...)
 
-write_obj(obj, file, type = c("auto", "qs2", "rds", "h5seurat"))
+write_obj(obj, file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad"), ...)
 }
 \arguments{
-\item{file}{The file to read or write}
+\item{file}{The file to save the object to}
 
-\item{type}{The type of the file. Can be "auto", "qs2", "rds" or "h5seurat".
+\item{type}{The type of the file. Can be "auto", "qs2", "rds", "h5seurat" or "h5ad".
 If "auto", the type will be inferred from the file extension.}
+
+\item{...}{Additional arguments passed to the underlying save functions.}
 
 \item{obj}{The object to save}
 }
