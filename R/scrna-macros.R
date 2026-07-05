@@ -2463,8 +2463,20 @@ ConvertAnnDataToSeurat <- function(infile, outfile = NULL, assay = NULL, ident =
 
     log$debug("[ConvertAnnDataToSeurat] Converting h5ad file to h5seurat file ...")
     fin <- hdf5r::H5File$new(infile, "r")
-    assay <- assay %||% hdf5r::h5attr(fin, "active_assay") %||% "RNA"
-    ident <- ident %||% hdf5r::h5attr(fin, "active_ident") %||% NULL
+    if (is.null(assay)) {
+        if (fin$attr_exists("active_assay")) {
+            assay <- hdf5r::h5attr(fin, "active_assay")
+        } else {
+            assay <- "RNA"
+        }
+    }
+    if (is.null(ident)) {
+        if (fin$attr_exists("active_ident")) {
+            ident <- hdf5r::h5attr(fin, "active_ident")
+        } else {
+            ident <- NULL
+        }
+    }
     fin$close_all()
     SeuratDisk::Convert(infile, destfile, assay = assay, overwrite = TRUE)
 

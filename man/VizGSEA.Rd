@@ -24,18 +24,22 @@ VizGSEA(
 \item{plot_type}{The type of plot to create
 One of "summary", "gsea"}
 
-\item{gene_ranks}{A numeric vector of gene ranks with genes as names
-The gene ranks are used to plot the gene sets.
-If \code{gene_ranks} is a character vector starting with \code{@}, the gene ranks will be taken from the attribute of \code{data}.}
+\item{gene_ranks}{A named numeric vector of gene-level rank statistics, with
+gene identifiers as names. Used to construct the per-term line plots.
+If a character string starting with \code{"@"}, the attribute of \code{data}
+with that name (minus the \code{"@"}) is used as the gene ranks vector.}
 
-\item{gene_sets}{A list of gene sets, typically from a record of a GMT file
-The names of the list should match the \code{ID} column of \code{data}.
-If \code{gene_sets} is a character vector starting with \code{@}, the gene sets will be taken from the attribute of \code{data}.
-The GSEA plots will be plotted for each gene set. So, the number of plots will be the number of gene sets.
-If you only want to plot a subset of gene sets, you can subset the \code{gene_sets} before passing it to this function.}
+\item{gene_sets}{A named list of gene sets. Each name must correspond to an
+\code{ID} in \code{data}, and each element is a character vector of gene
+identifiers. A GSEA ridge plot is generated for each gene set in the list.
+If you only want to plot a subset of gene sets, subset the list before
+passing it to this function. If a character string starting with
+\code{"@"}, the attribute of \code{data} with that name (minus the
+\code{"@"}) is used.}
 
-\item{gs}{The names of the gene sets to plot
-If \code{NULL}, all gene sets in \code{gene_sets} will be plotted.}
+\item{gs}{Character vector of gene set \code{ID}s to plot. If \code{NULL}
+(default), all gene sets in \code{gene_sets} that appear in \code{data$ID}
+are plotted.}
 
 \item{group_by}{The column name to group by for heatmap and dot plot.
 They will be used as the columns in the heatmap or dot plot.}
