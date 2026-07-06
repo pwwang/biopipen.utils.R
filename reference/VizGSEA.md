@@ -32,25 +32,25 @@ VizGSEA(
 
 - gene_ranks:
 
-  A numeric vector of gene ranks with genes as names The gene ranks are
-  used to plot the gene sets. If `gene_ranks` is a character vector
-  starting with `@`, the gene ranks will be taken from the attribute of
-  `data`.
+  A named numeric vector of gene-level rank statistics, with gene
+  identifiers as names. Used to construct the per-term line plots. If a
+  character string starting with `"@"`, the attribute of `data` with
+  that name (minus the `"@"`) is used as the gene ranks vector.
 
 - gene_sets:
 
-  A list of gene sets, typically from a record of a GMT file The names
-  of the list should match the `ID` column of `data`. If `gene_sets` is
-  a character vector starting with `@`, the gene sets will be taken from
-  the attribute of `data`. The GSEA plots will be plotted for each gene
-  set. So, the number of plots will be the number of gene sets. If you
-  only want to plot a subset of gene sets, you can subset the
-  `gene_sets` before passing it to this function.
+  A named list of gene sets. Each name must correspond to an `ID` in
+  `data`, and each element is a character vector of gene identifiers. A
+  GSEA ridge plot is generated for each gene set in the list. If you
+  only want to plot a subset of gene sets, subset the list before
+  passing it to this function. If a character string starting with
+  `"@"`, the attribute of `data` with that name (minus the `"@"`) is
+  used.
 
 - gs:
 
-  The names of the gene sets to plot If `NULL`, all gene sets in
-  `gene_sets` will be plotted.
+  Character vector of gene set `ID`s to plot. If `NULL` (default), all
+  gene sets in `gene_sets` that appear in `data$ID` are plotted.
 
 - group_by:
 

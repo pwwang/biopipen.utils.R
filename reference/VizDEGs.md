@@ -31,151 +31,98 @@ VizDEGs(
 
 - markers:
 
-  A data frame of markers, typically identified by
+  A data frame of differential expression results, typically the output
+  of
   [`Seurat::FindMarkers()`](https://satijalab.org/seurat/reference/FindMarkers.html)
   or
   [`Seurat::FindAllMarkers()`](https://satijalab.org/seurat/reference/FindAllMarkers.html).
+  Must contain columns `"gene"` (or gene symbols as rownames),
+  `"p_val"`, and `"avg_log2FC"`. For percentage-based plots
+  (`volcano_pct`, `jitter_pct`, `heatmap_pct`, `dot_pct`), columns
+  `"pct.1"` and `"pct.2"` are also required.
 
 - object:
 
-  A Seurat object. Required for some plot types, see `plot_type`.
+  A Seurat object. Required for expression-based plot types:
+  `"heatmap"`, `"violin"`, `"box"`, `"bar"`, `"ridge"`, and `"dot"`. Not
+  used for DE summary plot types. Default: `NULL`.
 
 - plot_type:
 
-  Type of plot to generate. Options include:
-
-  - `volcano`/`volcano_log2fc`: Volcano plot with log2 fold change on
-    x-axis and -log10(p-value) on y-axis. If `p_adjust` is TRUE,
-    -log10(adjusted p-value) is used instead.
-
-  - `volcano_pct`: Volcano plot with difference in percentage of cells
-    expressing the gene between two groups on x-axis and -log10(p-value)
-    on y-axis. If `p_adjust` is TRUE, -log10(adjusted p-value) is used
-    instead.
-
-  - `jitter`/`jitter_log2fc`: Jitter plot of log2 fold change for each
-    gene. The x-axis is the groups defined by `subset_by`, and the
-    y-axis is log2 fold change. The size of the dots represents
-    -log10(p-value) or -log10(adjusted p-value) if `p_adjust` is TRUE.
-
-  - `jitter_pct`: Jitter plot of difference in percentage of cells
-    expressing the gene between two groups for each gene. The x-axis is
-    the groups defined by `subset_by`, and the y-axis is the difference
-    in percentage of cells expressing the gene between two groups. The
-    size of the dots represents -log10(p-value) or -log10(adjusted
-    p-value) if `p_adjust` is TRUE.
-
-  - `heatmap_log2fc`: Heatmap of log2 fold change for each gene across
-    groups defined by `subset_by`. By specifying `cutoff`, The heatmap
-    cells will be labeled with "\*" for p-value \< cutoff, if `p_adjust`
-    is TRUE, adjusted p-value \< cutoff.
-
-  - `heatmap_pct`: Heatmap of difference in percentage of cells
-    expressing the gene between two groups for each gene across groups
-    defined by `subset_by`. By specifying `cutoff`, The heatmap cells
-    will be labeled with "\*" for p-value \< cutoff, if `p_adjust` is
-    TRUE, adjusted p-value \< cutoff.
-
-  - `dot_log2fc`: Dot plot of log2 fold change for each gene across
-    groups defined by `subset_by`. The size of the dots represents
-    -log10(p-value) or -log10(adjusted p-value) if `p_adjust` is TRUE.
-
-  - `dot_pct`: Dot plot of difference in percentage of cells expressing
-    the gene between two groups for each gene across groups defined by
-    `subset_by`. The size of the dots represents -log10(p-value) or
-    -log10(adjusted p-value) if `p_adjust` is TRUE.
-
-  - `heatmap`: Heatmap of expression values for each gene across groups
-    defined by `subset_by`. Requires `object`.
-
-  - `violin`: Violin plot of expression values for each gene across
-    groups defined by `subset_by`. Requires `object`.
-
-  - `box`: Box plot of expression values for each gene across groups
-    defined by `subset_by`. Requires `object`.
-
-  - `bar`: Bar plot of average expression values for each gene across
-    groups defined by `subset_by`. Requires `object`.
-
-  - `ridge`: Ridge plot of expression values for each gene across groups
-    defined by `subset_by`. Requires `object`.
-
-  - `dot`: Dot plot of expression values for each gene across groups
-    defined by `subset_by`. Requires `object`.
+  The type of plot to generate. One of `"volcano"`, `"volcano_log2fc"`,
+  `"volcano_pct"`, `"jitter"`, `"jitter_log2fc"`, `"jitter_pct"`,
+  `"heatmap_log2fc"`, `"heatmap_pct"`, `"dot_log2fc"`, `"dot_pct"`,
+  `"heatmap"`, `"violin"`, `"box"`, `"bar"`, `"ridge"`, or `"dot"`. See
+  Description for details on each type.
 
 - subset_by:
 
-  A column in markers indicating where the markers are identified from,
-  e.g., cluster or condition. If object is provided, you can provide the
-  corresponding metadata column in `subset_by` to merge the markers with
-  the object's metadata, using `:` as separator. For example, if the
-  markers are identified from different clusters (identified by
-  `FindAllMarkers`), and the object's ident column is "RNA_snn_res.0.8",
-  you can set `subset_by = "cluster:RNA_snn_res.0.8"`. Note that for
-  other columns to be merged, only the first value of each group defined
-  by `subset_by` will be used. For some plots, this is used to split the
-  markers into multiple plots, e.g., one plot for each cluster. See
-  `plot_type` for details.
+  A column name in `markers` indicating the grouping from which each
+  marker was identified (e.g., the `cluster` column from
+  `FindAllMarkers()`). Supports the `"marker_column:metadata_column"`
+  syntax for linking to Seurat object metadata (see **Metadata column
+  mapping** section). For jitter and DE heatmap/dot plot types,
+  `subset_by` is required and defines the x-axis or column groups. For
+  expression plot types, `subset_by` controls faceting or splitting.
+  Default: `NULL`.
 
 - subset_as_facet:
 
-  Logical, whether to facet the plots by `subset_by` if applicable.
+  Logical. If `TRUE`, facet the plot by `subset_by` groups instead of
+  splitting into separate plots. Most useful for expression plot types.
+  For volcano plots, controls whether faceting or split_by dispatch is
+  used. Default: `FALSE`.
 
 - comparison_by:
 
-  The metadata column in markers indicating the comparion. When
-  visualizing the expression values, this column should also be in the
-  object's metadata. The values of this column should either a single
-  value, indicating the comparison is between this group and all other
-  cells (in the subset), Similar as `subset_by`, you can provide the
-  corresponding object metadata column by using `:` as separator. If
-  `NULL`, all markers are treated as from one comparison.
+  A column name in `markers` indicating the comparison (e.g., `"g1:g2"`
+  for a pairwise comparison, or a single group name for one-vs-rest).
+  Required for expression-based plot types (`"heatmap"`, `"violin"`,
+  `"box"`, `"bar"`, `"ridge"`, `"dot"`). Supports the
+  `"marker_column:metadata_column"` syntax (see **Metadata column
+  mapping** section). If the comparison values contain a colon (e.g.,
+  `"G2M:G1"`), the two groups on either side of the colon are used to
+  subset the object. If only a single group is present, a one-vs-other
+  comparison is assumed. Default: `NULL`.
 
 - p_adjust:
 
-  Logical, whether to use adjusted p-value for plots that involve
-  p-values. Default is TRUE.
+  Logical. If `TRUE` (default), use adjusted p-value (`p_val_adj`
+  column) for significance calculations and y-axis transformations. If
+  `FALSE`, use raw p-value (`p_val` column).
 
 - cutoff:
 
-  Numeric, p-value or adjusted p-value cutoff to label significance in
-  heatmap plots. Default is NULL, no cutoff.
+  Numeric. The p-value (or adjusted p-value, depending on `p_adjust`)
+  threshold for labeling significance. For volcano plots, sets
+  `y_cutoff`. For heatmap-based DE plots (`heatmap_log2fc`,
+  `heatmap_pct`), controls which cells receive significance marks.
+  Default: `NULL` (no cutoff; defaults to `0.05` for volcano plots).
 
 - order_by:
 
-  A string of expression to order the markers within each group defined
-  by `subset_by`. In addition to the columns in `markers`, you can also
-  use the columns from the object's metadata if `object` is provided.
-  The object's metadata will be merged with `markers` by `subset_by`. Be
-  carefull that only the first value of other columns will be used.
+  A string expression to order markers by (evaluated with
+  [`dplyr::arrange()`](https://dplyr.tidyverse.org/reference/arrange.html)).
+  Can reference columns in `markers` as well as columns from the object
+  metadata (when `object` is provided and `subset_by` enables merging).
+  Only the first value of merged metadata columns is used. Example:
+  `"desc(avg_log2FC)"`. The ordering affects which markers are selected
+  when `select` is numeric. Default: `NULL`.
 
 - select:
 
-  Number of top markers (ordered by `order_by`) to select for each group
-  defined by `subset_by` or a string of expression to filter markers. It
-  will be evaluated by
-  [`dplyr::filter()`](https://dplyr.tidyverse.org/reference/filter.html).
-  For `volcano`, `volcano_log2fc`, `volcano_pct`, `jitter`,
-  `jitter_log2fc`, and `jitter_pct` plots, the selected markers will be
-  labeled in the plot. FOr other plot types, only the selected markers
-  will be plotted. Default is 5 for `volcano`, `volcano_log2fc`,
-  `volcano_pct`, `jitter`, `jitter_log2fc`, `jitter_pct`, and 10 for
-  other plot types. Note that if this is a numeric value, it will select
-  the top N markers for each group defined by `subset_by`. If this is a
-  string of expression, it will be evaluated by
-  [`dplyr::filter()`](https://dplyr.tidyverse.org/reference/filter.html)
-  to select markers. If this is an (character) expression, it will be
-  used to only filter the markers. For example, if you want to plot the
-  markers that are significant in cluster 0, you can set
-  `select = "p_val_adj < 0.05 & cluster == '0'"` for the markers
-  identified in cluster 0, but in the plot, other clusters will also be
-  included if they have markers that satisfy the condition. If you want
-  to filter the data by `subset_by`, you should use a multiple value
-  expression like `select = c("p_val_adj < 0.05", "cluster == '0'")`,
-  where `subset_by = "cluster"`. This also works:
-  `select = c(5, "cluster %in% c('0', '1')")`, which will select top 5
-  markers in cluster 0 and 1, and keeps only cluster 0 and 1 in the
-  plot.
+  How to select markers for labeling or display. See **Marker selection
+  and filtering** section for full details.
+
+  - Numeric: Top N markers per `subset_by` group (default: `5` for
+    volcano/jitter types, `10` for others).
+
+  - Character expression: Filter condition for
+    [`dplyr::filter()`](https://dplyr.tidyverse.org/reference/filter.html).
+
+  - Character vector: Multiple filter expressions; those containing the
+    `subset_by` column name filter the overall data, others filter
+    within remaining data.
 
 - outprefix:
 
@@ -200,23 +147,20 @@ VizDEGs(
 
   `show_labels`
 
-  :   Logical, whether to show the values in heatmap cells. Default is
-      FALSE. Only works for `heatmap_log2fc` and `heatmap_pct`. If
-      `cutoff` is provided, the significant cells will be labeled with
-      `sig_mark`, otherwise all cells will be labeled with their values.
+  :   Logical. For `heatmap_log2fc` and `heatmap_pct` plot types only.
+      If `TRUE`, display numeric values in heatmap cells. When combined
+      with `cutoff`, both values and significance marks are shown.
+      Default: `FALSE`.
 
   `sig_mark`
 
-  :   Character, the symbol to use for significant markers in heatmap
-      plots. Default is "*". See
-      [`plotthis::Heatmap()`](https://pwwang.github.io/plotthis/reference/Heatmap.html)
-      for more details. Note that "*" will not work if `show_labels` is
-      TRUE, since they are both using `label` in `Heatmap`. Try other
-      marks instead, e.g., `-`, `|`, `+`, `/`, `\\`, `x`, `o`, or
-      compound marks like `[*]`, `<*>`, `(*)`, `{*}`. Only works for
-      `heatmap_log2fc` and `heatmap_pct`. If `cutoff` is provided, the
-      significant cells will be labeled with `sig_mark`, otherwise all
-      cells will be labeled with their values.
+  :   Character. The symbol or compound mark used to annotate
+      statistically significant cells in `heatmap_log2fc` and
+      `heatmap_pct` plots. Must be a valid ComplexHeatmap mark: single
+      characters (`"-"`, `"|"`, `"+"`, `"/"`, `"\\"`, `"x"`, `"o"`) or
+      compound marks (`"[*]"`, `"<*>"`, `"(*)"`, `"{*}"`). Note that
+      `"*"` conflicts with `show_labels = TRUE` because both use the
+      label layer — use a compound mark instead. Default: `"*"`.
 
 ## Value
 

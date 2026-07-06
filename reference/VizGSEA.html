@@ -67,22 +67,26 @@ One of "summary", "gsea"</p></dd>
 
 
 <dt id="arg-gene-ranks">gene_ranks<a class="anchor" aria-label="anchor" href="#arg-gene-ranks"></a></dt>
-<dd><p>A numeric vector of gene ranks with genes as names
-The gene ranks are used to plot the gene sets.
-If <code>gene_ranks</code> is a character vector starting with <code>@</code>, the gene ranks will be taken from the attribute of <code>data</code>.</p></dd>
+<dd><p>A named numeric vector of gene-level rank statistics, with
+gene identifiers as names. Used to construct the per-term line plots.
+If a character string starting with <code>"@"</code>, the attribute of <code>data</code>
+with that name (minus the <code>"@"</code>) is used as the gene ranks vector.</p></dd>
 
 
 <dt id="arg-gene-sets">gene_sets<a class="anchor" aria-label="anchor" href="#arg-gene-sets"></a></dt>
-<dd><p>A list of gene sets, typically from a record of a GMT file
-The names of the list should match the <code>ID</code> column of <code>data</code>.
-If <code>gene_sets</code> is a character vector starting with <code>@</code>, the gene sets will be taken from the attribute of <code>data</code>.
-The GSEA plots will be plotted for each gene set. So, the number of plots will be the number of gene sets.
-If you only want to plot a subset of gene sets, you can subset the <code>gene_sets</code> before passing it to this function.</p></dd>
+<dd><p>A named list of gene sets. Each name must correspond to an
+<code>ID</code> in <code>data</code>, and each element is a character vector of gene
+identifiers. A GSEA ridge plot is generated for each gene set in the list.
+If you only want to plot a subset of gene sets, subset the list before
+passing it to this function. If a character string starting with
+<code>"@"</code>, the attribute of <code>data</code> with that name (minus the
+<code>"@"</code>) is used.</p></dd>
 
 
 <dt id="arg-gs">gs<a class="anchor" aria-label="anchor" href="#arg-gs"></a></dt>
-<dd><p>The names of the gene sets to plot
-If <code>NULL</code>, all gene sets in <code>gene_sets</code> will be plotted.</p></dd>
+<dd><p>Character vector of gene set <code>ID</code>s to plot. If <code>NULL</code>
+(default), all gene sets in <code>gene_sets</code> that appear in <code>data$ID</code>
+are plotted.</p></dd>
 
 
 <dt id="arg-group-by">group_by<a class="anchor" aria-label="anchor" href="#arg-group-by"></a></dt>
