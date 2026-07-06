@@ -42,9 +42,9 @@ jobs:
           use-public-rspm: true
           cran: https://packagemanager.posit.co/cran/2025-10-01
 
-      - name: Install libglpk40 for igraph
+      - name: Install libglpk40 for igraph and bsdtar
         run: |
-          sudo apt-get update -y && sudo apt-get install -y libglpk40
+          sudo apt-get update -y && sudo apt-get install -y libglpk40 libarchive-tools
         shell: bash
 
       - name: Promote legacy C++11 builds to C++14
@@ -61,6 +61,15 @@ jobs:
             any::plotthis, any::scplotter, any::enrichR, github::immunogenomics/presto,
             github::mojaveazure/seurat-disk, github::satijalab/seurat-data,
             github::satijalab/azimuth, any::plotly, any::htmlwidgets, github::stuart-lab/signac@1.16.0
+        env:
+          # R's internal tar() function (used by R CMD INSTALL --build to create binary packages) has a known bug since January 2023: for symlink entries, it writes the target file's size in the tar header instead of 0. Per the POSIX tar spec, symlinks (typeflag '2') must have size = 0.
+          # For Rhtslib, the build creates symlinks like libhts.so.2 → libhts.so. The target libhts.so is ~1,077,496 bytes. R's internal tar writes that size in the symlink's header — but correctly writes no data blocks after the header.
+          # Why Pak Fails
+          # Pak/pkdependds uses external GNU tar (/usr/bin/tar) to extract binary packages.
+          # GNU tar reads the symlink header, sees size = 1077496, and tries to skip 1,077,496 bytes to find the next entry.
+          # But the EOF marker is written right after the symlink header (no data blocks), so GNU tar overshoots by ~1MB and hits "Unexpected EOF in archive" → exit code 2.
+          # stop_task_install sees the non-zero exit code and throws "Failed to install binary package Rhtslib.".
+          TAR: bsdtar
 
       - uses: r-lib/actions/check-r-package@v2
 
