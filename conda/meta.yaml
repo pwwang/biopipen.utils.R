@@ -27,6 +27,9 @@ requirements:
     - r-tibble
     - r-tidyseurat
     - r-zip
+    # jq is lacking in bioconda for genomeinfodbdata
+    # bioconda::bioconductor-data-packages
+    - pwwang::bioconductor-data-packages
     - bioconda::bioconductor-biocparallel
     - bioconda::bioconductor-celda
     - bioconda::bioconductor-mygene
@@ -53,6 +56,7 @@ requirements:
     - r-tibble
     - r-tidyseurat
     - r-zip
+    - pwwang::bioconductor-data-packages
     - bioconda::bioconductor-biocparallel
     - bioconda::bioconductor-celda
     - bioconda::bioconductor-mygene
