@@ -1875,7 +1875,7 @@ RunSeuratDoubletDetection <- function(
 #' @export
 #' @importFrom methods slot
 #' @importFrom rlang %||%
-#' @importFrom SeuratObject UpdateSeuratObject DefaultAssay Idents Misc
+#' @importFrom SeuratObject UpdateSeuratObject DefaultAssay Idents Misc JoinLayers
 #' @importFrom Seurat GetAssay SplitObject MapQuery UpdateSCTAssays Reductions FindTransferAnchors
 #' @importFrom Seurat SCTransform NormalizeData MappingScore AddMetaData RunUMAP
 #' @importFrom parallel mclapply
@@ -2162,6 +2162,7 @@ RunSeuratMap2Ref <- function(
         gc()
 
         object <- merge(object[[1]], object[2:length(object)], merge.dr = MapQueryArgs$reference.reduction)
+        object <- JoinLayers(object)
     } else {
         MapQueryArgs$query <- object
         MapQueryArgs$reference <- reference
