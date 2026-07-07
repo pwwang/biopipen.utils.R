@@ -1939,9 +1939,9 @@ RunSeuratMap2Ref <- function(
 
     log$info("Checking if given refdata for MapQuery is in the reference ...")
     for (name in names(MapQueryArgs$refdata)) {
-        if (!name %in% colnames(reference@meta.data)) {
+        if (!(MapQueryArgs$refdata[[name]] %in% colnames(reference@meta.data))) {
             stop(paste0(
-                "[RunSeuratMap2Ref] items of 'refdata' should be in the reference: ", name, "\n",
+                "[RunSeuratMap2Ref] items of 'refdata' should be in the reference: ", MapQueryArgs$refdata[[name]], "\n",
                 "Available items: ", paste0(colnames(reference@meta.data), collapse = ", ")
             ))
         }
