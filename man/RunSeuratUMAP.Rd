@@ -20,6 +20,13 @@ for each group, and then select the top \code{n}/\code{ngroups} features for eac
 based on the \code{order} field.
 If \code{RunUMAPArgs$features} is a numeric value, it will be treated as the \code{n} field
 in the list above, with the default \code{order} being "desc(abs(avg_log2FC))".
+\code{RunUMAPArgs$from} can be a path to a TSV file containing pre-computed UMAP
+coordinates to overwrite the results of \code{\link[Seurat:RunUMAP]{Seurat::RunUMAP()}}. The path should be
+in the format \code{"file:///path/to/file#id_col,coord_col1,coord_col2"}, where
+\code{id_col} is the column with cell barcodes and the remaining columns are the UMAP
+coordinate columns (e.g., \verb{UMAP_1,UMAP_2}). The cell barcodes must match those
+in the Seurat object, and the coordinate column names must match the reduction's
+\code{cell.embeddings} column names. You can also use 1-based column indices instead of names, e.g., \code{"file:///path/to/file#1,2,3"}.
 }}
 
 \item{cache}{Directory to cache the all markers, which can be reused later if
