@@ -61,7 +61,14 @@ If <code>RunUMAPArgs$features</code> is a list, it will run <code><a href="RunSe
 for each group, and then select the top <code>n</code>/<code>ngroups</code> features for each group
 based on the <code>order</code> field.
 If <code>RunUMAPArgs$features</code> is a numeric value, it will be treated as the <code>n</code> field
-in the list above, with the default <code>order</code> being "desc(abs(avg_log2FC))".</p></li>
+in the list above, with the default <code>order</code> being "desc(abs(avg_log2FC))".
+<code>RunUMAPArgs$from</code> can be a path to a TSV file containing pre-computed UMAP
+coordinates to overwrite the results of <code><a href="https://satijalab.org/seurat/reference/RunUMAP.html" class="external-link">Seurat::RunUMAP()</a></code>. The path should be
+in the format <code>"file:///path/to/file#id_col,coord_col1,coord_col2"</code>, where
+<code>id_col</code> is the column with cell barcodes and the remaining columns are the UMAP
+coordinate columns (e.g., <code>UMAP_1,UMAP_2</code>). The cell barcodes must match those
+in the Seurat object, and the coordinate column names must match the reduction's
+<code>cell.embeddings</code> column names. You can also use 1-based column indices instead of names, e.g., <code>"file:///path/to/file#1,2,3"</code>.</p></li>
 </ul></dd>
 
 
@@ -96,7 +103,7 @@ where <code>ncells</code> is the number of cells in the object, and <code>reduct
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

@@ -34,7 +34,18 @@ RunSeuratUMAP(object, RunUMAPArgs = list(), cache = NULL, log = NULL)
     `n`/`ngroups` features for each group based on the `order` field. If
     `RunUMAPArgs$features` is a numeric value, it will be treated as the
     `n` field in the list above, with the default `order` being
-    "desc(abs(avg_log2FC))".
+    "desc(abs(avg_log2FC))". `RunUMAPArgs$from` can be a path to a TSV
+    file containing pre-computed UMAP coordinates to overwrite the
+    results of
+    [`Seurat::RunUMAP()`](https://satijalab.org/seurat/reference/RunUMAP.html).
+    The path should be in the format
+    `"file:///path/to/file#id_col,coord_col1,coord_col2"`, where
+    `id_col` is the column with cell barcodes and the remaining columns
+    are the UMAP coordinate columns (e.g., `UMAP_1,UMAP_2`). The cell
+    barcodes must match those in the Seurat object, and the coordinate
+    column names must match the reduction's `cell.embeddings` column
+    names. You can also use 1-based column indices instead of names,
+    e.g., `"file:///path/to/file#1,2,3"`.
 
 - cache:
 
