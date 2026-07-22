@@ -3055,11 +3055,13 @@ ConvertSeuratToAnnData <- function(
         robj = assay,
         space = hdf5r::H5S$new(type = "scalar")
     )
-    h5ad$create_attr(
-        attr_name = "active_ident",
-        robj = active_ident,
-        space = hdf5r::H5S$new(type = "scalar")
-    )
+    if (!is.null(active_ident)) {
+        h5ad$create_attr(
+            attr_name = "active_ident",
+            robj = active_ident,
+            space = hdf5r::H5S$new(type = "scalar")
+        )
+    }
     cats <- names(h5ad[["obs/__categories"]])
     for (cat in cats) {
         catname <- paste0("obs/__categories/", cat)
