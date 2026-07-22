@@ -1290,19 +1290,31 @@ RunSeuratUMAP <- function(
             umap_from <- sub("^file://", "", umap_from)
         }
         if (!file.exists(umap_from)) {
-            stop("[RunSeuratUMAP] The specified 'from' file does not exist: ", umap_from)
+            stop(
+                "[RunSeuratUMAP] The specified 'from' file does not exist: ",
+                umap_from
+            )
         }
         log$info("  Overwriting UMAP results from given 'from' file ...")
         if (!grepl("#", umap_from)) {
-            stop("[RunSeuratUMAP] The specified 'from' file must contain a '#' to specify the column name of the UMAP results, e.g. 'file://path/to/file#cell_id,UMAP_1,UMAP_2'")
+            stop(
+                "[RunSeuratUMAP] The specified 'from' file must contain a '#' to specify the column name of the UMAP results, e.g. 'file://path/to/file#cell_id,UMAP_1,UMAP_2'"
+            )
         }
         umap_file_parts <- strsplit(umap_from, "#")[[1]]
         umap_file_path <- umap_file_parts[1]
         umap_col_names <- trimws(strsplit(umap_file_parts[2], ",")[[1]])
         if (length(umap_col_names) < 2) {
-            stop("[RunSeuratUMAP] At least two column names must be specified after '#': the cell identifier column and at least one UMAP coordinate column, e.g. 'file://path/to/file#cell_id,UMAP_1,UMAP_2'")
+            stop(
+                "[RunSeuratUMAP] At least two column names must be specified after '#': the cell identifier column and at least one UMAP coordinate column, e.g. 'file://path/to/file#cell_id,UMAP_1,UMAP_2'"
+            )
         }
-        umap_data <- utils::read.table(umap_file_path, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+        umap_data <- utils::read.table(
+            umap_file_path,
+            header = TRUE,
+            sep = "\t",
+            stringsAsFactors = FALSE
+        )
         umap_col_names <- vapply(
             umap_col_names,
             function(col) {
@@ -1312,7 +1324,10 @@ RunSeuratUMAP <- function(
                         col <- ncol(umap_data) + col + 1
                     }
                     if (col < 1 || col > ncol(umap_data)) {
-                        stop("[RunSeuratUMAP] The specified column index is out of bounds: ", col)
+                        stop(
+                            "[RunSeuratUMAP] The specified column index is out of bounds: ",
+                            col
+                        )
                     }
                     col <- colnames(umap_data)[col]
                 }
@@ -1321,22 +1336,50 @@ RunSeuratUMAP <- function(
             character(1)
         )
         if (!all(umap_col_names %in% colnames(umap_data))) {
-            stop("[RunSeuratUMAP] The specified column names do not exist in the 'from' file: ", paste(umap_col_names[!umap_col_names %in% colnames(umap_data)], collapse = ", "))
+            stop(
+                "[RunSeuratUMAP] The specified column names do not exist in the 'from' file: ",
+                paste(
+                    umap_col_names[!umap_col_names %in% colnames(umap_data)],
+                    collapse = ", "
+                )
+            )
         }
         umap_data <- umap_data[, umap_col_names, drop = FALSE]
         if (anyDuplicated(umap_data[[umap_col_names[1]]])) {
-            stop("[RunSeuratUMAP] Duplicate cell barcodes found in the 'from' file column '", umap_col_names[1], "'")
+            stop(
+                "[RunSeuratUMAP] Duplicate cell barcodes found in the 'from' file column '",
+                umap_col_names[1],
+                "'"
+            )
         }
         rownames(umap_data) <- umap_data[[umap_col_names[1]]]
         umap_data <- umap_data[, -1, drop = FALSE]
         umap_name <- RunUMAPArgs$reduction.name %||% "umap"
-        if (!all(rownames(object@reductions[[umap_name]]) %in% rownames(umap_data))) {
-            stop("[RunSeuratUMAP] The cell names in the 'from' file do not match the cell names in the Seurat object.")
+        if (
+            !all(
+                rownames(object@reductions[[umap_name]]) %in%
+                    rownames(umap_data)
+            )
+        ) {
+            stop(
+                "[RunSeuratUMAP] The cell names in the 'from' file do not match the cell names in the Seurat object."
+            )
         }
-        if (ncol(umap_data) > ncol(object@reductions[[umap_name]]@cell.embeddings)) {
-            stop("[RunSeuratUMAP] The number of UMAP dimensions in the 'from' file is greater than the number of dimensions in the Seurat object.")
+        if (
+            ncol(umap_data) >
+                ncol(object@reductions[[umap_name]]@cell.embeddings)
+        ) {
+            stop(
+                "[RunSeuratUMAP] The number of UMAP dimensions in the 'from' file is greater than the number of dimensions in the Seurat object."
+            )
         }
-        object@reductions[[umap_name]]@cell.embeddings[, 1:ncol(umap_data)] <- umap_data[rownames(object@reductions[[umap_name]]@cell.embeddings), , drop = FALSE]
+        object@reductions[[umap_name]]@cell.embeddings[,
+            1:ncol(umap_data)
+        ] <- umap_data[
+            rownames(object@reductions[[umap_name]]@cell.embeddings),
+            ,
+            drop = FALSE
+        ]
     }
 
     object <- AddSeuratCommand(
