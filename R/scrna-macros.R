@@ -2429,6 +2429,7 @@ RunSeuratMap2Ref <- function(
     if (
         is.character(ref) &&
             (endsWith(ref, ".rds") ||
+                endsWith(ref, ".Rds") ||
                 endsWith(ref, ".RDS") ||
                 endsWith(ref, "qs") ||
                 endsWith(ref, ".qs2"))
@@ -2902,6 +2903,7 @@ ConvertSeuratToAnnData <- function(
         inherits(object_or_file, "Seurat") ||
             endsWith(object_or_file, ".rds") ||
             endsWith(object_or_file, ".RDS") ||
+            endsWith(object_or_file, ".Rds") ||
             endsWith(object_or_file, ".qs") ||
             endsWith(object_or_file, ".qs2")
     ) {
@@ -3126,12 +3128,13 @@ ConvertAnnDataToSeurat <- function(
             !endsWith(outfile, ".h5seurat") &&
                 !endsWith(outfile, ".rds") &&
                 !endsWith(outfile, ".RDS") &&
+                !endsWith(outfile, ".Rds") &&
                 !endsWith(outfile, ".qs") &&
                 !endsWith(outfile, ".qs2")
         ) {
             stop(
                 "[ConvertAnnDataToSeurat] 'outfile' should be either NULL or ",
-                "a file path with extension '.h5seurat', '.rds', '.RDS', '.qs' or '.qs2'"
+                "a file path with extension '.h5seurat', '.rds', '.RDS', '.Rds', '.qs' or '.qs2'"
             )
         }
         if (endsWith(outfile, ".h5seurat")) {
