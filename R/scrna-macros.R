@@ -789,6 +789,11 @@ LoadSeuratAndPerformQC <- function(
         meta <- UpdateSeuratObject(meta)
         samples <- samples %||% unique(meta@meta.data$Sample)
         assay <- DefaultAssay(meta)
+        if (identical(assay, "integrated")) {
+            log$warn(
+                "The default assay is 'integrated', which is not suitable for QC. Please set the default assay to the original assay (e.g. 'RNA') before calling this function."
+            )
+        }
         if (!"Assay5" %in% class(meta[[assay]])) {
             log$debug("Converting assay '{assay}' to Assay5 ...")
             meta[[assay]] <- as(meta[[assay]], "Assay5")
