@@ -2,16 +2,27 @@
 % Please edit documentation in R/misc.R
 \name{read_table}
 \alias{read_table}
+\alias{load_table}
+\alias{write_table}
+\alias{save_table}
 \title{Read a table, like read.table, but with annotated factor levels}
 \usage{
 read_table(file, factor_level_sep = "|", ...)
+
+load_table(file, factor_level_sep = "|", ...)
+
+write_table(x, file, factor_level_sep = "|", ...)
+
+save_table(x, file, factor_level_sep = "|", ...)
 }
 \arguments{
-\item{file}{The file to read}
+\item{file}{The file to write}
 
 \item{factor_level_sep}{The separator for factor levels, default is "|"}
 
-\item{...}{Additional arguments passed to read.table}
+\item{...}{Additional arguments passed to write.table}
+
+\item{x}{The data frame to write}
 }
 \value{
 A data frame with annotated factor levels
@@ -20,4 +31,7 @@ A data frame with annotated factor levels
 The factor levels are annotated like:
 \verb{# factor-levels: group=A|B|C}
 Column names are used literally, so \code{check.names} defaults to \code{FALSE}.
+
+The factor levels are annotated like:
+\verb{# factor-levels: group=A|B|C}
 }

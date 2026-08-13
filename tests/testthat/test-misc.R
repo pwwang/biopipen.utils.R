@@ -228,6 +228,33 @@ test_that("read_obj/save_obj: works with qs2 file", {
     unlink(file)
 })
 
+test_that("read_obj/save_obj: works with txt/tsv/csv files", {
+    obj <- data.frame(
+        group = factor(c("A", "B", "A"), levels = c("A", "B")),
+        value = c(1.2, 3.4, 5.6)
+    )
+    for (ext in c("txt", "tsv", "csv")) {
+        file <- tempfile(fileext = paste0(".", ext))
+        save_obj(obj, file)
+        out <- read_obj(file)
+        expect_s3_class(out$group, "factor")
+        expect_equal(levels(out$group), c("A", "B"))
+        expect_equal(as.character(out$group), as.character(obj$group))
+        expect_equal(out$value, obj$value)
+        unlink(file)
+    }
+})
+
+test_that("read_obj/save_obj: txt/tsv/csv types work explicitly", {
+    obj <- data.frame(group = factor(c("A", "B"), levels = c("A", "B")))
+    file <- tempfile(fileext = ".dat")
+    save_obj(obj, file, type = "tsv")
+    expect_equal(levels(read_obj(file, type = "tsv")$group), c("A", "B"))
+    save_obj(obj, file, type = "csv")
+    expect_equal(levels(read_obj(file, type = "csv")$group), c("A", "B"))
+    unlink(file)
+})
+
 test_that("require_package: works for installed R packages", {
     # testthat should be available since we're running tests
     expect_invisible(require_package("testthat"))

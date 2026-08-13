@@ -292,6 +292,7 @@ monkey_patch <- function(namespace, function_name, new_function) {
 #' `# factor-levels: group=A|B|C`
 #' Column names are used literally, so `check.names` defaults to `FALSE`.
 #'
+#' @rdname read_write_table
 #' @param file The file to read
 #' @param factor_level_sep The separator for factor levels, default is "|"
 #' @param ... Additional arguments passed to read.table
@@ -323,11 +324,18 @@ read_table <- function(file, factor_level_sep = "|", ...) {
     out
 }
 
+#' Alias of read_table
+#'
+#' @rdname read_write_table
+#' @export
+load_table <- read_table
+
 #' Write a table, like write.table, but with annotated factor levels
 #'
 #' The factor levels are annotated like:
 #' `# factor-levels: group=A|B|C`
 #'
+#' @rdname read_write_table
 #' @param x The data frame to write
 #' @param file The file to write
 #' @param factor_level_sep The separator for factor levels, default is "|"
@@ -349,17 +357,27 @@ write_table <- function(x, file, factor_level_sep = "|", ...) {
     }
 }
 
+#' Alias of write_table
+#'
+#' @rdname read_write_table
+#' @export
+save_table <- write_table
 
 #' Read and write objects to/from files
 #'
 #' @rdname read_save_object
 #' @param file The file to read or write
-#' @param type The type of the file. Can be "auto", "qs2", "rds", "h5seurat" or "h5ad".
+#' @param type The type of the file. Can be "auto", "qs2", "rds", "h5seurat", "h5ad",
+#' "txt", "csv" or "tsv".
 #' If "auto", the type will be inferred from the file extension.
 #' @param ... Additional arguments passed to the underlying read/write functions.
 #' @return The object read from the file or NULL if writing
 #' @export
-read_obj <- function(file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad"), ...) {
+read_obj <- function(
+    file,
+    type = c("auto", "qs2", "rds", "h5seurat", "h5ad", "txt", "csv", "tsv"),
+    ...
+) {
     type <- match.arg(type)
     if (type == "auto") {
         if (grepl("\\.rds$", file, ignore.case = TRUE)) {
@@ -370,6 +388,10 @@ read_obj <- function(file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad"), .
             type <- "h5seurat"
         } else if (grepl("\\.[Hh]5[Aa][Dd]$", file)) {
             type <- "h5ad"
+        } else if (grepl("\\.txt$|\\.tsv$", file, ignore.case = TRUE)) {
+            type <- "tsv"
+        } else if (grepl("\\.csv$", file, ignore.case = TRUE)) {
+            type <- "csv"
         } else {
             stop("Unknown file type")
         }
@@ -382,6 +404,10 @@ read_obj <- function(file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad"), .
         SeuratDisk::LoadH5Seurat(file)
     } else if (type == "h5ad") {
         ConvertAnnDataToSeurat(file, ...)
+    } else if (type == "tsv") {
+        read_table(file, sep = "\t", ...)
+    } else if (type == "csv") {
+        read_table(file, sep = ",", ...)
     } else {
         stop("Unknown file type")
     }
@@ -397,13 +423,19 @@ load_obj <- read_obj
 #'
 #' @param obj The object to save
 #' @param file The file to save the object to
-#' @param type The type of the file. Can be "auto", "qs2", "rds", "h5seurat" or "h5ad".
+#' @param type The type of the file. Can be "auto", "qs2", "rds", "h5seurat", "h5ad",
+#' "txt", "csv" or "tsv".
 #' If "auto", the type will be inferred from the file extension.
 #' @param ... Additional arguments passed to the underlying save functions.
 #' @return NULL
 #' @rdname read_save_object
 #' @export
-save_obj <- function(obj, file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad"), ...) {
+save_obj <- function(
+    obj,
+    file,
+    type = c("auto", "qs2", "rds", "h5seurat", "h5ad", "txt", "csv", "tsv"),
+    ...
+) {
     type <- match.arg(type)
     if (type == "auto") {
         if (grepl("\\.rds$", file, ignore.case = TRUE)) {
@@ -414,6 +446,10 @@ save_obj <- function(obj, file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad
             type <- "h5seurat"
         } else if (grepl("\\.[Hh]5[Aa][Dd]$", file)) {
             type <- "h5ad"
+        } else if (grepl("\\.txt$|\\.tsv$", file, ignore.case = TRUE)) {
+            type <- "tsv"
+        } else if (grepl("\\.csv$", file, ignore.case = TRUE)) {
+            type <- "csv"
         } else {
             stop("Unknown file type")
         }
@@ -426,6 +462,10 @@ save_obj <- function(obj, file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad
         SeuratDisk::SaveH5Seurat(obj, file, overwrite = TRUE)
     } else if (type == "h5ad") {
         ConvertSeuratToAnnData(obj, file, ...)
+    } else if (type == "tsv") {
+        write_table(obj, file, sep = "\t", ...)
+    } else if (type == "csv") {
+        write_table(obj, file, sep = ",", ...)
     } else {
         stop("Unknown file type")
     }
