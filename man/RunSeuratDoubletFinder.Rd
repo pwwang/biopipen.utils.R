@@ -11,6 +11,7 @@ RunSeuratDoubletFinder(
   PCs = 30,
   pN = 0.25,
   doublets = 0.075,
+  reuse.pANN = NULL,
   log = NULL,
   allow_warnings = FALSE
 )
@@ -30,6 +31,11 @@ real-artificial data. Default is set to 0.25, based on observation that DoubletF
 performance is largely pN-invariant (see McGinnis, Murrow and Gartner 2019, Cell Systems).}
 
 \item{doublets}{The expected proportion of doublets in the dataset. Default is set to 0.075}
+
+\item{reuse.pANN}{Metadata column name for previously-generated pANN results.
+If NULL (default), an existing pANN column matching the current pN/pK is
+reused to skip pANN computation, if available. Set to FALSE or an invalid
+column name is treated as NULL with a warning.}
 }
 \value{
 The Seurat object with doublet detection results in \verb{@misc$doubletFinder}

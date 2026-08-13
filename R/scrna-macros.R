@@ -2141,6 +2141,10 @@ RunSeuratIntegration <- function(
 #' real-artificial data. Default is set to 0.25, based on observation that DoubletFinder
 #' performance is largely pN-invariant (see McGinnis, Murrow and Gartner 2019, Cell Systems).
 #' @param doublets The expected proportion of doublets in the dataset. Default is set to 0.075
+#' @param reuse.pANN Metadata column name for previously-generated pANN results.
+#' If NULL (default), an existing pANN column matching the current pN/pK is
+#' reused to skip pANN computation, if available. Set to FALSE or an invalid
+#' column name is treated as NULL with a warning.
 #' @keywords internal
 #' @return The Seurat object with doublet detection results in `@misc$doubletFinder`
 #' @importFrom Seurat FindNeighbors FindClusters DefaultAssay AddMetaData
@@ -2154,6 +2158,7 @@ RunSeuratDoubletFinder <- function(
     PCs = 30,
     pN = 0.25,
     doublets = 0.075,
+    reuse.pANN = NULL,
     log = NULL,
     allow_warnings = FALSE
 ) {
@@ -2215,7 +2220,7 @@ RunSeuratDoubletFinder <- function(
             pN = pN,
             pK = pK,
             nExp = nExp_poi.adj,
-            reuse.pANN = FALSE,
+            reuse.pANN = reuse.pANN,
             sct = identical(DefaultAssay(object), "SCT")
         )
     } else {
@@ -2225,7 +2230,7 @@ RunSeuratDoubletFinder <- function(
             pN = pN,
             pK = pK,
             nExp = nExp_poi.adj,
-            reuse.pANN = FALSE,
+            reuse.pANN = reuse.pANN,
             sct = identical(DefaultAssay(object), "SCT")
         ))
     }
