@@ -350,3 +350,99 @@ test_that("get_worh: works", {
     expect_error(get_worh(10, "invalid"))
     expect_error(get_worh(10, c(1, 2)))
 })
+
+test_that("read_table: applies factor levels from annotations", {
+    file <- tempfile()
+    writeLines(c(
+        "# factor-levels: group=A|B|C",
+        "# factor-levels: batch=x1|x2",
+        "id\tgroup\tbatch\tvalue",
+        "s1\tA\tx1\t1.2",
+        "s2\tB\tx2\t3.4",
+        "s3\tC\tx1\t5.6"
+    ), file)
+    out <- read_table(file, sep = "\t", header = TRUE)
+    expect_s3_class(out, "data.frame")
+    expect_s3_class(out$group, "factor")
+    expect_equal(levels(out$group), c("A", "B", "C"))
+    expect_equal(levels(out$batch), c("x1", "x2"))
+    expect_equal(out$value, c(1.2, 3.4, 5.6))
+    unlink(file)
+})
+
+test_that("read_table: works without annotations and with custom sep", {
+    file <- tempfile()
+    writeLines(c("a\tb", "1\t2"), file)
+    out <- read_table(file, sep = "\t", header = TRUE)
+    expect_equal(out$a, 1L)
+    unlink(file)
+
+    file <- tempfile()
+    writeLines(c("# factor-levels: g=A,B,C", "g", "A", "B"), file)
+    out <- read_table(file, sep = "\t", factor_level_sep = ",", header = TRUE)
+    expect_equal(levels(out$g), c("A", "B", "C"))
+    unlink(file)
+})
+
+test_that("read_table: warns on annotation for non-existing column", {
+    file <- tempfile()
+    writeLines(c("# factor-levels: nope=A|B", "a\tb", "1\t2"), file)
+    expect_warning(out <- read_table(file, sep = "\t", header = TRUE), "non-existing column")
+    expect_equal(out$a, 1L)
+    unlink(file)
+})
+
+test_that("write_table: round-trips factor levels with read_table", {
+    x <- data.frame(
+        id = c("s1", "s2", "s3"),
+        group = factor(c("A", "B", "C"), levels = c("A", "B", "C")),
+        batch = factor(c("x2", "x1", "x2"), levels = c("x1", "x2")),
+        value = c(1.2, 3.4, 5.6)
+    )
+    file <- tempfile()
+    expect_warning(write_table(x, file, sep = "\t"), NA)
+    expect_warning(y <- read_table(file, sep = "\t", header = TRUE), NA)
+    expect_s3_class(y$group, "factor")
+    expect_equal(levels(y$group), c("A", "B", "C"))
+    expect_equal(levels(y$batch), c("x1", "x2"))
+    expect_equal(as.character(y$group), as.character(x$group))
+    expect_equal(as.character(y$batch), as.character(x$batch))
+    expect_identical(y$id, x$id)
+    expect_identical(y$value, x$value)
+    unlink(file)
+})
+
+test_that("write_table: writes plain table without annotations when no factors", {
+    x <- data.frame(a = 1:2, b = c("x", "y"))
+    file <- tempfile()
+    write_table(x, file, sep = "\t")
+    expect_false(any(grepl("factor-levels", readLines(file))))
+    expect_identical(read_table(file, sep = "\t", header = TRUE)$a, 1:2)
+    unlink(file)
+})
+
+test_that("write_table: custom factor level separator", {
+    x <- data.frame(g = factor(c("A", "B"), levels = c("A", "B")))
+    file <- tempfile()
+    write_table(x, file, sep = "\t", factor_level_sep = ",")
+    expect_true(any(grepl("^# factor-levels: g=A,B$", readLines(file))))
+    y <- read_table(file, sep = "\t", header = TRUE, factor_level_sep = ",")
+    expect_equal(levels(y$g), c("A", "B"))
+    unlink(file)
+})
+
+test_that("read_table/write_table: column names used literally", {
+    x <- data.frame(
+        "a b" = factor(c("A", "B"), levels = c("A", "B")),
+        "c" = 1:2,
+        check.names = FALSE
+    )
+    file <- tempfile()
+    write_table(x, file, sep = "\t")
+    lines <- readLines(file)
+    expect_true(any(grepl("# factor-levels: a b=A|B", lines, fixed = TRUE)))
+    y <- read_table(file, sep = "\t", header = TRUE)
+    expect_identical(colnames(y), c("a b", "c"))
+    expect_equal(levels(y[["a b"]]), c("A", "B"))
+    unlink(file)
+})

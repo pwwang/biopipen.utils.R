@@ -286,6 +286,70 @@ monkey_patch <- function(namespace, function_name, new_function) {
     lockBinding(function_name, ns)
 }
 
+#' Read a table, like read.table, but with annotated factor levels
+#'
+#' The factor levels are annotated like:
+#' `# factor-levels: group=A|B|C`
+#' Column names are used literally, so `check.names` defaults to `FALSE`.
+#'
+#' @param file The file to read
+#' @param factor_level_sep The separator for factor levels, default is "|"
+#' @param ... Additional arguments passed to read.table
+#' @return A data frame with annotated factor levels
+#' @export
+read_table <- function(file, factor_level_sep = "|", ...) {
+    args <- list(...)
+    if (is.null(args$check.names)) args$check.names <- FALSE
+    lines <- readLines(file)
+    annotated <- grepl("^#\\s*factor-levels:", lines)
+    if (!any(annotated)) {
+        return(do.call(utils::read.table, c(list(file = file), args)))
+    }
+    specs <- sub("^#\\s*factor-levels:\\s*", "", lines[annotated])
+    fnames <- sub("=.*$", "", specs)
+    flevels <- strsplit(
+        sub("^[^=]*=", "", specs),
+        factor_level_sep,
+        fixed = TRUE
+    )
+    out <- do.call(utils::read.table, c(list(text = lines[!annotated]), args))
+    for (i in seq_along(fnames)) {
+        if (!fnames[i] %in% colnames(out)) {
+            warning("[read_table] Factor level annotation for non-existing column: ", fnames[i])
+        } else {
+            out[[fnames[i]]] <- factor(out[[fnames[i]]], levels = flevels[[i]])
+        }
+    }
+    out
+}
+
+#' Write a table, like write.table, but with annotated factor levels
+#'
+#' The factor levels are annotated like:
+#' `# factor-levels: group=A|B|C`
+#'
+#' @param x The data frame to write
+#' @param file The file to write
+#' @param factor_level_sep The separator for factor levels, default is "|"
+#' @param ... Additional arguments passed to write.table
+#' @return NULL
+#' @export
+write_table <- function(x, file, factor_level_sep = "|", ...) {
+    factor_cols <- sapply(x, is.factor)
+    if (any(factor_cols)) {
+        specs <- sapply(names(x)[factor_cols], function(col) {
+            paste0(col, "=", paste(levels(x[[col]]), collapse = factor_level_sep))
+        })
+        con <- file(file, open = "w")
+        on.exit(close(con))
+        writeLines(c(paste0("# factor-levels: ", specs), ""), con = con)
+        utils::write.table(x, file = con, ...)
+    } else {
+        utils::write.table(x, file = file, ...)
+    }
+}
+
+
 #' Read and write objects to/from files
 #'
 #' @rdname read_save_object
