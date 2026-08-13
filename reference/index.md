@@ -168,6 +168,12 @@
   [`write_obj()`](https://pwwang.github.io/biopipen.utils.R/reference/read_save_object.md)
   : Read and write objects to/from files
 
+- [`read_table()`](https://pwwang.github.io/biopipen.utils.R/reference/read_write_table.md)
+  [`load_table()`](https://pwwang.github.io/biopipen.utils.R/reference/read_write_table.md)
+  [`write_table()`](https://pwwang.github.io/biopipen.utils.R/reference/read_write_table.md)
+  [`save_table()`](https://pwwang.github.io/biopipen.utils.R/reference/read_write_table.md)
+  : Read a table, like read.table, but with annotated factor levels
+
 - [`repr()`](https://pwwang.github.io/biopipen.utils.R/reference/repr.md)
   : The string representation of an object
 

@@ -11,13 +11,31 @@ Alias of save_obj
 ## Usage
 
 ``` r
-read_obj(file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad"), ...)
+read_obj(
+  file,
+  type = c("auto", "qs2", "rds", "h5seurat", "h5ad", "txt", "csv", "tsv"),
+  ...
+)
 
-load_obj(file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad"), ...)
+load_obj(
+  file,
+  type = c("auto", "qs2", "rds", "h5seurat", "h5ad", "txt", "csv", "tsv"),
+  ...
+)
 
-save_obj(obj, file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad"), ...)
+save_obj(
+  obj,
+  file,
+  type = c("auto", "qs2", "rds", "h5seurat", "h5ad", "txt", "csv", "tsv"),
+  ...
+)
 
-write_obj(obj, file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad"), ...)
+write_obj(
+  obj,
+  file,
+  type = c("auto", "qs2", "rds", "h5seurat", "h5ad", "txt", "csv", "tsv"),
+  ...
+)
 ```
 
 ## Arguments
@@ -28,8 +46,9 @@ write_obj(obj, file, type = c("auto", "qs2", "rds", "h5seurat", "h5ad"), ...)
 
 - type:
 
-  The type of the file. Can be "auto", "qs2", "rds", "h5seurat" or
-  "h5ad". If "auto", the type will be inferred from the file extension.
+  The type of the file. Can be "auto", "qs2", "rds", "h5seurat", "h5ad",
+  "txt", "csv" or "tsv". If "auto", the type will be inferred from the
+  file extension.
 
 - ...:
 
