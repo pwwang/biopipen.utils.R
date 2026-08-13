@@ -12,6 +12,7 @@ RunSeuratDoubletFinder(
   PCs = 30,
   pN = 0.25,
   doublets = 0.075,
+  reuse.pANN = NULL,
   log = NULL,
   allow_warnings = FALSE
 )
@@ -48,6 +49,13 @@ RunSeuratDoubletFinder(
 
   The expected proportion of doublets in the dataset. Default is set to
   0.075
+
+- reuse.pANN:
+
+  Metadata column name for previously-generated pANN results. If NULL
+  (default), an existing pANN column matching the current pN/pK is
+  reused to skip pANN computation, if available. Set to FALSE or an
+  invalid column name is treated as NULL with a warning.
 
 ## Value
 

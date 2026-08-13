@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">biopipen.utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,6 +45,7 @@
 <span>  PCs <span class="op">=</span> <span class="fl">30</span>,</span>
 <span>  pN <span class="op">=</span> <span class="fl">0.25</span>,</span>
 <span>  doublets <span class="op">=</span> <span class="fl">0.075</span>,</span>
+<span>  reuse.pANN <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  log <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  allow_warnings <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -79,6 +80,13 @@ performance is largely pN-invariant (see McGinnis, Murrow and Gartner 2019, Cell
 
 <dt id="arg-doublets">doublets<a class="anchor" aria-label="anchor" href="#arg-doublets"></a></dt>
 <dd><p>The expected proportion of doublets in the dataset. Default is set to 0.075</p></dd>
+
+
+<dt id="arg-reuse-pann">reuse.pANN<a class="anchor" aria-label="anchor" href="#arg-reuse-pann"></a></dt>
+<dd><p>Metadata column name for previously-generated pANN results.
+If NULL (default), an existing pANN column matching the current pN/pK is
+reused to skip pANN computation, if available. Set to FALSE or an invalid
+column name is treated as NULL with a warning.</p></dd>
 
 </dl></div>
     <div class="section level2">
