@@ -68,7 +68,7 @@ VizDEGs <- function(
     comparison_by = NULL,
     p_adjust = TRUE,
     cutoff = NULL,
-    order_by = NULL,
+    order_by = "desc(abs(avg_log2FC))",
     select = ifelse(
         plot_type %in% c(
             "volcano", "volcano_log2fc", "volcano_pct",
