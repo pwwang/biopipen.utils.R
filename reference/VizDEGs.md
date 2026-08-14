@@ -16,7 +16,7 @@ VizDEGs(
   comparison_by = NULL,
   p_adjust = TRUE,
   cutoff = NULL,
-  order_by = NULL,
+  order_by = "desc(abs(avg_log2FC))",
   select = ifelse(plot_type %in% c("volcano", "volcano_log2fc", "volcano_pct",
     "jitter", "jitter_log2fc", "jitter_pct", "heatmap_log2fc", "heatmap_pct"), 5, 10),
   outprefix = NULL,
@@ -107,7 +107,7 @@ VizDEGs(
   metadata (when `object` is provided and `subset_by` enables merging).
   Only the first value of merged metadata columns is used. Example:
   `"desc(avg_log2FC)"`. The ordering affects which markers are selected
-  when `select` is numeric. Default: `NULL`.
+  when `select` is numeric. Default: `desc(abs(avg_log2FC))`.
 
 - select:
 
@@ -241,26 +241,6 @@ VizDEGs(degs,
 #> ℹ Set `drop = FALSE` to consider such groups for position adjustment purposes.
 #> Warning: Groups with fewer than two datapoints have been dropped.
 #> ℹ Set `drop = FALSE` to consider such groups for position adjustment purposes.
-#> Warning: Groups with fewer than two datapoints have been dropped.
-#> ℹ Set `drop = FALSE` to consider such groups for position adjustment purposes.
-#> Warning: Groups with fewer than two datapoints have been dropped.
-#> ℹ Set `drop = FALSE` to consider such groups for position adjustment purposes.
-#> Warning: Groups with fewer than two datapoints have been dropped.
-#> ℹ Set `drop = FALSE` to consider such groups for position adjustment purposes.
-#> Warning: Groups with fewer than two datapoints have been dropped.
-#> ℹ Set `drop = FALSE` to consider such groups for position adjustment purposes.
-#> Warning: Groups with fewer than two datapoints have been dropped.
-#> ℹ Set `drop = FALSE` to consider such groups for position adjustment purposes.
-#> Warning: Groups with fewer than two datapoints have been dropped.
-#> ℹ Set `drop = FALSE` to consider such groups for position adjustment purposes.
-#> Warning: Groups with fewer than two datapoints have been dropped.
-#> ℹ Set `drop = FALSE` to consider such groups for position adjustment purposes.
-#> Warning: Groups with fewer than two datapoints have been dropped.
-#> ℹ Set `drop = FALSE` to consider such groups for position adjustment purposes.
-#> Warning: Groups with fewer than two datapoints have been dropped.
-#> ℹ Set `drop = FALSE` to consider such groups for position adjustment purposes.
-#> Warning: Groups with fewer than two datapoints have been dropped.
-#> ℹ Set `drop = FALSE` to consider such groups for position adjustment purposes.
 
 VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "box",
@@ -279,30 +259,30 @@ VizDEGs(degs,
     select = 1, comparison_by = "Phase", subset_by = "SubCellType"
 )
 #> Warning: Layer counts isn't present in the assay object; returning NULL
-#> Picking joint bandwidth of 0.283
-#> Picking joint bandwidth of 0.252
-#> Picking joint bandwidth of 0.196
-#> Picking joint bandwidth of 0.0311
-#> Picking joint bandwidth of 0.0338
-#> Picking joint bandwidth of 0.382
 #> Picking joint bandwidth of 0.0675
-#> Picking joint bandwidth of 0.031
-#> Picking joint bandwidth of 0.537
-#> Picking joint bandwidth of 0.133
-#> Picking joint bandwidth of 0.308
-#> Picking joint bandwidth of 0.3
-#> Picking joint bandwidth of 0.505
-#> Picking joint bandwidth of 0.283
+#> Picking joint bandwidth of 0.106
+#> Picking joint bandwidth of 0.382
+#> Picking joint bandwidth of 0.0338
+#> Picking joint bandwidth of 0.0681
+#> Picking joint bandwidth of 0.0279
+#> Picking joint bandwidth of 0.252
+#> Picking joint bandwidth of 0.0963
 #> Picking joint bandwidth of 0.326
+#> Picking joint bandwidth of 0.181
 #> Picking joint bandwidth of 0.505
-#> Picking joint bandwidth of 0.398
-#> Picking joint bandwidth of 0.305
-#> Picking joint bandwidth of 0.518
-#> Picking joint bandwidth of 0.455
-#> Picking joint bandwidth of 0.135
-#> Picking joint bandwidth of 0.526
+#> Picking joint bandwidth of 0.505
+#> Picking joint bandwidth of 0.0823
+#> Picking joint bandwidth of 0.306
+#> Picking joint bandwidth of 0.133
+#> Picking joint bandwidth of 0.132
 #> Picking joint bandwidth of 0.353
+#> Picking joint bandwidth of 0.351
+#> Picking joint bandwidth of 0.174
+#> Picking joint bandwidth of 0.135
+#> Picking joint bandwidth of 0.968
 #> Picking joint bandwidth of 0.526
+#> Picking joint bandwidth of 0.305
+#> Picking joint bandwidth of 0.238
 #> Picking joint bandwidth of NaN
 #> Picking joint bandwidth of NaN
 #> Picking joint bandwidth of NaN
@@ -313,30 +293,30 @@ VizDEGs(degs,
 #> Picking joint bandwidth of NaN
 #> Warning: No shared levels found between `names(values)` of the manual scale and the
 #> data's fill values.
-#> Picking joint bandwidth of 0.283
-#> Picking joint bandwidth of 0.252
-#> Picking joint bandwidth of 0.196
-#> Picking joint bandwidth of 0.0311
-#> Picking joint bandwidth of 0.0338
-#> Picking joint bandwidth of 0.382
 #> Picking joint bandwidth of 0.0675
-#> Picking joint bandwidth of 0.031
-#> Picking joint bandwidth of 0.537
-#> Picking joint bandwidth of 0.133
-#> Picking joint bandwidth of 0.308
-#> Picking joint bandwidth of 0.3
-#> Picking joint bandwidth of 0.505
-#> Picking joint bandwidth of 0.283
+#> Picking joint bandwidth of 0.106
+#> Picking joint bandwidth of 0.382
+#> Picking joint bandwidth of 0.0338
+#> Picking joint bandwidth of 0.0681
+#> Picking joint bandwidth of 0.0279
+#> Picking joint bandwidth of 0.252
+#> Picking joint bandwidth of 0.0963
 #> Picking joint bandwidth of 0.326
+#> Picking joint bandwidth of 0.181
 #> Picking joint bandwidth of 0.505
-#> Picking joint bandwidth of 0.398
-#> Picking joint bandwidth of 0.305
-#> Picking joint bandwidth of 0.518
-#> Picking joint bandwidth of 0.455
-#> Picking joint bandwidth of 0.135
-#> Picking joint bandwidth of 0.526
+#> Picking joint bandwidth of 0.505
+#> Picking joint bandwidth of 0.0823
+#> Picking joint bandwidth of 0.306
+#> Picking joint bandwidth of 0.133
+#> Picking joint bandwidth of 0.132
 #> Picking joint bandwidth of 0.353
+#> Picking joint bandwidth of 0.351
+#> Picking joint bandwidth of 0.174
+#> Picking joint bandwidth of 0.135
+#> Picking joint bandwidth of 0.968
 #> Picking joint bandwidth of 0.526
+#> Picking joint bandwidth of 0.305
+#> Picking joint bandwidth of 0.238
 #> Picking joint bandwidth of NaN
 #> Picking joint bandwidth of NaN
 #> Picking joint bandwidth of NaN
