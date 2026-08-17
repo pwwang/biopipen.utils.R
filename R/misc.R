@@ -304,7 +304,8 @@ read_table <- function(file, factor_level_sep = "|", ...) {
     lines <- readLines(file)
     annotated <- grepl("^#\\s*factor-levels:", lines)
     if (!any(annotated)) {
-        return(do.call(utils::read.delim, c(list(file = file), args)))
+        print(args)
+        return(do_call(utils::read.delim, c(list(file = file), args)))
     }
     specs <- sub("^#\\s*factor-levels:\\s*", "", lines[annotated])
     fnames <- sub("=.*$", "", specs)
@@ -313,7 +314,7 @@ read_table <- function(file, factor_level_sep = "|", ...) {
         factor_level_sep,
         fixed = TRUE
     )
-    out <- do.call(utils::read.delim, c(list(text = lines[!annotated]), args))
+    out <- do_call(utils::read.delim, c(list(text = lines[!annotated]), args))
     for (i in seq_along(fnames)) {
         if (!fnames[i] %in% colnames(out)) {
             warning("[read_table] Factor level annotation for non-existing column: ", fnames[i])
@@ -406,7 +407,7 @@ read_obj <- function(
     } else if (type == "h5ad") {
         ConvertAnnDataToSeurat(file, ...)
     } else if (type == "tsv") {
-        read_table(file, sep = "\t", ...)
+        read_table(file, ...)
     } else if (type == "csv") {
         read_table(file, sep = ",", ...)
     } else {
@@ -464,7 +465,7 @@ save_obj <- function(
     } else if (type == "h5ad") {
         ConvertSeuratToAnnData(obj, file, ...)
     } else if (type == "tsv") {
-        write_table(obj, file, sep = "\t", ...)
+        write_table(obj, file, ...)
     } else if (type == "csv") {
         write_table(obj, file, sep = ",", ...)
     } else {

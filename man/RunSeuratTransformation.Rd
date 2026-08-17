@@ -28,7 +28,8 @@ RunSeuratTransformation(
 
 \item{FindVariableFeaturesArgs}{Arguments to pass to \link[Seurat:FindVariableFeatures]{Seurat::FindVariableFeatures}}
 
-\item{ScaleDataArgs}{Arguments to pass to \link[Seurat:ScaleData]{Seurat::ScaleData}}
+\item{ScaleDataArgs}{Arguments to pass to \link[Seurat:ScaleData]{Seurat::ScaleData}
+You can use \code{features = "__all__"} to scale all features, which will be expanded to all features in the object.}
 
 \item{RunPCAArgs}{Arguments to pass to \link[Seurat:RunPCA]{Seurat::RunPCA}}
 
