@@ -443,6 +443,106 @@ RunSeuratDEAnalysis <- function(
     degs
 }
 
+#' Ensure marker genes are in the scale.data layer of an assay of the Seurat object
+#'
+#' @param object Seurat object
+#' @param features Character vector of feature names to ensure in the scale.data layer
+#' @param assay Assay to use. If NULL, the default assay will be used.
+#' @param umi_assay Assay to use for the UMI counts. Default is "RNA". This is used to get the counts for scaling.
+#' @param log Logger object to log the messages. If NULL, the default logger will be used.
+#' @return The Seurat object with the features ensured in the scale.data layer
+#' @importFrom SeuratObject DefaultAssay Cells GetAssayData SetAssayData
+#' @importFrom Seurat GetResidual SCTResults
+#' @export
+EnsureSeuratScaleData <- function(
+    object,
+    features,
+    assay = NULL,
+    umi_assay = "RNA"
+) {
+    assay <- assay %||% DefaultAssay(object)
+    is_sct <- inherits(object[[assay]], "SCTAssay")
+    missing <- setdiff(features, rownames(object[[assay]]@scale.data))
+    log <- log %||% get_logger()
+    if (length(missing) == 0) {
+        return(object)
+    }
+    if (is_sct) {
+        models <- levels(object[[assay]])
+        if (length(models) > 1) {
+            # GetResidual crashes (Seurat bug) when an SCT model covers only
+            # part of the requested features (na.rm=TRUE silently drops them).
+            # Compute residuals per model, restricted to the features each
+            # model supports, and NA-fill the cells of models lacking them.
+            umi <- object[[umi_assay]]
+            residuals <- lapply(models, function(m) {
+                mfeats <- rownames(SCTResults(
+                    object[[assay]], "feature.attributes", model = m
+                ))
+                f <- intersect(missing, mfeats)
+                if (length(f) == 0) {
+                    return(NULL)
+                }
+                if (inherits(umi, "Assay5")) {
+                    Seurat:::FetchResidualSCTModel(
+                        object = object[[assay]],
+                        umi.object = umi,
+                        SCTModel = m,
+                        layer.cells = Cells(
+                            slot(object[[assay]], "SCTModel.list")[[m]]
+                        ),
+                        new_features = f
+                    )
+                } else {
+                    Seurat:::GetResidualSCTModel(
+                        object = object,
+                        assay = assay,
+                        SCTModel = m,
+                        new_features = f,
+                        clip.range = NULL,
+                        replace.value = FALSE,
+                        verbose = FALSE
+                    )
+                }
+            })
+            residuals <- Filter(Negate(is.null), residuals)
+            if (length(residuals) > 0) {
+                scale <- GetAssayData(
+                    object = object, layer = "scale.data", assay = assay
+                )
+                allfeat <- union(rownames(scale), missing)
+                newscale <- matrix(
+                    NA_real_, length(allfeat), ncol(object),
+                    dimnames = list(allfeat, Cells(object))
+                )
+                if (nrow(scale) > 0) {
+                    newscale[rownames(scale), ] <- as.matrix(scale)
+                }
+                for (r in residuals) {
+                    newscale[rownames(r), colnames(r)] <- r
+                }
+                object <- SetAssayData(
+                    object = object, layer = "scale.data", new.data = newscale
+                )
+            }
+        } else {
+            object <- GetResidual(
+                object,
+                features = missing,
+                assay = assay,
+                umi.assay = umi_assay
+            )
+        }
+    } else {
+        object <- Seurat::ScaleData(
+            object,
+            features = missing,
+            assay = assay
+        )
+    }
+    return(object)
+}
+
 #' Perform cell QC
 #'
 #' @param object Seurat object
