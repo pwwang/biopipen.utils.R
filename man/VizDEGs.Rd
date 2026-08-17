@@ -47,19 +47,9 @@ Default: \code{NULL}.}
 \code{"heatmap"}, \code{"violin"}, \code{"box"}, \code{"bar"},
 \code{"ridge"}, or \code{"dot"}. See Description for details on each type.}
 
-\item{subset_by}{A column name in \code{markers} indicating the grouping
-from which each marker was identified (e.g., the \code{cluster} column
-from \code{FindAllMarkers()}). Supports the
-\code{"marker_column:metadata_column"} syntax for linking to Seurat
-object metadata (see \strong{Metadata column mapping} section). For
-jitter and DE heatmap/dot plot types, \code{subset_by} is required and
-defines the x-axis or column groups. For expression plot types,
-\code{subset_by} controls faceting or splitting. Default: \code{NULL}.}
+\item{subset_by}{Deprecated. Use \code{each} instead.}
 
-\item{subset_as_facet}{Logical. If \code{TRUE}, facet the plot by
-\code{subset_by} groups instead of splitting into separate plots. Most
-useful for expression plot types. For volcano plots, controls whether
-faceting or split_by dispatch is used. Default: \code{FALSE}.}
+\item{subset_as_facet}{Deprecated. Use \code{facet_each} instead.}
 
 \item{comparison_by}{A column name in \code{markers} indicating the
 comparison (e.g., \code{"g1:g2"} for a pairwise comparison, or a single
@@ -86,20 +76,20 @@ to \code{0.05} for volcano plots).}
 \item{order_by}{A string expression to order markers by (evaluated with
 \code{\link[dplyr:arrange]{dplyr::arrange()}}). Can reference columns
 in \code{markers} as well as columns from the object metadata (when
-\code{object} is provided and \code{subset_by} enables merging). Only
+\code{object} is provided and \code{each} enables merging). Only
 the first value of merged metadata columns is used. Example:
 \code{"desc(avg_log2FC)"}. The ordering affects which markers are
-selected when \code{select} is numeric. Default: \code{NULL}.}
+selected when \code{select} is numeric. Default: \code{desc(abs(avg_log2FC))}.}
 
 \item{select}{How to select markers for labeling or display. See
 \strong{Marker selection and filtering} section for full details.
 \itemize{
-\item Numeric: Top N markers per \code{subset_by} group (default:
+\item Numeric: Top N markers per \code{each} group (default:
 \code{5} for volcano/jitter types, \code{10} for others).
 \item Character expression: Filter condition for
 \code{\link[dplyr:filter]{dplyr::filter()}}.
 \item Character vector: Multiple filter expressions; those containing
-the \code{subset_by} column name filter the overall data, others
+the \code{each} column name filter the overall data, others
 filter within remaining data.
 }}
 
