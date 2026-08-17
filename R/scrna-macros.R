@@ -232,8 +232,9 @@ RunSeuratDEAnalysis <- function(
     )
 
     assay <- assay %||% DefaultAssay(object)
+    is_sct <- inherits(object[[assay]], "SCTAssay")
 
-    if (assay == "SCT" && !"PrepSCTFindMarkers" %in% names(object@commands)) {
+    if (is_sct && !"PrepSCTFindMarkers" %in% names(object@commands)) {
         object <- PrepSCTFindMarkers(object)
         object <- AddSeuratCommand(object, "PrepSCTFindMarkers")
     }
@@ -312,7 +313,7 @@ RunSeuratDEAnalysis <- function(
         }
     }
     # https://satijalab.org/seurat/archive/v4.3/sctransform_v2_vignette#identify-differential-expressed-genes-across-conditions
-    recorrect_umi <- is.null(subset) && assay == "SCT"
+    recorrect_umi <- is.null(subset) && is_sct
 
     find_markers <- function(recorrect_umi, ...) {
         if (is.null(ident_1)) {
@@ -423,11 +424,11 @@ RunSeuratDEAnalysis <- function(
         }
     )
 
-    # Fix +Inf/-Inf avg_log2FC to make sure visualization works
-    # +Inf -> max(abs(is.finite(avg_log2FC))) + 1
-    # -Inf -> -max(abs(is.finite(avg_log2FC))) - 1
-    # When there is no finite value, set to 9/-9
     if (nrow(degs) > 0) {
+        # Fix +Inf/-Inf avg_log2FC to make sure visualization works
+        # +Inf -> max(abs(is.finite(avg_log2FC))) + 1
+        # -Inf -> -max(abs(is.finite(avg_log2FC))) - 1
+        # When there is no finite value, set to 9/-9
         finite_vals <- degs$avg_log2FC[is.finite(degs$avg_log2FC)]
         if (length(finite_vals) > 0) {
             max_finite <- max(abs(finite_vals))
@@ -1145,6 +1146,7 @@ FinishSeuratQC <- function(object, keep_contam_assay = FALSE) {
 #' @param NormalizeDataArgs Arguments to pass to [Seurat::NormalizeData]
 #' @param FindVariableFeaturesArgs Arguments to pass to [Seurat::FindVariableFeatures]
 #' @param ScaleDataArgs Arguments to pass to [Seurat::ScaleData]
+#' You can use `features = "__all__"` to scale all features, which will be expanded to all features in the object.
 #' @param RunPCAArgs Arguments to pass to [Seurat::RunPCA]
 #' @param from_ccs Whether this is called from [RunSeuratCellCycleScoring].
 #' @param log Logger
@@ -1228,8 +1230,11 @@ RunSeuratTransformation <- function(
         gc()
 
         log$info("{log_prefix}Running ScaleData ...")
-        log_debug("  Arguments: {format_args(ScaleDataArgs)}")
+        log$debug("  Arguments: {format_args(ScaleDataArgs)}")
         ScaleDataArgs$object <- object
+        if (identical(ScaleDataArgs$features, "__all__")) {
+            ScaleDataArgs$features <- rownames(object)
+        }
         object <- do_call(ScaleData, ScaleDataArgs)
         ScaleDataArgs$object <- NULL
         gc()
