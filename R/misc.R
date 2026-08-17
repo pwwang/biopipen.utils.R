@@ -286,7 +286,7 @@ monkey_patch <- function(namespace, function_name, new_function) {
     lockBinding(function_name, ns)
 }
 
-#' Read a table, like read.table, but with annotated factor levels
+#' Read a table, like read.delim, but with annotated factor levels
 #'
 #' The factor levels are annotated like:
 #' `# factor-levels: group=A|B|C`
@@ -295,7 +295,7 @@ monkey_patch <- function(namespace, function_name, new_function) {
 #' @rdname read_write_table
 #' @param file The file to read
 #' @param factor_level_sep The separator for factor levels, default is "|"
-#' @param ... Additional arguments passed to read.table
+#' @param ... Additional arguments passed to read.delim
 #' @return A data frame with annotated factor levels
 #' @export
 read_table <- function(file, factor_level_sep = "|", ...) {
@@ -304,7 +304,7 @@ read_table <- function(file, factor_level_sep = "|", ...) {
     lines <- readLines(file)
     annotated <- grepl("^#\\s*factor-levels:", lines)
     if (!any(annotated)) {
-        return(do.call(utils::read.table, c(list(file = file), args)))
+        return(do.call(utils::read.delim, c(list(file = file), args)))
     }
     specs <- sub("^#\\s*factor-levels:\\s*", "", lines[annotated])
     fnames <- sub("=.*$", "", specs)
@@ -313,7 +313,7 @@ read_table <- function(file, factor_level_sep = "|", ...) {
         factor_level_sep,
         fixed = TRUE
     )
-    out <- do.call(utils::read.table, c(list(text = lines[!annotated]), args))
+    out <- do.call(utils::read.delim, c(list(text = lines[!annotated]), args))
     for (i in seq_along(fnames)) {
         if (!fnames[i] %in% colnames(out)) {
             warning("[read_table] Factor level annotation for non-existing column: ", fnames[i])
@@ -336,13 +336,14 @@ load_table <- read_table
 #' `# factor-levels: group=A|B|C`
 #'
 #' @rdname read_write_table
-#' @param x The data frame to write
-#' @param file The file to write
+#' @inheritParams utils::read.delim
 #' @param factor_level_sep The separator for factor levels, default is "|"
+#' @param sep The field separator string, default is `\t` (different from write.table default)
+#' @param row.names Whether to include row names, default is FALSE (different from write.table default)
 #' @param ... Additional arguments passed to write.table
 #' @return NULL
 #' @export
-write_table <- function(x, file, factor_level_sep = "|", ...) {
+write_table <- function(x, file, factor_level_sep = "|", sep = "\t", row.names = FALSE, ...) {
     factor_cols <- sapply(x, is.factor)
     if (any(factor_cols)) {
         specs <- sapply(names(x)[factor_cols], function(col) {
@@ -351,9 +352,9 @@ write_table <- function(x, file, factor_level_sep = "|", ...) {
         con <- file(file, open = "w")
         on.exit(close(con))
         writeLines(c(paste0("# factor-levels: ", specs), ""), con = con)
-        utils::write.table(x, file = con, ...)
+        utils::write.table(x, file = con, sep = sep, row.names = row.names, ...)
     } else {
-        utils::write.table(x, file = file, ...)
+        utils::write.table(x, file = file, sep = sep, row.names = row.names, ...)
     }
 }
 

@@ -5,24 +5,40 @@
 \alias{load_table}
 \alias{write_table}
 \alias{save_table}
-\title{Read a table, like read.table, but with annotated factor levels}
+\title{Read a table, like read.delim, but with annotated factor levels}
 \usage{
 read_table(file, factor_level_sep = "|", ...)
 
 load_table(file, factor_level_sep = "|", ...)
 
-write_table(x, file, factor_level_sep = "|", ...)
+write_table(
+  x,
+  file,
+  factor_level_sep = "|",
+  sep = "\\t",
+  row.names = FALSE,
+  ...
+)
 
-save_table(x, file, factor_level_sep = "|", ...)
+save_table(
+  x,
+  file,
+  factor_level_sep = "|",
+  sep = "\\t",
+  row.names = FALSE,
+  ...
+)
 }
 \arguments{
-\item{file}{The file to write}
+\item{file}{The file to read}
 
 \item{factor_level_sep}{The separator for factor levels, default is "|"}
 
 \item{...}{Additional arguments passed to write.table}
 
-\item{x}{The data frame to write}
+\item{sep}{The field separator string, default is \verb{\\t} (different from write.table default)}
+
+\item{row.names}{Whether to include row names, default is FALSE (different from write.table default)}
 }
 \value{
 A data frame with annotated factor levels
