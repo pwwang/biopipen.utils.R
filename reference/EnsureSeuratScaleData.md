@@ -17,7 +17,8 @@ EnsureSeuratScaleData(object, features, assay = NULL, umi_assay = "RNA")
 
 - features:
 
-  Character vector of feature names to ensure in the scale.data layer
+  Character vector, or a list of character vectors, of feature names to
+  ensure in the scale.data layer
 
 - assay:
 

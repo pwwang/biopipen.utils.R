@@ -203,8 +203,6 @@ VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "violin",
     select = 2, comparison_by = "Phase", each = "SubCellType"
 )
-#> Centering and scaling data matrix
-#> Warning: Layer counts isn't present in the assay object; returning NULL
 #> Warning: Layer counts isn't present in the assay object; returning NULL
 #> Warning: Groups with fewer than two datapoints have been dropped.
 #> ℹ Set `drop = FALSE` to consider such groups for position adjustment purposes.
@@ -255,24 +253,18 @@ VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "box",
     select = 2, comparison_by = "Phase", each = "SubCellType"
 )
-#> Centering and scaling data matrix
-#> Warning: Layer counts isn't present in the assay object; returning NULL
 #> Warning: Layer counts isn't present in the assay object; returning NULL
 
 VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "bar",
     select = 2, comparison_by = "Phase", each = "SubCellType"
 )
-#> Centering and scaling data matrix
-#> Warning: Layer counts isn't present in the assay object; returning NULL
 #> Warning: Layer counts isn't present in the assay object; returning NULL
 
 VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "ridge",
     select = 1, comparison_by = "Phase", each = "SubCellType"
 )
-#> Centering and scaling data matrix
-#> Warning: Layer counts isn't present in the assay object; returning NULL
 #> Warning: Layer counts isn't present in the assay object; returning NULL
 #> Picking joint bandwidth of 0.0834
 #> Picking joint bandwidth of 0.0961
@@ -347,16 +339,12 @@ VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "heatmap",
     cluster_columns = FALSE, comparison_by = "Phase", each = "SubCellType"
 )
-#> Centering and scaling data matrix
-#> Warning: Layer counts isn't present in the assay object; returning NULL
 #> Warning: Layer counts isn't present in the assay object; returning NULL
 
 VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "dot",
     select = 1, comparison_by = "Phase", each = "SubCellType"
 )
-#> Centering and scaling data matrix
-#> Warning: Layer counts isn't present in the assay object; returning NULL
 #> Warning: Layer counts isn't present in the assay object; returning NULL
 
 # }
