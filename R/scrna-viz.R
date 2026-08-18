@@ -82,11 +82,18 @@ VizDEGs <- function(
     # degs: p_val avg_log2FC pct.1 pct.2 p_val_adj gene group diff_pct
     stopifnot("[VizDEGs] 'outprefix' must be provided to save code" = !save_code || !is.null(outprefix))
     other_args <- list(...)
-    if (!is.null(object) && identical(other_args$layer %||% "scale.data", "scale.data")) {
+    if (
+        !is.null(object) &&
+        identical(other_args$layer %||% "scale.data", "scale.data") &&
+        plot_type %in% c("heatmap", "violin", "box", "bar", "ridge", "dot")
+    ) {
         assay <- other_args$assay %||% SeuratObject::DefaultAssay(object)
-        missing_features <- setdiff(unique(markers$gene), rownames(object[[assay]]@scale.data))
+        missing_features <- setdiff(
+            unique(markers$gene),
+            rownames(SeuratObject::GetAssayData(object, assay = assay, layer = "scale.data"))
+        )
         if (length(missing_features) > 0) {
-            object <- EnsureSeuratScaleData(object, missing_features, assay = other_args$assay)
+            object <- EnsureSeuratScaleData(object, missing_features, assay = assay)
         }
     }
 

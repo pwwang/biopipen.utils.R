@@ -462,8 +462,26 @@ EnsureSeuratScaleData <- function(
 ) {
     assay <- assay %||% DefaultAssay(object)
     is_sct <- inherits(object[[assay]], "SCTAssay")
-    missing <- setdiff(features, rownames(object[[assay]]@scale.data))
+    missing <- setdiff(features, rownames(GetAssayData(object, assay = assay, layer = "scale.data")))
     log <- log %||% get_logger()
+    # Merge new data into the existing scale.data, keeping the original rows
+    # and NA-filling the cells not covered by the new data.
+    merge_scale_data <- function(newdata) {
+        newdata <- if (is.list(newdata)) newdata else list(newdata)
+        scale <- GetAssayData(object = object, layer = "scale.data", assay = assay)
+        allfeat <- union(rownames(scale), union(missing, unlist(lapply(newdata, rownames))))
+        newscale <- matrix(
+            NA_real_, length(allfeat), ncol(object),
+            dimnames = list(allfeat, Cells(object))
+        )
+        if (nrow(scale) > 0) {
+            newscale[rownames(scale), ] <- as.matrix(scale)
+        }
+        for (r in newdata) {
+            newscale[rownames(r), colnames(r)] <- r
+        }
+        SetAssayData(object = object, layer = "scale.data", new.data = newscale)
+    }
     if (length(missing) == 0) {
         return(object)
     }
@@ -509,23 +527,7 @@ EnsureSeuratScaleData <- function(
             })
             residuals <- Filter(Negate(is.null), residuals)
             if (length(residuals) > 0) {
-                scale <- GetAssayData(
-                    object = object, layer = "scale.data", assay = assay
-                )
-                allfeat <- union(rownames(scale), missing)
-                newscale <- matrix(
-                    NA_real_, length(allfeat), ncol(object),
-                    dimnames = list(allfeat, Cells(object))
-                )
-                if (nrow(scale) > 0) {
-                    newscale[rownames(scale), ] <- as.matrix(scale)
-                }
-                for (r in residuals) {
-                    newscale[rownames(r), colnames(r)] <- r
-                }
-                object <- SetAssayData(
-                    object = object, layer = "scale.data", new.data = newscale
-                )
+                object <- merge_scale_data(residuals)
             }
         } else {
             object <- GetResidual(
@@ -536,11 +538,15 @@ EnsureSeuratScaleData <- function(
             )
         }
     } else {
-        object <- Seurat::ScaleData(
-            object,
-            features = missing,
-            assay = assay
-        )
+        # `Seurat::ScaleData()` would rebuild the whole `scale.data` layer,
+        # destroying the pre-existing rows (including marker genes used by
+        # downstream plots). Compute z-scores for the missing features only
+        # and merge them into the existing layer.
+        data <- GetAssayData(object = object, layer = "data", assay = assay)
+        newdata <- t(scale(t(as.matrix(data[missing, , drop = FALSE]))))
+        # Zero-variance features yield NaN; keep the rows, zero them out.
+        newdata[!is.finite(newdata)] <- 0
+        object <- merge_scale_data(newdata)
     }
     return(object)
 }
@@ -3694,8 +3700,13 @@ RunSeuratCellCycleScoring <- function(
     if (length(assays_to_remove) > 0) {
         object@assays[assays_to_remove] <- NULL
     } else {
-        object[[orig_assay]]$data <- NULL
-        object[[orig_assay]]$scale.data <- NULL
+        if ("layers" %in% methods::slotNames(object[[orig_assay]])) {
+            object[[orig_assay]]@layers$data <- NULL
+            object[[orig_assay]]@layers$scale.data <- NULL
+        } else {
+            object[[orig_assay]]$data <- NULL
+            object[[orig_assay]]$scale.data <- NULL
+        }
     }
     gc()
 
