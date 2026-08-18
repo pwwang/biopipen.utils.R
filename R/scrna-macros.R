@@ -447,7 +447,7 @@ RunSeuratDEAnalysis <- function(
 #' Ensure marker genes are in the scale.data layer of an assay of the Seurat object
 #'
 #' @param object Seurat object
-#' @param features Character vector of feature names to ensure in the scale.data layer
+#' @param features Character vector, or a list of character vectors, of feature names to ensure in the scale.data layer
 #' @param assay Assay to use. If NULL, the default assay will be used.
 #' @param umi_assay Assay to use for the UMI counts. Default is "RNA". This is used to get the counts for scaling.
 #' @return The Seurat object with the features ensured in the scale.data layer
@@ -462,7 +462,9 @@ EnsureSeuratScaleData <- function(
 ) {
     assay <- assay %||% DefaultAssay(object)
     is_sct <- inherits(object[[assay]], "SCTAssay")
-    missing <- setdiff(features, rownames(GetAssayData(object, assay = assay, layer = "scale.data")))
+    # features can be a (named) list of feature groups, e.g. cell-type markers
+    features <- if (is.list(features)) unlist(features, use.names = FALSE) else features
+    missing <- setdiff(unique(features), rownames(GetAssayData(object, assay = assay, layer = "scale.data")))
     log <- log %||% get_logger()
     # Merge new data into the existing scale.data, keeping the original rows
     # and NA-filling the cells not covered by the new data.
@@ -480,7 +482,7 @@ EnsureSeuratScaleData <- function(
         for (r in newdata) {
             newscale[rownames(r), colnames(r)] <- r
         }
-        SetAssayData(object = object, layer = "scale.data", new.data = newscale)
+        suppressWarnings(SetAssayData(object = object, layer = "scale.data", new.data = newscale))
     }
     if (length(missing) == 0) {
         return(object)

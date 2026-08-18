@@ -9,7 +9,7 @@ EnsureSeuratScaleData(object, features, assay = NULL, umi_assay = "RNA")
 \arguments{
 \item{object}{Seurat object}
 
-\item{features}{Character vector of feature names to ensure in the scale.data layer}
+\item{features}{Character vector, or a list of character vectors, of feature names to ensure in the scale.data layer}
 
 \item{assay}{Assay to use. If NULL, the default assay will be used.}
 
