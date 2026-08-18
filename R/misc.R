@@ -337,7 +337,7 @@ load_table <- read_table
 #' `# factor-levels: group=A|B|C`
 #'
 #' @rdname read_write_table
-#' @inheritParams utils::read.delim
+#' @inheritParams utils::write.table
 #' @param factor_level_sep The separator for factor levels, default is "|"
 #' @param sep The field separator string, default is `\t` (different from write.table default)
 #' @param row.names Whether to include row names, default is FALSE (different from write.table default)

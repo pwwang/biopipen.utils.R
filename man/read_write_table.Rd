@@ -36,6 +36,9 @@ save_table(
 
 \item{...}{Additional arguments passed to write.table}
 
+\item{x}{the object to be written, preferably a matrix or data frame.
+    If not, it is attempted to coerce \code{x} to a data frame.}
+
 \item{sep}{The field separator string, default is \verb{\\t} (different from write.table default)}
 
 \item{row.names}{Whether to include row names, default is FALSE (different from write.table default)}
