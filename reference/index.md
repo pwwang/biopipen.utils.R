@@ -21,6 +21,10 @@
   : Convert a Seurat object (or RDS/H5Seurat/qs2 file) to an AnnData
   object file
 
+- [`EnsureSeuratScaleData()`](https://pwwang.github.io/biopipen.utils.R/reference/EnsureSeuratScaleData.md)
+  : Ensure marker genes are in the scale.data layer of an assay of the
+  Seurat object
+
 - [`FinishSeuratQC()`](https://pwwang.github.io/biopipen.utils.R/reference/FinishSeuratQC.md)
   : Finish the QC process including the visualization
 
@@ -172,7 +176,7 @@
   [`load_table()`](https://pwwang.github.io/biopipen.utils.R/reference/read_write_table.md)
   [`write_table()`](https://pwwang.github.io/biopipen.utils.R/reference/read_write_table.md)
   [`save_table()`](https://pwwang.github.io/biopipen.utils.R/reference/read_write_table.md)
-  : Read a table, like read.table, but with annotated factor levels
+  : Read a table, like read.delim, but with annotated factor levels
 
 - [`repr()`](https://pwwang.github.io/biopipen.utils.R/reference/repr.md)
   : The string representation of an object

@@ -9,6 +9,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/Cache.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ConvertAnnDataToSeurat.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ConvertSeuratToAnnData.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/EnsureSeuratScaleData.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/FinishSeuratQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/GetIdentityColumn.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/LoadSeuratAndPerformQC.html</loc></url>
