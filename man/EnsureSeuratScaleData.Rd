@@ -14,8 +14,6 @@ EnsureSeuratScaleData(object, features, assay = NULL, umi_assay = "RNA")
 \item{assay}{Assay to use. If NULL, the default assay will be used.}
 
 \item{umi_assay}{Assay to use for the UMI counts. Default is "RNA". This is used to get the counts for scaling.}
-
-\item{log}{Logger object to log the messages. If NULL, the default logger will be used.}
 }
 \value{
 The Seurat object with the features ensured in the scale.data layer

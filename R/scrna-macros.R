@@ -450,7 +450,6 @@ RunSeuratDEAnalysis <- function(
 #' @param features Character vector of feature names to ensure in the scale.data layer
 #' @param assay Assay to use. If NULL, the default assay will be used.
 #' @param umi_assay Assay to use for the UMI counts. Default is "RNA". This is used to get the counts for scaling.
-#' @param log Logger object to log the messages. If NULL, the default logger will be used.
 #' @return The Seurat object with the features ensured in the scale.data layer
 #' @importFrom SeuratObject DefaultAssay Cells GetAssayData SetAssayData
 #' @importFrom Seurat GetResidual SCTResults
@@ -485,7 +484,8 @@ EnsureSeuratScaleData <- function(
                     return(NULL)
                 }
                 if (inherits(umi, "Assay5")) {
-                    Seurat:::FetchResidualSCTModel(
+                    FetchResidualSCTModel <- utils::getFromNamespace("FetchResidualSCTModel", "Seurat")
+                    FetchResidualSCTModel(
                         object = object[[assay]],
                         umi.object = umi,
                         SCTModel = m,
@@ -495,7 +495,8 @@ EnsureSeuratScaleData <- function(
                         new_features = f
                     )
                 } else {
-                    Seurat:::GetResidualSCTModel(
+                    GetResidualSCTModel <- utils::getFromNamespace("GetResidualSCTModel", "Seurat")
+                    GetResidualSCTModel(
                         object = object,
                         assay = assay,
                         SCTModel = m,
