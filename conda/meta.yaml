@@ -16,7 +16,7 @@ requirements:
     - r-base
     - r-bracer
     - r-digest
-    - r-doubletfinder
+    - r-doubletfinder >=2.0.6
     - r-enrichit
     - r-jsonlite
     - r-logger
@@ -45,7 +45,7 @@ requirements:
     - r-base
     - r-bracer
     - r-digest
-    - r-doubletfinder
+    - r-doubletfinder >=2.0.6
     - r-enrichit
     - r-jsonlite
     - r-logger
