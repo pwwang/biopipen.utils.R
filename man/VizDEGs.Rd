@@ -10,8 +10,8 @@ VizDEGs(
   plot_type = c("volcano", "volcano_log2fc", "volcano_pct", "jitter", "jitter_log2fc",
     "jitter_pct", "heatmap_log2fc", "heatmap_pct", "dot_log2fc", "dot_pct", "heatmap",
     "violin", "box", "bar", "ridge", "dot"),
-  subset_by = NULL,
-  subset_as_facet = FALSE,
+  each = NULL,
+  facet_each = FALSE,
   comparison_by = NULL,
   p_adjust = TRUE,
   cutoff = NULL,
@@ -47,9 +47,19 @@ Default: \code{NULL}.}
 \code{"heatmap"}, \code{"violin"}, \code{"box"}, \code{"bar"},
 \code{"ridge"}, or \code{"dot"}. See Description for details on each type.}
 
-\item{subset_by}{Deprecated. Use \code{each} instead.}
+\item{each}{A column name in \code{markers} indicating the grouping
+from which each marker was identified (e.g., the \code{cluster} column
+from \code{FindAllMarkers()}). Supports the
+\code{"marker_column:metadata_column"} syntax for linking to Seurat
+object metadata (see \strong{Metadata column mapping} section). For
+jitter and DE heatmap/dot plot types, \code{each} is required and
+defines the x-axis or column groups. For expression plot types,
+\code{each} controls faceting or splitting. Default: \code{NULL}.}
 
-\item{subset_as_facet}{Deprecated. Use \code{facet_each} instead.}
+\item{facet_each}{Logical. If \code{TRUE}, facet the plot by
+\code{each} groups instead of splitting into separate plots. Most
+useful for expression plot types. For volcano plots, controls whether
+faceting or split_by dispatch is used. Default: \code{FALSE}.}
 
 \item{comparison_by}{A column name in \code{markers} indicating the
 comparison (e.g., \code{"g1:g2"} for a pairwise comparison, or a single
@@ -104,6 +114,8 @@ filter within remaining data.
 \item{...}{
   Arguments passed on to \code{\link[scplotter:MarkersPlot]{scplotter::MarkersPlot}}
   \describe{
+    \item{\code{subset_by}}{Deprecated. Use \code{each} instead.}
+    \item{\code{subset_as_facet}}{Deprecated. Use \code{facet_each} instead.}
     \item{\code{show_labels}}{Logical. For \code{heatmap_log2fc} and
 \code{heatmap_pct} plot types only. If \code{TRUE}, display numeric
 values in heatmap cells. When combined with \code{cutoff}, both values
@@ -129,10 +141,10 @@ Visualize differentially expressed genes
 degs <- RunSeuratDEAnalysis(scplotter::pancreas_sub, "SubCellType")
 VizDEGs(degs, plot_type = "volcano_pct")
 VizDEGs(degs, plot_type = "volcano_log2fc")
-VizDEGs(degs, plot_type = "jitter_log2fc", subset_by = "SubCellType")
+VizDEGs(degs, plot_type = "jitter_log2fc", each = "SubCellType")
 VizDEGs(degs,
     plot_type = "heatmap_log2fc", cutoff = 0.05,
-    select = 5, subset_by = "SubCellType"
+    select = 5, each = "SubCellType"
 )
 
 # Visualize expression of the top DEGs
@@ -141,27 +153,27 @@ degs$Phase <- "G2M:S"
 
 VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "violin",
-    select = 2, comparison_by = "Phase", subset_by = "SubCellType"
+    select = 2, comparison_by = "Phase", each = "SubCellType"
 )
 VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "box",
-    select = 2, comparison_by = "Phase", subset_by = "SubCellType"
+    select = 2, comparison_by = "Phase", each = "SubCellType"
 )
 VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "bar",
-    select = 2, comparison_by = "Phase", subset_by = "SubCellType"
+    select = 2, comparison_by = "Phase", each = "SubCellType"
 )
 VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "ridge",
-    select = 1, comparison_by = "Phase", subset_by = "SubCellType"
+    select = 1, comparison_by = "Phase", each = "SubCellType"
 )
 VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "heatmap",
-    cluster_columns = FALSE, comparison_by = "Phase", subset_by = "SubCellType"
+    cluster_columns = FALSE, comparison_by = "Phase", each = "SubCellType"
 )
 VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "dot",
-    select = 1, comparison_by = "Phase", subset_by = "SubCellType"
+    select = 1, comparison_by = "Phase", each = "SubCellType"
 )
 }
 }

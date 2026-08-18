@@ -20,10 +20,10 @@
 #' degs <- RunSeuratDEAnalysis(scplotter::pancreas_sub, "SubCellType")
 #' VizDEGs(degs, plot_type = "volcano_pct")
 #' VizDEGs(degs, plot_type = "volcano_log2fc")
-#' VizDEGs(degs, plot_type = "jitter_log2fc", subset_by = "SubCellType")
+#' VizDEGs(degs, plot_type = "jitter_log2fc", each = "SubCellType")
 #' VizDEGs(degs,
 #'     plot_type = "heatmap_log2fc", cutoff = 0.05,
-#'     select = 5, subset_by = "SubCellType"
+#'     select = 5, each = "SubCellType"
 #' )
 #'
 #' # Visualize expression of the top DEGs
@@ -32,27 +32,27 @@
 #'
 #' VizDEGs(degs,
 #'     object = scplotter::pancreas_sub, plot_type = "violin",
-#'     select = 2, comparison_by = "Phase", subset_by = "SubCellType"
+#'     select = 2, comparison_by = "Phase", each = "SubCellType"
 #' )
 #' VizDEGs(degs,
 #'     object = scplotter::pancreas_sub, plot_type = "box",
-#'     select = 2, comparison_by = "Phase", subset_by = "SubCellType"
+#'     select = 2, comparison_by = "Phase", each = "SubCellType"
 #' )
 #' VizDEGs(degs,
 #'     object = scplotter::pancreas_sub, plot_type = "bar",
-#'     select = 2, comparison_by = "Phase", subset_by = "SubCellType"
+#'     select = 2, comparison_by = "Phase", each = "SubCellType"
 #' )
 #' VizDEGs(degs,
 #'     object = scplotter::pancreas_sub, plot_type = "ridge",
-#'     select = 1, comparison_by = "Phase", subset_by = "SubCellType"
+#'     select = 1, comparison_by = "Phase", each = "SubCellType"
 #' )
 #' VizDEGs(degs,
 #'     object = scplotter::pancreas_sub, plot_type = "heatmap",
-#'     cluster_columns = FALSE, comparison_by = "Phase", subset_by = "SubCellType"
+#'     cluster_columns = FALSE, comparison_by = "Phase", each = "SubCellType"
 #' )
 #' VizDEGs(degs,
 #'     object = scplotter::pancreas_sub, plot_type = "dot",
-#'     select = 1, comparison_by = "Phase", subset_by = "SubCellType"
+#'     select = 1, comparison_by = "Phase", each = "SubCellType"
 #' )
 #' }
 VizDEGs <- function(
@@ -63,8 +63,8 @@ VizDEGs <- function(
         "jitter_pct", "heatmap_log2fc", "heatmap_pct", "dot_log2fc", "dot_pct", "heatmap",
         "violin", "box", "bar", "ridge", "dot"
     ),
-    subset_by = NULL,
-    subset_as_facet = FALSE,
+    each = NULL,
+    facet_each = FALSE,
     comparison_by = NULL,
     p_adjust = TRUE,
     cutoff = NULL,
@@ -93,8 +93,8 @@ VizDEGs <- function(
     p <- MarkersPlot(
         markers = markers, object = object,
         plot_type = plot_type,
-        subset_by = subset_by,
-        subset_as_facet = subset_as_facet,
+        each = each,
+        facet_each = facet_each,
         comparison_by = comparison_by,
         p_adjust = p_adjust,
         cutoff = cutoff,
