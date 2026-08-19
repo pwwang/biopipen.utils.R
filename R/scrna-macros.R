@@ -503,15 +503,21 @@ EnsureSeuratScaleData <- function(
                 if (length(f) == 0) {
                     return(NULL)
                 }
+                mcells <- Cells(slot(object[[assay]], "SCTModel.list")[[m]])
+                # Seurat bug: FetchResidualSCTModel crashes when a model has
+                # <= 1 cell, because `scale.data[, cells]` drops to a vector
+                # and apply(..., 1, anyNA) fails. Skip such models; their
+                # cells stay NA in scale.data.
+                if (length(mcells) <= 1) {
+                    return(NULL)
+                }
                 if (inherits(umi, "Assay5")) {
                     FetchResidualSCTModel <- utils::getFromNamespace("FetchResidualSCTModel", "Seurat")
                     FetchResidualSCTModel(
                         object = object[[assay]],
                         umi.object = umi,
                         SCTModel = m,
-                        layer.cells = Cells(
-                            slot(object[[assay]], "SCTModel.list")[[m]]
-                        ),
+                        layer.cells = mcells,
                         new_features = f
                     )
                 } else {
