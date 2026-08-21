@@ -49,28 +49,19 @@ Default: \code{NULL}.}
 
 \item{each}{A column name in \code{markers} indicating the grouping
 from which each marker was identified (e.g., the \code{cluster} column
-from \code{FindAllMarkers()}). Supports the
-\code{"marker_column:metadata_column"} syntax for linking to Seurat
-object metadata (see \strong{Metadata column mapping} section). For
-jitter and DE heatmap/dot plot types, \code{each} is required and
-defines the x-axis or column groups. For expression plot types,
-\code{each} controls faceting or splitting. Default: \code{NULL}.}
+from \code{FindAllMarkers()}). Required for jitter and DE heatmap/dot
+plot types, where it defines the x-axis or column groups. For volcano
+plot types, it splits the plot by group (or facets it, with
+\code{facet_each = TRUE}). For expression plot types, \code{each} is
+used to select the markers within each group; a plain column name does
+not split the plot — use the \code{"marker_column:metadata_column"}
+syntax (see \strong{Metadata column mapping}) to also split the plot by
+the mapped metadata column. Default: \code{NULL}.}
 
-\item{facet_each}{Logical. If \code{TRUE}, facet the plot by
-\code{each} groups instead of splitting into separate plots. Most
-useful for expression plot types. For volcano plots, controls whether
-faceting or split_by dispatch is used. Default: \code{FALSE}.}
-
-\item{comparison_by}{A column name in \code{markers} indicating the
-comparison (e.g., \code{"g1:g2"} for a pairwise comparison, or a single
-group name for one-vs-rest). Required for expression-based plot types
-(\code{"heatmap"}, \code{"violin"}, \code{"box"}, \code{"bar"},
-\code{"ridge"}, \code{"dot"}). Supports the
-\code{"marker_column:metadata_column"} syntax (see \strong{Metadata
-column mapping} section). If the comparison values contain a colon
-(e.g., \code{"G2M:G1"}), the two groups on either side of the colon
-are used to subset the object. If only a single group is present, a
-one-vs-other comparison is assumed. Default: \code{NULL}.}
+\item{facet_each}{Logical. Only for volcano plot types: if \code{TRUE},
+facet the volcano plot by the \code{each} groups instead of splitting
+it into separate subplots. Ignored for other plot types. Default:
+\code{FALSE}.}
 
 \item{p_adjust}{Logical. If \code{TRUE} (default), use adjusted p-value
 (\code{p_val_adj} column) for significance calculations and y-axis
@@ -78,29 +69,36 @@ transformations. If \code{FALSE}, use raw p-value (\code{p_val} column).}
 
 \item{cutoff}{Numeric. The p-value (or adjusted p-value, depending on
 \code{p_adjust}) threshold for labeling significance. For volcano plots,
-sets \code{y_cutoff}. For heatmap-based DE plots
-(\code{heatmap_log2fc}, \code{heatmap_pct}), controls which cells
-receive significance marks. Default: \code{NULL} (no cutoff; defaults
-to \code{0.05} for volcano plots).}
+sets \code{y_cutoff}. For DE heatmap plots (\code{heatmap_log2fc},
+\code{heatmap_pct}), controls which cells receive significance marks.
+For expression plot types with a numeric \code{select}, only markers
+with a p-value below \code{cutoff} are eligible for selection. Ignored
+by DE dot plots (\code{dot_log2fc}, \code{dot_pct}). Default:
+\code{NULL} (no cutoff; defaults to \code{0.05} for volcano plots).}
 
-\item{order_by}{A string expression to order markers by (evaluated with
+\item{order_by}{A string of one or more comma-separated expressions used
+to order the markers (evaluated with
 \code{\link[dplyr:arrange]{dplyr::arrange()}}). Can reference columns
-in \code{markers} as well as columns from the object metadata (when
-\code{object} is provided and \code{each} enables merging). Only
-the first value of merged metadata columns is used. Example:
-\code{"desc(avg_log2FC)"}. The ordering affects which markers are
-selected when \code{select} is numeric. Default: \code{desc(abs(avg_log2FC))}.}
+in \code{markers} as well as metadata columns merged in via a
+colon-form \code{each} (see \strong{Metadata column mapping}). Only
+the first value of each merged metadata column is kept. Example:
+\code{"desc(avg_log2FC)"} or \code{"desc(avg_log2FC), desc(pct.1)"}.
+The ordering determines which markers are selected when \code{select}
+is numeric. For jitter plots, it is also passed to
+\code{\link[plotthis:JitterPlot]{plotthis::JitterPlot()}}. Default:
+\code{"desc(abs(avg_log2FC))"}.}
 
-\item{select}{How to select markers for labeling or display. See
+\item{select}{How to select markers for display or labeling. See
 \strong{Marker selection and filtering} section for full details.
 \itemize{
-\item Numeric: Top N markers per \code{each} group (default:
-\code{5} for volcano/jitter types, \code{10} for others).
-\item Character expression: Filter condition for
+\item Numeric: Top N markers per \code{each} group, or overall when
+\code{each} is \code{NULL} (default: \code{5} for volcano/jitter
+types, \code{10} for others).
+\item Single expression: Filter condition for
 \code{\link[dplyr:filter]{dplyr::filter()}}.
-\item Character vector: Multiple filter expressions; those containing
-the \code{each} column name filter the overall data, others
-filter within remaining data.
+\item Character vector of multiple expressions (DE heatmap/dot plot
+types only): expressions mentioning the \code{each} column name
+filter the overall data, others filter within the remaining data.
 }}
 
 \item{outprefix}{Prefix of the output file}
@@ -114,8 +112,25 @@ filter within remaining data.
 \item{...}{
   Arguments passed on to \code{\link[scplotter:MarkersPlot]{scplotter::MarkersPlot}}
   \describe{
-    \item{\code{subset_by}}{Deprecated. Use \code{each} instead.}
-    \item{\code{subset_as_facet}}{Deprecated. Use \code{facet_each} instead.}
+    \item{\code{group_by}}{Used only for expression-based plot types (ignored for DE
+summary plot types). A column in the Seurat object's metadata to group
+cells by, e.g., a condition column — useful when the DEs were calculated
+between conditions (such as cell cycle phases) and you want to compare
+the expression of the markers across those conditions. A single value is
+passed directly to \code{\link[scplotter]{FeatureStatPlot}}: for \code{heatmap} and
+\code{dot} plots it is applied as the column annotation (\code{ident}),
+and it only takes effect when \code{each} includes a metadata column
+mapping; for \code{violin}, \code{box}, \code{bar}, and \code{ridge}
+plots it is passed as \code{group_by}.
+The \code{"marker_column:metadata_column"} syntax (see \strong{Metadata
+column mapping}) restricts the object to only the cells involved in the
+comparisons: for example, if a \code{comparison} column in the markers
+data frame holds \code{"G1:G2M"}, passing
+\code{group_by = "comparison:Phase"} keeps only G1 and G2M cells in the
+plot, with the \code{Phase} column re-factored to these two levels in
+the order they first appear in the \code{comparison} column. Without
+the restriction, e.g., \code{group_by = "Phase"}, all phase cells
+(G1, G2M, and S) are included in the plot. Default: \code{NULL}.}
     \item{\code{show_labels}}{Logical. For \code{heatmap_log2fc} and
 \code{heatmap_pct} plot types only. If \code{TRUE}, display numeric
 values in heatmap cells. When combined with \code{cutoff}, both values
@@ -128,6 +143,15 @@ characters (\code{"-"}, \code{"|"}, \code{"+"}, \code{"/"},
 (\code{"[*]"}, \code{"<*>"}, \code{"(*)"}, \code{"{*}"}). Note that
 \code{"*"} conflicts with \code{show_labels = TRUE} because both use
 the label layer — use a compound mark instead. Default: \code{"*"}.}
+    \item{\code{flatten_markers}}{Logical. Only for the expression \code{heatmap} and
+\code{dot} plot types. When \code{each} is used to select markers per
+group, the markers are by default provided to
+\code{\link[scplotter]{FeatureStatPlot}} as a named list (one entry per group),
+which splits the feature rows of the plot by group. With
+\code{flatten_markers = TRUE}, the selected markers are collapsed into a
+single vector so the plot shows one unsplit block of features — useful
+e.g. to mimic \code{\link[Seurat:DoHeatmap]{Seurat::DoHeatmap()}} on
+globally selected markers. Default: \code{FALSE}.}
   }}
 }
 \value{

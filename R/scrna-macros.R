@@ -185,11 +185,6 @@ AddSeuratCommand <- function(
 #'  Anything changed in the object or arguments will trigger a re-run
 #' @param error Whether to raise an error if the analysis fails
 #'  Otherwise, return an empty data frame
-#' @param object_sig The signature of the object, used for caching.
-#' If NULL, it will be generated from the object using `.sig_str()`.
-#' You can provide a custom signature if you want to control the caching behavior.
-#' Also if this function is called multiple times with the same object
-#' but different arguments, providing a custom signature can help to avoid redundant computation.
 #' @param ... Additional arguments to pass to [Seurat::FindMarkers()]
 #' @export
 #' @import tidyseurat
@@ -206,17 +201,21 @@ RunSeuratDEAnalysis <- function(
     subset = NULL,
     cache = NULL,
     error = TRUE,
-    object_sig = NULL,
+    log = NULL,
+    log_prefix = "",
     ...
 ) {
-    object_sig <- object_sig %||% .sig_str(object)
     cache <- cache %||% gettempdir()
     cached <- Cache$new(
         list(object, group_by, ident_1, ident_2, subset, assay, ...),
         prefix = "biopipen.utils.RunSeuratDEAnalysis",
         cache_dir = cache,
     )
+    log <- log %||% get_logger()
     if (cached$is_cached()) {
+        log$info(
+            "{log_prefix}Using cached results from {cached$get_path()}"
+        )
         return(cached$restore())
     }
 
@@ -235,6 +234,9 @@ RunSeuratDEAnalysis <- function(
     is_sct <- inherits(object[[assay]], "SCTAssay")
 
     if (is_sct && !"PrepSCTFindMarkers" %in% names(object@commands)) {
+        log$info(
+            "{log_prefix}Preparing SCT for FindMarkers"
+        )
         object <- PrepSCTFindMarkers(object)
         object <- AddSeuratCommand(object, "PrepSCTFindMarkers")
     }
@@ -252,6 +254,7 @@ RunSeuratDEAnalysis <- function(
 
     object <- filter(object, !is.na(!!sym(group_by)))
     if (!is.null(subset)) {
+        log$info("{log_prefix}Subsetting object with: {subset}")
         object <- filter(object, !!parse_expr(subset))
     }
     # all_ident <- as.character(sort(unique(object@meta.data[[group_by]])))
@@ -398,6 +401,9 @@ RunSeuratDEAnalysis <- function(
         degs
     }
 
+    log$info(
+        "{log_prefix}Running DE analysis with group_by = {group_by}, ident_1 = {ident_1}, ident_2 = {ident_2}, assay = {assay}, recorrect_umi = {recorrect_umi}"
+    )
     degs <- tryCatch(
         {
             find_markers(recorrect_umi, ...)
@@ -406,18 +412,15 @@ RunSeuratDEAnalysis <- function(
             if (
                 grepl("PrepSCTFindMarkers", e$message) && isTRUE(recorrect_umi)
             ) {
-                warning(
-                    "[RunSeuratDEAnalysis] Still failing about PrepSCTFindMarkers, try recorrect_umi = FALSE",
-                    immediate. = TRUE
+                log$warn(
+                    "{log_prefix}Still failing about PrepSCTFindMarkers, try recorrect_umi = FALSE"
                 )
                 find_markers(recorrect_umi = FALSE, ...)
-            } else if (error) {
+            } else if (inherits(e, "error")) {
                 stop(traceback(e))
             } else {
-                warning(
-                    "[RunSeuratDEAnalysis] Failed to run DE analysis: ",
-                    e$message,
-                    immediate. = TRUE
+                log$warn(
+                    "{log_prefix}Failed to run DE analysis: {e$message}, returning empty result"
                 )
                 empty
             }
