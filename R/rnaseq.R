@@ -39,7 +39,7 @@ RunDEGAnalysis <- function(
         cache_dir = cache
     )
     if (cached$is_cached()) {
-        log$info("[RunDEGAnalysis] Using cached result.")
+        log$info("[RunDEGAnalysis] Using cached result: {cached$get_path()}")
         return(cached$restore())
     }
 
@@ -47,7 +47,7 @@ RunDEGAnalysis <- function(
         meta <- attr(exprs, "meta")
     }
     check_columns <- utils::getFromNamespace("check_columns", "plotthis")
-    paried_by <- check_columns(meta, paired_by, force_factor = TRUE)
+    paired_by <- check_columns(meta, paired_by, force_factor = TRUE)
     group_by <- check_columns(meta, group_by, force_factor = TRUE)
     stopifnot("[RunDEGAnalysis] 'group_by' must exist in the 'meta'." = !is.null(group_by))
     table_vec <- table(meta[[group_by]])

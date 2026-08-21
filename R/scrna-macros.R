@@ -214,7 +214,7 @@ RunSeuratDEAnalysis <- function(
     log <- log %||% get_logger()
     if (cached$is_cached()) {
         log$info(
-            "{log_prefix}Using cached results from {cached$get_path()}"
+            "{log_prefix}Using cached results from: {cached$get_path()}"
         )
         return(cached$restore())
     }
@@ -897,7 +897,7 @@ LoadSeuratAndPerformQC <- function(
     )
 
     if (cached$is_cached()) {
-        log$info("Initialized and QC'ed data loaded from cache")
+        log$info("Initialized and QC'ed data loaded from cache: {cached$get_path()}")
         return(cached$restore())
     }
     is_seurat <- inherits(meta, "Seurat")
@@ -1206,9 +1206,9 @@ RunSeuratTransformation <- function(
     )
     if (cached$is_cached()) {
         if (from_ccs) {
-            log$info("  Transformed data loaded from cache")
+            log$info("  Transformed data loaded from cache: {cached$get_path()}")
         } else {
-            log$info("Transformed data loaded from cache")
+            log$info("Transformed data loaded from cache: {cached$get_path()}")
         }
         return(cached$restore())
     }
@@ -1799,7 +1799,7 @@ RunSeuratSubClustering <- function(
         cache_dir = cache
     )
     if (cached$is_cached()) {
-        log$info("Subset clustering results loaded from cache")
+        log$info("Subset clustering results loaded from cache: {cached$get_path()}")
         return(cached$restore())
     }
     log$info("Subsetting seurat object ({subset}) ...")
@@ -2167,7 +2167,7 @@ RunSeuratIntegration <- function(
         cache_dir = cache
     )
     if (cached$is_cached()) {
-        log$info("Integrated data loaded from cache")
+        log$info("Integrated data loaded from cache: {cached$get_path()}")
         return(cached$restore())
     }
 
@@ -2449,7 +2449,7 @@ RunSeuratDoubletDetection <- function(
         cache_dir = cache
     )
     if (cached$is_cached()) {
-        log$info("Doublet detection results loaded from cache")
+        log$info("Doublet detection results loaded from cache: {cached$get_path()}")
         return(cached$restore())
     }
 
@@ -2598,7 +2598,7 @@ RunSeuratMap2Ref <- function(
         cache_dir = cache
     )
     if (cached$is_cached()) {
-        log$info("Mapping-to-reference results loaded from cache")
+        log$info("Mapping-to-reference results loaded from cache: {cached$get_path()}")
         return(cached$restore())
     }
 
