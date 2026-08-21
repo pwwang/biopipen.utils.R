@@ -25,34 +25,55 @@
 #'     plot_type = "heatmap_log2fc", cutoff = 0.05,
 #'     select = 5, each = "SubCellType"
 #' )
+#' # mimic Seurat's DoHeatmap()
+#' top_degs <- degs[order(degs$avg_log2FC, decreasing = TRUE), ]
+#' Seurat::DoHeatmap(scplotter::pancreas_sub, features = unique(top_degs$gene)[1:10],
+#'    slot = "data", group.by = "SubCellType")
+#' VizDEGs(degs,
+#'     object = scplotter::pancreas_sub,
+#'     layer = "data", plot_type = "heatmap",
+#'     # Make the heatmap cells filled with bars
+#'     cell_type = "bars",
+#'     # Make sure "select" the top (positive) DEGs by avg_log2FC
+#'     order_by = "desc(avg_log2FC)",  select = 10,
+#'     # Select overall top 10 DEGs for each SubCellType (empty name before :)
+#'     # But use the SubCellType for column splits
+#'     each = ":SubCellType",
+#'     # Column names/title
+#'     show_column_names = "inplace", column_names_side = "top", column_title_rot = 45,
+#'     column_annotation = list(.column = list(name = FALSE)),
+#'     # Row names
+#'     row_names_side = "left", row_annotation = list(.row = list(name = FALSE)),
+#' )
 #'
-#' # Visualize expression of the top DEGs
 #' # Suppose we did comparison between G2M and S phase in each SubCellType
 #' degs$Phase <- "G2M:S"
 #'
 #' VizDEGs(degs,
 #'     object = scplotter::pancreas_sub, plot_type = "violin",
-#'     select = 2, comparison_by = "Phase", each = "SubCellType"
+#'     position_dodge_preserve = "single",
+#'     select = 2, group_by = "Phase:Phase", each = "SubCellType:SubCellType"
 #' )
 #' VizDEGs(degs,
 #'     object = scplotter::pancreas_sub, plot_type = "box",
-#'     select = 2, comparison_by = "Phase", each = "SubCellType"
+#'     select = 2, group_by = "Phase", each = "SubCellType:SubCellType"
 #' )
 #' VizDEGs(degs,
 #'     object = scplotter::pancreas_sub, plot_type = "bar",
-#'     select = 2, comparison_by = "Phase", each = "SubCellType"
+#'     position_dodge_preserve = "single",
+#'     select = 2, group_by = "Phase:Phase", each = "SubCellType:SubCellType"
 #' )
 #' VizDEGs(degs,
 #'     object = scplotter::pancreas_sub, plot_type = "ridge",
-#'     select = 1, comparison_by = "Phase", each = "SubCellType"
+#'     select = 1, group_by = "Phase:Phase", each = "SubCellType:SubCellType"
 #' )
 #' VizDEGs(degs,
-#'     object = scplotter::pancreas_sub, plot_type = "heatmap",
-#'     cluster_columns = FALSE, comparison_by = "Phase", each = "SubCellType"
+#'     object = scplotter::pancreas_sub, plot_type = "heatmap", select = 3,
+#'     cluster_columns = FALSE, group_by = "Phase:Phase", each = "SubCellType:SubCellType"
 #' )
 #' VizDEGs(degs,
 #'     object = scplotter::pancreas_sub, plot_type = "dot",
-#'     select = 1, comparison_by = "Phase", each = "SubCellType"
+#'     select = 1, group_by = "Phase:Phase", each = "SubCellType:SubCellType"
 #' )
 #' }
 VizDEGs <- function(
@@ -65,7 +86,6 @@ VizDEGs <- function(
     ),
     each = NULL,
     facet_each = FALSE,
-    comparison_by = NULL,
     p_adjust = TRUE,
     cutoff = NULL,
     order_by = "desc(abs(avg_log2FC))",
@@ -102,7 +122,6 @@ VizDEGs <- function(
         plot_type = plot_type,
         each = each,
         facet_each = facet_each,
-        comparison_by = comparison_by,
         p_adjust = p_adjust,
         cutoff = cutoff,
         order_by = order_by,

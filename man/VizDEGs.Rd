@@ -12,7 +12,6 @@ VizDEGs(
     "violin", "box", "bar", "ridge", "dot"),
   each = NULL,
   facet_each = FALSE,
-  comparison_by = NULL,
   p_adjust = TRUE,
   cutoff = NULL,
   order_by = "desc(abs(avg_log2FC))",
@@ -56,7 +55,11 @@ plot types, it splits the plot by group (or facets it, with
 used to select the markers within each group; a plain column name does
 not split the plot — use the \code{"marker_column:metadata_column"}
 syntax (see \strong{Metadata column mapping}) to also split the plot by
-the mapped metadata column. Default: \code{NULL}.}
+the mapped metadata column. Alternatively, pass
+\code{":metadata_column"} with an empty marker part to split the
+expression plot by the metadata column directly, without selecting
+markers per group (markers are selected overall) and without merging
+metadata. Default: \code{NULL}.}
 
 \item{facet_each}{Logical. Only for volcano plot types: if \code{TRUE},
 facet the volcano plot by the \code{each} groups instead of splitting
@@ -93,7 +96,8 @@ is numeric. For jitter plots, it is also passed to
 \itemize{
 \item Numeric: Top N markers per \code{each} group, or overall when
 \code{each} is \code{NULL} (default: \code{5} for volcano/jitter
-types, \code{10} for others).
+types and for expression plot types when \code{each} selects
+markers per group, \code{10} otherwise).
 \item Single expression: Filter condition for
 \code{\link[dplyr:filter]{dplyr::filter()}}.
 \item Character vector of multiple expressions (DE heatmap/dot plot
@@ -170,34 +174,55 @@ VizDEGs(degs,
     plot_type = "heatmap_log2fc", cutoff = 0.05,
     select = 5, each = "SubCellType"
 )
+# mimic Seurat's DoHeatmap()
+top_degs <- degs[order(degs$avg_log2FC, decreasing = TRUE), ]
+Seurat::DoHeatmap(scplotter::pancreas_sub, features = unique(top_degs$gene)[1:10],
+   slot = "data", group.by = "SubCellType")
+VizDEGs(degs,
+    object = scplotter::pancreas_sub,
+    layer = "data", plot_type = "heatmap",
+    # Make the heatmap cells filled with bars
+    cell_type = "bars",
+    # Make sure "select" the top (positive) DEGs by avg_log2FC
+    order_by = "desc(avg_log2FC)",  select = 10,
+    # Select overall top 10 DEGs for each SubCellType (empty name before :)
+    # But use the SubCellType for column splits
+    each = ":SubCellType",
+    # Column names/title
+    show_column_names = "inplace", column_names_side = "top", column_title_rot = 45,
+    column_annotation = list(.column = list(name = FALSE)),
+    # Row names
+    row_names_side = "left", row_annotation = list(.row = list(name = FALSE)),
+)
 
-# Visualize expression of the top DEGs
 # Suppose we did comparison between G2M and S phase in each SubCellType
 degs$Phase <- "G2M:S"
 
 VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "violin",
-    select = 2, comparison_by = "Phase", each = "SubCellType"
+    position_dodge_preserve = "single",
+    select = 2, group_by = "Phase:Phase", each = "SubCellType:SubCellType"
 )
 VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "box",
-    select = 2, comparison_by = "Phase", each = "SubCellType"
+    select = 2, group_by = "Phase", each = "SubCellType:SubCellType"
 )
 VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "bar",
-    select = 2, comparison_by = "Phase", each = "SubCellType"
+    position_dodge_preserve = "single",
+    select = 2, group_by = "Phase:Phase", each = "SubCellType:SubCellType"
 )
 VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "ridge",
-    select = 1, comparison_by = "Phase", each = "SubCellType"
+    select = 1, group_by = "Phase:Phase", each = "SubCellType:SubCellType"
 )
 VizDEGs(degs,
-    object = scplotter::pancreas_sub, plot_type = "heatmap",
-    cluster_columns = FALSE, comparison_by = "Phase", each = "SubCellType"
+    object = scplotter::pancreas_sub, plot_type = "heatmap", select = 3,
+    cluster_columns = FALSE, group_by = "Phase:Phase", each = "SubCellType:SubCellType"
 )
 VizDEGs(degs,
     object = scplotter::pancreas_sub, plot_type = "dot",
-    select = 1, comparison_by = "Phase", each = "SubCellType"
+    select = 1, group_by = "Phase:Phase", each = "SubCellType:SubCellType"
 )
 }
 }
