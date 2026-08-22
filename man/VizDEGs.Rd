@@ -21,6 +21,8 @@ VizDEGs(
   devpars = list(res = 100),
   more_formats = c(),
   save_code = FALSE,
+  log = NULL,
+  cache = NULL,
   ...
 )
 }
@@ -112,6 +114,10 @@ filter the overall data, others filter within the remaining data.
 \item{more_formats}{Additional formats to save the plot in addition to 'png'}
 
 \item{save_code}{Whether to save the code to reproduce the plot}
+
+\item{log}{A logger object}
+
+\item{cache}{Directory to cache the plot. Default to \code{gettempdir()}}
 
 \item{...}{
   Arguments passed on to \code{\link[scplotter:MarkersPlot]{scplotter::MarkersPlot}}
