@@ -9,6 +9,7 @@
 #' @param more_formats Additional formats to save the plot in addition to 'png'
 #' @param save_code Whether to save the code to reproduce the plot
 #' @param log A logger object
+#' @param log_prefix Prefix to add to the log messages
 #' @param cache Directory to cache the plot. Default to `gettempdir()`
 #' @return A ggplot object if 'outprefix' is NULL, otherwise, save the plot to the output directory
 #' @export
@@ -100,7 +101,7 @@ VizDEGs <- function(
     ),
     outprefix = NULL,
     devpars = list(res = 100), more_formats = c(), save_code = FALSE,
-    log = NULL, cache = NULL,
+    log = NULL, log_prefix = "", cache = NULL,
     ...) {
     # degs: p_val avg_log2FC pct.1 pct.2 p_val_adj gene group diff_pct
     stopifnot("[VizDEGs] 'outprefix' must be provided to save code" = !save_code || !is.null(outprefix))
@@ -116,7 +117,7 @@ VizDEGs <- function(
         cache_dir = cache
     )
     if (cached$is_cached()) {
-        log$info("Plot loaded from cache: {cached$get_path()}")
+        log$info("{log_prefix}Plot loaded from cache: {cached$get_path()}")
         p <- cached$restore()
     } else {
         if (

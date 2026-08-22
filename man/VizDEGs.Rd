@@ -22,6 +22,7 @@ VizDEGs(
   more_formats = c(),
   save_code = FALSE,
   log = NULL,
+  log_prefix = "",
   cache = NULL,
   ...
 )
@@ -116,6 +117,8 @@ filter the overall data, others filter within the remaining data.
 \item{save_code}{Whether to save the code to reproduce the plot}
 
 \item{log}{A logger object}
+
+\item{log_prefix}{Prefix to add to the log messages}
 
 \item{cache}{Directory to cache the plot. Default to \code{gettempdir()}}
 
