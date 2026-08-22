@@ -39,6 +39,10 @@ Anything changed in the object or arguments will trigger a re-run}
 \item{error}{Whether to raise an error if the analysis fails
 Otherwise, return an empty data frame}
 
+\item{log}{Logger object to log the messages. If NULL, the default logger will be used.}
+
+\item{log_prefix}{Prefix to add to the log messages}
+
 \item{...}{Additional arguments to pass to \code{\link[Seurat:FindMarkers]{Seurat::FindMarkers()}}}
 }
 \description{

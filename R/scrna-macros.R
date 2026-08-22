@@ -185,6 +185,8 @@ AddSeuratCommand <- function(
 #'  Anything changed in the object or arguments will trigger a re-run
 #' @param error Whether to raise an error if the analysis fails
 #'  Otherwise, return an empty data frame
+#' @param log Logger object to log the messages. If NULL, the default logger will be used.
+#' @param log_prefix Prefix to add to the log messages
 #' @param ... Additional arguments to pass to [Seurat::FindMarkers()]
 #' @export
 #' @import tidyseurat
@@ -901,12 +903,15 @@ LoadSeuratAndPerformQC <- function(
         return(cached$restore())
     }
     is_seurat <- inherits(meta, "Seurat")
+    factor_levels <- NULL
     if (!is_seurat) {
         meta <- as.data.frame(meta)
         samples <- samples %||% meta$Sample
+        factor_levels <- lapply(meta, function(x) if (is.factor(x)) levels(x) else NULL)
     } else {
         meta <- UpdateSeuratObject(meta)
         samples <- samples %||% unique(meta@meta.data$Sample)
+        factor_levels <- lapply(meta@meta.data, function(x) if (is.factor(x)) levels(x) else NULL)
         assay <- DefaultAssay(meta)
         if (identical(assay, "integrated")) {
             log$warn(
@@ -1080,6 +1085,12 @@ LoadSeuratAndPerformQC <- function(
     obj <- Reduce(merge, object_list)
     rm(object_list)
     gc()
+
+    for (col in names(factor_levels)) {
+        if (!is.null(factor_levels[[col]])) {
+            obj@meta.data[[col]] <- factor(obj@meta.data[[col]], levels = factor_levels[[col]])
+        }
+    }
 
     obj@misc$gene_qc <- geneqc_df
     obj@misc$contamination <- contamination_info
