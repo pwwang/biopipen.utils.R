@@ -14,7 +14,8 @@ RunSeuratDEAnalysis(
   subset = NULL,
   cache = NULL,
   error = TRUE,
-  object_sig = NULL,
+  log = NULL,
+  log_prefix = "",
   ...
 )
 ```
@@ -59,15 +60,14 @@ RunSeuratDEAnalysis(
   Whether to raise an error if the analysis fails Otherwise, return an
   empty data frame
 
-- object_sig:
+- log:
 
-  The signature of the object, used for caching. If NULL, it will be
-  generated from the object using
-  [`.sig_str()`](https://pwwang.github.io/biopipen.utils.R/reference/dot-sig_str.md).
-  You can provide a custom signature if you want to control the caching
-  behavior. Also if this function is called multiple times with the same
-  object but different arguments, providing a custom signature can help
-  to avoid redundant computation.
+  Logger object to log the messages. If NULL, the default logger will be
+  used.
+
+- log_prefix:
+
+  Prefix to add to the log messages
 
 - ...:
 
@@ -83,6 +83,7 @@ RunSeuratDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2")
 #> ℹ The deprecated feature was likely used in the tidyseurat package.
 #>   Please report the issue at
 #>   <https://github.com/stemangiola/tidyseurat/issues>.
+#> INFO    [2026-08-22 20:18:16] Running DE analysis with group_by = groups, ident_1 = g1, ident_2 = g2, assay = RNA, recorrect_umi = FALSE
 #>                    p_val avg_log2FC pct.1 pct.2 p_val_adj          gene groups
 #> NOSIP         0.02870319  1.2224797 0.455 0.194         1         NOSIP  g1:g2
 #> LYAR          0.02920961  0.8205500 0.159 0.389         1          LYAR  g1:g2

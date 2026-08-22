@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">biopipen.utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3-6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.3-9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,6 @@
 <span>    <span class="st">"violin"</span>, <span class="st">"box"</span>, <span class="st">"bar"</span>, <span class="st">"ridge"</span>, <span class="st">"dot"</span><span class="op">)</span>,</span>
 <span>  each <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  facet_each <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  comparison_by <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  p_adjust <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  order_by <span class="op">=</span> <span class="st">"desc(abs(avg_log2FC))"</span>,</span>
@@ -56,6 +55,9 @@
 <span>  devpars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>res <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>,</span>
 <span>  more_formats <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  save_code <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  log <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  log_prefix <span class="op">=</span> <span class="st">""</span>,</span>
+<span>  cache <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -94,32 +96,25 @@ Default: <code>NULL</code>.</p></dd>
 <dt id="arg-each">each<a class="anchor" aria-label="anchor" href="#arg-each"></a></dt>
 <dd><p>A column name in <code>markers</code> indicating the grouping
 from which each marker was identified (e.g., the <code>cluster</code> column
-from <code>FindAllMarkers()</code>). Supports the
-<code>"marker_column:metadata_column"</code> syntax for linking to Seurat
-object metadata (see <strong>Metadata column mapping</strong> section). For
-jitter and DE heatmap/dot plot types, <code>each</code> is required and
-defines the x-axis or column groups. For expression plot types,
-<code>each</code> controls faceting or splitting. Default: <code>NULL</code>.</p></dd>
+from <code>FindAllMarkers()</code>). Required for jitter and DE heatmap/dot
+plot types, where it defines the x-axis or column groups. For volcano
+plot types, it splits the plot by group (or facets it, with
+<code>facet_each = TRUE</code>). For expression plot types, <code>each</code> is
+used to select the markers within each group; a plain column name does
+not split the plot — use the <code>"marker_column:metadata_column"</code>
+syntax (see <strong>Metadata column mapping</strong>) to also split the plot by
+the mapped metadata column. Alternatively, pass
+<code>":metadata_column"</code> with an empty marker part to split the
+expression plot by the metadata column directly, without selecting
+markers per group (markers are selected overall) and without merging
+metadata. Default: <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-facet-each">facet_each<a class="anchor" aria-label="anchor" href="#arg-facet-each"></a></dt>
-<dd><p>Logical. If <code>TRUE</code>, facet the plot by
-<code>each</code> groups instead of splitting into separate plots. Most
-useful for expression plot types. For volcano plots, controls whether
-faceting or split_by dispatch is used. Default: <code>FALSE</code>.</p></dd>
-
-
-<dt id="arg-comparison-by">comparison_by<a class="anchor" aria-label="anchor" href="#arg-comparison-by"></a></dt>
-<dd><p>A column name in <code>markers</code> indicating the
-comparison (e.g., <code>"g1:g2"</code> for a pairwise comparison, or a single
-group name for one-vs-rest). Required for expression-based plot types
-(<code>"heatmap"</code>, <code>"violin"</code>, <code>"box"</code>, <code>"bar"</code>,
-<code>"ridge"</code>, <code>"dot"</code>). Supports the
-<code>"marker_column:metadata_column"</code> syntax (see <strong>Metadata
-column mapping</strong> section). If the comparison values contain a colon
-(e.g., <code>"G2M:G1"</code>), the two groups on either side of the colon
-are used to subset the object. If only a single group is present, a
-one-vs-other comparison is assumed. Default: <code>NULL</code>.</p></dd>
+<dd><p>Logical. Only for volcano plot types: if <code>TRUE</code>,
+facet the volcano plot by the <code>each</code> groups instead of splitting
+it into separate subplots. Ignored for other plot types. Default:
+<code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-p-adjust">p_adjust<a class="anchor" aria-label="anchor" href="#arg-p-adjust"></a></dt>
@@ -131,31 +126,39 @@ transformations. If <code>FALSE</code>, use raw p-value (<code>p_val</code> colu
 <dt id="arg-cutoff">cutoff<a class="anchor" aria-label="anchor" href="#arg-cutoff"></a></dt>
 <dd><p>Numeric. The p-value (or adjusted p-value, depending on
 <code>p_adjust</code>) threshold for labeling significance. For volcano plots,
-sets <code>y_cutoff</code>. For heatmap-based DE plots
-(<code>heatmap_log2fc</code>, <code>heatmap_pct</code>), controls which cells
-receive significance marks. Default: <code>NULL</code> (no cutoff; defaults
-to <code>0.05</code> for volcano plots).</p></dd>
+sets <code>y_cutoff</code>. For DE heatmap plots (<code>heatmap_log2fc</code>,
+<code>heatmap_pct</code>), controls which cells receive significance marks.
+For expression plot types with a numeric <code>select</code>, only markers
+with a p-value below <code>cutoff</code> are eligible for selection. Ignored
+by DE dot plots (<code>dot_log2fc</code>, <code>dot_pct</code>). Default:
+<code>NULL</code> (no cutoff; defaults to <code>0.05</code> for volcano plots).</p></dd>
 
 
 <dt id="arg-order-by">order_by<a class="anchor" aria-label="anchor" href="#arg-order-by"></a></dt>
-<dd><p>A string expression to order markers by (evaluated with
+<dd><p>A string of one or more comma-separated expressions used
+to order the markers (evaluated with
 <code><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">dplyr::arrange()</a></code>). Can reference columns
-in <code>markers</code> as well as columns from the object metadata (when
-<code>object</code> is provided and <code>each</code> enables merging). Only
-the first value of merged metadata columns is used. Example:
-<code>"desc(avg_log2FC)"</code>. The ordering affects which markers are
-selected when <code>select</code> is numeric. Default: <code>desc(abs(avg_log2FC))</code>.</p></dd>
+in <code>markers</code> as well as metadata columns merged in via a
+colon-form <code>each</code> (see <strong>Metadata column mapping</strong>). Only
+the first value of each merged metadata column is kept. Example:
+<code>"desc(avg_log2FC)"</code> or <code>"desc(avg_log2FC), desc(pct.1)"</code>.
+The ordering determines which markers are selected when <code>select</code>
+is numeric. For jitter plots, it is also passed to
+<code><a href="https://pwwang.github.io/plotthis/reference/jitterplot.html" class="external-link">plotthis::JitterPlot()</a></code>. Default:
+<code>"desc(abs(avg_log2FC))"</code>.</p></dd>
 
 
 <dt id="arg-select">select<a class="anchor" aria-label="anchor" href="#arg-select"></a></dt>
-<dd><p>How to select markers for labeling or display. See
-<strong>Marker selection and filtering</strong> section for full details.</p><ul><li><p>Numeric: Top N markers per <code>each</code> group (default:
-<code>5</code> for volcano/jitter types, <code>10</code> for others).</p></li>
-<li><p>Character expression: Filter condition for
+<dd><p>How to select markers for display or labeling. See
+<strong>Marker selection and filtering</strong> section for full details.</p><ul><li><p>Numeric: Top N markers per <code>each</code> group, or overall when
+<code>each</code> is <code>NULL</code> (default: <code>5</code> for volcano/jitter
+types and for expression plot types when <code>each</code> selects
+markers per group, <code>10</code> otherwise).</p></li>
+<li><p>Single expression: Filter condition for
 <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">dplyr::filter()</a></code>.</p></li>
-<li><p>Character vector: Multiple filter expressions; those containing
-the <code>each</code> column name filter the overall data, others
-filter within remaining data.</p></li>
+<li><p>Character vector of multiple expressions (DE heatmap/dot plot
+types only): expressions mentioning the <code>each</code> column name
+filter the overall data, others filter within the remaining data.</p></li>
 </ul></dd>
 
 
@@ -175,12 +178,39 @@ filter within remaining data.</p></li>
 <dd><p>Whether to save the code to reproduce the plot</p></dd>
 
 
-<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Arguments passed on to <code><a href="https://pwwang.github.io/scplotter/reference/MarkersPlot.html" class="external-link">scplotter::MarkersPlot</a></code></p><dl><dt><code>subset_by</code></dt>
-<dd><p>Deprecated. Use <code>each</code> instead.</p></dd>
+<dt id="arg-log">log<a class="anchor" aria-label="anchor" href="#arg-log"></a></dt>
+<dd><p>A logger object</p></dd>
 
-    <dt><code>subset_as_facet</code></dt>
-<dd><p>Deprecated. Use <code>facet_each</code> instead.</p></dd>
+
+<dt id="arg-log-prefix">log_prefix<a class="anchor" aria-label="anchor" href="#arg-log-prefix"></a></dt>
+<dd><p>Prefix to add to the log messages</p></dd>
+
+
+<dt id="arg-cache">cache<a class="anchor" aria-label="anchor" href="#arg-cache"></a></dt>
+<dd><p>Directory to cache the plot. Default to <code><a href="gettempdir.html">gettempdir()</a></code></p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Arguments passed on to <code><a href="https://pwwang.github.io/scplotter/reference/MarkersPlot.html" class="external-link">scplotter::MarkersPlot</a></code></p><dl><dt><code>group_by</code></dt>
+<dd><p>Used only for expression-based plot types (ignored for DE
+summary plot types). A column in the Seurat object's metadata to group
+cells by, e.g., a condition column — useful when the DEs were calculated
+between conditions (such as cell cycle phases) and you want to compare
+the expression of the markers across those conditions. A single value is
+passed directly to <code><a href="https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html" class="external-link">FeatureStatPlot</a></code>: for <code>heatmap</code> and
+<code>dot</code> plots it is applied as the column annotation (<code>ident</code>),
+and it only takes effect when <code>each</code> includes a metadata column
+mapping; for <code>violin</code>, <code>box</code>, <code>bar</code>, and <code>ridge</code>
+plots it is passed as <code>group_by</code>.
+The <code>"marker_column:metadata_column"</code> syntax (see <strong>Metadata
+column mapping</strong>) restricts the object to only the cells involved in the
+comparisons: for example, if a <code>comparison</code> column in the markers
+data frame holds <code>"G1:G2M"</code>, passing
+<code>group_by = "comparison:Phase"</code> keeps only G1 and G2M cells in the
+plot, with the <code>Phase</code> column re-factored to these two levels in
+the order they first appear in the <code>comparison</code> column. Without
+the restriction, e.g., <code>group_by = "Phase"</code>, all phase cells
+(G1, G2M, and S) are included in the plot. Default: <code>NULL</code>.</p></dd>
 
     <dt><code>show_labels</code></dt>
 <dd><p>Logical. For <code>heatmap_log2fc</code> and
@@ -197,6 +227,17 @@ characters (<code>"-"</code>, <code>"|"</code>, <code>"+"</code>, <code>"/"</cod
 (<code>"[*]"</code>, <code>"&lt;*&gt;"</code>, <code>"(*)"</code>, <code>"{*}"</code>). Note that
 <code>"*"</code> conflicts with <code>show_labels = TRUE</code> because both use
 the label layer — use a compound mark instead. Default: <code>"*"</code>.</p></dd>
+
+    <dt><code>flatten_markers</code></dt>
+<dd><p>Logical. Only for the expression <code>heatmap</code> and
+<code>dot</code> plot types. When <code>each</code> is used to select markers per
+group, the markers are by default provided to
+<code><a href="https://pwwang.github.io/scplotter/reference/FeatureStatPlot.html" class="external-link">FeatureStatPlot</a></code> as a named list (one entry per group),
+which splits the feature rows of the plot by group. With
+<code>flatten_markers = TRUE</code>, the selected markers are collapsed into a
+single vector so the plot shows one unsplit block of features — useful
+e.g. to mimic <code><a href="https://satijalab.org/seurat/reference/DoHeatmap.html" class="external-link">Seurat::DoHeatmap()</a></code> on
+globally selected markers. Default: <code>FALSE</code>.</p></dd>
 
 
 </dl></dd>
@@ -215,6 +256,7 @@ the label layer — use a compound mark instead. Default: <code>"*"</code>.</p><
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="va">degs</span> <span class="op">&lt;-</span> <span class="fu"><a href="RunSeuratDEAnalysis.html">RunSeuratDEAnalysis</a></span><span class="op">(</span><span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, <span class="st">"SubCellType"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, plot_type <span class="op">=</span> <span class="st">"volcano_pct"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="VizDEGs-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>, plot_type <span class="op">=</span> <span class="st">"volcano_log2fc"</span><span class="op">)</span></span></span>
@@ -226,14 +268,37 @@ the label layer — use a compound mark instead. Default: <code>"*"</code>.</p><
 <span class="r-in"><span>    select <span class="op">=</span> <span class="fl">5</span>, each <span class="op">=</span> <span class="st">"SubCellType"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="VizDEGs-4.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="co"># mimic Seurat's DoHeatmap()</span></span></span>
+<span class="r-in"><span><span class="va">top_degs</span> <span class="op">&lt;-</span> <span class="va">degs</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">degs</span><span class="op">$</span><span class="va">avg_log2FC</span>, decreasing <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, <span class="op">]</span></span></span>
+<span class="r-in"><span><span class="fu">Seurat</span><span class="fu">::</span><span class="fu"><a href="https://satijalab.org/seurat/reference/DoHeatmap.html" class="external-link">DoHeatmap</a></span><span class="op">(</span><span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">top_degs</span><span class="op">$</span><span class="va">gene</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>   slot <span class="op">=</span> <span class="st">"data"</span>, group.by <span class="op">=</span> <span class="st">"SubCellType"</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="VizDEGs-5.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>,</span></span>
+<span class="r-in"><span>    object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>,</span></span>
+<span class="r-in"><span>    layer <span class="op">=</span> <span class="st">"data"</span>, plot_type <span class="op">=</span> <span class="st">"heatmap"</span>,</span></span>
+<span class="r-in"><span>    <span class="co"># Make the heatmap cells filled with bars</span></span></span>
+<span class="r-in"><span>    cell_type <span class="op">=</span> <span class="st">"bars"</span>,</span></span>
+<span class="r-in"><span>    <span class="co"># Make sure "select" the top (positive) DEGs by avg_log2FC</span></span></span>
+<span class="r-in"><span>    order_by <span class="op">=</span> <span class="st">"desc(avg_log2FC)"</span>,  select <span class="op">=</span> <span class="fl">10</span>,</span></span>
+<span class="r-in"><span>    <span class="co"># Select overall top 10 DEGs for each SubCellType (empty name before :)</span></span></span>
+<span class="r-in"><span>    <span class="co"># But use the SubCellType for column splits</span></span></span>
+<span class="r-in"><span>    each <span class="op">=</span> <span class="st">":SubCellType"</span>,</span></span>
+<span class="r-in"><span>    <span class="co"># Column names/title</span></span></span>
+<span class="r-in"><span>    show_column_names <span class="op">=</span> <span class="st">"inplace"</span>, column_names_side <span class="op">=</span> <span class="st">"top"</span>, column_title_rot <span class="op">=</span> <span class="fl">45</span>,</span></span>
+<span class="r-in"><span>    column_annotation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>.column <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    <span class="co"># Row names</span></span></span>
+<span class="r-in"><span>    row_names_side <span class="op">=</span> <span class="st">"left"</span>, row_annotation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>.row <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Layer counts isn't present in the assay object; returning NULL</span>
+<span class="r-plt img"><img src="VizDEGs-6.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Visualize expression of the top DEGs</span></span></span>
 <span class="r-in"><span><span class="co"># Suppose we did comparison between G2M and S phase in each SubCellType</span></span></span>
 <span class="r-in"><span><span class="va">degs</span><span class="op">$</span><span class="va">Phase</span> <span class="op">&lt;-</span> <span class="st">"G2M:S"</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>,</span></span>
 <span class="r-in"><span>    object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"violin"</span>,</span></span>
-<span class="r-in"><span>    select <span class="op">=</span> <span class="fl">2</span>, comparison_by <span class="op">=</span> <span class="st">"Phase"</span>, each <span class="op">=</span> <span class="st">"SubCellType"</span></span></span>
+<span class="r-in"><span>    position_dodge_preserve <span class="op">=</span> <span class="st">"single"</span>,</span></span>
+<span class="r-in"><span>    select <span class="op">=</span> <span class="fl">2</span>, group_by <span class="op">=</span> <span class="st">"Phase:Phase"</span>, each <span class="op">=</span> <span class="st">"SubCellType:SubCellType"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Layer counts isn't present in the assay object; returning NULL</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
@@ -280,105 +345,106 @@ the label layer — use a compound mark instead. Default: <code>"*"</code>.</p><
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Groups with fewer than two datapoints have been dropped.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Set `drop = FALSE` to consider such groups for position adjustment purposes.</span>
-<span class="r-plt img"><img src="VizDEGs-5.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>,</span></span>
-<span class="r-in"><span>    object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"box"</span>,</span></span>
-<span class="r-in"><span>    select <span class="op">=</span> <span class="fl">2</span>, comparison_by <span class="op">=</span> <span class="st">"Phase"</span>, each <span class="op">=</span> <span class="st">"SubCellType"</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Layer counts isn't present in the assay object; returning NULL</span>
-<span class="r-plt img"><img src="VizDEGs-6.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>,</span></span>
-<span class="r-in"><span>    object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"bar"</span>,</span></span>
-<span class="r-in"><span>    select <span class="op">=</span> <span class="fl">2</span>, comparison_by <span class="op">=</span> <span class="st">"Phase"</span>, each <span class="op">=</span> <span class="st">"SubCellType"</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Layer counts isn't present in the assay object; returning NULL</span>
 <span class="r-plt img"><img src="VizDEGs-7.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>,</span></span>
-<span class="r-in"><span>    object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"ridge"</span>,</span></span>
-<span class="r-in"><span>    select <span class="op">=</span> <span class="fl">1</span>, comparison_by <span class="op">=</span> <span class="st">"Phase"</span>, each <span class="op">=</span> <span class="st">"SubCellType"</span></span></span>
+<span class="r-in"><span>    object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"box"</span>,</span></span>
+<span class="r-in"><span>    select <span class="op">=</span> <span class="fl">2</span>, group_by <span class="op">=</span> <span class="st">"Phase"</span>, each <span class="op">=</span> <span class="st">"SubCellType:SubCellType"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Layer counts isn't present in the assay object; returning NULL</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0834</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0961</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.307</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0264</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.043</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0335</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.302</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.061</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.135</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.164</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.405</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.181</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.052</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.203</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.16</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0835</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.132</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.15</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.192</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.106</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.612</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.294</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.365</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.151</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>No shared levels found between `names(values)` of the manual scale and the</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> data's <span style="color: #00BB00;">fill</span> values.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0834</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0961</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.307</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0264</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.043</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0335</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.302</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.061</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.135</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.164</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.405</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.181</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.052</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.203</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.16</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0835</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.132</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.15</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.192</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.106</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.612</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.294</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.365</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.151</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of NaN</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>No shared levels found between `names(values)` of the manual scale and the</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> data's <span style="color: #00BB00;">fill</span> values.</span>
 <span class="r-plt img"><img src="VizDEGs-8.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>,</span></span>
-<span class="r-in"><span>    object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"heatmap"</span>,</span></span>
-<span class="r-in"><span>    cluster_columns <span class="op">=</span> <span class="cn">FALSE</span>, comparison_by <span class="op">=</span> <span class="st">"Phase"</span>, each <span class="op">=</span> <span class="st">"SubCellType"</span></span></span>
+<span class="r-in"><span>    object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"bar"</span>,</span></span>
+<span class="r-in"><span>    position_dodge_preserve <span class="op">=</span> <span class="st">"single"</span>,</span></span>
+<span class="r-in"><span>    select <span class="op">=</span> <span class="fl">2</span>, group_by <span class="op">=</span> <span class="st">"Phase:Phase"</span>, each <span class="op">=</span> <span class="st">"SubCellType:SubCellType"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Layer counts isn't present in the assay object; returning NULL</span>
 <span class="r-plt img"><img src="VizDEGs-9.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>,</span></span>
-<span class="r-in"><span>    object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"dot"</span>,</span></span>
-<span class="r-in"><span>    select <span class="op">=</span> <span class="fl">1</span>, comparison_by <span class="op">=</span> <span class="st">"Phase"</span>, each <span class="op">=</span> <span class="st">"SubCellType"</span></span></span>
+<span class="r-in"><span>    object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"ridge"</span>,</span></span>
+<span class="r-in"><span>    select <span class="op">=</span> <span class="fl">1</span>, group_by <span class="op">=</span> <span class="st">"Phase:Phase"</span>, each <span class="op">=</span> <span class="st">"SubCellType:SubCellType"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Layer counts isn't present in the assay object; returning NULL</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.132</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.126</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.392</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.121</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0751</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.18</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.341</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.11</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.152</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.124</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.462</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.151</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.571</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.239</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.417</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.196</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0681</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.09</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.197</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0363</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.14</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.128</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.318</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0648</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.147</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.255</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.299</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.28</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0752</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.437</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.521</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.171</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>No shared levels found between `names(values)` of the manual scale and the</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> data's <span style="color: #00BB00;">fill</span> values.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.132</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.126</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.392</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.121</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0751</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.18</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.341</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.11</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.152</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.124</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.462</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.151</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.571</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.239</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.417</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.196</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0681</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.09</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.197</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0363</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.14</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.128</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.318</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0648</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.147</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.255</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.299</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.28</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.0752</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.437</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.521</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Picking joint bandwidth of 0.171</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>No shared levels found between `names(values)` of the manual scale and the</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> data's <span style="color: #00BB00;">fill</span> values.</span>
 <span class="r-plt img"><img src="VizDEGs-10.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>,</span></span>
+<span class="r-in"><span>    object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"heatmap"</span>, select <span class="op">=</span> <span class="fl">3</span>,</span></span>
+<span class="r-in"><span>    cluster_columns <span class="op">=</span> <span class="cn">FALSE</span>, group_by <span class="op">=</span> <span class="st">"Phase:Phase"</span>, each <span class="op">=</span> <span class="st">"SubCellType:SubCellType"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Layer counts isn't present in the assay object; returning NULL</span>
+<span class="r-plt img"><img src="VizDEGs-11.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="fu">VizDEGs</span><span class="op">(</span><span class="va">degs</span>,</span></span>
+<span class="r-in"><span>    object <span class="op">=</span> <span class="fu">scplotter</span><span class="fu">::</span><span class="va"><a href="https://pwwang.github.io/scplotter/reference/pancreas_sub.html" class="external-link">pancreas_sub</a></span>, plot_type <span class="op">=</span> <span class="st">"dot"</span>,</span></span>
+<span class="r-in"><span>    select <span class="op">=</span> <span class="fl">1</span>, group_by <span class="op">=</span> <span class="st">"Phase:Phase"</span>, each <span class="op">=</span> <span class="st">"SubCellType:SubCellType"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Layer counts isn't present in the assay object; returning NULL</span>
+<span class="r-plt img"><img src="VizDEGs-12.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
