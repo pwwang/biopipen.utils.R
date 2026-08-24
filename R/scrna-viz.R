@@ -108,46 +108,64 @@ VizDEGs <- function(
     log <- log %||% get_logger()
     cache <- cache %||% gettempdir()
     other_args <- list(...)
-    cached <- Cache$new(
-        list(
-            markers, object, plot_type, each, facet_each, p_adjust,
-            cutoff, order_by, select, other_args
-        ),
-        prefix = "biopipen.utils.VizDEGs",
-        cache_dir = cache
-    )
-    if (cached$is_cached()) {
-        log$info("{log_prefix}Plot loaded from cache: {cached$get_path()}")
-        p <- cached$restore()
-    } else {
-        if (
-            !is.null(object) &&
-            identical(other_args$layer %||% "scale.data", "scale.data") &&
-            plot_type %in% c("heatmap", "violin", "box", "bar", "ridge", "dot")
-        ) {
-            assay <- other_args$assay %||% SeuratObject::DefaultAssay(object)
-            missing_features <- setdiff(
-                unique(markers$gene),
-                rownames(SeuratObject::GetAssayData(object, assay = assay, layer = "scale.data"))
-            )
-            if (length(missing_features) > 0) {
-                object <- EnsureSeuratScaleData(object, missing_features, assay = assay)
-            }
-        }
-
-        p <- MarkersPlot(
-            markers = markers, object = object,
-            plot_type = plot_type,
-            each = each,
-            facet_each = facet_each,
-            p_adjust = p_adjust,
-            cutoff = cutoff,
-            order_by = order_by,
-            select = select,
-            ...
+    if (is.null(outprefix)) {
+        cached <- Cache$new(
+            list(
+                markers, object, plot_type, each, facet_each, p_adjust,
+                cutoff, order_by, select, outprefix, other_args
+            ),
+            prefix = "biopipen.utils.VizDEGs",
+            cache_dir = cache
         )
-        cached$save(p)
+        if (cached$is_cached()) {
+            log$info("{log_prefix}Plot loaded from cache: {cached$get_path()}")
+            return(cached$restore())
+        }
+    } else {
+        cached <- Cache$new(
+            list(
+                markers, object, plot_type, each, facet_each, p_adjust,
+                cutoff, order_by, select, outprefix, other_args
+            ),
+            prefix = "biopipen.utils.VizDEGs",
+            cache_dir = cache,
+            kind = "prefix",
+            path = outprefix
+        )
+        if (cached$is_cached()) {
+            log$info("{log_prefix}Plot loaded from cache: {cached$get_path()}")
+            cached$restore()
+            return(invisible(NULL))
+        }
     }
+
+    # not cached, generate the plot
+    if (
+        !is.null(object) &&
+        identical(other_args$layer %||% "scale.data", "scale.data") &&
+        plot_type %in% c("heatmap", "violin", "box", "bar", "ridge", "dot")
+    ) {
+        assay <- other_args$assay %||% SeuratObject::DefaultAssay(object)
+        missing_features <- setdiff(
+            unique(markers$gene),
+            rownames(SeuratObject::GetAssayData(object, assay = assay, layer = "scale.data"))
+        )
+        if (length(missing_features) > 0) {
+            object <- EnsureSeuratScaleData(object, missing_features, assay = assay)
+        }
+    }
+
+    p <- MarkersPlot(
+        markers = markers, object = object,
+        plot_type = plot_type,
+        each = each,
+        facet_each = facet_each,
+        p_adjust = p_adjust,
+        cutoff = cutoff,
+        order_by = order_by,
+        select = select,
+        ...
+    )
 
     if (!is.null(outprefix)) {
         formats <- unique(c("png", more_formats))
@@ -161,8 +179,10 @@ VizDEGs <- function(
             args <- c(args, setdiff(ls(), c("p", "args", "formats", "devpars", "more_formats", "save_code", "outprefix")))
             do_call(save_plotcode, args)
         }
-        return(NULL)
+        cached$save()
+        return(invisible(NULL))
     } else {
+        cached$save(p)
         return(p)
     }
 }
