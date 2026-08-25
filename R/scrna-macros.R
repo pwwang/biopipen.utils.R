@@ -2249,6 +2249,7 @@ RunSeuratIntegration <- function(
     }
 
     log$info("- Joining layers ...")
+    # https://github.com/satijalab/seurat/issues/8558#issuecomment-2591323978
     object <- JoinLayers(object, assay = "RNA")
     object <- AddSeuratCommand(
         object,
@@ -2259,6 +2260,12 @@ RunSeuratIntegration <- function(
             IntegrateLayersArgs = IntegrateLayersArgs
         )
     )
+
+    if (inherits(object[[DefaultAssay(object)]], "SCTAssay")) {
+        log$info("- Running PrepSCTFindMarkers() ...")
+        object <- PrepSCTFindMarkers(object)
+        object <- AddSeuratCommand(object, "PrepSCTFindMarkers")
+    }
 
     cached$save(object)
     object
