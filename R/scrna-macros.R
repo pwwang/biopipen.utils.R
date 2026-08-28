@@ -4219,6 +4219,10 @@ RunModuleScoring <- function(
 # returning a cells x sets matrix. The set names are positional and will be
 # renamed by the caller.
 .RunModuleScoringMatrix <- function(object, features, method, module, log) {
+    # some tools (GSVA >= 2.0) require named gene sets
+    if (is.null(names(features))) {
+        names(features) <- paste0("signature_", seq_along(features))
+    }
     switch(
         method,
         aucell = {
@@ -4251,8 +4255,7 @@ RunModuleScoring <- function(
         ssgsea = {
             require_package("GSVA")
             expr <- GetAssayData(object, layer = module$layer %||% "data")
-            args <- list(expr = expr, gset.idx.list = features, method = "ssgsea")
-            args <- list_update(args, .filter_module_args(
+            ssgsea_args <- .filter_module_args(
                 module,
                 GSVA::gsva,
                 whitelist = c(
@@ -4260,8 +4263,35 @@ RunModuleScoring <- function(
                     "parallel.sz", "mx.diff", "tau", "ssgsea.norm",
                     "verbose", "BPPARAM"
                 )
-            ))
-            scores <- do_call(GSVA::gsva, args)
+            )
+            if (exists("ssgseaParam", envir = asNamespace("GSVA"))) {
+                # GSVA >= 2.0: method-specific parameter object, with the
+                # pre-2.0 parameter names mapped to the new ones
+                param <- list(exprData = expr, geneSets = features)
+                if (!is.null(ssgsea_args$min.sz)) {
+                    param$minSize <- ssgsea_args$min.sz
+                }
+                if (!is.null(ssgsea_args$max.sz)) {
+                    param$maxSize <- ssgsea_args$max.sz
+                }
+                if (!is.null(ssgsea_args$tau)) {
+                    param$alpha <- ssgsea_args$tau
+                }
+                if (!is.null(ssgsea_args$ssgsea.norm)) {
+                    param$normalize <- ssgsea_args$ssgsea.norm
+                }
+                gsva_args <- ssgsea_args[c("verbose", "BPPARAM")]
+                gsva_args <- gsva_args[!vapply(gsva_args, is.null, logical(1))]
+                scores <- do_call(
+                    GSVA::gsva,
+                    c(list(param = do_call(GSVA::ssgseaParam, param)), gsva_args)
+                )
+            } else {
+                # GSVA < 2.0: the classic signature
+                args <- list(expr = expr, gset.idx.list = features, method = "ssgsea")
+                args <- list_update(args, ssgsea_args)
+                scores <- do_call(GSVA::gsva, args)
+            }
             scores <- t(scores)
             rownames(scores) <- colnames(expr)
             scores

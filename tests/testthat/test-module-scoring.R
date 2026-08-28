@@ -73,10 +73,15 @@ test_that("errors", {
         "arg"
     )
     # with destiny installed the module actually runs; `features` is the
-    # number of components and must be a positive integer
+    # number of components and must be a positive integer (destiny loading
+    # triggers unrelated namespace-replacement warnings)
     expect_error(
-        RunModuleScoring(obj, modules = list(Bad = list(features = "A", kind = "dm"))),
-        if (requireNamespace("destiny", quietly = TRUE)) "positive integer" else "destiny"
+        suppressWarnings(RunModuleScoring(obj, modules = list(Bad = list(features = "A", kind = "dm")))),
+        if (suppressWarnings(requireNamespace("destiny", quietly = TRUE))) {
+            "positive integer"
+        } else {
+            "destiny"
+        }
     )
     # scps runs on the bundled implementation; a signature whose genes are
     # not scaled in the object errors with the ScaleData hint
@@ -87,7 +92,7 @@ test_that("errors", {
     # with AUCell installed the module actually runs; a signature with no
     # genes found in the object triggers AUCell's own error
     expect_error(
-        RunModuleScoring(obj, modules = list(Auc = list(features = "A", method = "aucell"))),
+        suppressWarnings(RunModuleScoring(obj, modules = list(Auc = list(features = "A", method = "aucell")))),
         if (requireNamespace("AUCell", quietly = TRUE)) "genes" else "AUCell"
     )
     expect_error(
@@ -131,11 +136,12 @@ test_that("diffusion map (destiny)", {
 
 test_that("aucell", {
     skip_if_not_installed("AUCell")
-    res <- RunModuleScoring(
+    # AUCell warns that only the first aucMaxRank genes are used
+    res <- suppressWarnings(RunModuleScoring(
         obj,
         modules = list(Auc = list(features = "MS4A1,CD79A")),
         method = "aucell"
-    )
+    ))
     expect_true("Auc" %in% colnames(res@meta.data))
     expect_true(all(is.finite(res$Auc)))
 })
@@ -184,32 +190,37 @@ test_that("jasmine and scse", {
 set.seed(1)
 syn_genes <- c("GNLY", "MS4A1", "CD79A", "GZMB", "CST3", "TCL1A",
                Seurat::cc.genes$s.genes[1:30], Seurat::cc.genes$g2m.genes[1:30])
-syn_counts <- matrix(rpois(80 * length(syn_genes), 1), nrow = length(syn_genes),
-                     dimnames = list(syn_genes, paste0("cell", 1:80)))
+syn_counts <- Matrix::Matrix(
+    matrix(rpois(80 * length(syn_genes), 1), nrow = length(syn_genes),
+           dimnames = list(syn_genes, paste0("cell", 1:80))),
+    sparse = TRUE
+)
 syn <- NormalizeData(CreateSeuratObject(counts = syn_counts))
 
 test_that("cell cycle scoring", {
-    res <- RunModuleScoring(
+    # the synthetic object has only 30 of each cc gene list; the missing
+    # genes are reported by the tools (CellCycleScoring/UCell) as warnings
+    res <- suppressWarnings(RunModuleScoring(
         syn,
         modules = list(`_` = list(features = "cc.genes")), # `_` is a reserved key: no column prefix; or using kind = "cc"
         nbin = 10, ctrl = 5
-    )
+    ))
     expect_true(all(c("S.Score", "G2M.Score", "Phase") %in% colnames(res@meta.data)))
     expect_true(all(res$Phase %in% c("S", "G2M", "G1")))
 
-    res <- RunModuleScoring(
+    res <- suppressWarnings(RunModuleScoring(
         syn,
         modules = list(CellCycle = list(features = "cc.genes.mouse")),
         method = "ucell"
-    )
+    ))
     expect_true(all(c("CellCycle_S.Score", "CellCycle_G2M.Score", "CellCycle_Phase") %in% colnames(res@meta.data)))
 
     skip_if_not_installed("UCell")
-    res <- RunModuleScoring(
+    res <- suppressWarnings(RunModuleScoring(
         syn,
         modules = list(`_` = list(features = "cc.genes")),
         method = "ucell"
-    )
+    ))
     expect_true(all(c("S.Score", "G2M.Score", "Phase") %in% colnames(res@meta.data)))
 
     res <- RunModuleScoring(
