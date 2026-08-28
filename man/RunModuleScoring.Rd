@@ -109,7 +109,7 @@ from the \code{data} layer (or the layer specified by \code{layer}).
 \examples{
 \donttest{
 data(pbmc_small, package = "SeuratObject")
-obj <- NormalizeData(pbmc_small)
+obj <- Seurat::NormalizeData(pbmc_small)
 # a comma-separated string of features: one score column per module key
 obj <- RunModuleScoring(
     obj,
@@ -129,6 +129,7 @@ if (requireNamespace("UCell", quietly = TRUE)) {
         modules = list(CellCycle = list(features = "cc.genes.updated.2019")),
         method = "ucell", nbin = 10, ctrl = 5
     )
+    head(obj@meta.data[, c("CellCycle_S.Score", "CellCycle_G2M.Score", "CellCycle_Phase")])
 }
 }
 }

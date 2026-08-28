@@ -3849,7 +3849,7 @@ RunSeuratCellCycleScoring <- function(
 #' @examples
 #' \donttest{
 #' data(pbmc_small, package = "SeuratObject")
-#' obj <- NormalizeData(pbmc_small)
+#' obj <- Seurat::NormalizeData(pbmc_small)
 #' # a comma-separated string of features: one score column per module key
 #' obj <- RunModuleScoring(
 #'     obj,
@@ -4208,7 +4208,7 @@ RunModuleScoring <- function(
     if (!is.null(whitelist)) {
         return(args[names(args) %in% whitelist])
     }
-    frm <- formalArgs(fn)
+    frm <- methods::formalArgs(fn)
     if ("..." %in% frm) {
         return(args)
     }
