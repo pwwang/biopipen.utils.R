@@ -30,7 +30,7 @@ GS_PCA_Calculation <- function(Seurat_data, GeneSet) {
         ))
     }
     scale_data <- SeuratObject::GetAssayData(Seurat_data, assay = sd_assay, layer = "scale.data")
-    is_collection <- is(GeneSet, "GeneSetCollection")
+    is_collection <- methods::is(GeneSet, "GeneSetCollection")
     GSdiscription <- if (is_collection) {
         names(GeneSet)
     } else {
@@ -110,7 +110,7 @@ GS_Experssion_Calculation <- function(Seurat_data, GeneSet) {
             "Please run NormalizeData or SCTransform and retry"
         ))
     }
-    is_collection <- is(GeneSet, "GeneSetCollection")
+    is_collection <- methods::is(GeneSet, "GeneSetCollection")
     GSdiscription <- if (is_collection) {
         names(GeneSet)
     } else {
