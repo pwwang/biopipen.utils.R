@@ -62,6 +62,9 @@
 - [`RunGSEAPreRank()`](https://pwwang.github.io/biopipen.utils.R/reference/RunGSEAPreRank.md)
   : Pre-rank genes based on expression data
 
+- [`RunModuleScoring()`](https://pwwang.github.io/biopipen.utils.R/reference/RunModuleScoring.md)
+  : Run module scoring for expression programs on a Seurat object
+
 - [`RunSeuratClustering()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratClustering.md)
   : Run seurat unsupervised clustering
 

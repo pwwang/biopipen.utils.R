@@ -233,6 +233,7 @@ VizDEGs(degs, plot_type = "volcano_pct")
 VizDEGs(degs, plot_type = "volcano_log2fc")
 
 VizDEGs(degs, plot_type = "jitter_log2fc", each = "SubCellType")
+#> Warning: [JitterPlot] `raster` is ignored when `size_by` is mapped to a column; falling back to vector points.
 
 VizDEGs(degs,
     plot_type = "heatmap_log2fc", cutoff = 0.05,

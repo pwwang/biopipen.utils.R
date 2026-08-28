@@ -11,6 +11,8 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ConvertSeuratToAnnData.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/EnsureSeuratScaleData.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/FinishSeuratQC.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/GS_Experssion_Calculation.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/GS_PCA_Calculation.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/GetIdentityColumn.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/LoadSeuratAndPerformQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/MutateScRep.html</loc></url>
@@ -22,6 +24,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunDEGAnalysis.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunGSEA.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunGSEAPreRank.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunModuleScoring.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratCellCycleScoring.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratClustering.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratContamCorrection.html</loc></url>
@@ -87,6 +90,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/run_command.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/save_plot.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/save_plotcode.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/scPS.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/slugify.html</loc></url>
 </urlset>
 
