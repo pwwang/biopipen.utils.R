@@ -5,3 +5,5 @@ cran-comments.md
 *.Rcheck/
 biopipen.utils_*.tar.gz
 .vscode/
+Rplots.pdf
+REFACTOR-*.md

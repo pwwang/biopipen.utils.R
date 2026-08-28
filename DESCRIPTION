@@ -55,6 +55,11 @@ Suggests:
     qs2,
     celda,
     scCDC,
+    UCell,
+    destiny,
+    AUCell,
+    GSVA,
+    GSEABase,
     plotly,
     htmlwidgets
 Remotes:
