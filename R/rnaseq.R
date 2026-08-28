@@ -306,7 +306,7 @@ VizBulkDEGs <- function(
         p <- feature_stat_plot(
             data = object, features = features, plot_type = plot_type, downsample = NULL,
             should_shrink = should_shrink, should_pivot = should_pivot,
-            ident = group_by, ...
+            ident = group_by, center_zero = FALSE, ...
         )
     }
 
