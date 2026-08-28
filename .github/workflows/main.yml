@@ -59,7 +59,7 @@ jobs:
           extra-packages: |
             any::remotes, any::devtools, any::pkgdown, any::testthat, any::gglogger, any::ComplexHeatmap,
             any::plotthis, any::scplotter, any::enrichR, github::immunogenomics/presto,
-            github::mojaveazure/seurat-disk, github::satijalab/seurat-data,
+            github::mojaveazure/seurat-disk, github::satijalab/seurat-data, github::sgsokol/Deriv@v4.2.0,
             github::satijalab/azimuth, any::plotly, any::htmlwidgets, github::stuart-lab/signac@1.16.0
         env:
           # R's internal tar() function (used by R CMD INSTALL --build to create binary packages) has a known bug since January 2023: for symlink entries, it writes the target file's size in the tar header instead of 0. Per the POSIX tar spec, symlinks (typeflag '2') must have size = 0.
