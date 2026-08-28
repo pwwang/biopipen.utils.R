@@ -20,3 +20,5 @@
 ^\.vscode\/.*
 ^\.vscode$
 .+\.qs$
+^REFACTOR-ModuleScoreCalculator\.md$
+^Rplots\.pdf$
