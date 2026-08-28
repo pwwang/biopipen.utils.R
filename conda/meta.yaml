@@ -1,12 +1,12 @@
 package:
   name: r-biopipen.utils
-  version: 0.4.3
+  version: 0.4.4
 
 source:
   path: ..
 
 build:
-  number: 10
+  number: 1
   rpaths:
     - lib/R/lib/
     - lib/
@@ -34,6 +34,12 @@ requirements:
     - bioconda::bioconductor-celda
     - bioconda::bioconductor-mygene
     - bioconda::bioconductor-scdblfinder
+    - bioconda::bioconductor-ucell
+    - bioconda::bioconductor-destiny
+    - bioconda::bioconductor-aucell
+    - bioconda::bioconductor-gsva
+    - bioconda::bioconductor-gseabase
+    - bioconda::bioconductor-genefilter
     - r-ggplot2 >4
     - pwwang::r-scplotter
     - pwwang::r-seuratdisk
@@ -61,6 +67,12 @@ requirements:
     - bioconda::bioconductor-celda
     - bioconda::bioconductor-mygene
     - bioconda::bioconductor-scdblfinder
+    - bioconda::bioconductor-ucell
+    - bioconda::bioconductor-destiny
+    - bioconda::bioconductor-aucell
+    - bioconda::bioconductor-gsva
+    - bioconda::bioconductor-gseabase
+    - bioconda::bioconductor-genefilter
     - r-ggplot2 >4
     - pwwang::r-scplotter
     - pwwang::r-seuratdisk
