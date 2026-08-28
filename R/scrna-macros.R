@@ -487,7 +487,7 @@ EnsureSeuratScaleData <- function(
         for (r in newdata) {
             newscale[rownames(r), colnames(r)] <- r
         }
-        suppressWarnings(SetAssayData(object = object, layer = "scale.data", new.data = newscale))
+        suppressWarnings(SetAssayData(object = object, assay = assay, layer = "scale.data", new.data = newscale))
     }
     if (length(missing) == 0) {
         return(object)
