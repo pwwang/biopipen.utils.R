@@ -4071,14 +4071,22 @@ RunModuleScoring <- function(
             module$features <- NULL
             # score columns are prefixed by the module key unless it is empty
             cc_cols <- paste0(prefix, c("S.Score", "G2M.Score"))
+            # the tools write fixed column names (S.Score/G2M.Score/Phase)
+            # and overwrite existing ones in place, so save any existing
+            # ones and restore them after this call's columns are renamed
+            # (a previous cc module may have added columns with the same
+            # fixed names)
+            saved <- object@meta.data[, intersect(
+                colnames(object@meta.data),
+                c("S.Score", "G2M.Score", "Phase")
+            ), drop = FALSE]
             if (mthd == "seurat") {
                 args <- list(object = object, s.features = s.genes, g2m.features = g2m.genes)
                 args <- list_update(args, .filter_module_args(module, Seurat::CellCycleScoring))
                 object <- do_call(Seurat::CellCycleScoring, args)
-                colnames(object@meta.data)[match(
-                    c("S.Score", "G2M.Score"),
-                    colnames(object@meta.data)
-                )] <- cc_cols
+                # the tool's fixed-name columns are this module's output
+                idx <- match(c("S.Score", "G2M.Score", "Phase"), colnames(object@meta.data))
+                colnames(object@meta.data)[idx] <- c(cc_cols, paste0(prefix, "Phase"))
             } else if (mthd == "ucell") {
                 require_package("UCell")
                 args <- list(
@@ -4088,10 +4096,9 @@ RunModuleScoring <- function(
                 )
                 args <- list_update(args, .filter_module_args(module, UCell::AddModuleScore_UCell))
                 object <- do_call(UCell::AddModuleScore_UCell, args)
-                colnames(object@meta.data)[match(
-                    c("S.Score", "G2M.Score"),
-                    colnames(object@meta.data)
-                )] <- cc_cols
+                # the tool's fixed-name columns are this module's output
+                idx <- match(c("S.Score", "G2M.Score"), colnames(object@meta.data))
+                colnames(object@meta.data)[idx] <- cc_cols
             } else {
                 scores <- .RunModuleScoringMatrix(
                     object,
@@ -4103,6 +4110,11 @@ RunModuleScoring <- function(
                 colnames(scores) <- cc_cols
                 object <- AddMetaData(object, scores)
             }
+            # restore any previous module's fixed-name columns (they were
+            # overwritten in place by the tools; skip names that collide
+            # with this module's output)
+            saved <- saved[, setdiff(colnames(saved), c(cc_cols, paste0(prefix, "Phase"))), drop = FALSE]
+            if (ncol(saved) > 0) object <- AddMetaData(object, saved)
             object[[paste0(prefix, "Phase")]] <- ifelse(
                 object[[cc_cols[1]]] - object[[cc_cols[2]]] > 0,
                 "S",

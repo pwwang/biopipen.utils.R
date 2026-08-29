@@ -230,3 +230,27 @@ test_that("cell cycle scoring", {
     )
     expect_true(all(c("S.Score", "G2M.Score", "Phase") %in% colnames(res@meta.data)))
 })
+
+test_that("multiple cc modules each keep their own columns", {
+    # two cc modules, one with a reserved no-prefix key and one prefixed;
+    # the tools write fixed S.Score/G2M.Score/Phase names and would
+    # overwrite/steal the other module's columns without the fix
+    res <- suppressWarnings(RunModuleScoring(
+        syn,
+        modules = list(`_` = list(kind = "cc"), CC = list(kind = "cc")),
+        nbin = 10, ctrl = 5
+    ))
+    expect_true(all(c("S.Score", "G2M.Score", "Phase",
+                      "CC_S.Score", "CC_G2M.Score", "CC_Phase") %in% colnames(res@meta.data)))
+    expect_true(all(res$CC_Phase %in% c("S", "G2M", "G1")))
+
+    skip_if_not_installed("UCell")
+    res <- suppressWarnings(RunModuleScoring(
+        syn,
+        modules = list(`_` = list(kind = "cc"), CC = list(kind = "cc")),
+        method = "ucell"
+    ))
+    expect_true(all(c("S.Score", "G2M.Score", "Phase",
+                      "CC_S.Score", "CC_G2M.Score", "CC_Phase") %in% colnames(res@meta.data)))
+    expect_true(all(res$CC_Phase %in% c("S", "G2M", "G1")))
+})
