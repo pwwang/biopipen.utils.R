@@ -824,6 +824,10 @@ RunSeuratContamCorrection <- function(
 #' @param contam_correction Whether to perform contaminant RNA correction. Supported methods: "decontx" (using decontX function from the celda package) and "sccdc" (using scCDC package).
 #' @param decontXArgs Arguments to pass to decontX function from the celda package when `contam_correction` is "decontx". See `?celda::decontX` for details.
 #' @param scCDCArgs Arguments to pass to scCDC package when `contam_correction` is "sccdc". It should be a list containing three sub-lists: Detection, Quantification and Correction, which are the arguments for `scCDC::ContaminationDetection`, `scCDC::ContaminationQuantification` and `scCDC::ContaminationCorrection` functions, respectively. See `?scCDC::ContaminationDetection`, `?scCDC::ContaminationQuantification` and `?scCDC::ContaminationCorrection` for details.
+#' @param keep_contam_assay Whether to keep the `Contaminated` assay (the original counts before
+#' contamination correction) in the object. If `FALSE` (default), the assay is dropped per-sample
+#' right after the correction (before samples are merged) to save memory. Note the `Contaminated`
+#' assay is not used by any downstream steps of [FinishSeuratQC()] unless `keep_contam_assay` is `TRUE`.
 #' @param tmpdir Temporary directory to store intermediate files when there are prefix in the file names
 #' @param log Logger
 #' @param cache Directory to cache the results. Set to `FALSE` to disable caching
@@ -870,6 +874,7 @@ LoadSeuratAndPerformQC <- function(
         Quantification = list(),
         Correction = list()
     ),
+    keep_contam_assay = FALSE,
     tmpdir = NULL,
     log = NULL,
     cache = NULL
@@ -892,7 +897,8 @@ LoadSeuratAndPerformQC <- function(
             ccs_args,
             contam_correction,
             decontXArgs,
-            scCDCArgs
+            scCDCArgs,
+            keep_contam_assay
         ),
         prefix = "biopipen.utils.LoadSeuratAndPerformQC",
         cache_dir = cache
@@ -937,6 +943,7 @@ LoadSeuratAndPerformQC <- function(
     object_list <- list()
     geneqc_df <- NULL
     contamination_info <- list()
+    contam_done <- FALSE
     for (sam in samples) {
         log$info("- Loading {sam} and performing QC ...")
         if (is_seurat) {
@@ -1050,6 +1057,7 @@ LoadSeuratAndPerformQC <- function(
                 decontXArgs = decontXArgs,
                 scCDCArgs = scCDCArgs
             )
+            contam_done <- TRUE
             contamination_info[["tool"]] <- contam_correction
 
             if (contam_correction == "sccdc") {
@@ -1078,11 +1086,27 @@ LoadSeuratAndPerformQC <- function(
             gc()
         }
 
+        # The `Contaminated` assay (original counts) is only used by
+        # contamination-expression visualizations, which are done after merging
+        # and require `keep_contam_assay = TRUE`. Drop it here to avoid keeping
+        # ~2x the count data through merging and the cell/gene filtering.
+        if (contam_done && !keep_contam_assay &&
+                "Contaminated" %in% names(obj@assays)) {
+            obj@assays$Contaminated <- NULL
+            invisible(gc())
+        }
+
         object_list[[sam]] <- obj
     }
 
     log$info("Merging samples ...")
-    obj <- Reduce(merge, object_list)
+    obj <- object_list[[1]]
+    for (sam in names(object_list)[-1]) {
+        obj <- merge(obj, object_list[[sam]])
+        # release the sample object as soon as it is merged to reduce the peak memory
+        object_list[[sam]] <- NULL
+        gc()
+    }
     rm(object_list)
     gc()
 
@@ -1105,6 +1129,9 @@ LoadSeuratAndPerformQC <- function(
         "LoadSeuratAndPerformQC",
         "LoadSeuratAndPerformQC(meta, samples, per_sample_qc, cell_qc, gene_qc, tmpdir, log, cache)"
     )
+    # gc before serialization: qs2 allocations don't trigger R's gc,
+    # so collect first to lower the peak memory of the cache save
+    invisible(gc())
     cached$save(obj)
     obj
 }
@@ -1300,6 +1327,8 @@ RunSeuratTransformation <- function(
             from_ccs = from_ccs
         )
     )
+    invisible(gc())
+    # gc before serialization: qs2 allocations don't trigger R's gc
     cached$save(object)
     object
 }
@@ -2267,6 +2296,8 @@ RunSeuratIntegration <- function(
         object <- AddSeuratCommand(object, "PrepSCTFindMarkers")
     }
 
+    invisible(gc())
+    # gc before serialization: qs2 allocations don't trigger R's gc
     cached$save(object)
     object
 }
@@ -2352,6 +2383,10 @@ RunSeuratDoubletFinder <- function(
     homotypic.prop <- DoubletFinder::modelHomotypic(Idents(object))
     nExp_poi <- round(nrow(object@meta.data) * doublets)
     nExp_poi.adj <- round(nExp_poi * (1 - homotypic.prop))
+
+    # Release the pK sweep artifacts, they are no longer needed (bcmvn is kept below)
+    rm(sweep.res.list, sweep.stats)
+    invisible(gc())
 
     log$info("- Running DoubletFinder ...")
     if (allow_warnings) {
@@ -2519,6 +2554,8 @@ RunSeuratDoubletDetection <- function(
             filter = filter
         )
     )
+    invisible(gc())
+    # gc before serialization: qs2 allocations don't trigger R's gc
     cached$save(object)
     object
 }

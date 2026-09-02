@@ -17,6 +17,7 @@ LoadSeuratAndPerformQC(
   contam_correction = NULL,
   decontXArgs = list(),
   scCDCArgs = list(Detection = list(), Quantification = list(), Correction = list()),
+  keep_contam_assay = FALSE,
   tmpdir = NULL,
   log = NULL,
   cache = NULL
@@ -88,6 +89,11 @@ has been QC'ed.}
 \item{decontXArgs}{Arguments to pass to decontX function from the celda package when \code{contam_correction} is "decontx". See \code{?celda::decontX} for details.}
 
 \item{scCDCArgs}{Arguments to pass to scCDC package when \code{contam_correction} is "sccdc". It should be a list containing three sub-lists: Detection, Quantification and Correction, which are the arguments for \code{scCDC::ContaminationDetection}, \code{scCDC::ContaminationQuantification} and \code{scCDC::ContaminationCorrection} functions, respectively. See \code{?scCDC::ContaminationDetection}, \code{?scCDC::ContaminationQuantification} and \code{?scCDC::ContaminationCorrection} for details.}
+
+\item{keep_contam_assay}{Whether to keep the \code{Contaminated} assay (the original counts before
+contamination correction) in the object. If \code{FALSE} (default), the assay is dropped per-sample
+right after the correction (before samples are merged) to save memory. Note the \code{Contaminated}
+assay is not used by any downstream steps of \code{\link[=FinishSeuratQC]{FinishSeuratQC()}} unless \code{keep_contam_assay} is \code{TRUE}.}
 
 \item{tmpdir}{Temporary directory to store intermediate files when there are prefix in the file names}
 
