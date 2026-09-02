@@ -18,6 +18,7 @@ LoadSeuratAndPerformQC(
   contam_correction = NULL,
   decontXArgs = list(),
   scCDCArgs = list(Detection = list(), Quantification = list(), Correction = list()),
+  keep_contam_assay = FALSE,
   tmpdir = NULL,
   log = NULL,
   cache = NULL
@@ -149,6 +150,16 @@ LoadSeuratAndPerformQC(
   [`?scCDC::ContaminationCorrection`](https://rdrr.io/pkg/scCDC/man/ContaminationCorrection.html)
   for details.
 
+- keep_contam_assay:
+
+  Whether to keep the `Contaminated` assay (the original counts before
+  contamination correction) in the object. If `FALSE` (default), the
+  assay is dropped per-sample right after the correction (before samples
+  are merged) to save memory. Note the `Contaminated` assay is not used
+  by any downstream steps of
+  [`FinishSeuratQC()`](https://pwwang.github.io/biopipen.utils.R/reference/FinishSeuratQC.md)
+  unless `keep_contam_assay` is `TRUE`.
+
 - tmpdir:
 
   Temporary directory to store intermediate files when there are prefix
@@ -184,10 +195,10 @@ obj <- LoadSeuratAndPerformQC(
    meta, cache = FALSE, cell_qc = "nFeature_RNA > 1000",
    gene_qc = list(min_cells = 3)
 )
-#> INFO    [2026-08-29 04:34:03] Loading each sample ...
-#> INFO    [2026-08-29 04:34:03] - Loading Sample1 and performing QC ...
-#> INFO    [2026-08-29 04:34:03] - Loading Sample2 and performing QC ...
-#> INFO    [2026-08-29 04:34:03] Merging samples ...
+#> INFO    [2026-09-02 20:31:35] Loading each sample ...
+#> INFO    [2026-09-02 20:31:35] - Loading Sample1 and performing QC ...
+#> INFO    [2026-09-02 20:31:36] - Loading Sample2 and performing QC ...
+#> INFO    [2026-09-02 20:31:36] Merging samples ...
 print(table(obj$.QC))
 #> 
 #> FALSE  TRUE 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">biopipen.utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4-3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.4-4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,7 @@
 <span>  contam_correction <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  decontXArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  scCDCArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Detection <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, Quantification <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, Correction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  keep_contam_assay <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  tmpdir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  log <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cache <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -148,6 +149,13 @@ has been QC'ed.</p></dd>
 <dd><p>Arguments to pass to scCDC package when <code>contam_correction</code> is "sccdc". It should be a list containing three sub-lists: Detection, Quantification and Correction, which are the arguments for <code><a href="https://rdrr.io/pkg/scCDC/man/ContaminationDetection.html" class="external-link">scCDC::ContaminationDetection</a></code>, <code><a href="https://rdrr.io/pkg/scCDC/man/ContaminationQuantification.html" class="external-link">scCDC::ContaminationQuantification</a></code> and <code><a href="https://rdrr.io/pkg/scCDC/man/ContaminationCorrection.html" class="external-link">scCDC::ContaminationCorrection</a></code> functions, respectively. See <code><a href="https://rdrr.io/pkg/scCDC/man/ContaminationDetection.html" class="external-link">?scCDC::ContaminationDetection</a></code>, <code><a href="https://rdrr.io/pkg/scCDC/man/ContaminationQuantification.html" class="external-link">?scCDC::ContaminationQuantification</a></code> and <code><a href="https://rdrr.io/pkg/scCDC/man/ContaminationCorrection.html" class="external-link">?scCDC::ContaminationCorrection</a></code> for details.</p></dd>
 
 
+<dt id="arg-keep-contam-assay">keep_contam_assay<a class="anchor" aria-label="anchor" href="#arg-keep-contam-assay"></a></dt>
+<dd><p>Whether to keep the <code>Contaminated</code> assay (the original counts before
+contamination correction) in the object. If <code>FALSE</code> (default), the assay is dropped per-sample
+right after the correction (before samples are merged) to save memory. Note the <code>Contaminated</code>
+assay is not used by any downstream steps of <code><a href="FinishSeuratQC.html">FinishSeuratQC()</a></code> unless <code>keep_contam_assay</code> is <code>TRUE</code>.</p></dd>
+
+
 <dt id="arg-tmpdir">tmpdir<a class="anchor" aria-label="anchor" href="#arg-tmpdir"></a></dt>
 <dd><p>Temporary directory to store intermediate files when there are prefix in the file names</p></dd>
 
@@ -182,10 +190,10 @@ In slot <code>misc</code>, there are two fields: <code>cell_qc_df</code> and <co
 <span class="r-in"><span>   <span class="va">meta</span>, cache <span class="op">=</span> <span class="cn">FALSE</span>, cell_qc <span class="op">=</span> <span class="st">"nFeature_RNA &gt; 1000"</span>,</span></span>
 <span class="r-in"><span>   gene_qc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>min_cells <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-08-29 04:34:03] Loading each sample ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-08-29 04:34:03] - Loading Sample1 and performing QC ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-08-29 04:34:03] - Loading Sample2 and performing QC ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-08-29 04:34:03] Merging samples ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-09-02 20:31:35] Loading each sample ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-09-02 20:31:35] - Loading Sample1 and performing QC ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-09-02 20:31:36] - Loading Sample2 and performing QC ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-09-02 20:31:36] Merging samples ...</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">obj</span><span class="op">$</span><span class="va">.QC</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> FALSE  TRUE </span>

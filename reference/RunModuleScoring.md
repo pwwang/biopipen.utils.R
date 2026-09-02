@@ -196,8 +196,8 @@ obj <- RunModuleScoring(
     # small object needs small `nbin`/`ctrl` (see the hint on error)
     nbin = 10, ctrl = 5
 )
-#> INFO    [2026-08-29 04:34:10] Calculating module 'Exhaustion' with method 'seurat' ...
-#> INFO    [2026-08-29 04:34:10] Calculating module 'Prolif' with method 'seurat' ...
+#> INFO    [2026-09-02 20:31:43] Calculating module 'Exhaustion' with method 'seurat' ...
+#> INFO    [2026-09-02 20:31:43] Calculating module 'Prolif' with method 'seurat' ...
 head(obj@meta.data[, c("Exhaustion", "Prolif")])
 #>                Exhaustion     Prolif
 #> ATGCCAGAACGACT -1.0627307 -1.4906462
@@ -216,7 +216,7 @@ if (requireNamespace("UCell", quietly = TRUE)) {
     )
     head(obj@meta.data[, c("CellCycle_S.Score", "CellCycle_G2M.Score", "CellCycle_Phase")])
 }
-#> INFO    [2026-08-29 04:34:10] Calculating module 'CellCycle' with method 'ucell' ...
+#> INFO    [2026-09-02 20:31:43] Calculating module 'CellCycle' with method 'ucell' ...
 #> Warning: Over half of genes (100%) in specified signatures are missing from data. Check the integrity of your dataset.
 #> Warning: The following genes were not found and will be
 #>                         imputed to exp=0:

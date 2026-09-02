@@ -83,7 +83,7 @@ RunSeuratDEAnalysis(SeuratObject::pbmc_small, "groups", "g1", "g2")
 #> ℹ The deprecated feature was likely used in the tidyseurat package.
 #>   Please report the issue at
 #>   <https://github.com/stemangiola/tidyseurat/issues>.
-#> INFO    [2026-08-29 04:34:29] Running DE analysis with group_by = groups, ident_1 = g1, ident_2 = g2, assay = RNA, recorrect_umi = FALSE
+#> INFO    [2026-09-02 20:31:59] Running DE analysis with group_by = groups, ident_1 = g1, ident_2 = g2, assay = RNA, recorrect_umi = FALSE
 #>                    p_val avg_log2FC pct.1 pct.2 p_val_adj          gene groups
 #> NOSIP         0.02870319  1.2224797 0.455 0.194         1         NOSIP  g1:g2
 #> LYAR          0.02920961  0.8205500 0.159 0.389         1          LYAR  g1:g2
