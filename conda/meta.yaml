@@ -6,7 +6,7 @@ source:
   path: ..
 
 build:
-  number: 4
+  number: 5
   rpaths:
     - lib/R/lib/
     - lib/
@@ -38,6 +38,9 @@ requirements:
     - bioconda::bioconductor-gsva
     - bioconda::bioconductor-gseabase
     - bioconda::bioconductor-genefilter
+    - bioconda::bioconductor-ucell
+    - bioconda::bioconductor-aucell
+    - bioconda::bioconductor-gseabase
     - r-ggplot2 >4
     - pwwang::r-scplotter
     - pwwang::r-seuratdisk
@@ -71,6 +74,9 @@ requirements:
     - bioconda::bioconductor-gsva
     - bioconda::bioconductor-gseabase
     - bioconda::bioconductor-genefilter
+    - bioconda::bioconductor-ucell
+    - bioconda::bioconductor-aucell
+    - bioconda::bioconductor-gseabase
     - r-ggplot2 >4
     - pwwang::r-scplotter
     - pwwang::r-seuratdisk
