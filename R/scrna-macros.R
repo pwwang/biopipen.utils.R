@@ -457,7 +457,7 @@ RunSeuratDEAnalysis <- function(
 #' @param umi_assay Assay to use for the UMI counts. Default is "RNA". This is used to get the counts for scaling.
 #' @return The Seurat object with the features ensured in the scale.data layer
 #' @importFrom SeuratObject DefaultAssay Cells GetAssayData SetAssayData
-#' @importFrom Seurat GetResidual SCTResults
+#' @importFrom Seurat SCTResults
 #' @export
 EnsureSeuratScaleData <- function(
     object,
@@ -469,14 +469,16 @@ EnsureSeuratScaleData <- function(
     is_sct <- inherits(object[[assay]], "SCTAssay")
     # features can be a (named) list of feature groups, e.g. cell-type markers
     features <- if (is.list(features)) unlist(features, use.names = FALSE) else features
-    missing <- setdiff(unique(features), rownames(GetAssayData(object, assay = assay, layer = "scale.data")))
+    missing <- setdiff(unique(features), rownames(suppressWarnings(GetAssayData(
+        object, assay = assay, layer = "scale.data"
+    ))))
     missing <- setdiff(missing, colnames(object@meta.data))
     log <- log %||% get_logger()
     # Merge new data into the existing scale.data, keeping the original rows
     # and NA-filling the cells not covered by the new data.
     merge_scale_data <- function(newdata) {
         newdata <- if (is.list(newdata)) newdata else list(newdata)
-        scale <- GetAssayData(object = object, layer = "scale.data", assay = assay)
+        scale <- suppressWarnings(GetAssayData(object = object, layer = "scale.data", assay = assay))
         allfeat <- union(rownames(scale), union(missing, unlist(lapply(newdata, rownames))))
         newscale <- matrix(
             NA_real_, length(allfeat), ncol(object),
@@ -495,61 +497,68 @@ EnsureSeuratScaleData <- function(
     }
     if (is_sct) {
         models <- levels(object[[assay]])
-        if (length(models) > 1) {
-            # GetResidual crashes (Seurat bug) when an SCT model covers only
-            # part of the requested features (na.rm=TRUE silently drops them).
-            # Compute residuals per model, restricted to the features each
-            # model supports, and NA-fill the cells of models lacking them.
-            umi <- object[[umi_assay]]
-            residuals <- lapply(models, function(m) {
-                mfeats <- rownames(SCTResults(
-                    object[[assay]], "feature.attributes", model = m
-                ))
-                f <- intersect(missing, mfeats)
-                if (length(f) == 0) {
-                    return(NULL)
-                }
-                mcells <- Cells(slot(object[[assay]], "SCTModel.list")[[m]])
-                # Seurat bug: FetchResidualSCTModel crashes when a model has
-                # <= 1 cell, because `scale.data[, cells]` drops to a vector
-                # and apply(..., 1, anyNA) fails. Skip such models; their
-                # cells stay NA in scale.data.
-                if (length(mcells) <= 1) {
-                    return(NULL)
-                }
-                if (inherits(umi, "Assay5")) {
-                    FetchResidualSCTModel <- utils::getFromNamespace("FetchResidualSCTModel", "Seurat")
-                    FetchResidualSCTModel(
-                        object = object[[assay]],
-                        umi.object = umi,
-                        SCTModel = m,
-                        layer.cells = mcells,
-                        new_features = f
-                    )
-                } else {
-                    GetResidualSCTModel <- utils::getFromNamespace("GetResidualSCTModel", "Seurat")
-                    GetResidualSCTModel(
-                        object = object,
-                        assay = assay,
-                        SCTModel = m,
-                        new_features = f,
-                        clip.range = NULL,
-                        replace.value = FALSE,
-                        verbose = FALSE
-                    )
-                }
-            })
-            residuals <- Filter(Negate(is.null), residuals)
-            if (length(residuals) > 0) {
-                object <- merge_scale_data(residuals)
+        # GetResidual crashes (Seurat bug) when an SCT model covers only
+        # part of the requested features (na.rm=TRUE silently drops them).
+        # Compute residuals per model, restricted to the features each
+        # model supports, and NA-fill the cells of models lacking them.
+        #
+        # The residual functions also require the umi assay recorded in the
+        # models (usually "RNA") to be in the object and silently add nothing
+        # when it was removed. The SCT assay itself keeps the counts
+        # SCTransform was run on, so they stand in for the umi assay in that
+        # case.
+        umi_missing <- !umi_assay %in% SeuratObject::Assays(object)
+        umi <- if (umi_missing) NULL else object[[umi_assay]]
+        model_residuals <- function(m) {
+            mfeats <- rownames(SCTResults(
+                object[[assay]], "feature.attributes", model = m
+            ))
+            f <- intersect(missing, mfeats)
+            if (length(f) == 0) {
+                return(NULL)
             }
-        } else {
-            object <- GetResidual(
-                object,
-                features = missing,
-                assay = assay,
-                umi.assay = umi_assay
-            )
+            mcells <- Cells(slot(object[[assay]], "SCTModel.list")[[m]])
+            # Seurat bug: FetchResidualSCTModel crashes when a model has
+            # <= 1 cell, because `scale.data[, cells]` drops to a vector
+            # and apply(..., 1, anyNA) fails. Skip such models; their
+            # cells stay NA in scale.data.
+            if (length(mcells) <= 1) {
+                return(NULL)
+            }
+            if (umi_missing) {
+                FetchResidualSCTModel <- utils::getFromNamespace("FetchResidualSCTModel", "Seurat")
+                FetchResidualSCTModel(
+                    object = object[[assay]],
+                    umi.object = object[[assay]],
+                    SCTModel = m,
+                    layer.cells = mcells,
+                    new_features = f
+                )
+            } else if (inherits(umi, "Assay5")) {
+                FetchResidualSCTModel <- utils::getFromNamespace("FetchResidualSCTModel", "Seurat")
+                FetchResidualSCTModel(
+                    object = object[[assay]],
+                    umi.object = umi,
+                    SCTModel = m,
+                    layer.cells = mcells,
+                    new_features = f
+                )
+            } else {
+                GetResidualSCTModel <- utils::getFromNamespace("GetResidualSCTModel", "Seurat")
+                GetResidualSCTModel(
+                    object = object,
+                    assay = assay,
+                    SCTModel = m,
+                    new_features = f,
+                    clip.range = NULL,
+                    replace.value = FALSE,
+                    verbose = FALSE
+                )
+            }
+        }
+        residuals <- Filter(Negate(is.null), lapply(models, model_residuals))
+        if (length(residuals) > 0) {
+            object <- merge_scale_data(residuals)
         }
     } else {
         # `Seurat::ScaleData()` would rebuild the whole `scale.data` layer,
@@ -557,7 +566,22 @@ EnsureSeuratScaleData <- function(
         # downstream plots). Compute z-scores for the missing features only
         # and merge them into the existing layer.
         data <- GetAssayData(object = object, layer = "data", assay = assay)
-        newdata <- t(scale(t(as.matrix(data[missing, , drop = FALSE]))))
+        f <- intersect(missing, rownames(data))
+        # Features without a data row (e.g. filtered out after DE) cannot be
+        # scaled, and scale.data rows for them cannot be created either.
+        nodata <- setdiff(missing, f)
+        if (length(nodata) > 0) {
+            warning(
+                "Cannot scale the following features (not in the data layer): ",
+                paste(nodata, collapse = ", "),
+                call. = FALSE
+            )
+            if (length(f) == 0) {
+                return(object)
+            }
+            missing <- f
+        }
+        newdata <- t(scale(t(as.matrix(data[f, , drop = FALSE]))))
         # Zero-variance features yield NaN; keep the rows, zero them out.
         newdata[!is.finite(newdata)] <- 0
         object <- merge_scale_data(newdata)
