@@ -470,6 +470,7 @@ EnsureSeuratScaleData <- function(
     # features can be a (named) list of feature groups, e.g. cell-type markers
     features <- if (is.list(features)) unlist(features, use.names = FALSE) else features
     missing <- setdiff(unique(features), rownames(GetAssayData(object, assay = assay, layer = "scale.data")))
+    missing <- setdiff(missing, colnames(object@meta.data))
     log <- log %||% get_logger()
     # Merge new data into the existing scale.data, keeping the original rows
     # and NA-filling the cells not covered by the new data.
