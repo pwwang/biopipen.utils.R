@@ -4483,7 +4483,14 @@ RunModuleScoring <- function(
     cheetah        = list(level = "cell",    h5ad = FALSE),
     scclassify     = list(level = "cell",    h5ad = FALSE),
     scpred         = list(level = "cell",    h5ad = FALSE),
-    azimuth        = list(level = "cluster", h5ad = FALSE)
+    azimuth        = list(level = "cluster", h5ad = FALSE),
+    # ---- LLM annotators ----
+    # Ask a large language model to name each cluster from its marker genes
+    # instead of matching them against a database, so both need credentials (or
+    # a local OpenAI-compatible endpoint) rather than a `db`. Without one they
+    # stop instead of returning a placeholder label.
+    mllmcelltype   = list(level = "cluster", h5ad = FALSE),
+    lict           = list(level = "cluster", h5ad = FALSE)
 )
 
 #' List the cell type annotation tools supported by [RunCellTypeAnnotation()]
@@ -4672,7 +4679,10 @@ RunCellTypeAnnotation <- function(
         cheetah        = .run_celltypeannotation_cheetah(object, args, ident, ctx),
         scclassify     = .run_celltypeannotation_scclassify(object, args, ident, ctx),
         scpred         = .run_celltypeannotation_scpred(object, args, ident, ctx),
-        azimuth        = .run_celltypeannotation_azimuth(object, args, ident, ctx)
+        azimuth        = .run_celltypeannotation_azimuth(object, args, ident, ctx),
+        # ---- LLM annotators ----
+        mllmcelltype   = .run_celltypeannotation_mllmcelltype(object, args, ident, ctx),
+        lict           = .run_celltypeannotation_lict(object, args, ident, ctx)
     )
     if (is.null(result)) {
         result <- list()

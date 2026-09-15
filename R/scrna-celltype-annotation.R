@@ -2889,3 +2889,211 @@ patch_garnett_run_classifier <- function(log) {
 
     list(mapping = mapping, type = "cluster", cells = result)
 }
+
+# ---- LLM annotators ---------------------------------------------------------
+# Both ask an LLM to name each cluster from its marker genes, so both need
+# credentials (or a local OpenAI-compatible endpoint) to return labels. Neither
+# has a `db`; the markers come from RunSeuratDEAnalysis().
+
+# ---- mllmcelltype -----------------------------------------------------------
+# mLLMCelltype (CRAN; the maintained fork of the archived LLMCellType). One call
+# per run: the top `top_gene_count` markers per cluster by avg_log2FC go into a
+# prompt, the model answers with one cell type per line, in cluster order. With
+# `api_key = NA` -- or with no key at all -- the function returns that prompt
+# instead of calling the API, and the runner stops rather than passing the
+# prompt off as an annotation.
+.run_celltypeannotation_mllmcelltype <- function(object, args, ident, ctx) {
+    require_package("mLLMCelltype")
+    log <- get_logger()
+
+    tissue <- args$tissue
+    if (is.null(tissue) || !nzchar(tissue)) {
+        stop("`envs.mllmcelltype.tissue` is required (e.g. 'human PBMC')")
+    }
+    model <- args$model %||% "gpt-5.5"
+    # the model decides which provider is called, and so which key it needs
+    key_env <- if (grepl("^(anthropic|claude)", tolower(model))) {
+        "ANTHROPIC_API_KEY"
+    } else {
+        "OPENAI_API_KEY"
+    }
+    api_key <- args$api_key %||% Sys.getenv(key_env)
+    if (!nzchar(api_key)) {
+        log$info("No {key_env} set; mLLMCelltype can only build the prompt")
+        api_key <- NA
+    }
+
+    log$info("Find the markers for {ident} ...")
+    markers <- RunSeuratDEAnalysis(object, group_by = ident, log = log)
+    # the tool wants the cluster column to be named `cluster`
+    names(markers)[names(markers) == ident] <- "cluster"
+
+    call_args <- args[
+        # NOTE: mLLMCelltype's own logger writes <cwd>/logs/mllm_*.log on every
+        # call (including the prompt-only path); the repo ignores `logs/`.
+        intersect(names(args), formalArgs(mLLMCelltype::annotate_cell_types))
+    ]
+    call_args$input <- markers
+    call_args$tissue_name <- tissue
+    call_args$model <- model
+    call_args$api_key <- api_key
+
+    log$info("Running mLLMCelltype with model '{model}' ...")
+    res <- do_call(mLLMCelltype::annotate_cell_types, call_args)
+
+    if (is.character(res) && length(res) == 1 && !is.na(res) &&
+        startsWith(res, "You are ")) {
+        stop(paste0(
+            "mLLMCelltype returned a prompt, not an annotation: set ",
+            "`api_key`/", key_env, "` (or pass `api_key = NA` on purpose ",
+            "to inspect the prompt)"
+        ))
+    }
+
+    # the API path answers one cell type per line, in the order the clusters
+    # were shown in the prompt; the reasoning path is already named by cluster
+    labels <- if (isTRUE(call_args$return_reasoning)) {
+        vapply(res, function(x) x$cell_type, character(1))
+    } else {
+        as.character(res)
+    }
+    clusters <- names(res) %||% unique(trimws(as.character(markers$cluster)))
+    if (length(labels) != length(clusters)) {
+        stop(paste0(
+            "mLLMCelltype returned ", length(labels), " label(s) for ",
+            length(clusters), " cluster(s): ", paste(labels, collapse = ", ")
+        ))
+    }
+    mapping <- stats::setNames(as.list(labels), clusters)
+
+    log$info("Annotated {length(mapping)} cluster(s)")
+    list(mapping = mapping, type = "cluster")
+}
+
+# ---- lict -------------------------------------------------------------------
+# LICT (GitHub only) queries every provider at once and combines the answers. It
+# reads the credentials from the *process environment* rather than from its
+# arguments -- `openai.api_key`/`openai_api_key`, `Gemini_api_key`,
+# `ANTHROPIC_API_KEY`, `ERNIE_api_key` + `ERNIE_secret_key`, `Llama3_api_key` +
+# `Llama3_secret_key` -- skips every provider without one (printing an error per
+# provider to stdout) and returns the string "error" when none was set.
+#
+# `args$keys` is a convenience for setting those variables with Sys.setenv()
+# before the call. It is a *process-wide, permanent* mutation: the variables stay
+# set for the rest of the R session and are inherited by child processes. Only
+# the variable names are logged, never the values. When `keys` is NULL the
+# environment is used as-is, so credentials already set elsewhere keep working.
+#
+#' @noRd
+.run_celltypeannotation_lict <- function(object, args, ident, ctx) {
+    require_package("LICT")
+    log <- get_logger()
+
+    species <- args$species %||% "Human"
+    topgenenumber <- args$topgenenumber %||% 30
+    validate <- args$validate %||% TRUE
+    percent <- args$percent %||% 0.5
+
+    if (length(args$keys) > 0) {
+        do_call(Sys.setenv, args$keys)
+        log$info(
+            "Set the LICT provider key environment variable(s): ",
+            "{paste(names(args$keys), collapse = ', ')}"
+        )
+    }
+
+    log$info("Find the markers for {ident} ...")
+    markers <- RunSeuratDEAnalysis(object, group_by = ident, log = log)
+    # LICT wants the cluster column to be named `cluster`
+    names(markers)[names(markers) == ident] <- "cluster"
+
+    log$info("Running LICT with species '{species}' ...")
+    res <- LICT::LLMCellType(
+        markers,
+        topgenenumber = topgenenumber,
+        species = species,
+        tissuename = args$tissue
+    )
+    if (!is.list(res)) {
+        # every provider without a key is skipped, and with no provider left
+        # LLMCellType() returns the string "error"
+        stop(paste0(
+            "LICT returned no labels (", deparse(res), "): no provider API key ",
+            "was found. Set one of `openai_api_key` (or `openai.api_key`), ",
+            "`Gemini_api_key`, `ANTHROPIC_API_KEY`, `ERNIE_api_key` + ",
+            "`ERNIE_secret_key`, `Llama3_api_key` + `Llama3_secret_key` in the ",
+            "environment, or pass them through `envs.lict.keys`"
+        ))
+    }
+
+    provider <- args$provider
+    if (is.null(provider)) {
+        provider <- names(res)[1]
+        if (length(res) > 1) {
+            log$warn(
+                "{length(res)} LICT providers answered ",
+                "({paste(names(res), collapse = ', ')}); using '{provider}'. ",
+                "Set `envs.lict.provider` to pick another one"
+            )
+        }
+    }
+    if (!provider %in% names(res)) {
+        stop(paste0(
+            "LICT did not answer with provider '", provider, "', got: ",
+            paste(names(res), collapse = ", ")
+        ))
+    }
+    answered <- res[[provider]]
+    if (!is.data.frame(answered) ||
+        !all(c("clusters", "cell_type") %in% names(answered))) {
+        stop(paste0(
+            "Unexpected result from the LICT provider '", provider, "': ",
+            paste(names(answered), collapse = ", ")
+        ))
+    }
+
+    # the provider numbers the clusters from 0, in the order the markers were
+    # grouped in (level order for a factor, sorted otherwise)
+    clusters <- if (is.factor(markers$cluster)) {
+        levels(droplevels(markers$cluster))
+    } else {
+        sort(unique(as.character(markers$cluster)))
+    }
+    idx <- as.integer(answered$clusters) + 1
+    if (anyNA(idx) || any(idx < 1) || any(idx > length(clusters))) {
+        stop(paste0(
+            "LICT numbered its clusters outside the marker table: ",
+            paste(answered$clusters, collapse = ", "), " for ",
+            length(clusters), " cluster(s)"
+        ))
+    }
+    mapping <- stats::setNames(
+        as.list(as.character(answered$cell_type)),
+        clusters[idx]
+    )
+
+    # The refine/validate stage re-checks the provider's markers against the
+    # expression data and asks the model for a second opinion on them. It is
+    # best-effort: it costs extra LLM calls, needs reticulate + the python
+    # `openai` package, and its per-cluster reliability table is a report on the
+    # markers rather than a set of labels -- so a failure here still leaves the
+    # first-stage labels usable.
+    more <- NULL
+    if (isTRUE(validate)) {
+        log$info("Validating the LICT labels ...")
+        # Validate() subsets the object by its identities, in the same order the
+        # markers were grouped in, so the identity has to be `ident`
+        Idents(object) <- ident
+        more <- tryCatch({
+            checked <- LICT::Validate(res[provider], object, percent, species)
+            feedback <- LICT::Feedback_Info(checked, 11, 20, markers)
+            list(validate = LICT::Validate_Result_to_Df(feedback))
+        }, error = function(e) {
+            log$warn("The LICT validate stage failed: {conditionMessage(e)}")
+            NULL
+        })
+    }
+
+    log$info("Annotated {length(mapping)} cluster(s) with '{provider}'")
+    list(mapping = mapping, type = "cluster", more = more)
+}
