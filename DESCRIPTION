@@ -88,6 +88,7 @@ Remotes:
     pwwang/scplotter,
     chris-mcginnis-ucsf/DoubletFinder,
     mojaveazure/seurat-disk,
-    ZJU-UoE-CCW-LAB/scCDC
+    ZJU-UoE-CCW-LAB/scCDC,
+    Irrationone/cellassign
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3

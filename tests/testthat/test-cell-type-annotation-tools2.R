@@ -1,5 +1,5 @@
 # Smoke tests for the marker/reference-based runners. pbmc_small: 80 cells,
-# 230 genes, metadata `groups` (g1, g2, g3).
+# 230 genes, metadata `groups` (g1, g2).
 
 norm_obj <- function() {
     obj <- SeuratObject::pbmc_small
@@ -33,9 +33,10 @@ test_that("singler runner: cluster-level mapping from a SummarizedExperiment ref
     skip_if_not_installed("SingleR")
     skip_if_not_installed("SummarizedExperiment")
     obj <- norm_obj()
-    # Reference labels are deliberately different from the cluster ids: the
-    # CRAN build of SingleR returns an UNNAMED list (one entry per cluster), so
-    # the test asserts on the values, not on the names.
+    # Reference labels are deliberately different from the cluster ids. The
+    # Bioconductor build names the per-cluster rows; the old CRAN build (no
+    # `test` formal) returns an unnamed list, so the name assertion below is
+    # only made when the Bioconductor API is in use.
     labels <- ifelse(as.character(obj$groups) == "g1", "TypeA", "TypeB")
     ref <- SummarizedExperiment::SummarizedExperiment(
         assays = list(logcounts = as.matrix(SeuratObject::GetAssayData(obj, layer = "data"))),
@@ -49,6 +50,9 @@ test_that("singler runner: cluster-level mapping from a SummarizedExperiment ref
     expect_equal(rec$type, "cluster")
     expect_equal(length(rec$mapping), 2)
     expect_true(all(unlist(rec$mapping) %in% c("TypeA", "TypeB")))
+    if ("test" %in% names(formals(SingleR::SingleR))) {
+        expect_setequal(names(rec$mapping), c("g1", "g2"))
+    }
 })
 
 test_that("scina runner: cell-level and both-mode", {
