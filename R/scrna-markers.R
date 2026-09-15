@@ -432,6 +432,27 @@ is_garnett_native_marker <- function(path) {
     FALSE
 }
 
+# Convert a canonical marker table to the headerless two-column cell type/gene
+# TSV the python wrappers (scsa, maca, scmapnet) take as their `-m/--marker`.
+# Only positive markers are kept (the format has no direction).
+#' Convert a marker table to the python wrappers' marker file format
+#'
+#' @description A headerless two-column table of the cell types and their
+#' genes, as taken by the `-m/--marker` of the python wrappers (`scsa`, `maca`,
+#' `scmapnet`). Only positive markers are kept (the format has no direction).
+#'
+#' @param df A canonical marker table.
+#' @return A data.frame with `cellName` and `gene` columns.
+#' @export
+markers_to_scsa_df <- function(df) {
+    df <- filter_positive_markers(df)
+    data.frame(
+        cellName = df$cell_type,
+        gene = df$gene,
+        stringsAsFactors = FALSE
+    )
+}
+
 # Convert a canonical marker table to a garnett-native marker file
 # (`> <cell type>` blocks with `expressed:` / `not expressed:` rules).
 # Negative-direction markers become `not expressed:` rules. Returns the path.

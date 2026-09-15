@@ -3097,3 +3097,216 @@ patch_garnett_run_classifier <- function(log) {
     log$info("Annotated {length(mapping)} cluster(s) with '{provider}'")
     list(mapping = mapping, type = "cluster", more = more)
 }
+
+# ---- python-based marker tools (scsa, maca, scmapnet) ------------------------
+
+# The marker table these three wrappers take as `-m/--marker`: a headerless
+# two-column TSV of the cell type and the gene, written into the scratch dir.
+.cta_py_marker_file <- function(db, scratch, tool) {
+    if (is.null(db)) {
+        stop(paste0("`envs.", tool, ".db` is not set"))
+    }
+    df <- load_marker_table(db)
+    if (!is.data.frame(df) || !is_marker_canonical(df)) {
+        stop(paste0(
+            "The `", tool, "` marker table must be a universal marker table ",
+            "(with `cell_type` and `gene` columns): ", db
+        ))
+    }
+    file <- file.path(scratch, "markers.tsv")
+    write.table(
+        markers_to_scsa_df(df), file,
+        sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE
+    )
+    file
+}
+
+# SCSA labels whole clusters (its `-i` is a per-cluster marker table that the
+# wrapper computes itself), and the wrapper maps the cluster labels back onto
+# the cells. `scsa_dir` is a clone of the SCSA repo: SCSA is not on
+# CRAN/Bioconductor/PyPI, and the clone carries the reference database.
+.run_celltypeannotation_scsa <- function(object, args, ident, ctx) {
+    log <- get_logger()
+
+    scsa_dir <- args$scsa_dir
+    if (is.null(scsa_dir)) {
+        stop(paste0(
+            "`envs.scsa.scsa_dir` is not set. SCSA is not on ",
+            "CRAN/Bioconductor/PyPI: clone ",
+            "https://github.com/bioinfo-ibms-pumc/SCSA and point ",
+            "`envs.scsa.scsa_dir` at the clone (it holds `SCSA.py` and ",
+            "`whole.db`)."
+        ))
+    }
+    markers <- .cta_py_marker_file(args$db, ctx$scratch, "scsa")
+
+    outfile <- file.path(ctx$scratch, "scsa.txt")
+    biopipen_dir <- get_biopipen_dir(args$python)
+    wrapper <- file.path(biopipen_dir, "scripts", "scrna", "scsa-wrapper.py")
+    command <- c(
+        args$python, wrapper,
+        "-i", ctx$h5ad,
+        "-o", outfile,
+        "-m", markers,
+        "--scsa-dir", scsa_dir,
+        "--ident", ident
+    )
+    if (isFALSE(args$use_refdb)) {
+        command <- c(command, "--norefdb")
+    }
+    if (!is.null(args$species)) {
+        command <- c(command, "-g", args$species)
+    }
+    if (!is.null(args$tissue)) {
+        command <- c(command, "-k", args$tissue)
+    }
+
+    log$info("Running SCSA ...")
+    # The wrapper names what is missing (a clone without SCSA.py, no marker
+    # passing SCSA's own thresholds), so surface its output on failure
+    run_command(command, stdout = TRUE, stderr = TRUE)
+
+    # (barcode, scsa_celltype), one row per cell
+    results <- read.table(outfile, sep = "\t", header = TRUE, row.names = 1)
+
+    cells_df <- data.frame(
+        scsa_celltype = unname(results[["scsa_celltype"]]),
+        row.names = rownames(results)
+    )
+    # SCSA labels the clusters, so the cells of a cluster share a label unless
+    # the wrapper could not map a cell back; vote instead of trusting the
+    # first cell, and say so when that happens
+    labels <- results[["scsa_celltype"]]
+    names(labels) <- rownames(results)
+    # meta.data columns are unnamed, so the clusters have to be taken by row
+    # (a `[[ident]][<barcodes>]` lookup would be all NA)
+    clusters <- as.character(object@meta.data[names(labels), ident])
+
+    log$info("Aggregating SCSA results by cluster ...")
+    mapping <- majority_vote(labels, clusters)
+    disagreeing <- names(Filter(
+        function(cell_types) length(unique(cell_types)) > 1,
+        split(as.character(labels), clusters)
+    ))
+    if (length(disagreeing) > 0) {
+        log$warn(paste0(
+            "The cells of cluster(s) ",
+            paste(disagreeing, collapse = ", "),
+            " have different SCSA labels; using the majority vote."
+        ))
+    }
+
+    list(mapping = mapping, type = "cluster", cells = cells_df)
+}
+
+# MACA needs its own environment (it pins scanpy==1.6.0/anndata==0.7.5), and
+# the wrapper names that environment when the import fails.
+.run_celltypeannotation_maca <- function(object, args, ident, ctx) {
+    log <- get_logger()
+
+    markers <- .cta_py_marker_file(args$db, ctx$scratch, "maca")
+
+    outfile <- file.path(ctx$scratch, "maca.txt")
+    biopipen_dir <- get_biopipen_dir(args$python)
+    wrapper <- file.path(biopipen_dir, "scripts", "scrna", "maca-wrapper.py")
+    command <- c(
+        args$python, wrapper,
+        "-i", ctx$h5ad,
+        "-o", outfile,
+        "-m", markers
+    )
+    if (!is.null(args$n_pcs)) {
+        command <- c(command, "--n-pcs", args$n_pcs)
+    }
+    if (!is.null(args$res)) {
+        command <- c(
+            command, "--res", paste(unlist(args$res), collapse = ",")
+        )
+    }
+    if (!is.null(args$n_neis)) {
+        command <- c(
+            command, "--n-neis", paste(unlist(args$n_neis), collapse = ",")
+        )
+    }
+    if (!is.null(args$freq)) {
+        command <- c(command, "--freq", args$freq)
+    }
+    if (isTRUE(args$use_weight)) {
+        command <- c(command, "--use-weight")
+    }
+
+    log$info("Running MACA ...")
+    # A missing MACA is not an R error to hide: the wrapper prints the
+    # environment MACA needs, so surface that
+    run_command(command, stdout = TRUE, stderr = TRUE)
+
+    results <- read.table(outfile, sep = "\t", header = TRUE, row.names = 1)
+    if (is.null(ident)) {
+        list(mapping = results, type = "cell")
+    } else {
+        log$info("Aggregating MACA results by cluster...")
+        mapping <- majority_vote(
+            results[["maca_celltype"]],
+            # meta.data columns are unnamed, so the clusters have to be taken
+            # by row (a `[[ident]][<barcodes>]` lookup would be all NA)
+            as.character(object@meta.data[rownames(results), ident])
+        )
+        list(mapping = mapping, type = "cluster", cells = results)
+    }
+}
+
+# scMapNet's treemap images and its checkpoint are not distributable: the
+# clone is passed in, and the weights are a manual download under CC BY-NC 4.0
+# (non-commercial).
+.run_celltypeannotation_scmapnet <- function(object, args, ident, ctx) {
+    log <- get_logger()
+
+    if (is.null(args$scmapnet_dir)) {
+        stop(paste0(
+            "`envs.scmapnet.scmapnet_dir` is not set. scMapNet is not a ",
+            "package: clone https://github.com/Yuz7/scMapNet and point ",
+            "`envs.scmapnet.scmapnet_dir` at the clone (it holds ",
+            "`main_finetune.py` and `generate_image_script.sh`)."
+        ))
+    }
+    if (is.null(args$weights)) {
+        stop(paste0(
+            "`envs.scmapnet.weights` is not set. The pre-trained weights are ",
+            "a manual download (they are not part of the repo, see ",
+            "https://github.com/Yuz7/scMapNet) and are licensed CC BY-NC 4.0 ",
+            "(non-commercial); point `envs.scmapnet.weights` at a checkpoint ",
+            "fine-tuned on the cell types of the marker table."
+        ))
+    }
+    markers <- .cta_py_marker_file(args$db, ctx$scratch, "scmapnet")
+
+    outfile <- file.path(ctx$scratch, "scmapnet.txt")
+    biopipen_dir <- get_biopipen_dir(args$python)
+    wrapper <- file.path(biopipen_dir, "scripts", "scrna", "scmapnet-wrapper.py")
+    command <- c(
+        args$python, wrapper,
+        "-i", ctx$h5ad,
+        "-o", outfile,
+        "-m", markers,
+        "--scmapnet-dir", args$scmapnet_dir,
+        "--weights", args$weights
+    )
+    if (!is.null(args$organ)) {
+        command <- c(command, "--organ", args$organ)
+    }
+
+    log$info("Running scMapNet ...")
+    run_command(command, stdout = TRUE, stderr = TRUE)
+
+    results <- read.table(outfile, sep = "\t", header = TRUE, row.names = 1)
+    if (is.null(ident)) {
+        list(mapping = results, type = "cell")
+    } else {
+        log$info("Aggregating scMapNet results by cluster...")
+        mapping <- majority_vote(
+            results[["scmapnet_celltype"]],
+            as.character(object@meta.data[rownames(results), ident])
+        )
+        list(mapping = mapping, type = "cluster", cells = results)
+    }
+}

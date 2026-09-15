@@ -4484,6 +4484,14 @@ RunModuleScoring <- function(
     scclassify     = list(level = "cell",    h5ad = FALSE),
     scpred         = list(level = "cell",    h5ad = FALSE),
     azimuth        = list(level = "cluster", h5ad = FALSE),
+    # ---- bundled-DB marker tools ----
+    # Marker-table tools that are not pip-installable packages and are driven
+    # through a cloned repository instead: the wrapper scripts of
+    # `biopipen/scripts/scrna/`, with the clone (and, for scMapNet, a manually
+    # downloaded checkpoint) passed in through the envs.
+    scsa           = list(level = "cluster", h5ad = TRUE),
+    maca           = list(level = "cell",    h5ad = TRUE),
+    scmapnet       = list(level = "cell",    h5ad = TRUE),
     # ---- LLM annotators ----
     # Ask a large language model to name each cluster from its marker genes
     # instead of matching them against a database, so both need credentials (or
@@ -4680,6 +4688,10 @@ RunCellTypeAnnotation <- function(
         scclassify     = .run_celltypeannotation_scclassify(object, args, ident, ctx),
         scpred         = .run_celltypeannotation_scpred(object, args, ident, ctx),
         azimuth        = .run_celltypeannotation_azimuth(object, args, ident, ctx),
+        # ---- bundled-DB marker tools ----
+        scsa           = .run_celltypeannotation_scsa(object, args, ident, ctx),
+        maca           = .run_celltypeannotation_maca(object, args, ident, ctx),
+        scmapnet       = .run_celltypeannotation_scmapnet(object, args, ident, ctx),
         # ---- LLM annotators ----
         mllmcelltype   = .run_celltypeannotation_mllmcelltype(object, args, ident, ctx),
         lict           = .run_celltypeannotation_lict(object, args, ident, ctx)
