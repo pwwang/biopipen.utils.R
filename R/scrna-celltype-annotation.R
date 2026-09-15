@@ -648,3 +648,572 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
 
     list(mapping = celltypes, type = "cluster")
 }
+
+# ---- scsorter ---------------------------------------------------------------
+
+.run_celltypeannotation_scsorter <- function(object, args, ident, ctx) {
+    # Check if RunScSorter from the scSorter package is available
+    # If not, this is the cran/scSorter package, which doesn't support RunScSorter
+    # on Seurat objects
+    # We need pwwang/scSorter, which is a fork of scSorter that supports Seurat objects
+    if (!requireNamespace("scSorter", quietly = TRUE) ||
+        !"RunScSorter" %in% getNamespaceExports("scSorter")) {
+        stop(paste(
+            "The scSorter package is not installed or does not support RunScSorter.",
+            "Please install the pwwang/scSorter package from GitHub."
+        ))
+    }
+    library(scSorter)
+
+    log <- get_logger()
+    db <- args$db
+
+    if (is.null(db)) { stop("`envs.scsorter.db` is not set") }
+
+    log$info("Loading scSorter database ...")
+    anno <- load_marker_table(db)
+    if (!is.data.frame(anno)) {
+        stop(paste0(
+            "scSorter database must be a data.frame, got: ",
+            paste(class(anno), collapse = ", ")
+        ))
+    }
+    if (is_marker_canonical(anno)) {
+        anno <- markers_to_scsorter_df(
+            anno,
+            tissue = args$tissue,
+            cancer = args$cancer,
+            species = args$species
+        )
+    } else {
+        # Native positional tables have no tissue/cancer/species columns
+        stop_on_filtering_native_db(
+            args$tissue, args$cancer, args$species
+        )
+        if (ncol(anno) < 2) {
+            stop(paste0(
+                "scSorter database file must have at least 2 columns: ",
+                db
+            ))
+        }
+        if (ncol(anno) == 2) {
+            colnames(anno) <- c("Type", "Marker")
+        } else if (ncol(anno) >= 3) {
+            colnames(anno)[1:3] <- c("Type", "Marker", "Weight")
+        }
+    }
+    # The filter envs are consumed by the marker conversion above; never
+    # forward them to RunScSorter()
+    args$tissue <- NULL
+    args$cancer <- NULL
+    args$species <- NULL
+
+    log$info("Running RunScSorter...")
+    # Set the active identity to the ident column
+    Idents(object) <- ident
+    args$db <- NULL  # db is passed separately as scsorter_db
+    args$object <- object
+    args$anno <- anno
+    args$mc.cores <- args$mc.cores %||% 1L
+    object <- do_call(RunScSorter, args)
+
+    # RunScSorter stores per-cell predictions in the scSorter_celltype column;
+    # aggregate to one type per cluster by majority vote
+    log$info("Aggregating scSorter results by cluster...")
+    mapping <- majority_vote(
+        object@meta.data$scSorter_celltype,
+        as.character(object@meta.data[[ident]])
+    )
+
+    list(mapping = mapping, type = "cluster")
+}
+
+# ---- singler ----------------------------------------------------------------
+
+.run_celltypeannotation_singler <- function(object, args, ident, ctx) {
+    library(SingleR)
+
+    log <- get_logger()
+    db <- args$db
+
+    if (is.null(db)) { stop("`envs.singler.db` is not set") }
+
+    if (startsWith(db, "file://")) {
+        db <- sub("^file://", "", db)
+    }
+
+    if (!file.exists(db)) {
+        stop(paste0("SingleR database file does not exist: ", db))
+    }
+
+    # Detect which SingleR API is available:
+    # - Bioconductor (LTLA): SingleR(test, ref, labels, clusters, ...)
+    # - CRAN (dviraran):    SingleR(sc_data, ref_data, types, clusters, ...)
+    is_bioc <- "test" %in% names(formals(SingleR))
+    log$info(
+        "Using SingleR {ifelse(is_bioc, 'Bioconductor', 'CRAN')} API"
+    )
+
+    # Load reference (supports RDS, qs, qs2 via biopipen.utils)
+    log$info("Loading SingleR reference ...")
+    ref <- read_obj(db)
+
+    # Resolve label column
+    label_col <- args$label
+    args$label <- NULL
+    args$db <- NULL  # db is passed separately as singler_db
+
+    # Prepare reference data and labels based on API version
+    if (is_bioc) {
+        # Bioconductor API: ref is a SummarizedExperiment, labels is a vector
+        if (inherits(ref, "Seurat")) {
+            log$info("Converting Seurat reference to SummarizedExperiment ...")
+            ref <- as.SingleCellExperiment(ref)
+        }
+
+        if (!is.null(label_col)) {
+            if (is(ref, "SummarizedExperiment")) {
+                labels <- SummarizedExperiment::colData(ref)[[label_col]]
+            } else {
+                stop(paste0("Label column '", label_col, "' not found"))
+            }
+        } else if (is(ref, "SummarizedExperiment")) {
+            labels <- NULL
+            for (col in c(
+                "label.main", "label.fine", "label.ont", "label"
+            )) {
+                if (col %in% colnames(SummarizedExperiment::colData(ref))) {
+                    labels <- SummarizedExperiment::colData(ref)[[col]]
+                    log$info("Auto-detected label column: {col}")
+                    break
+                }
+            }
+        } else {
+            stop(paste(
+                "Reference must be a Seurat or SummarizedExperiment object."
+            ))
+        }
+
+        if (is.null(labels)) {
+            stop(paste(
+                "Cannot determine labels from reference.",
+                "Set `label` in `envs.singler.label`."
+            ))
+        }
+
+        # Bioconductor SingleR call
+        log$info("Preparing expression matrix ...")
+        exp <- as.matrix(GetAssayData(object, layer = "data"))
+
+        clusters <- as.character(object@meta.data[[ident]])
+        log$info(
+            "Running SingleR with {length(unique(clusters))} clusters ..."
+        )
+
+        args$test <- exp
+        args$ref <- ref
+        args$labels <- labels
+        args$clusters <- clusters
+
+        results <- do_call(SingleR, args)
+
+        # Build mapping (prefer pruned.labels, fall back to labels)
+        mapping <- as.list(results$pruned.labels)
+        names(mapping) <- rownames(results)
+        na_mask <- is.na(mapping) | mapping == "NA"
+        if (any(na_mask)) {
+            mapping[na_mask] <- as.list(results$labels[na_mask])
+        }
+
+    } else {
+        # CRAN API: ref_data is a matrix, types is a vector
+        if (inherits(ref, "Seurat")) {
+            log$info("Extracting data from Seurat reference ...")
+            ref_data <- as.matrix(GetAssayData(ref, layer = "data"))
+            meta <- ref@meta.data
+        } else if (is(ref, "SummarizedExperiment")) {
+            assay_name <- "logcounts"
+            if (!assay_name %in% names(SummarizedExperiment::assays(ref))) {
+                assay_name <- names(SummarizedExperiment::assays(ref))[1]
+            }
+            ref_data <- as.matrix(
+                SummarizedExperiment::assay(ref, assay_name)
+            )
+            meta <- SummarizedExperiment::colData(ref)
+        } else {
+            stop(paste(
+                "Reference must be a Seurat or SummarizedExperiment object."
+            ))
+        }
+
+        if (!is.null(label_col)) {
+            if (!label_col %in% colnames(meta)) {
+                stop(paste0(
+                    "Label column '", label_col, "' not found in reference"
+                ))
+            }
+            types <- meta[[label_col]]
+        } else {
+            types <- NULL
+            for (col in c(
+                "label.main", "label.fine", "label.ont", "label"
+            )) {
+                if (col %in% colnames(meta)) {
+                    types <- meta[[col]]
+                    log$info("Auto-detected label column: {col}")
+                    break
+                }
+            }
+        }
+
+        if (is.null(types)) {
+            stop(paste(
+                "Cannot determine cell types from reference.",
+                "Set `label` in `envs.singler.label`."
+            ))
+        }
+
+        # CRAN SingleR call
+        log$info("Preparing expression matrix ...")
+        sc_data <- as.matrix(GetAssayData(object, layer = "data"))
+
+        clusters <- as.factor(object@meta.data[[ident]])
+        log$info(
+            "Running SingleR with {length(levels(clusters))} clusters ..."
+        )
+
+        args$method <- "cluster"
+        args$sc_data <- sc_data
+        args$ref_data <- ref_data
+        args$types <- types
+        args$clusters <- clusters
+
+        results <- do_call(SingleR, args)
+
+        # Build mapping from labels
+        mapping <- as.list(results$labels)
+    }
+
+    list(mapping = mapping, type = "cluster")
+}
+
+# ---- scina ------------------------------------------------------------------
+
+.run_celltypeannotation_scina <- function(object, args, ident, ctx) {
+    library(SCINA)
+
+    log <- get_logger()
+    db <- args$db
+
+    if (is.null(db)) { stop("`envs.scina.db` is not set") }
+
+    log$info("Loading SCINA signature file ...")
+    mt <- load_marker_table(db)
+    if (!is_marker_canonical(mt)) {
+        # Native signature formats have no tissue/cancer/species columns
+        stop_on_filtering_native_db(
+            args$tissue, args$cancer, args$species
+        )
+    }
+    if (is_marker_canonical(mt)) {
+        signatures <- markers_to_named_list(
+            mt,
+            tissue = args$tissue,
+            cancer = args$cancer,
+            species = args$species
+        )
+    } else if (is.data.frame(mt)) {
+        # Native per-cell-type-column CSV/TSV (one column per cell type)
+        signatures <- lapply(mt, function(x) x[!is.na(x) & x != ""])
+    } else if (is.list(mt)) {
+        signatures <- mt  # RDS named list
+    } else {
+        stop("Cannot recognize the SCINA signature file format.")
+    }
+    # The filter envs are consumed by the marker conversion above; never
+    # forward them to SCINA() which has no such arguments
+    args$tissue <- NULL
+    args$cancer <- NULL
+    args$species <- NULL
+
+    if (!is.list(signatures) || is.null(names(signatures))) {
+        stop("SCINA signatures must be a named list")
+    }
+
+    # Get expression matrix (log-normalized, genes x cells)
+    log$info("Preparing expression matrix...")
+    exp <- as.matrix(GetAssayData(object, layer = "data"))
+
+    # Drop signature genes not in the expression matrix, and simulate SCINA's
+    # rm_overlap removal, so signatures emptied by either are dropped here
+    # with a clear warning (SCINA chokes on an empty signature with a cryptic
+    # chol() error).
+    log$info("Filtering signatures against the expression matrix...")
+    signatures <- lapply(
+        signatures,
+        function(x) unique(x[x %in% row.names(exp)])
+    )
+    rm_overlap <- args$rm_overlap %||% formals(SCINA)$rm_overlap %||% 1
+    if (isTRUE(rm_overlap) || rm_overlap == 1) {
+        counts <- table(unlist(signatures))
+        signatures <- lapply(
+            signatures,
+            function(x) x[x %in% names(counts[counts == 1])]
+        )
+    }
+    signatures <- lapply(
+        signatures,
+        function(x) x[apply(exp[x, , drop = F], 1, sd) > 0]
+    )
+    n_genes <- lengths(signatures)
+    if (any(n_genes == 0)) {
+        log$warn(sprintf(
+            paste(
+                "Dropping %d signature(s) with no genes in the expression matrix:",
+                "%s"
+            ),
+            sum(n_genes == 0),
+            paste(names(n_genes)[n_genes == 0], collapse = ", ")
+        ))
+        signatures <- signatures[n_genes > 0]
+    }
+    if (length(signatures) == 0) {
+        stop("No SCINA signatures have genes in the expression matrix.")
+    }
+
+    # Run SCINA
+    log$info("Running SCINA...")
+    args$db <- NULL  # db is passed separately as scina_db
+    args$exp <- exp
+    args$signatures <- signatures
+    results <- do_call(SCINA, args)
+
+    cell_labels <- results$cell_labels
+    result <- data.frame(
+        scina_celltype = unname(cell_labels),
+        row.names = names(cell_labels)
+    )
+
+    if (is.null(ident)) {
+        list(mapping = result, type = "cell")
+    } else {
+        # Aggregate per-cell results to cluster-level mapping (majority vote)
+        log$info("Aggregating SCINA results by cluster...")
+        mapping <- majority_vote(
+            cell_labels, as.character(object@meta.data[[ident]])
+        )
+        list(mapping = mapping, type = "cluster", cells = result)
+    }
+}
+
+# ---- cellid -----------------------------------------------------------------
+
+.run_celltypeannotation_cellid <- function(object, args, ident, ctx) {
+    library(CelliD)
+
+    log <- get_logger()
+    db <- args$db
+
+    if (is.null(db)) {
+        stop("`envs.cellid.db` is required for CelliD annotation")
+    }
+
+    # Load marker gene list from file
+    marker_info <- load_marker_table(db)
+    if (!is_marker_canonical(marker_info)) {
+        # Native signature formats have no tissue/cancer/species columns
+        stop_on_filtering_native_db(
+            args$tissue, args$cancer, args$species
+        )
+    }
+    if (is_marker_canonical(marker_info)) {
+        pathways <- markers_to_named_list(
+            marker_info,
+            tissue = args$tissue,
+            cancer = args$cancer,
+            species = args$species
+        )
+        args$tissue <- NULL
+        args$cancer <- NULL
+        args$species <- NULL
+    } else if (is.data.frame(marker_info)) {
+        stop("CSV/TSV must have 'gene' and 'cell_type' columns.")
+    } else if (is.list(marker_info)) {
+        pathways <- marker_info
+    } else {
+        stop("CelliD marker gene info must be a named list.")
+    }
+
+    nmcs <- args$nmcs %||% 50
+    n_features <- args$n_features %||% 200
+    dims <- args$dims %||% seq(nmcs)
+    min_size <- args$min_size %||% 10
+    log_trans <- args$log_trans %||% TRUE
+    p_adjust <- args$p_adjust %||% TRUE
+
+    # Run MCA
+    log$info("Running MCA with {nmcs} components ...")
+    object <- RunMCA(object, nmcs = nmcs)
+
+    # Run per-cell hypergeometric test
+    log$info(
+        "Running per-cell hypergeometric test against {length(pathways)} gene sets ..."
+    )
+    enrichment <- RunCellHGT(
+        X = object,
+        pathways = pathways,
+        reduction = "mca",
+        n.features = n_features,
+        dims = dims,
+        minSize = min_size,
+        log.trans = log_trans,
+        p.adjust = p_adjust
+    )
+
+    # Convert enrichment matrix to cell type predictions (argmax per cell)
+    # enrichment is: pathways (cell types) x cells
+    enrichment <- as.matrix(enrichment)
+    cell_type_names <- rownames(enrichment)
+    pred_idx <- apply(enrichment, 2, which.max)
+    predicted <- cell_type_names[pred_idx]
+    names(predicted) <- colnames(enrichment)
+
+    # Build cell annotations data frame
+    result <- data.frame(
+        cellid_celltype = predicted,
+        row.names = names(predicted)
+    )
+
+    if (is.null(ident)) {
+        list(mapping = result, type = "cell")
+    } else {
+        # Aggregate per-cell results to cluster-level mapping (majority vote)
+        log$info("Aggregating CelliD results by cluster...")
+        mapping <- majority_vote(
+            predicted, as.character(object@meta.data[[ident]])
+        )
+        list(mapping = mapping, type = "cluster", cells = result)
+    }
+}
+
+# ---- sccatch ----------------------------------------------------------------
+
+.run_celltypeannotation_sccatch <- function(object, args, ident, ctx) {
+    library(scCATCH)
+
+    log <- get_logger()
+
+    if (!is.null(args$marker)) {
+        cellmatch <- load_marker_table(args$marker)
+        if (is_marker_canonical(cellmatch)) {
+            cellmatch <- markers_to_sccatch_df(
+                cellmatch,
+                tissue = args$tissue,
+                cancer = args$cancer,
+                species = args$species
+            )
+            args$tissue <- NULL
+            args$cancer <- NULL
+            args$species <- NULL
+        } else if (!is.data.frame(cellmatch)) {
+            stop("The custom marker file for scCATCH must be a table or data.frame.")
+        } else {
+            # A non-universal marker data.frame: filter by the columns if the
+            # filter envs are set. scCATCH itself won't filter the markers
+            # when `if_use_custom_marker` is TRUE (see below).
+            cellmatch <- apply_marker_filters(
+                cellmatch,
+                tissue = args$tissue,
+                cancer = args$cancer,
+                species = args$species
+            )
+        }
+        args$if_use_custom_marker <- TRUE
+    } else {
+        args$cancer <- args$cancer %||% "Normal"
+    }
+    args$marker <- cellmatch
+
+    if (is.integer(args$use_method)) {
+        args$use_method <- as.character(args$use_method)
+    }
+
+    # Check if there is less than 2 clusters
+    num_clusters <- length(unique(object@meta.data[[ident]]))
+    if (num_clusters < 2) {
+        stop(paste(
+            "The number of clusters is less than 2.",
+            "Sccatch requires at least 2 clusters to perform cell type annotation."
+        ))
+    }
+
+    log$info("Running createscCATCH ...")
+    obj <- createscCATCH(
+        data = GetAssayData(object, assay = args$assay),
+        cluster = as.character(object@meta.data[[ident]])
+    )
+    args$object <- obj
+
+    log$info("Running findmarkergene ...")
+    obj <- do_call(findmarkergene, args)
+
+    log$info("Running findcelltype ...")
+    obj <- findcelltype(object = obj)
+
+    celltypes <- as.list(obj@celltype$cell_type)
+    names(celltypes) <- obj@celltype$cluster
+
+    if (length(celltypes) == 0) {
+        log$warn("- No cell types annotated from the database!")
+    }
+
+    list(mapping = celltypes, type = "cluster")
+}
+
+# ---- llmcelltype ------------------------------------------------------------
+
+.run_celltypeannotation_llmcelltype <- function(object, args, ident, ctx) {
+    library(LLMCellType)
+
+    log <- get_logger()
+
+    llmcelltype_argnames <- formalArgs(LLMCellType::llmcelltype)
+    markers_args <- args[setdiff(names(args), llmcelltype_argnames)]
+    args <- args[intersect(names(args), llmcelltype_argnames)]
+
+    # Run FindAllMarkers
+    log$info("Find the markers for {ident} ...")
+    markers_args$object <- object
+    markers_args$group_by <- ident
+    markers_args$ident_1 <- NULL
+    markers_args$ident_2 <- NULL
+    markers_args$log_prefix <- " * "
+    markers_args$log <- log
+
+    sigmarkers <- markers_args$sigmarkers
+    markers_args$sigmarkers <- NULL
+
+    args$input <- do_call(RunSeuratDEAnalysis, markers_args)
+    colnames(args$input)[ncol(args$input)] <- "cluster"
+    if (!is.null(sigmarkers)) {
+        log$info("Filtering markers with sigmarkers: {sigmarkers}")
+        args$input <- filter(args$input, !!parse_expr(sigmarkers))
+    }
+    rm(object)
+    rm(markers_args)
+    gc()
+
+    # Run LLMCelltype
+    log$info("Running LLMCelltype with model '{args$model}' ...")
+    res <- do_call(LLMCellType::llmcelltype, args)
+    if (isTRUE(args$return_prompt)) {
+        stop("LLMCellType prompt:\n\n", res, "\n\n")
+    }
+    if (is.character(res) && length(res) == 1 && startsWith(res, "Identify cell types")) {
+        stop("LLMCellType failed, do you have the correct API key set?")
+    }
+
+    # Build mapping (res is named vector: cluster → cell type)
+    mapping <- as.list(res)
+    list(mapping = mapping, type = "cluster")
+}
