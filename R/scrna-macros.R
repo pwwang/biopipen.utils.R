@@ -4467,7 +4467,14 @@ RunModuleScoring <- function(
     scagenttype    = list(level = "cluster", h5ad = TRUE),
     cellid         = list(level = "cell"),
     direct         = list(level = "cluster"),
-    cell           = list(level = "cell")
+    cell           = list(level = "cell"),
+    # ---- equal-weighting scorers (no learned weights) ----
+    # Per-cell signature scores with unit weights; the label is the argmax of
+    # the signature scores, and `ident` aggregates them by majority vote.
+    ucell          = list(level = "cell"),
+    aucell         = list(level = "cell"),
+    gsva           = list(level = "cell"),
+    singscore      = list(level = "cell")
 )
 
 #' List the cell type annotation tools supported by [RunCellTypeAnnotation()]
@@ -4646,7 +4653,11 @@ RunCellTypeAnnotation <- function(
         scagenttype    = .run_celltypeannotation_scagenttype(object, args, ident, ctx),
         cellid         = .run_celltypeannotation_cellid(object, args, ident, ctx),
         direct         = .run_celltypeannotation_direct(object, args, ident, ctx),
-        cell           = .run_celltypeannotation_cell(object, args, ident, ctx)
+        cell           = .run_celltypeannotation_cell(object, args, ident, ctx),
+        ucell          = .run_celltypeannotation_ucell(object, args, ident, ctx),
+        aucell         = .run_celltypeannotation_aucell(object, args, ident, ctx),
+        gsva           = .run_celltypeannotation_gsva(object, args, ident, ctx),
+        singscore      = .run_celltypeannotation_singscore(object, args, ident, ctx)
     )
     if (is.null(result)) {
         result <- list()

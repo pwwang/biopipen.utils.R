@@ -2183,3 +2183,289 @@ patch_garnett_run_classifier <- function(log) {
         list(mapping = mapping, type = "cluster", cells = result)
     }
 }
+
+# ---- ucell ------------------------------------------------------------------
+
+.run_celltypeannotation_ucell <- function(object, args, ident, ctx) {
+    # UCell (Andreatta & Carmona, 2021, doi:10.1016/j.csbj.2021.06.043):
+    # rank-based signature scores with equal (unit) weights — the negative
+    # markers are read from the `-` gene-name suffix (markers_to_ucell_list()).
+    log <- get_logger()
+    db <- args$db
+
+    if (is.null(db)) { stop("`envs.ucell.db` is not set") }
+
+    log$info("Loading UCell marker table ...")
+    mt <- load_marker_table(db)
+    if (!is_marker_canonical(mt)) {
+        # Native signature formats have no tissue/cancer/species columns
+        stop_on_filtering_native_db(args$tissue, args$cancer, args$species)
+        stop(paste0(
+            "The UCell db must be a universal marker table ",
+            "(a table with `cell_type` and `gene` columns)."
+        ))
+    }
+    mt <- apply_marker_filters(
+        mt,
+        tissue = args$tissue,
+        cancer = args$cancer,
+        species = args$species
+    )
+    sets <- markers_to_ucell_list(mt)
+
+    # Defaults are the UCell defaults (`maxRank` 1000 is biopipen's own default)
+    max_rank <- args$maxRank %||% 1000
+    w_neg <- args$w_neg %||% 1
+    name <- args$name %||% "_UCell"
+
+    log$info("Running UCell on {length(sets)} signatures ...")
+    object <- UCell::AddModuleScore_UCell(
+        object,
+        features = sets,
+        maxRank = max_rank,
+        w_neg = w_neg,
+        # NULL falls back to the default assay of the object
+        assay = args$assay,
+        name = name
+    )
+
+    # The scores land in the metadata as `<signature><name>`; drop the suffix so
+    # the argmax labels are the cell types themselves. `sort()` keeps one
+    # deterministic column order across runs.
+    set_names <- sort(names(sets))
+    scores <- as.matrix(
+        object@meta.data[, paste0(set_names, name), drop = FALSE]
+    )
+    colnames(scores) <- set_names
+    labels <- colnames(scores)[max.col(scores, ties.method = "first")]
+
+    result <- data.frame(
+        ucell_celltype = unname(labels),
+        row.names = colnames(object)
+    )
+
+    if (is.null(ident)) {
+        list(mapping = result, type = "cell")
+    } else {
+        log$info("Aggregating UCell results by cluster...")
+        mapping <- majority_vote(labels, as.character(object@meta.data[[ident]]))
+        list(mapping = mapping, type = "cluster", cells = result)
+    }
+}
+
+# ---- aucell -----------------------------------------------------------------
+
+.run_celltypeannotation_aucell <- function(object, args, ident, ctx) {
+    # AUCell (Van de Sande et al., 2020, doi:10.1038/s41596-020-0336-2): the AUC
+    # of the signature genes in the per-cell ranking, equal-weighting by design.
+    log <- get_logger()
+    db <- args$db
+
+    if (is.null(db)) { stop("`envs.aucell.db` is not set") }
+
+    log$info("Loading AUCell marker table ...")
+    mt <- load_marker_table(db)
+    if (!is_marker_canonical(mt)) {
+        # Native signature formats have no tissue/cancer/species columns
+        stop_on_filtering_native_db(args$tissue, args$cancer, args$species)
+        stop(paste0(
+            "The AUCell db must be a universal marker table ",
+            "(a table with `cell_type` and `gene` columns)."
+        ))
+    }
+    mt <- apply_marker_filters(
+        mt,
+        tissue = args$tissue,
+        cancer = args$cancer,
+        species = args$species
+    )
+    # AUCell gene sets are positive-only (a ranked list has no direction), so
+    # the negative markers are dropped by markers_to_named_list() below
+    if ("direction" %in% colnames(mt) &&
+        any(normalize_marker_direction(mt$direction) == "negative")) {
+        log$warn(paste0(
+            "AUCell has no direction support: dropping the ",
+            "negative-direction markers."
+        ))
+    }
+    sets <- markers_to_named_list(mt)
+
+    # genes x cells, log-normalized data layer
+    expr <- as.matrix(GetAssayData(object, assay = args$assay, layer = "data"))
+    auc_max_rank <- args$aucMaxRank %||% ceiling(0.05 * nrow(expr))
+    norm_auc <- args$normAUC %||% TRUE
+
+    log$info("Building AUCell rankings ...")
+    rankings <- AUCell::AUCell_buildRankings(
+        expr, plotStats = FALSE, splitByBlocks = TRUE
+    )
+    log$info("Running AUCell on {length(sets)} signatures ...")
+    auc <- AUCell::AUCell_calcAUC(
+        sets, rankings, aucMaxRank = auc_max_rank, normAUC = norm_auc
+    )
+    # getAUC() is sets x cells; transpose to cells x sets for the argmax
+    scores <- t(AUCell::getAUC(auc))
+    labels <- colnames(scores)[max.col(scores, ties.method = "first")]
+
+    result <- data.frame(
+        aucell_celltype = unname(labels),
+        row.names = colnames(object)
+    )
+
+    if (is.null(ident)) {
+        list(mapping = result, type = "cell")
+    } else {
+        log$info("Aggregating AUCell results by cluster...")
+        mapping <- majority_vote(labels, as.character(object@meta.data[[ident]]))
+        list(mapping = mapping, type = "cluster", cells = result)
+    }
+}
+
+# ---- gsva -------------------------------------------------------------------
+
+.run_celltypeannotation_gsva <- function(object, args, ident, ctx) {
+    # GSVA (Hänzelmann et al., 2013, doi:10.1186/1471-2105-14-7): a per-sample
+    # (here: per-cell) enrichment score for each gene set, with no weights.
+    log <- get_logger()
+    db <- args$db
+
+    if (is.null(db)) { stop("`envs.gsva.db` is not set") }
+
+    log$info("Loading GSVA marker table ...")
+    mt <- load_marker_table(db)
+    if (!is_marker_canonical(mt)) {
+        # Native signature formats have no tissue/cancer/species columns
+        stop_on_filtering_native_db(args$tissue, args$cancer, args$species)
+        stop(paste0(
+            "The GSVA db must be a universal marker table ",
+            "(a table with `cell_type` and `gene` columns)."
+        ))
+    }
+    mt <- apply_marker_filters(
+        mt,
+        tissue = args$tissue,
+        cancer = args$cancer,
+        species = args$species
+    )
+    # A GSVA gene set carries no direction: its score is the enrichment of the
+    # set in the cell, so a down-regulated marker cannot be expressed as a set
+    if ("direction" %in% colnames(mt) &&
+        any(normalize_marker_direction(mt$direction) == "negative")) {
+        log$warn(paste0(
+            "GSVA has no direction support: dropping the ",
+            "negative-direction markers."
+        ))
+    }
+    sets <- markers_to_named_list(mt)
+
+    # genes x cells, log-normalized data layer (Gaussian kernel by default)
+    expr <- as.matrix(GetAssayData(object, assay = args$assay, layer = "data"))
+
+    log$info("Running GSVA on {length(sets)} signatures ...")
+    scores <- GSVA::gsva(
+        GSVA::gsvaParam(
+            expr, sets,
+            kcdf = args$kcdf %||% "Gaussian",
+            minSize = args$minSize %||% 1,
+            maxSize = args$maxSize %||% Inf
+        ),
+        verbose = FALSE
+    )
+    # gsva() returns sets x cells; max.col() needs the cells as rows
+    labels <- rownames(scores)[max.col(t(scores), ties.method = "first")]
+
+    result <- data.frame(
+        gsva_celltype = unname(labels),
+        row.names = colnames(object)
+    )
+
+    if (is.null(ident)) {
+        list(mapping = result, type = "cell")
+    } else {
+        log$info("Aggregating GSVA results by cluster...")
+        mapping <- majority_vote(labels, as.character(object@meta.data[[ident]]))
+        list(mapping = mapping, type = "cluster", cells = result)
+    }
+}
+
+# ---- singscore --------------------------------------------------------------
+
+.run_celltypeannotation_singscore <- function(object, args, ident, ctx) {
+    # singscore (Foroutan et al., 2018, doi:10.1186/s12859-018-2435-4): a
+    # rank-based score over each signature's up and down gene sets, unweighted.
+    log <- get_logger()
+    db <- args$db
+
+    if (is.null(db)) { stop("`envs.singscore.db` is not set") }
+
+    log$info("Loading singscore marker table ...")
+    mt <- load_marker_table(db)
+    if (!is_marker_canonical(mt)) {
+        # Native signature formats have no tissue/cancer/species columns
+        stop_on_filtering_native_db(args$tissue, args$cancer, args$species)
+        stop(paste0(
+            "The singscore db must be a universal marker table ",
+            "(a table with `cell_type` and `gene` columns)."
+        ))
+    }
+    mt <- apply_marker_filters(
+        mt,
+        tissue = args$tissue,
+        cancer = args$cancer,
+        species = args$species
+    )
+    # The direction is native in singscore: no marker is dropped here
+    sets <- markers_to_singscore_list(mt)
+
+    # genes x cells, log-normalized data layer
+    expr <- as.matrix(GetAssayData(object, assay = args$assay, layer = "data"))
+    log$info("Ranking the genes of {ncol(expr)} cells ...")
+    ranked <- singscore::rankGenes(expr)
+
+    # simpleScore() dispatches on the class of every argument, so `downSet` can
+    # only be passed when the cell type has negative markers, and `subSamples` /
+    # `centerScore` only when the caller set them
+    score_one <- function(set) {
+        extra <- list()
+        if (length(set$down) > 0) {
+            extra$downSet <- set$down
+        }
+        if (!is.null(args$subSamples)) {
+            extra$subSamples <- args$subSamples
+        }
+        if (!is.null(args$centerScore)) {
+            extra$centerScore <- args$centerScore
+        }
+        do_call(
+            singscore::simpleScore,
+            c(list(rankData = ranked, upSet = set$up), extra)
+        )$TotalScore
+    }
+    log$info("Running singscore on {length(sets)} signatures ...")
+    scores <- do.call(cbind, lapply(sets, score_one))
+    # The score columns are in the order of the ranked cells; `subSamples` (if
+    # given) scores a subset of them only
+    scored_cells <- colnames(ranked)
+    if (!is.null(args$subSamples)) {
+        scored_cells <- scored_cells[args$subSamples]
+    }
+    rownames(scores) <- scored_cells
+    labels <- colnames(scores)[max.col(scores, ties.method = "first")]
+    names(labels) <- scored_cells
+    # Align back to the object, so the result always has one row per cell (NA
+    # for the cells `subSamples` left out)
+    labels <- labels[colnames(object)]
+
+    result <- data.frame(
+        singscore_celltype = unname(labels),
+        row.names = colnames(object)
+    )
+
+    if (is.null(ident)) {
+        list(mapping = result, type = "cell")
+    } else {
+        log$info("Aggregating singscore results by cluster...")
+        mapping <- majority_vote(labels, as.character(object@meta.data[[ident]]))
+        list(mapping = mapping, type = "cluster", cells = result)
+    }
+}

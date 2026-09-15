@@ -11,7 +11,8 @@ test_that("celltype_annotation_tools lists the built-in tools", {
     expect_true(all(c(
         "hitype", "sctype", "sccatch", "celltypist", "scsorter", "scina", "garnett",
         "singler", "schdeepinsight", "llmcelltype", "cellassign", "scbert",
-        "scagenttype", "cellid", "direct", "cell"
+        "scagenttype", "cellid", "direct", "cell",
+        "ucell", "aucell", "gsva", "singscore"
     ) %in% names(tools)))
     expect_equal(tools$sctype$level, "cluster")
     expect_equal(tools$hitype$level, "cell")

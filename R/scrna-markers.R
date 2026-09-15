@@ -476,6 +476,77 @@ markers_to_garnett_file <- function(df, file, tissue = NULL, cancer = NULL, spec
     file
 }
 
+# Convert a canonical marker table to the UCell signature format
+# Negative-direction markers get a `-` appended (UCell reads the direction from
+# the gene name); UCell has no per-gene weights
+#' Convert a marker table to the UCell signature format
+#'
+#' @description A named list of gene vectors, one per cell type, in the UCell
+#' signature format.
+#'
+#' @details UCell reads the marker direction from the gene name: a gene whose
+#' name ends in `-` is a negative marker (it contributes `w_neg` times its
+#' score, subtracted), while a trailing `+` is stripped. Negative-direction
+#' rows therefore get a `-` appended to the gene symbol and positive rows pass
+#' through unchanged. UCell has no per-gene weights, so a `weight` column is
+#' deliberately ignored.
+#'
+#' @param df A canonical marker table.
+#' @return A named list of gene vectors, named by the cell types.
+#' @export
+markers_to_ucell_list <- function(df) {
+    direction <- if ("direction" %in% colnames(df)) {
+        normalize_marker_direction(df$direction)
+    } else {
+        rep("positive", nrow(df))
+    }
+    gene <- as.character(df$gene)
+    cell_types <- unique(df$cell_type)
+    sets <- lapply(cell_types, function(ct) {
+        rows <- df$cell_type == ct
+        pos <- sort(unique(gene[rows & direction == "positive"]))
+        neg <- sort(unique(gene[rows & direction == "negative"]))
+        # paste0(character(0), "-") is "-", not empty
+        c(pos, if (length(neg) > 0) paste0(neg, "-"))
+    })
+    names(sets) <- cell_types
+    sets
+}
+
+# Convert a canonical marker table to the singscore format
+# singscore takes the up and the down sets natively, so the direction is kept
+#' Convert a marker table to the singscore format
+#'
+#' @description A named list of `up`/`down` gene sets, one per cell type, for
+#' [singscore::simpleScore()].
+#'
+#' @details The direction is native here, so both marker directions are kept:
+#' positive-direction rows become `up` and negative-direction rows become
+#' `down`.
+#'
+#' @param df A canonical marker table.
+#' @return A named list of `list(up = <genes>, down = <genes>)`, named by the
+#' cell types.
+#' @export
+markers_to_singscore_list <- function(df) {
+    direction <- if ("direction" %in% colnames(df)) {
+        normalize_marker_direction(df$direction)
+    } else {
+        rep("positive", nrow(df))
+    }
+    gene <- as.character(df$gene)
+    cell_types <- unique(df$cell_type)
+    sets <- lapply(cell_types, function(ct) {
+        rows <- df$cell_type == ct
+        list(
+            up = sort(unique(gene[rows & direction == "positive"])),
+            down = sort(unique(gene[rows & direction == "negative"]))
+        )
+    })
+    names(sets) <- cell_types
+    sets
+}
+
 # Majority-vote helper for cell-level tools with ident
 #' Majority vote the labels of each cluster
 #'
