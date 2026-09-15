@@ -258,7 +258,7 @@ gene_sets_prepare_ <- function(cell_markers) {
     markers_all = sort(markers_all)
 
     if(length(markers_all) > 0){
-      suppressMessages({markers_all = unique(na.omit(checkGeneSymbols(markers_all)$Suggested.Symbol))})
+      suppressMessages({markers_all = unique(na.omit(HGNChelper::checkGeneSymbols(markers_all)$Suggested.Symbol))})
       paste0(markers_all, collapse=",")
     } else {
       ""
@@ -273,7 +273,7 @@ gene_sets_prepare_ <- function(cell_markers) {
     markers_all = sort(markers_all)
 
     if(length(markers_all) > 0){
-      suppressMessages({markers_all = unique(na.omit(checkGeneSymbols(markers_all)$Suggested.Symbol))})
+      suppressMessages({markers_all = unique(na.omit(HGNChelper::checkGeneSymbols(markers_all)$Suggested.Symbol))})
       paste0(markers_all, collapse=",")
     } else {
       ""
@@ -398,8 +398,6 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
 # ---- hitype ----------------------------------------------------------------
 
 .run_celltypeannotation_hitype <- function(object, args, ident, ctx) {
-    library(hitype)
-
     log <- get_logger()
 
     tissue <- args$tissue
@@ -417,7 +415,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     if (startsWith(db, "hitypedb_") && !grepl(".", db, fixed = TRUE)) {
         # Built-in databases have no cancer/species columns
         stop_on_filtering_native_db(NULL, cancer, species)
-        gs_list <- gs_prepare(eval(as.symbol(db)), tissue)
+        gs_list <- hitype::gs_prepare(getExportedValue("hitype", db), tissue)
     } else {
         db_markers <- load_marker_table(db)
         if (!is.data.frame(db_markers) || !is_marker_canonical(db_markers)) {
@@ -427,7 +425,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         }
         if (is.character(db_markers)) {
             # native ScType xlsx passthrough
-            gs_list <- gs_prepare(db_markers, tissue)
+            gs_list <- hitype::gs_prepare(db_markers, tissue)
         } else {
             if (!is.data.frame(db_markers)) {
                 stop("Cannot recognize the hitype database format. ",
@@ -454,10 +452,10 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
                 )
                 # Tissues already filtered above; gs_prepare accepts a
                 # data.frame directly
-                gs_list <- gs_prepare(db_markers, NULL)
+                gs_list <- hitype::gs_prepare(db_markers, NULL)
             } else {
                 # Native hitype/ScType db-format data.frame
-                gs_list <- gs_prepare(db_markers, tissue)
+                gs_list <- hitype::gs_prepare(db_markers, tissue)
             }
         }
     }
@@ -470,7 +468,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     # script), so it maps 1:1. Older hitype builds without the `ident`
     # argument fail here with an "unused argument" error — update hitype.
     log$info("Running RunHitype...")
-    object <- RunHitype(
+    object <- hitype::RunHitype(
         object, gs_list, ident = ident, threshold = threshold, make_unique = TRUE,
         norm = norm, use_sensitivity = use_sensitivity
     )
@@ -502,8 +500,6 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
 # ---- sctype ----------------------------------------------------------------
 
 .run_celltypeannotation_sctype <- function(object, args, ident, ctx) {
-    library(HGNChelper)
-
     log <- get_logger()
 
     tissue <- args$tissue
@@ -663,7 +659,6 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
             "Please install the pwwang/scSorter package from GitHub."
         ))
     }
-    library(scSorter)
 
     log <- get_logger()
     db <- args$db
@@ -715,7 +710,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     args$object <- object
     args$anno <- anno
     args$mc.cores <- args$mc.cores %||% 1L
-    object <- do_call(RunScSorter, args)
+    object <- do_call(scSorter::RunScSorter, args)
 
     # RunScSorter stores per-cell predictions in the scSorter_celltype column;
     # aggregate to one type per cluster by majority vote
@@ -731,8 +726,6 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
 # ---- singler ----------------------------------------------------------------
 
 .run_celltypeannotation_singler <- function(object, args, ident, ctx) {
-    library(SingleR)
-
     log <- get_logger()
     db <- args$db
 
@@ -749,7 +742,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     # Detect which SingleR API is available:
     # - Bioconductor (LTLA): SingleR(test, ref, labels, clusters, ...)
     # - CRAN (dviraran):    SingleR(sc_data, ref_data, types, clusters, ...)
-    is_bioc <- "test" %in% names(formals(SingleR))
+    is_bioc <- "test" %in% names(formals(SingleR::SingleR))
     log$info(
         "Using SingleR {ifelse(is_bioc, 'Bioconductor', 'CRAN')} API"
     )
@@ -768,7 +761,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         # Bioconductor API: ref is a SummarizedExperiment, labels is a vector
         if (inherits(ref, "Seurat")) {
             log$info("Converting Seurat reference to SummarizedExperiment ...")
-            ref <- as.SingleCellExperiment(ref)
+            ref <- Seurat::as.SingleCellExperiment(ref)
         }
 
         if (!is.null(label_col)) {
@@ -815,7 +808,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         args$labels <- labels
         args$clusters <- clusters
 
-        results <- do_call(SingleR, args)
+        results <- do_call(SingleR::SingleR, args)
 
         # Build mapping (prefer pruned.labels, fall back to labels)
         mapping <- as.list(results$pruned.labels)
@@ -888,7 +881,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         args$types <- types
         args$clusters <- clusters
 
-        results <- do_call(SingleR, args)
+        results <- do_call(SingleR::SingleR, args)
 
         # Build mapping from labels
         mapping <- as.list(results$labels)
@@ -900,8 +893,6 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
 # ---- scina ------------------------------------------------------------------
 
 .run_celltypeannotation_scina <- function(object, args, ident, ctx) {
-    library(SCINA)
-
     log <- get_logger()
     db <- args$db
 
@@ -953,7 +944,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         signatures,
         function(x) unique(x[x %in% row.names(exp)])
     )
-    rm_overlap <- args$rm_overlap %||% formals(SCINA)$rm_overlap %||% 1
+    rm_overlap <- args$rm_overlap %||% formals(SCINA::SCINA)$rm_overlap %||% 1
     if (isTRUE(rm_overlap) || rm_overlap == 1) {
         counts <- table(unlist(signatures))
         signatures <- lapply(
@@ -986,7 +977,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     args$db <- NULL  # db is passed separately as scina_db
     args$exp <- exp
     args$signatures <- signatures
-    results <- do_call(SCINA, args)
+    results <- do_call(SCINA::SCINA, args)
 
     cell_labels <- results$cell_labels
     result <- data.frame(
@@ -1009,8 +1000,6 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
 # ---- cellid -----------------------------------------------------------------
 
 .run_celltypeannotation_cellid <- function(object, args, ident, ctx) {
-    library(CelliD)
-
     log <- get_logger()
     db <- args$db
 
@@ -1053,13 +1042,13 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
 
     # Run MCA
     log$info("Running MCA with {nmcs} components ...")
-    object <- RunMCA(object, nmcs = nmcs)
+    object <- CelliD::RunMCA(object, nmcs = nmcs)
 
     # Run per-cell hypergeometric test
     log$info(
         "Running per-cell hypergeometric test against {length(pathways)} gene sets ..."
     )
-    enrichment <- RunCellHGT(
+    enrichment <- CelliD::RunCellHGT(
         X = object,
         pathways = pathways,
         reduction = "mca",
@@ -1099,8 +1088,6 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
 # ---- sccatch ----------------------------------------------------------------
 
 .run_celltypeannotation_sccatch <- function(object, args, ident, ctx) {
-    library(scCATCH)
-
     log <- get_logger()
 
     if (!is.null(args$marker)) {
@@ -1148,17 +1135,17 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     }
 
     log$info("Running createscCATCH ...")
-    obj <- createscCATCH(
+    obj <- scCATCH::createscCATCH(
         data = GetAssayData(object, assay = args$assay),
         cluster = as.character(object@meta.data[[ident]])
     )
     args$object <- obj
 
     log$info("Running findmarkergene ...")
-    obj <- do_call(findmarkergene, args)
+    obj <- do_call(scCATCH::findmarkergene, args)
 
     log$info("Running findcelltype ...")
-    obj <- findcelltype(object = obj)
+    obj <- scCATCH::findcelltype(object = obj)
 
     celltypes <- as.list(obj@celltype$cell_type)
     names(celltypes) <- obj@celltype$cluster
@@ -1173,8 +1160,6 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
 # ---- llmcelltype ------------------------------------------------------------
 
 .run_celltypeannotation_llmcelltype <- function(object, args, ident, ctx) {
-    library(LLMCellType)
-
     log <- get_logger()
 
     llmcelltype_argnames <- formalArgs(LLMCellType::llmcelltype)
@@ -1249,12 +1234,12 @@ patch_garnett_make_predictions <- function(log) {
             if (is.null(cvfit)) {
                 child_cell_types <- igraph::V(
                     classifier@classification_tree
-                )[suppressWarnings(.outnei(curr_node))]$name
+                )[suppressWarnings(igraph::.outnei(curr_node))]$name
                 predictions <- matrix(
                     FALSE,
-                    nrow = nrow(colData(cds)),
+                    nrow = nrow(SummarizedExperiment::colData(cds)),
                     ncol = length(child_cell_types),
-                    dimnames = list(row.names(colData(cds)), child_cell_types)
+                    dimnames = list(row.names(SummarizedExperiment::colData(cds)), child_cell_types)
                 )
                 predictions <- split(
                     predictions,
@@ -1266,7 +1251,7 @@ patch_garnett_make_predictions <- function(log) {
                 candidate_model_genes <-
                     cvfit$glmnet.fit$beta[[1]]@Dimnames[[1]]
                 good_genes <- intersect(
-                    row.names(counts(cds)), candidate_model_genes
+                    row.names(SingleCellExperiment::counts(cds)), candidate_model_genes
                 )
                 if (length(good_genes) == 0) {
                     stop(paste(
@@ -1275,9 +1260,9 @@ patch_garnett_make_predictions <- function(log) {
                         "the correct db?"
                     ))
                 }
-                x <- Matrix::t(counts(cds[
+                x <- Matrix::t(SingleCellExperiment::counts(cds[
                     intersect(
-                        row.names(counts(cds)), candidate_model_genes
+                        row.names(SingleCellExperiment::counts(cds)), candidate_model_genes
                     ),
                 ]))
                 extra <- as(matrix(
@@ -1294,11 +1279,11 @@ patch_garnett_make_predictions <- function(log) {
                 ))
                 nonz <- nonz[2:length(nonz)]
                 nonz <- names(nonz[nonz != 0])
-                if (sum(!nonz %in% row.names(counts(cds))) > 0) {
+                if (sum(!nonz %in% row.names(SingleCellExperiment::counts(cds))) > 0) {
                     warning(paste(
                         "The following genes used in the classifier are not",
                         "present in the input CDS. Interpret with caution.",
-                        nonz[!nonz %in% row.names(counts(cds))]
+                        nonz[!nonz %in% row.names(SingleCellExperiment::counts(cds))]
                     ))
                 }
                 temp <- stats::predict(cvfit, newx = x, s = s, type = "response")
@@ -1370,8 +1355,8 @@ patch_garnett_make_predictions <- function(log) {
                 assignments <- assignments[
                     assignments$odds_ratio > random_guess_thresh,
                 ]
-                not_assigned <- row.names(colData(cds))[
-                    !row.names(colData(cds)) %in% assignments$cell_name
+                not_assigned <- row.names(SummarizedExperiment::colData(cds))[
+                    !row.names(SummarizedExperiment::colData(cds)) %in% assignments$cell_name
                 ]
                 if (length(not_assigned) > 0) {
                     assignments <- rbind(
@@ -1399,7 +1384,7 @@ patch_garnett_make_predictions <- function(log) {
                     ]
                     predictions <- predictions[, -1, drop = FALSE]
                     predictions <- predictions[
-                        rownames(colData(cds)), , drop = FALSE
+                        rownames(SummarizedExperiment::colData(cds)), , drop = FALSE
                     ]
                     predictions <- as.matrix(predictions)
                     predictions[is.na(predictions)] <- FALSE
@@ -1419,10 +1404,10 @@ patch_garnett_make_predictions <- function(log) {
                     }
                     predictions <- matrix(
                         FALSE,
-                        nrow = nrow(colData(cds)),
+                        nrow = nrow(SummarizedExperiment::colData(cds)),
                         ncol = length(cell_type_names),
                         dimnames = list(
-                            row.names(colData(cds)), cell_type_names
+                            row.names(SummarizedExperiment::colData(cds)), cell_type_names
                         )
                     )
                     # --- FIX (b): "Unknown" (and any name outside the model's
@@ -1451,9 +1436,9 @@ patch_garnett_make_predictions <- function(log) {
             cell_type_names <- names(cvfit$glmnet.fit$beta)
             predictions <- matrix(
                 FALSE,
-                nrow = nrow(colData(cds)),
+                nrow = nrow(SummarizedExperiment::colData(cds)),
                 ncol = length(cell_type_names),
-                dimnames = list(row.names(colData(cds)), cell_type_names)
+                dimnames = list(row.names(SummarizedExperiment::colData(cds)), cell_type_names)
             )
             predictions <- split(
                 predictions,
@@ -1513,7 +1498,7 @@ patch_garnett_marker_lexer <- function(log) {
 # warn when no cell was classified (degenerate classifier / ratio too strict).
 patch_garnett_run_classifier <- function(log) {
     fix_run_classifier <- function() {
-        src <- deparse(garnett:::run_classifier)
+        src <- deparse(get("run_classifier", envir = asNamespace("garnett")))
         n_cells <- "nrow(SummarizedExperiment::colData(cds))"
         cell_names <- "row.names(SummarizedExperiment::colData(cds))"
         src <- gsub(
@@ -1566,10 +1551,6 @@ patch_garnett_run_classifier <- function(log) {
     # `args` is the caller's list and the body below NULLs keys out of it
     args <- as.list(args)
 
-    library(monocle3)
-    library(garnett)
-    library(SeuratWrappers)
-
     log <- get_logger()
     patch_garnett_make_predictions(log)
     patch_garnett_run_classifier(log)
@@ -1609,7 +1590,7 @@ patch_garnett_run_classifier <- function(log) {
     args$db <- NULL
     args$assay <- NULL
 
-    unknown_args <- setdiff(names(args), formalArgs(classify_cells))
+    unknown_args <- setdiff(names(args), formalArgs(garnett::classify_cells))
     if (length(unknown_args) > 0) {
         stop(paste0(
             "Unknown arguments in `envs.garnett`: ",
@@ -1622,9 +1603,9 @@ patch_garnett_run_classifier <- function(log) {
     # as.cell_data_set is the monocle3 generic; SeuratWrappers only registers
     # the method for Seurat objects (loaded above), so call it unqualified
     cds <- if (is.null(assay)) {
-        as.cell_data_set(object)
+        SeuratWrappers::as.cell_data_set(object)
     } else {
-        as.cell_data_set(object, assay = assay)
+        SeuratWrappers::as.cell_data_set(object, assay = assay)
     }
 
     # classify_cells() hard-asserts a Size_Factor column but overwrites the
@@ -1637,8 +1618,8 @@ patch_garnett_run_classifier <- function(log) {
     # conversion actually happened (a no-op monocle3 would leave the colSums
     # values in place, which is the silent all-"Unknown" trap at training time).
     cds <- monocle3::estimate_size_factors(cds)
-    .sf <- as.numeric(colData(cds)$Size_Factor)
-    .ct <- as.numeric(Matrix::colSums(counts(cds)))
+    .sf <- as.numeric(SummarizedExperiment::colData(cds)$Size_Factor)
+    .ct <- as.numeric(Matrix::colSums(SingleCellExperiment::counts(cds)))
     .g <- exp(mean(log(.ct[.ct > 0])))
     if (anyNA(.sf) || !all(is.finite(.sf))) {
         stop("Could not install finite size factors on the cell_data_set.")
@@ -1658,7 +1639,7 @@ patch_garnett_run_classifier <- function(log) {
 
     # classify_cells() internally normalizes counts(cds); an assay with only a
     # data layer (converted counts are log values) would silently give garbage
-    if (is(counts(cds), "dgCMatrix") && any(counts(cds)@x %% 1 != 0)) {
+    if (is(SingleCellExperiment::counts(cds), "dgCMatrix") && any(SingleCellExperiment::counts(cds)@x %% 1 != 0)) {
         log$warn(paste(
             "The counts of the converted cell_data_set are not integers;",
             "garnett::classify_cells() expects raw counts. Results may be",
@@ -1671,9 +1652,9 @@ patch_garnett_run_classifier <- function(log) {
     classify_args$cds <- cds
     classify_args$classifier <- classifier
     classify_args$db <- db
-    result_cds <- do_call(classify_cells, classify_args)
+    result_cds <- do_call(garnett::classify_cells, classify_args)
 
-    labels <- colData(result_cds)$cell_type
+    labels <- SummarizedExperiment::colData(result_cds)$cell_type
     if (is.null(labels)) {
         stop("classify_cells() did not return a `cell_type` column")
     }
@@ -1714,8 +1695,6 @@ patch_garnett_run_classifier <- function(log) {
 # ---- celltypist -------------------------------------------------------------
 
 .run_celltypeannotation_celltypist <- function(object, args, ident, ctx) {
-    library(hdf5r)
-
     log <- get_logger()
 
     if (is.null(args$model)) {
@@ -2098,8 +2077,6 @@ patch_garnett_run_classifier <- function(log) {
     }
     # load the right Python environment with tensorflow installed
     Sys.setenv(RETICULATE_PYTHON = python)
-
-    library(cellassign)
 
     log <- get_logger()
 
