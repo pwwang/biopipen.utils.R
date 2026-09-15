@@ -1217,3 +1217,992 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     mapping <- as.list(res)
     list(mapping = mapping, type = "cluster")
 }
+
+# ---- garnett ----------------------------------------------------------------
+
+# patch_garnett_make_predictions — replacement for the wrapper function of the
+# same name in biopipen/scripts/scrna/CellTypeAnnotation-garnett.R
+#
+# Root cause being fixed: with glmnet >= 4.0, predict(cv.glmnet, type="response")
+# on a multinomial fit returns a rank-3 array [cells, classes, s]. garnett's
+# `as.matrix(as.data.frame(temp))` then pastes dim2 and dim3 names together, so
+# the class columns come out as "B cell.lambda.min" instead of "B cell", and
+# every class name is mangled before the which.max()/gate logic runs. Fix: cut
+# the singleton `s` dimension down to a plain cells x classes matrix before any
+# data.frame conversion, strip any residual ".lambda.<s>" / ".s=<x>" / ".1"
+# suffix, and refuse loudly if the class dimension cannot be established
+# (all-Unknown is a legitimate result; silently collapsing the classes is not).
+#
+# Usage: replace the existing patch_garnett_make_predictions() in
+# CellTypeAnnotation-garnett.R with this function. The rest of the wrapper is
+# unchanged (it is still called once at the top of annotate_garnett()).
+#' Patch garnett's make_predictions for glmnet >= 4.0 multinomial fits
+#'
+#' @param log Logger
+#' @return Invisibly, the patched namespace function
+#' @export
+patch_garnett_make_predictions <- function(log) {
+    make_predictions_fixed <- function(cds, classifier, curr_node,
+                                       rank_prob_ratio, cores = 1, s) {
+        cvfit <- igraph::V(classifier@classification_tree)[curr_node]$model[[1]]
+        predictions <- tryCatch({
+            if (is.null(cvfit)) {
+                child_cell_types <- igraph::V(
+                    classifier@classification_tree
+                )[suppressWarnings(.outnei(curr_node))]$name
+                predictions <- matrix(
+                    FALSE,
+                    nrow = nrow(colData(cds)),
+                    ncol = length(child_cell_types),
+                    dimnames = list(row.names(colData(cds)), child_cell_types)
+                )
+                predictions <- split(
+                    predictions,
+                    rep(1:ncol(predictions), each = nrow(predictions))
+                )
+                names(predictions) <- child_cell_types
+                predictions
+            } else {
+                candidate_model_genes <-
+                    cvfit$glmnet.fit$beta[[1]]@Dimnames[[1]]
+                good_genes <- intersect(
+                    row.names(counts(cds)), candidate_model_genes
+                )
+                if (length(good_genes) == 0) {
+                    stop(paste(
+                        "None of the model genes are in your CDS object.",
+                        "Did you specify the correct cds_gene_id_type and",
+                        "the correct db?"
+                    ))
+                }
+                x <- Matrix::t(counts(cds[
+                    intersect(
+                        row.names(counts(cds)), candidate_model_genes
+                    ),
+                ]))
+                extra <- as(matrix(
+                    0,
+                    nrow = nrow(x),
+                    ncol = length(setdiff(candidate_model_genes, colnames(x)))
+                ), "sparseMatrix")
+                row.names(extra) <- row.names(x)
+                colnames(extra) <- setdiff(candidate_model_genes, colnames(x))
+                x <- cbind(x, extra)
+                x <- x[, candidate_model_genes]
+                nonz <- Matrix::rowSums(do.call(
+                    cbind, glmnet::coef.glmnet(cvfit, s = "lambda.min")
+                ))
+                nonz <- nonz[2:length(nonz)]
+                nonz <- names(nonz[nonz != 0])
+                if (sum(!nonz %in% row.names(counts(cds))) > 0) {
+                    warning(paste(
+                        "The following genes used in the classifier are not",
+                        "present in the input CDS. Interpret with caution.",
+                        nonz[!nonz %in% row.names(counts(cds))]
+                    ))
+                }
+                temp <- stats::predict(cvfit, newx = x, s = s, type = "response")
+                temp[is.nan(temp)] <- 0
+                # --- FIX (a): with glmnet >= 4 the multinomial response is a
+                # [cells, classes, s] array. Rebuild it as a plain cells x
+                # classes matrix before any data.frame conversion. Two traps:
+                # `temp[, , 1, drop = FALSE]` keeps rank 3, so as.data.frame()
+                # below pastes dim2+dim3 names together and every class comes
+                # out as "<class>.<s-label>"; plain `temp[, , 1]` instead drops
+                # any length-1 dim, so a single-class model collapses to a bare
+                # vector and the class name is lost. Build the matrix by hand
+                # so exactly the class labels survive either way.
+                if (is.array(temp) && length(dim(temp)) > 2) {
+                    if (length(dim(temp)) != 3) {
+                        stop(paste(
+                            "Unexpected predict() rank",
+                            length(dim(temp)), "(dim =",
+                            paste(dim(temp), collapse = " x "),
+                            "); expected [cells, classes, s]"
+                        ))
+                    }
+                    if (dim(temp)[3] != 1) {
+                        stop(paste(
+                            "Expected a single `s` slot in the predict() output,",
+                            "got", dim(temp)[3], "(dim =",
+                            paste(dim(temp), collapse = " x "),
+                            "); refusing to guess the class dimension"
+                        ))
+                    }
+                    temp <- matrix(
+                        temp[, , 1],
+                        nrow = dim(temp)[1],
+                        ncol = dim(temp)[2],
+                        dimnames = list(dimnames(temp)[[1]], dimnames(temp)[[2]])
+                    )
+                }
+                if (is.null(temp) || is.null(dim(temp)) || ncol(temp) < 2) {
+                    stop(paste(
+                        "The classifier returned no usable class dimension",
+                        "(dim =", paste(dim(temp), collapse = " x "),
+                        "); cannot classify"
+                    ))
+                }
+                colnames(temp) <- sub("\\.lambda\\..*$", "", colnames(temp))
+                colnames(temp) <- sub("\\.s=.*$", "", colnames(temp))
+                colnames(temp) <- sub("\\.1$", "", colnames(temp))
+                prediction_probs <- as.matrix(as.data.frame(temp))
+                prediction_probs <-
+                    prediction_probs / Biobase::rowMax(prediction_probs)
+                prediction_probs[is.nan(prediction_probs)] <- 0
+                prediction_probs <- apply(prediction_probs, 1, function(x) {
+                    m <- names(which.max(x))
+                    s <- sort(x, decreasing = T)
+                    c(cell_type = m, odds_ratio = s[1] / s[2])
+                })
+                prediction_probs <- as.data.frame(t(prediction_probs))
+                prediction_probs$cell_name <- row.names(prediction_probs)
+                names(prediction_probs) <- c(
+                    "cell_type", "odds_ratio", "cell_name"
+                )
+                prediction_probs$odds_ratio <- as.numeric(
+                    as.character(prediction_probs$odds_ratio)
+                )
+                assignments <- prediction_probs[
+                    prediction_probs$odds_ratio > rank_prob_ratio,
+                ]
+                random_guess_thresh <- 1 / length(cvfit$glmnet.fit$beta)
+                assignments <- assignments[
+                    assignments$odds_ratio > random_guess_thresh,
+                ]
+                not_assigned <- row.names(colData(cds))[
+                    !row.names(colData(cds)) %in% assignments$cell_name
+                ]
+                if (length(not_assigned) > 0) {
+                    assignments <- rbind(
+                        assignments,
+                        data.frame(
+                            cell_name = not_assigned,
+                            cell_type = NA, odds_ratio = NA
+                        )
+                    )
+                }
+                assignments$cell_type <- stringr::str_replace_all(
+                    assignments$cell_type, "\\.1", ""
+                )
+                predictions <- reshape2::dcast(
+                    assignments,
+                    cell_name ~ cell_type,
+                    value.var = "odds_ratio"
+                )
+                predictions <- predictions[!is.na(predictions$cell_name), ]
+                row.names(predictions) <- predictions$cell_name
+                if (ncol(predictions) > 2) {
+                    predictions <- predictions[
+                        ,
+                        setdiff(colnames(predictions), "NA")
+                    ]
+                    predictions <- predictions[, -1, drop = FALSE]
+                    predictions <- predictions[
+                        rownames(colData(cds)), , drop = FALSE
+                    ]
+                    predictions <- as.matrix(predictions)
+                    predictions[is.na(predictions)] <- FALSE
+                    predictions[predictions != 0] <- TRUE
+                    cell_type_names <- colnames(predictions)
+                    predictions <- split(
+                        predictions,
+                        rep(1:ncol(predictions), each = nrow(predictions))
+                    )
+                    names(predictions) <- cell_type_names
+                } else {
+                    cell_type_names <- names(cvfit$glmnet.fit$beta)
+                    one_type <- names(predictions)[2]
+                    if (one_type == "NA") {
+                        names(predictions)[2] <- "Unknown"
+                        one_type <- "Unknown"
+                    }
+                    predictions <- matrix(
+                        FALSE,
+                        nrow = nrow(colData(cds)),
+                        ncol = length(cell_type_names),
+                        dimnames = list(
+                            row.names(colData(cds)), cell_type_names
+                        )
+                    )
+                    # --- FIX (b): "Unknown" (and any name outside the model's
+                    # classes) must not index the matrix; leave the mask
+                    # all-FALSE instead of crashing.
+                    if (one_type %in% cell_type_names) {
+                        predictions[, one_type] <- TRUE
+                    }
+                    predictions <- split(
+                        predictions,
+                        rep(1:ncol(predictions), each = nrow(predictions))
+                    )
+                    names(predictions) <- cell_type_names
+                }
+                predictions
+            }
+        }, error = function(e) {
+            if (e$message == paste(
+                "None of the model genes are in your CDS object.",
+                "Did you specify the correct cds_gene_id_type and",
+                "the correct db?"
+            )) {
+                stop(e)
+            }
+            print(e)
+            cell_type_names <- names(cvfit$glmnet.fit$beta)
+            predictions <- matrix(
+                FALSE,
+                nrow = nrow(colData(cds)),
+                ncol = length(cell_type_names),
+                dimnames = list(row.names(colData(cds)), cell_type_names)
+            )
+            predictions <- split(
+                predictions,
+                rep(1:ncol(predictions), each = nrow(predictions))
+            )
+            names(predictions) <- cell_type_names
+            predictions
+        })
+    }
+    tryCatch({
+        monkey_patch("garnett", "make_predictions", make_predictions_fixed)
+    }, error = function(e) {
+        log$warn(paste(
+            "Failed to patch garnett::make_predictions (glmnet >= 4.0 fix):",
+            conditionMessage(e)
+        ))
+    })
+}
+
+# Workaround for garnett 0.2.22: the marker-file lexer (`t_NAME` in the rly
+# `Lexer` in garnett's namespace) only accepts ASCII letters, so a cell type
+# like "γδ-T cells" from ScTypeDB fails with `Marker file error. Syntax error
+# 'γ' ...` when train_cell_classifier() parses the file. Widen the token
+# regex to Unicode letters via (*UCP) (ASCII-only behavior is unchanged, as
+# [:alpha:]/[:alnum:] still cover the ASCII range) so such names pass through
+# verbatim. Idempotent — safe to call before train_cell_classifier().
+patch_garnett_marker_lexer <- function(log) {
+    tryCatch({
+        # parse_input() rebuilds the lexer from the generator at every call
+        # (rly::lex(Lexer)), so patching the generator in garnett's namespace
+        # is enough; its environment is not locked (R6 lock_class = FALSE)
+        ns <- asNamespace("garnett")
+        Lexer <- get("Lexer", envir = ns)
+        fields <- Lexer$public_fields
+        fields[["t_NAME"]] <- "(*UCP)[[:alnum:]_+/\\-\\.|=`~\\*&<^%?@!$();:]*[[:alpha:]][[:alnum:]_+/\\-\\.|=`~\\*&<^%?@!$();]*"
+        Lexer$public_fields <- fields
+    }, error = function(e) {
+        log$warn(paste(
+            "Failed to patch garnett's marker-file lexer for Unicode cell",
+            "type names:",
+            conditionMessage(e)
+        ))
+    })
+}
+
+# patch_garnett_run_classifier — fix the upstream crash in garnett 0.2.22's
+# run_classifier() when NO cell passes any gate.
+#
+# Upstream bug: run_classifier() builds its level table with
+#   level_table <- data.frame(cell = row.names(imputed_gate_res[[1]]), ...)
+# but make_predictions() returns split()-ed plain vectors, whose row.names() is
+# NULL, and data.frame(cell = NULL, level1 = "Unknown") errors in R >= 4.x with
+# "arguments imply differing number of rows: 0, 1". The line is unconditional,
+# so this guard is what makes a degenerate classifier fail loudly as
+# all-Unknown instead of killing the job.
+# Fix: take cell names from the cds instead of from the prediction vectors, and
+# warn when no cell was classified (degenerate classifier / ratio too strict).
+patch_garnett_run_classifier <- function(log) {
+    fix_run_classifier <- function() {
+        src <- deparse(garnett:::run_classifier)
+        n_cells <- "nrow(SummarizedExperiment::colData(cds))"
+        cell_names <- "row.names(SummarizedExperiment::colData(cds))"
+        src <- gsub(
+            "length(imputed_gate_res[[1]])", n_cells, src, fixed = TRUE
+        )
+        src <- gsub(
+            "row.names(imputed_gate_res[[1]])", cell_names, src, fixed = TRUE
+        )
+        warn_at <- grep("tree_levels <- igraph::distances", src, fixed = TRUE)
+        warn_line <- paste0(
+            "    if (length(imputed_gate_res) == 0 || ",
+            "!any(vapply(imputed_gate_res, length, integer(1)) > 0)) ",
+            "warning(\"garnett run_classifier: no cell passed any gate; all ",
+            "cells marked Unknown (degenerate classifier or rank_prob_ratio ",
+            "too strict)\")"
+        )
+        if (length(warn_at) > 0) {
+            src <- append(src, warn_line, after = warn_at[1] - 1)
+        }
+        # A silent no-op would be worse than a loud failure: if garnett's
+        # internals change, the substitutions above stop matching.
+        if (!any(grepl(n_cells, src, fixed = TRUE)) ||
+                any(grepl("imputed_gate_res[[1]]", src, fixed = TRUE))) {
+            stop(paste(
+                "run_classifier substitution did not match the installed",
+                "garnett::run_classifier source; the empty-gate crash fix is",
+                "NOT applied"
+            ))
+        }
+        eval(
+            parse(text = paste(src, collapse = "\n")),
+            envir = asNamespace("garnett")
+        )
+    }
+    tryCatch(
+        {
+            monkey_patch("garnett", "run_classifier", fix_run_classifier())
+            log$info("Patched garnett::run_classifier (empty-gate crash fix)")
+        },
+        error = function(e) {
+            log$warn(paste(
+                "Failed to patch garnett::run_classifier",
+                "(empty-gate crash fix):", conditionMessage(e)
+            ))
+        }
+    )
+}
+
+.run_celltypeannotation_garnett <- function(object, args, ident, ctx) {
+    # `args` is the caller's list and the body below NULLs keys out of it
+    args <- as.list(args)
+
+    library(monocle3)
+    library(garnett)
+    library(SeuratWrappers)
+
+    log <- get_logger()
+    patch_garnett_make_predictions(log)
+    patch_garnett_run_classifier(log)
+    patch_garnett_marker_lexer(log)
+
+    classifier_path <- args$classifier
+    if (is.null(classifier_path)) { stop("`envs.garnett.classifier` is not set") }
+    if (!file.exists(classifier_path)) {
+        stop(paste0("Garnett classifier file does not exist: ", classifier_path))
+    }
+
+    log$info("Loading Garnett classifier ...")
+    classifier <- read_obj(classifier_path)
+    if (!inherits(classifier, "garnett_classifier")) {
+        stop(paste0(
+            "The file in `envs.garnett.classifier` does not contain a ",
+            "Garnett classifier (garnett_classifier) object: ", classifier_path
+        ))
+    }
+
+    # Gene ID conversion database: "none" or an AnnotationDb/OrgDb package name
+    db <- args$db %||% "none"
+    if (!identical(db, "none")) {
+        if (!requireNamespace(db, quietly = TRUE)) {
+            stop(paste0(
+                "The gene ID database package `", db,
+                "` from `envs.garnett.db` is not installed."
+            ))
+        }
+        library(db, character.only = TRUE)
+        db <- getExportedValue(db, db)
+    }
+
+    assay <- args$assay
+    # Keys consumed here must not be forwarded to classify_cells()
+    args$classifier <- NULL
+    args$db <- NULL
+    args$assay <- NULL
+
+    unknown_args <- setdiff(names(args), formalArgs(classify_cells))
+    if (length(unknown_args) > 0) {
+        stop(paste0(
+            "Unknown arguments in `envs.garnett`: ",
+            paste(unknown_args, collapse = ", "),
+            " (not arguments of `garnett::classify_cells()`)"
+        ))
+    }
+
+    log$info("Converting Seurat object to a monocle3 cell_data_set ...")
+    # as.cell_data_set is the monocle3 generic; SeuratWrappers only registers
+    # the method for Seurat objects (loaded above), so call it unqualified
+    cds <- if (is.null(assay)) {
+        as.cell_data_set(object)
+    } else {
+        as.cell_data_set(object, assay = assay)
+    }
+
+    # classify_cells() hard-asserts a Size_Factor column but overwrites the
+    # value internally with colSums / (cell_totals * median(num_genes_expressed))
+    # -- the monocle3 convention (colSums / G) -- so the labels do not depend on
+    # what we pass here; the returned cds does keep it though. Install monocle3
+    # (median-ratio) size factors unconditionally so the annotation cds stays on
+    # the same convention the trainer uses, instead of the
+    # SeuratWrappers::as.cell_data_set() colSums convention, and verify the
+    # conversion actually happened (a no-op monocle3 would leave the colSums
+    # values in place, which is the silent all-"Unknown" trap at training time).
+    cds <- monocle3::estimate_size_factors(cds)
+    .sf <- as.numeric(colData(cds)$Size_Factor)
+    .ct <- as.numeric(Matrix::colSums(counts(cds)))
+    .g <- exp(mean(log(.ct[.ct > 0])))
+    if (anyNA(.sf) || !all(is.finite(.sf))) {
+        stop("Could not install finite size factors on the cell_data_set.")
+    }
+    if (!isTRUE(all.equal(.g, 1)) &&
+        isTRUE(all.equal(.sf, .ct, check.attributes = FALSE))) {
+        stop(paste(
+            "Garnett expects monocle3 (median-ratio) size factors, but",
+            "colData(cds)$Size_Factor still equals colSums(counts) (the",
+            "SeuratWrappers::as.cell_data_set() convention). At training time",
+            "this makes the model fit and the prediction matrix differ by a",
+            "factor of G = exp(mean(log(colSums))), which turns every cell into",
+            "'Unknown' with no error. Run monocle3::estimate_size_factors(cds)",
+            "on the converted cell_data_set."
+        ))
+    }
+
+    # classify_cells() internally normalizes counts(cds); an assay with only a
+    # data layer (converted counts are log values) would silently give garbage
+    if (is(counts(cds), "dgCMatrix") && any(counts(cds)@x %% 1 != 0)) {
+        log$warn(paste(
+            "The counts of the converted cell_data_set are not integers;",
+            "garnett::classify_cells() expects raw counts. Results may be",
+            "unreliable. Set `envs.assay` to an assay with a counts layer."
+        ))
+    }
+
+    log$info("Classifying cells with Garnett ...")
+    classify_args <- args
+    classify_args$cds <- cds
+    classify_args$classifier <- classifier
+    classify_args$db <- db
+    result_cds <- do_call(classify_cells, classify_args)
+
+    labels <- colData(result_cds)$cell_type
+    if (is.null(labels)) {
+        stop("classify_cells() did not return a `cell_type` column")
+    }
+    # Cells with zero counts are excluded by classify_cells and get NA
+    labels[is.na(labels)] <- "Unknown"
+
+    n_unknown <- sum(labels == "Unknown")
+    if (n_unknown == length(labels)) {
+        log$warn(paste(
+            "All cells are classified as 'Unknown' by Garnett; check",
+            "`envs.garnett.db`/`envs.garnett.cds_gene_id_type` (classifier is",
+            "trained on", classifier@gene_id_type, "genes)"
+        ))
+    } else {
+        log$info(
+            "Garnett classified {length(labels) - n_unknown}/{length(labels)}",
+            " cells (Unknown: {n_unknown})"
+        )
+    }
+
+    result <- data.frame(
+        garnett_celltype = unname(labels),
+        row.names = colnames(result_cds)
+    )
+
+    if (is.null(ident)) {
+        list(mapping = result, type = "cell")
+    } else {
+        log$info("Aggregating Garnett results by cluster ...")
+        mapping <- majority_vote(
+            labels, as.character(object@meta.data[[ident]]),
+            unknown = "Unknown"  # garnett's sentinel is capital-U
+        )
+        list(mapping = mapping, type = "cluster", cells = result)
+    }
+}
+
+# ---- celltypist -------------------------------------------------------------
+
+.run_celltypeannotation_celltypist <- function(object, args, ident, ctx) {
+    library(hdf5r)
+
+    log <- get_logger()
+
+    if (is.null(args$model)) {
+        stop("Please specify a model for celltypist (celltypist.model)")
+    } else if (!file.exists(args$model)) {
+        stop(paste0("Model file not found (celltypist.model)"))
+    }
+
+    require_package(
+        "celltypist2",
+        version = ">=1.7.1",
+        python = args$python
+    )
+
+    over_clustering <- args$over_clustering %||% ident
+
+    # Symlink the model file
+    model_dir <- file.path(ctx$scratch, "data", "models")
+    dir.create(model_dir, recursive = TRUE, showWarnings = FALSE)
+    modelfile <- file.path(model_dir, basename(args$model))
+    suppressWarnings(file.remove(modelfile))
+    file.symlink(normalizePath(args$model), modelfile)
+
+    # Determine output file
+    celltypist_outfile <- file.path(ctx$scratch, "celltypist.txt")
+
+    # Run celltypist
+    biopipen_dir <- get_biopipen_dir(args$python)
+    celltypist_script <- file.path(
+        biopipen_dir, "scripts", "scrna", "celltypist-wrapper.py"
+    )
+
+    if (file.exists(celltypist_outfile) &&
+        (file.mtime(celltypist_outfile) > file.mtime(ctx$h5ad))) {
+        log$warn(
+            "Using existing celltypist results: {celltypist_outfile} ..."
+        )
+    } else {
+        command <- paste(
+            paste0("CELLTYPIST_FOLDER='", ctx$scratch, "'"),
+            args$python,
+            celltypist_script,
+            "-i", ctx$h5ad,
+            "-m", args$model,
+            "-o", celltypist_outfile
+        )
+        if (!isFALSE(over_clustering) && !is.null(over_clustering)) {
+            command <- paste(command, "-c", over_clustering)
+        }
+        if (isTRUE(args$majority_voting)) {
+            command <- paste(command, "-v")
+        }
+        log$info("Running celltypist:")
+        print(paste0("- ", command))
+        log$debug("  {command}")
+        rc <- system(command)
+        if (rc != 0) {
+            stop(paste(
+                "Failed to run celltypist.",
+                "Check the job.stderr file to see the error message."
+            ))
+        }
+    }
+
+    # Read results
+    log$info("Reading celltypist results ...")
+    celltypist_out <- read.table(
+        celltypist_outfile, sep = "\t", header = TRUE, row.names = 1
+    )
+
+    output_col <- ifelse(
+        isTRUE(args$majority_voting),
+        "majority_voting",
+        "predicted_labels"
+    )
+
+    # Per-cell predictions are always returned
+    annotations <- celltypist_out[, output_col, drop = FALSE]
+    colnames(annotations) <- output_col
+
+    if (is.null(over_clustering) || isFALSE(over_clustering)) {
+        # Cell-level prediction only
+        list(mapping = annotations, type = "cell")
+    } else {
+        # Cluster-level mapping by majority vote
+        clusters <- as.character(
+            object@meta.data[[over_clustering]][rownames(celltypist_out)]
+        )
+        mapping <- majority_vote(celltypist_out[[output_col]], clusters)
+        list(mapping = mapping, type = "cluster", cells = annotations)
+    }
+}
+
+# ---- schdeepinsight ---------------------------------------------------------
+
+.run_celltypeannotation_schdeepinsight <- function(object, args, ident, ctx) {
+    log <- get_logger()
+
+    schdeepinsight_ref <- args$ref
+    if (is.null(schdeepinsight_ref)) {
+        stop("`envs.schdeepinsight.ref` is not set")
+    }
+    if (startsWith(schdeepinsight_ref, "file://")) {
+        schdeepinsight_ref <- sub("^file://", "", schdeepinsight_ref)
+    }
+    if (!file.exists(schdeepinsight_ref)) {
+        stop(paste0(
+            "scHDeepInsight reference file does not exist: ",
+            schdeepinsight_ref
+        ))
+    }
+
+    require_package(
+        "SCHdeepinsight", python = args$python
+    )
+
+    # Output paths
+    workdir <- file.path(ctx$scratch, "workdir")
+    outfile <- file.path(ctx$scratch, "schdeepinsight.txt")
+
+    # Run wrapper script
+    biopipen_dir <- get_biopipen_dir(args$python)
+    wrapper <- file.path(
+        biopipen_dir, "scripts", "scrna", "schdeepinsight-wrapper.py"
+    )
+    command <- paste(
+        args$python, wrapper,
+        "-i", ctx$h5ad,
+        "-r", schdeepinsight_ref,
+        "-o", outfile,
+        "-d", workdir,
+        "-b", args$batch_size %||% 128,
+        "--rhome", R.home()
+    )
+    log$info("Running scHDeepInsight ...")
+    rc <- system(command)
+    if (rc != 0) {
+        stop("Failed to run scHDeepInsight.")
+    }
+
+    # Read results (barcode-indexed, all columns become meta.data)
+    results <- read.table(
+        outfile, sep = "\t", header = TRUE, row.names = 1
+    )
+    if (is.null(ident)) {
+        list(mapping = results, type = "cell")
+    } else {
+        # Aggregate per-cell results to cluster-level mapping (majority vote)
+        log$info("Aggregating scHDeepInsight results by cluster...")
+        mapping <- majority_vote(
+            results[["predicted_detailed_type"]],
+            as.character(object@meta.data[[ident]][rownames(results)])
+        )
+        list(mapping = mapping, type = "cluster", cells = results)
+    }
+}
+
+# ---- scbert -----------------------------------------------------------------
+
+.run_celltypeannotation_scbert <- function(object, args, ident, ctx) {
+    log <- get_logger()
+
+    # Validate inputs
+    scbert_ref <- args$ref
+    scbert_model <- args$model
+    scbert_label_dict <- args$label_dict
+    if (is.null(scbert_ref)) {
+        stop("`envs.scbert.ref` is required for scBERT annotation")
+    }
+    if (is.null(scbert_model)) {
+        stop("`envs.scbert.model` is required for scBERT annotation")
+    }
+    if (is.null(scbert_label_dict)) {
+        stop("`envs.scbert.label_dict` is required for scBERT annotation")
+    }
+
+    if (startsWith(scbert_model, "file://")) {
+        scbert_model <- sub("^file://", "", scbert_model)
+    }
+    if (startsWith(scbert_label_dict, "file://")) {
+        scbert_label_dict <- sub("^file://", "", scbert_label_dict)
+    }
+    if (!file.exists(scbert_model)) {
+        stop(paste0("scBERT model checkpoint does not exist: ", scbert_model))
+    }
+    if (!file.exists(scbert_label_dict)) {
+        stop(paste0(
+            "scBERT label dictionary does not exist: ", scbert_label_dict
+        ))
+    }
+
+    # Output paths
+    outfile <- file.path(ctx$scratch, "scbert.txt")
+
+    # Run wrapper script
+    biopipen_dir <- get_biopipen_dir(args$python)
+    wrapper <- file.path(
+        biopipen_dir, "scripts", "scrna", "scbert-wrapper.py"
+    )
+    command <- paste(
+        args$python, wrapper,
+        "-i", ctx$h5ad,
+        "-m", scbert_model,
+        "-l", scbert_label_dict,
+        "-r", scbert_ref,
+        "-o", outfile,
+        "--bin-num", args$bin_num %||% 5,
+        "--gene-num", args$gene_num %||% 16906,
+        "--seed", args$seed %||% 2021
+    )
+    if (isTRUE(args$pos_embed)) {
+        command <- paste(command, "--pos-embed")
+    } else {
+        command <- paste(command, "--no-pos-embed")
+    }
+    if (isTRUE(args$novel_type)) {
+        command <- paste(
+            command, "--novel-type",
+            "--unassign-thres", args$unassign_thres %||% 0.5
+        )
+    }
+    log$info("Running scBERT ...")
+    rc <- system(command)
+    if (rc != 0) {
+        stop("Failed to run scBERT.")
+    }
+
+    # Read results (barcode-indexed)
+    results <- read.table(
+        outfile, sep = "\t", header = TRUE, row.names = 1
+    )
+    if (is.null(ident)) {
+        list(mapping = results, type = "cell")
+    } else {
+        # Aggregate per-cell results to cluster-level mapping (majority vote)
+        log$info("Aggregating scBERT results by cluster...")
+        mapping <- majority_vote(
+            results[["scbert_celltype"]],
+            as.character(object@meta.data[[ident]][rownames(results)])
+        )
+        list(mapping = mapping, type = "cluster", cells = results)
+    }
+}
+
+# ---- scagenttype ------------------------------------------------------------
+
+.run_celltypeannotation_scagenttype <- function(object, args, ident, ctx) {
+    log <- get_logger()
+
+    require_package("scagenttype", python = args$python)
+
+    # Output paths
+    cluster_file <- file.path(ctx$scratch, "scagenttype.clusters.tsv")
+    config_file <- file.path(ctx$scratch, "scagenttype.config.json")
+    outfile <- file.path(ctx$scratch, "scagenttype.txt")
+
+    # Cluster memberships (barcode -> cluster) for the wrapper: the h5ad carries
+    # no cluster column, and scAgentType requires one for its per-cluster markers.
+    # `ident` is guaranteed to be resolved for cluster-level tools (see main script).
+    cluster_df <- data.frame(
+        barcode = rownames(object@meta.data),
+        cluster = as.character(object@meta.data[[ident]]),
+        stringsAsFactors = FALSE,
+        check.names = FALSE
+    )
+    write.table(
+        cluster_df, cluster_file,
+        sep = "\t", quote = FALSE, row.names = FALSE, col.names = TRUE
+    )
+
+    # Config for the wrapper: `envs.scagenttype` minus the R-side and credential
+    # keys; `tissue`/`species` are folded into `tissue_context` when not given
+    config <- args
+    config$python <- NULL
+    config$assay <- NULL
+    config$api_key <- NULL
+    config$base_url <- NULL
+    config$tissue <- NULL
+    config$species <- NULL
+    # Keep the agent's caches (marker DBs, LLM responses) in the job dir
+    # instead of the job's working directory (default), which could be inside
+    # the source tree. The wrapper clears the LLM-response cache on retry.
+    if (is.null(config$cache_dir)) config$cache_dir <- ctx$scratch
+    if (is.null(config$tissue_context)) {
+        tctx <- c(
+            if (!is.null(args$tissue)) args$tissue,
+            if (!is.null(args$species)) args$species
+        )
+        if (length(tctx) > 0) {
+            config$tissue_context <- paste(tctx, collapse = " / ")
+        }
+    }
+    config <- config[!sapply(config, is.null)]
+    if (!requireNamespace("jsonlite", quietly = TRUE)) {
+        stop("`jsonlite` R package is required for scAgentType annotation")
+    }
+    writeLines(
+        jsonlite::toJSON(config, auto_unbox = TRUE, null = "null", na = "null"),
+        config_file
+    )
+
+    # Pass credentials to the wrapper process as environment variables, since
+    # scAgentType reads the keys from the environment at call time
+    child_env <- character(0)
+    api <- args$api %||% "openai"
+    if (!is.null(args$api_key)) {
+        key_env <- c(
+            openai = "OPENAI_API_KEY",
+            anthropic = "ANTHROPIC_API_KEY",
+            google = "GOOGLE_API_KEY"
+        )[[api]]
+        if (is.na(key_env)) stop(paste0("Unknown api: ", api))
+        child_env <- c(child_env, paste0(key_env, "=", args$api_key))
+    }
+    if (!is.null(args$base_url)) {
+        base_env <- c(
+            openai = "OPENAI_BASE_URL",
+            anthropic = "ANTHROPIC_BASE_URL"
+        )[[api]]
+        if (is.na(base_env)) {
+            stop(paste0("`base_url` is not supported for api: ", api))
+        }
+        child_env <- c(child_env, paste0(base_env, "=", args$base_url))
+    }
+
+    # Run the wrapper script
+    biopipen_dir <- get_biopipen_dir(args$python)
+    wrapper <- file.path(
+        biopipen_dir, "scripts", "scrna", "scagenttype-wrapper.py"
+    )
+    log$info("Running scAgentType ...")
+    rc <- system2(
+        args$python,
+        c(
+            wrapper,
+            "-i", ctx$h5ad,
+            "-c", cluster_file,
+            "-o", outfile,
+            "--config", config_file
+        ),
+        env = child_env
+    )
+    if (rc != 0) {
+        stop(
+            "Failed to run scAgentType. ",
+            "Check the job.stderr file to see the error message."
+        )
+    }
+
+    # Read the per-cell labels and aggregate to a cluster-level mapping.
+    # Seurat meta.data columns carry no cell names, so align by `match()` and
+    # subset positionally (name-subsetting would return all NAs).
+    results <- read.table(outfile, sep = "\t", header = TRUE, row.names = 1)
+    idx <- match(rownames(results), rownames(object@meta.data))
+    if (anyNA(idx)) {
+        stop(
+            sum(is.na(idx)), " barcodes from scAgentType results are not found ",
+            "in the Seurat object. The barcodes were likely changed during ",
+            "the h5ad conversion."
+        )
+    }
+    log$info("Aggregating scAgentType results by cluster ...")
+    mapping <- majority_vote(
+        results[["scagenttype_celltype"]],
+        as.character(object@meta.data[[ident]][idx])
+    )
+    list(mapping = mapping, type = "cluster")
+}
+
+# ---- cellassign -------------------------------------------------------------
+
+.run_celltypeannotation_cellassign <- function(object, args, ident, ctx) {
+    # `args` is the caller's list and the body below NULLs keys out of it
+    args <- as.list(args)
+    cellassign_db <- args$db
+
+    python <- args$python %||% Sys.which("python")
+    if (python == "") {
+        stop("Python executable not found. Please specify `envs.cellassign.python`.")
+    }
+    # load the right Python environment with tensorflow installed
+    Sys.setenv(RETICULATE_PYTHON = python)
+
+    library(cellassign)
+
+    log <- get_logger()
+
+    if (is.null(cellassign_db)) {
+        stop("`envs.cellassign.db` is required for cellassign annotation")
+    }
+
+    # Load marker gene info
+    marker_gene_info <- load_marker_table(cellassign_db)
+    if (!is_marker_canonical(marker_gene_info)) {
+        # Native signature formats have no tissue/cancer/species columns
+        stop_on_filtering_native_db(
+            args$tissue,
+            args$cancer,
+            args$species
+        )
+    }
+    if (is_marker_canonical(marker_gene_info)) {
+        marker_gene_info <- markers_to_named_list(
+            marker_gene_info,
+            tissue = args$tissue,
+            cancer = args$cancer,
+            species = args$species
+        )
+    } else if (is.data.frame(marker_gene_info)) {
+        stop("CSV/TSV must have 'gene' and 'cell_type' columns.")
+    } else if (!(is.list(marker_gene_info) || is.matrix(marker_gene_info))) {
+        stop("Marker gene info must be a named list or binary matrix.")
+    }
+    # The filter envs are consumed by the marker conversion above; never
+    # forward them to cellassign() which has no such arguments
+    args$tissue <- NULL
+    args$cancer <- NULL
+    args$species <- NULL
+
+    # Get raw counts
+    assay <- args$assay %||% DefaultAssay(object)
+    log$info("Extracting raw counts from assay: {assay}")
+    # genes x cells matrix
+    counts <- as.matrix(GetAssayData(object, assay = assay, layer = "counts"))
+    library_size <- colSums(counts)
+    size_factors <- library_size / median(library_size)
+
+    # Filter to marker genes present in data
+    if (is.list(marker_gene_info)) {
+        all_markers <- unique(unlist(marker_gene_info))
+    } else if (is.matrix(marker_gene_info)) {
+        all_markers <- rownames(marker_gene_info)
+    } else {
+        stop("marker_gene_info must be a named list or binary matrix.")
+    }
+    common_genes <- intersect(all_markers, rownames(counts))
+    if (length(common_genes) == 0) {
+        stop("None of the marker genes are found in the expression data.")
+    }
+    log$info(
+        "Found {length(common_genes)} / {length(all_markers)} marker genes in data"
+    )
+
+    args$s <- size_factors
+    # Filter counts and marker_gene_info to common genes
+    counts <- counts[common_genes, , drop = FALSE]
+    if (is.list(marker_gene_info)) {
+        marker_gene_info <- lapply(
+            marker_gene_info,
+            function(gs) intersect(gs, common_genes)
+        )
+        marker_gene_info <- marker_gene_info[lengths(marker_gene_info) > 0]
+    } else {
+        marker_gene_info <- marker_gene_info[common_genes, , drop = FALSE]
+    }
+
+    # Extract extra args for cellassign()
+    extra_args <- args
+    extra_args$assay <- NULL  # already handled
+    extra_args$db <- NULL  # db is passed separately as cellassign_db
+    extra_args$python <- NULL  # already handled above
+
+    # Run cellassign
+    log$info("Running cellassign...")
+    fit <- do_call(cellassign::cellassign, c(
+        list(
+            exprs_obj = t(counts),
+            marker_gene_info = marker_gene_info
+        ),
+        extra_args
+    ))
+
+    # Build cell annotations
+    cell_types <- fit$cell_type
+    result <- data.frame(
+        cellassign_celltype = cell_types,
+        row.names = names(cell_types)
+    )
+
+    if (is.null(ident)) {
+        list(mapping = result, type = "cell")
+    } else {
+        # Aggregate per-cell results to cluster-level mapping (majority vote)
+        log$info("Aggregating cellassign results by cluster...")
+        mapping <- majority_vote(
+            cell_types, as.character(object@meta.data[[ident]])
+        )
+        list(mapping = mapping, type = "cluster", cells = result)
+    }
+}
