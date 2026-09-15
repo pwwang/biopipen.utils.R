@@ -2469,3 +2469,423 @@ patch_garnett_run_classifier <- function(log) {
         list(mapping = mapping, type = "cluster", cells = result)
     }
 }
+
+# ---- reference-consuming annotators -----------------------------------------
+# These take a *labelled reference* in `envs.<tool>.db` -- read with read_obj(),
+# so an RDS/qs/qs2 file holding a Seurat object, a SingleCellExperiment or a
+# plain list -- instead of a marker table, and label the query by projecting it
+# onto that reference.
+
+# ---- scmap ------------------------------------------------------------------
+# scmap (Kiselev et al. 2018, doi:10.1038/s41592-018-0051-x). The vignette
+# (scmap/doc/scmap.Rmd) builds the reference SingleCellExperiment by hand from a
+# matrix -- logcounts() + rowData$feature_symbol + the cell types in a colData
+# column -- then setFeatures() -> indexCluster(cluster_col) ->
+# scmapCluster(projection, index_list, threshold). For a Seurat reference,
+# as.SingleCellExperiment() is the shortcut to that same shape.
+.run_celltypeannotation_scmap <- function(object, args, ident, ctx) {
+    require_package("scmap")
+    require_package("SingleCellExperiment")
+    log <- get_logger()
+    db <- args$db
+
+    if (is.null(db)) { stop("`envs.scmap.db` is not set") }
+
+    assay <- args$assay %||% "RNA"
+    threshold <- args$threshold %||% 0.5
+    cluster_col <- args$cluster_col %||% "cell_type1"
+    features <- args$features
+    use_cell_index <- isTRUE(args$use_cell_index)
+
+    log$info("Loading scmap reference ...")
+    ref <- read_obj(db)
+    if (inherits(ref, "Seurat")) {
+        ref <- Seurat::as.SingleCellExperiment(ref, assay = assay)
+    }
+    if (!is(ref, "SingleCellExperiment")) {
+        stop(paste0(
+            "The scmap reference must be a SingleCellExperiment or a Seurat ",
+            "object, got: ", paste(class(ref), collapse = ", ")
+        ))
+    }
+    if (!"logcounts" %in% SummarizedExperiment::assayNames(ref)) {
+        stop(paste(
+            "The scmap reference needs a `logcounts` assay.",
+            "Normalize the reference before saving it."
+        ))
+    }
+    coldata <- SummarizedExperiment::colData(ref)
+    if (!cluster_col %in% colnames(coldata)) {
+        stop(paste0(
+            "No `", cluster_col, "` column in the reference's colData. Set ",
+            "`envs.scmap.cluster_col` to the column holding the cell types."
+        ))
+    }
+    ref_labels <- as.character(coldata[[cluster_col]])
+
+    # the vignette keeps one row per feature symbol
+    ref <- ref[!duplicated(rownames(ref)), ]
+    SummarizedExperiment::rowData(ref)$feature_symbol <- rownames(ref)
+    features <- features %||% rownames(ref)
+    log$info("Using {length(features)} features for the scmap index ...")
+    ref <- scmap::setFeatures(ref, features)
+
+    log$info("Indexing the scmap reference ...")
+    index <- if (use_cell_index) {
+        # scmap-cell is k-means based, so its projection is stochastic
+        scmap::indexCell(ref)
+    } else {
+        scmap::indexCluster(ref, cluster_col = cluster_col)
+    }
+    # scmap keeps the index in the object's metadata
+    index <- S4Vectors::metadata(index)
+
+    log$info("Preparing the query ...")
+    query <- SingleCellExperiment::SingleCellExperiment(
+        assays = list(
+            logcounts = as.matrix(
+                GetAssayData(object, assay = assay, layer = "data")
+            )
+        )
+    )
+    SummarizedExperiment::rowData(query)$feature_symbol <- rownames(query)
+    query <- scmap::setFeatures(query, features)
+
+    log$info("Projecting the query with scmap (threshold = {threshold}) ...")
+    projected <- if (use_cell_index) {
+        # scmap-cell looks at the w nearest neighbours of the reference
+        cells <- scmap::scmapCell(
+            projection = query, index_list = list(db = index$scmap_cell_index)
+        )
+        scmap::scmapCell2Cluster(cells, list(ref_labels), threshold = threshold)
+    } else {
+        scmap::scmapCluster(
+            projection = query,
+            index_list = list(db = index$scmap_cluster_index),
+            threshold = threshold
+        )
+    }
+    # The labels matrix is not row-named and its rows follow the query columns,
+    # which are the object's columns; the cells below the threshold come back as
+    # "unassigned".
+    labels <- unname(projected$scmap_cluster_labs[, 1])
+
+    result <- data.frame(
+        scmap_celltype = labels,
+        row.names = colnames(object)
+    )
+
+    if (is.null(ident)) {
+        list(mapping = result, type = "cell")
+    } else {
+        log$info("Aggregating scmap results by cluster...")
+        mapping <- majority_vote(labels, as.character(object@meta.data[[ident]]))
+        list(mapping = mapping, type = "cluster", cells = result)
+    }
+}
+
+# ---- cheetah -----------------------------------------------------------------
+# CHETAH (de Kanter et al. 2019, doi:10.1093/bioinformatics/btz500). The
+# vignette (CHETAH/doc/CHETAH_introduction.Rmd) hands CHETAHclassifier() a query
+# and a reference SingleCellExperiment, both holding *counts*, with the
+# reference cell types in colData$celltypes (the `ref_ct` default); it returns
+# the query with the calls in colData$celltype_CHETAH. In the installed 1.22.0
+# `input_c`/`ref_c` are the *assay names* of the input and the reference ("the
+# name of the assay of the input to use"), not cluster assignments.
+.run_celltypeannotation_cheetah <- function(object, args, ident, ctx) {
+    require_package("CHETAH")
+    require_package("SingleCellExperiment")
+    log <- get_logger()
+    db <- args$db
+
+    if (is.null(db)) { stop("`envs.cheetah.db` is not set") }
+
+    assay <- args$assay %||% "RNA"
+    # the reference's colData column holding the cell types
+    label_col <- args$label %||% args$ref_ct %||% "celltypes"
+
+    log$info("Loading CHETAH reference ...")
+    ref <- read_obj(db)
+    if (inherits(ref, "Seurat")) {
+        ref <- Seurat::as.SingleCellExperiment(ref, assay = assay)
+    }
+    if (!is(ref, "SingleCellExperiment")) {
+        stop(paste0(
+            "The CHETAH reference must be a SingleCellExperiment or a Seurat ",
+            "object, got: ", paste(class(ref), collapse = ", ")
+        ))
+    }
+    if (!label_col %in% colnames(SummarizedExperiment::colData(ref))) {
+        stop(paste0(
+            "No `", label_col, "` column in the reference's colData. Set ",
+            "`envs.cheetah.label` to the column holding the cell types."
+        ))
+    }
+
+    log$info("Preparing the query ...")
+    query <- SingleCellExperiment::SingleCellExperiment(
+        assays = list(
+            counts = as.matrix(
+                GetAssayData(object, assay = assay, layer = "counts")
+            )
+        )
+    )
+
+    log$info("Running CHETAH ...")
+    args$db <- NULL
+    args$assay <- NULL
+    args$label <- NULL
+    args$input <- query
+    args$ref_cells <- ref
+    args$ref_ct <- label_col
+    res <- do_call(CHETAH::CHETAHclassifier, args)
+
+    # CHETAH names the labels with the query barcodes
+    labels <- as.character(res$celltype_CHETAH[colnames(object)])
+    result <- data.frame(
+        cheetah_celltype = labels,
+        row.names = colnames(object)
+    )
+
+    if (is.null(ident)) {
+        list(mapping = result, type = "cell")
+    } else {
+        log$info("Aggregating CHETAH results by cluster...")
+        mapping <- majority_vote(labels, as.character(object@meta.data[[ident]]))
+        list(mapping = mapping, type = "cluster", cells = result)
+    }
+}
+
+# ---- scclassify --------------------------------------------------------------
+# scClassify (Lin et al. 2020, doi:10.1186/s13059-020-02078-x). The vignette
+# (scClassify/doc/scClassify.Rmd) trains on a labelled reference matrix and
+# predicts a query matrix: scClassify(exprsMat_train, cellTypes_train,
+# exprsMat_test = list(<name> = <matrix>)) -> $testRes$<name>$<method>$predRes.
+# With a pretrained model the entry point is predict_scClassify(), whose result
+# is keyed by the method only ($<method>$predRes). The installed 1.18.0 accepts
+# only algorithm WKNN/KNN/DWKNN (there is no "lr"), and builds its HOPACH tree
+# from the reference cell types, which needs more than two of them.
+.run_celltypeannotation_scclassify <- function(object, args, ident, ctx) {
+    require_package("scClassify")
+    log <- get_logger()
+    db <- args$db
+
+    if (is.null(db)) { stop("`envs.scclassify.db` is not set") }
+
+    assay <- args$assay %||% "RNA"
+
+    log$info("Loading scClassify reference ...")
+    ref <- read_obj(db)
+
+    log$info("Preparing the query ...")
+    query <- as.matrix(GetAssayData(object, assay = assay, layer = "data"))
+
+    log$info("Running scClassify ...")
+    args$db <- NULL
+    args$assay <- NULL
+    args$algorithm <- args$algorithm %||% "WKNN"
+    if (is.list(ref) && !is.null(ref$exprsMat) && !is.null(ref$cellTypes)) {
+        # a labelled reference matrix: scClassify() trains and predicts
+        args$exprsMat_train <- ref$exprsMat
+        args$cellTypes_train <- ref$cellTypes
+        args$exprsMat_test <- list(query = query)
+        res <- do_call(scClassify::scClassify, args)
+        labels <- res$testRes[[1]][[1]]$predRes
+    } else if (inherits(ref, "scClassifyTrainModel") || is.list(ref)) {
+        # a pretrained model -- train_scClassify() hands back either the S4
+        # model or a plain list: predict_scClassify() has no dataset level
+        args$exprsMat_test <- query
+        args$trainRes <- ref
+        res <- do_call(scClassify::predict_scClassify, args)
+        labels <- res[[1]]$predRes
+    } else {
+        stop(paste(
+            "The scClassify reference must be a list with `exprsMat` and",
+            "`cellTypes`, or a model from scClassify::train_scClassify()."
+        ))
+    }
+
+    # the predictions are named with the query barcodes
+    labels <- as.character(labels[colnames(object)])
+    result <- data.frame(
+        scclassify_celltype = labels,
+        row.names = colnames(object)
+    )
+
+    if (is.null(ident)) {
+        list(mapping = result, type = "cell")
+    } else {
+        log$info("Aggregating scClassify results by cluster...")
+        mapping <- majority_vote(labels, as.character(object@meta.data[[ident]]))
+        list(mapping = mapping, type = "cluster", cells = result)
+    }
+}
+
+# ---- scpred ------------------------------------------------------------------
+# scPred (Alquicira-Hernandez et al. 2019, doi:10.1186/s13059-019-1802-4). The
+# old scPred() entry point is gone in the installed 1.9.2: the reference is
+# prepared with getFeatureSpace(pvar = <label column>) + trainModel(), and the
+# query is predicted with scPredict(), which hands back the query with the
+# per-cell calls in its metadata -- `prediction` ("unassigned" below the
+# probability threshold) and the same calls without the rejections.
+# NOTE: scPredict() -> project_query() reads the query with
+# GetAssayData(new, "data"), whose 2nd positional argument is `assay` since
+# SeuratObject 5, so it fails there with
+# "`assay` must be one of "RNA", not "data"." -- the installed scPred needs a
+# SeuratObject < 5 until it is fixed upstream.
+.run_celltypeannotation_scpred <- function(object, args, ident, ctx) {
+    require_package("scPred")
+    log <- get_logger()
+    db <- args$db
+
+    if (is.null(db)) { stop("`envs.scpred.db` is not set") }
+
+    pvar <- args$pvar %||% "cell_type"
+    model <- args$model %||% "svmRadial"
+    reduction <- args$reduction %||% "pca"
+    threshold <- args$threshold %||% 0.55
+
+    log$info("Loading scPred reference ...")
+    reference <- read_obj(db)
+    if (!inherits(reference, "Seurat")) {
+        stop(paste0(
+            "The scPred reference must be a labelled Seurat object, got: ",
+            paste(class(reference), collapse = ", ")
+        ))
+    }
+    if (!pvar %in% colnames(reference@meta.data)) {
+        stop(paste0(
+            "No `", pvar, "` column in the reference's metadata. Set ",
+            "`envs.scpred.pvar` to the column holding the cell types."
+        ))
+    }
+
+    log$info("Extracting the scPred feature space ...")
+    reference <- scPred::getFeatureSpace(
+        reference, pvar = pvar, reduction = reduction
+    )
+    log$info("Training the scPred model ({model}) ...")
+    reference <- scPred::trainModel(reference, model = model)
+
+    log$info("Predicting the query with scPredict (threshold = {threshold}) ...")
+    predicted <- scPred::scPredict(
+        new = object, reference = reference, threshold = threshold
+    )
+
+    meta <- predicted@meta.data
+    # scPredict prefixes its output columns with `scpred_`
+    pred_col <- if ("scpred_prediction" %in% colnames(meta)) {
+        "scpred_prediction"
+    } else {
+        "prediction"
+    }
+    if (!pred_col %in% colnames(meta)) {
+        stop(paste0(
+            "No prediction column in the scPredict result: ",
+            paste(colnames(meta), collapse = ", ")
+        ))
+    }
+    log$info("Using the '{pred_col}' column of the scPredict result")
+    labels <- as.character(meta[[pred_col]])
+
+    result <- data.frame(
+        scpred_celltype = labels,
+        row.names = colnames(object)
+    )
+
+    if (is.null(ident)) {
+        list(mapping = result, type = "cell")
+    } else {
+        log$info("Aggregating scPred results by cluster...")
+        mapping <- majority_vote(labels, as.character(object@meta.data[[ident]]))
+        list(mapping = mapping, type = "cluster", cells = result)
+    }
+}
+
+# ---- azimuth -----------------------------------------------------------------
+# Azimuth (Hao et al. 2021, doi:10.1016/j.cell.2021.04.048). RunAzimuth()
+# resolves `ref` either as a name looked up through SeuratData -- an
+# uninstalled reference is downloaded first (`pbmcref` is ~73 MB) -- or as a
+# directory holding `ref.Rds` + `idx.annoy`. The reference carries the cell type
+# levels and TransferData() puts a `predicted.<level>` column (plus
+# `predicted.<level>.score`) into the query metadata for each of them.
+# Cluster-level: the object's identity is set to `ident` for the run and each
+# cluster gets the majority call of its cells.
+# The installed 0.5.1 has no `dims`/`k.anchor` argument -- it reads the
+# dimensionality off the reference's own annoy index.
+.run_celltypeannotation_azimuth <- function(object, args, ident, ctx) {
+    require_package("Azimuth")
+    log <- get_logger()
+    ref <- args$ref %||% args$db
+    anno_col_in <- args$anno_col_in
+
+    if (is.null(ref)) {
+        stop(paste0(
+            "[RunCellTypeAnnotation] Tool 'azimuth' needs `envs.azimuth.ref`, ",
+            "a reference name such as \"pbmcref\" or a directory holding ",
+            "ref.Rds + idx.annoy"
+        ))
+    }
+    for (nm in c("dims", "k.anchor")) {
+        if (!is.null(args[[nm]])) {
+            log$warn(
+                "Ignoring `", nm, "`: Azimuth ", packageVersion("Azimuth"),
+                " reads it off the reference instead of taking it as an argument"
+            )
+        }
+    }
+
+    original_ident <- Idents(object)
+    log$info("Setting the object's identity to '{ident}' for Azimuth ...")
+    Idents(object) <- ident
+
+    log$info("Running Azimuth with reference '{ref}' ...")
+    args$ref <- NULL
+    args$db <- NULL
+    args$anno_col_in <- NULL
+    args$dims <- NULL
+    args$k.anchor <- NULL
+    args$query <- object
+    args$reference <- ref
+    # Azimuth's internals look `Key<-` up on the search path (it is a SeuratObject
+    # replacement function Azimuth does not import itself), so a `::`-only call
+    # fails with `could not find function "Key<-"`. Attaching the namespace is the
+    # documented way to provide it without a `library()` call in package code.
+    suppressMessages(attachNamespace("SeuratObject"))
+    object <- do_call(Azimuth::RunAzimuth, args)
+    # our own copy only; the caller's object is untouched
+    Idents(object) <- original_ident
+
+    meta <- object@meta.data
+    if (is.null(anno_col_in)) {
+        # one `predicted.<level>` column per reference annotation level, the
+        # coarsest one first
+        cols <- grep("^predicted\\.", colnames(meta), value = TRUE)
+        cols <- cols[!grepl("\\.score$", cols)]
+        if (length(cols) == 0) {
+            stop(paste0(
+                "Azimuth returned no `predicted.*` column: ",
+                paste(colnames(meta), collapse = ", ")
+            ))
+        }
+        anno_col_in <- grep("^predicted\\.celltype\\.l1$", cols, value = TRUE)
+        anno_col_in <- if (length(anno_col_in) > 0) anno_col_in[1] else cols[1]
+        log$info("Using the Azimuth annotation column '{anno_col_in}'")
+    }
+    if (!anno_col_in %in% colnames(meta)) {
+        stop(paste0(
+            "No `", anno_col_in, "` column in the Azimuth result: ",
+            paste(colnames(meta), collapse = ", ")
+        ))
+    }
+    labels <- as.character(meta[[anno_col_in]])
+
+    log$info("Aggregating Azimuth results by cluster...")
+    mapping <- majority_vote(labels, as.character(meta[[ident]]))
+    result <- data.frame(
+        azimuth_celltype = labels,
+        row.names = colnames(object)
+    )
+
+    list(mapping = mapping, type = "cluster", cells = result)
+}

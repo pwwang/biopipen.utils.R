@@ -81,7 +81,15 @@ Suggests:
     SingleCellExperiment,
     SingleR,
     stringr,
-    SummarizedExperiment
+    SummarizedExperiment,
+    Azimuth,
+    CHETAH,
+    S4Vectors,
+    scClassify,
+    scmap,
+    scPred,
+    LICT,
+    mLLMCelltype
 Remotes:
     pwwang/enrichit,
     pwwang/plotthis,

@@ -4474,7 +4474,16 @@ RunModuleScoring <- function(
     ucell          = list(level = "cell"),
     aucell         = list(level = "cell"),
     gsva           = list(level = "cell"),
-    singscore      = list(level = "cell")
+    singscore      = list(level = "cell"),
+    # ---- reference-consuming annotators ----
+    # These take a labelled reference dataset in `db` (a Seurat object, a
+    # SingleCellExperiment or a plain list read by read_obj()) instead of a
+    # marker table.
+    scmap          = list(level = "cell",    h5ad = FALSE),
+    cheetah        = list(level = "cell",    h5ad = FALSE),
+    scclassify     = list(level = "cell",    h5ad = FALSE),
+    scpred         = list(level = "cell",    h5ad = FALSE),
+    azimuth        = list(level = "cluster", h5ad = FALSE)
 )
 
 #' List the cell type annotation tools supported by [RunCellTypeAnnotation()]
@@ -4657,7 +4666,13 @@ RunCellTypeAnnotation <- function(
         ucell          = .run_celltypeannotation_ucell(object, args, ident, ctx),
         aucell         = .run_celltypeannotation_aucell(object, args, ident, ctx),
         gsva           = .run_celltypeannotation_gsva(object, args, ident, ctx),
-        singscore      = .run_celltypeannotation_singscore(object, args, ident, ctx)
+        singscore      = .run_celltypeannotation_singscore(object, args, ident, ctx),
+        # ---- reference-consuming annotators ----
+        scmap          = .run_celltypeannotation_scmap(object, args, ident, ctx),
+        cheetah        = .run_celltypeannotation_cheetah(object, args, ident, ctx),
+        scclassify     = .run_celltypeannotation_scclassify(object, args, ident, ctx),
+        scpred         = .run_celltypeannotation_scpred(object, args, ident, ctx),
+        azimuth        = .run_celltypeannotation_azimuth(object, args, ident, ctx)
     )
     if (is.null(result)) {
         result <- list()
