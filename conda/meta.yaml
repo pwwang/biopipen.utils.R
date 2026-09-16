@@ -32,21 +32,49 @@ requirements:
     - bioconda::bioconductor-celda
     - bioconda::bioconductor-mygene
     - bioconda::bioconductor-scdblfinder
-    - bioconda::bioconductor-ucell
     - bioconda::bioconductor-destiny
     - bioconda::bioconductor-aucell
     - bioconda::bioconductor-gsva
     - bioconda::bioconductor-gseabase
     - bioconda::bioconductor-genefilter
     - bioconda::bioconductor-ucell
-    - bioconda::bioconductor-aucell
-    - bioconda::bioconductor-gseabase
+    - bioconda::bioconductor-deseq2
+    - bioconda::bioconductor-edger
+    - bioconda::bioconductor-complexheatmap
+    - bioconda::bioconductor-biobase
+    - bioconda::bioconductor-singlecellexperiment
+    - bioconda::bioconductor-singler
+    - bioconda::bioconductor-summarizedexperiment
+    - bioconda::bioconductor-chetah
+    - bioconda::bioconductor-scclassify
+    - bioconda::bioconductor-scmap
+    - bioconda::bioconductor-singscore
+    - bioconda::bioconductor-s4vectors
     - r-ggplot2 >4
     - pwwang::r-scplotter
     - pwwang::r-seuratdisk
+    - pwwang::r-cellid
+    - pwwang::r-hitype
+    - pwwang::r-llmcelltype
+    - pwwang::r-sccatch
+    - pwwang::r-scina
+    - pwwang::r-scsorter
+    - pwwang::r-seuratwrappers
+    - pwwang::r-lict
+    - pwwang::r-mllmcelltype
     - r-qs2
     - r-plotly
     - r-htmlwidgets
+    - r-glmnet
+    - r-hgnchelper
+    - r-igraph
+    - r-monocle3
+    - r-openxlsx
+    - r-reshape2
+    - r-stringr
+    - r-azimuth
+    - r-scpred
+    - r-withr
 
   run:
     - r-base
@@ -68,21 +96,49 @@ requirements:
     - bioconda::bioconductor-celda
     - bioconda::bioconductor-mygene
     - bioconda::bioconductor-scdblfinder
-    - bioconda::bioconductor-ucell
     - bioconda::bioconductor-destiny
     - bioconda::bioconductor-aucell
     - bioconda::bioconductor-gsva
     - bioconda::bioconductor-gseabase
     - bioconda::bioconductor-genefilter
     - bioconda::bioconductor-ucell
-    - bioconda::bioconductor-aucell
-    - bioconda::bioconductor-gseabase
+    - bioconda::bioconductor-deseq2
+    - bioconda::bioconductor-edger
+    - bioconda::bioconductor-complexheatmap
+    - bioconda::bioconductor-biobase
+    - bioconda::bioconductor-singlecellexperiment
+    - bioconda::bioconductor-singler
+    - bioconda::bioconductor-summarizedexperiment
+    - bioconda::bioconductor-chetah
+    - bioconda::bioconductor-scclassify
+    - bioconda::bioconductor-scmap
+    - bioconda::bioconductor-singscore
+    - bioconda::bioconductor-s4vectors
     - r-ggplot2 >4
     - pwwang::r-scplotter
     - pwwang::r-seuratdisk
+    - pwwang::r-cellid
+    - pwwang::r-hitype
+    - pwwang::r-llmcelltype
+    - pwwang::r-sccatch
+    - pwwang::r-scina
+    - pwwang::r-scsorter
+    - pwwang::r-seuratwrappers
+    - pwwang::r-lict
+    - pwwang::r-mllmcelltype
     - r-qs2
     - r-plotly
     - r-htmlwidgets
+    - r-glmnet
+    - r-hgnchelper
+    - r-igraph
+    - r-monocle3
+    - r-openxlsx
+    - r-reshape2
+    - r-stringr
+    - r-azimuth
+    - r-scpred
+    - r-withr
 
 test:
   commands:
