@@ -3368,8 +3368,9 @@ patch_garnett_run_classifier <- function(log) {
     list(mapping = mapping, type = "cluster", cells = cells_df)
 }
 
-# MACA needs its own environment (it pins scanpy==1.6.0/anndata==0.7.5), and
-# the wrapper names that environment when the import fails.
+# MACA must be installed in the python the process runs with; the wrapper
+# names what to check when the import fails or the marker table shares too few
+# genes with the object.
 .run_celltypeannotation_maca <- function(object, args, ident, ctx) {
     log <- get_logger()
 
@@ -3405,8 +3406,8 @@ patch_garnett_run_classifier <- function(log) {
     }
 
     log$info("Running MACA ...")
-    # A missing MACA is not an R error to hide: the wrapper prints the
-    # environment MACA needs, so surface that
+    # A missing MACA, or a marker table it cannot score, is not an R error to
+    # hide: the wrapper prints what to check, so surface that
     run_command(command, stdout = TRUE, stderr = TRUE)
 
     results <- read.table(outfile, sep = "\t", header = TRUE, row.names = 1)

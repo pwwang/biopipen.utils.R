@@ -2,18 +2,19 @@
 # universal marker table and shell out to a wrapper script shipped with
 # biopipen, so they need a python that can import scanpy (scsa, which computes
 # the per-cluster markers itself) or the tool itself (maca, scmapnet) -- none
-# of which is an R dependency. `scsa` is exercised for real against the SCSA
-# clone on this machine; MACA and scMapNet cannot be installed here (MACA pins
-# scanpy==1.6.0/anndata==0.7.5; scMapNet is a clone plus a manually downloaded
-# checkpoint), so they are covered through the errors naming what they need.
+# of which is an R dependency. `scsa` and `maca` are exercised for real against
+# the SCSA clone and the modernized MACA fork on this machine; scMapNet cannot
+# be installed here (it is a clone plus a manually downloaded checkpoint), so
+# it is covered through the errors naming what it needs.
 
 norm_obj <- function() {
     obj <- SeuratObject::pbmc_small
     suppressWarnings(Seurat::NormalizeData(obj, verbose = FALSE))
 }
 
-universal_markers <- function(obj, n = 5) {
-    genes <- rownames(obj)
+# `genes` defaults to the object's own genes, but callers can pass the ones the
+# tool will actually see (the h5ad keeps only the variable features).
+universal_markers <- function(obj, n = 5, genes = rownames(obj)) {
     df <- data.frame(
         cell_type = rep(c("A", "B"), each = n),
         gene = c(genes[1:n], genes[(n + 1):(2 * n)]),
@@ -111,15 +112,56 @@ test_that("scsa runner: cluster-level mapping from the SCSA clone", {
     expect_equal(nrow(rec$cells), ncol(obj))
 })
 
-test_that("maca runner: names the environment MACA needs", {
+test_that("maca runner: cell-level labels from a real MACA run", {
     skip_if_not(file.exists(PYTHON), paste("no python at", PYTHON))
     obj <- norm_obj()
-    err <- run_error(
-        obj, "maca", list(db = universal_markers(obj), python = PYTHON)
+    # MACA keeps only the markers it finds among the object's features, drops
+    # every cell type left outside its 3..300 marker range, and the h5ad
+    # conversion carries the object's variable features alone, so the markers
+    # have to be taken from those.
+    genes <- SeuratObject::VariableFeatures(obj)
+    n <- length(genes) %/% 2
+    skip_if(n < 3, paste("only", length(genes), "variable features"))
+    rec <- tryCatch(
+        run(
+            obj, "maca",
+            args = list(
+                db = universal_markers(obj, n, genes = genes), python = PYTHON
+            )
+        ),
+        error = function(e) e
     )
-    expect_match(err, "Cannot import MACA", fixed = TRUE)
-    expect_match(err, "scanpy==1.6.0", fixed = TRUE)
-    expect_match(err, "envs.maca.python", fixed = TRUE)
+    if (inherits(rec, "error")) {
+        # a data problem, not a code one: MACA dropped every cell type it was
+        # given (too few or too many of its markers are in the object)
+        msg <- conditionMessage(rec)
+        if (!grepl("MACA cannot annotate anything", msg, fixed = TRUE)) {
+            stop(rec)
+        }
+        skip(paste("MACA cannot score this object:", msg))
+    }
+    expect_equal(rec$type, "cell")
+    expect_true("maca_celltype" %in% colnames(rec$mapping))
+    expect_equal(nrow(rec$mapping), ncol(obj))
+    expect_setequal(rownames(rec$mapping), colnames(obj))
+    expect_true(all(rec$mapping$maca_celltype %in% c("A", "B", "unassigned")))
+})
+
+test_that("maca runner: markers absent from the object fail actionably", {
+    skip_if_not(file.exists(PYTHON), paste("no python at", PYTHON))
+    obj <- norm_obj()
+    # None of these are in the h5ad (it carries the variable features only),
+    # so MACA drops both cell types and would hit its empty-argmax crash
+    genes <- setdiff(rownames(obj), SeuratObject::VariableFeatures(obj))
+    err <- run_error(
+        obj, "maca",
+        list(db = universal_markers(obj, 5, genes = genes), python = PYTHON)
+    )
+    expect_match(err, "MACA cannot annotate anything", fixed = TRUE)
+    expect_match(err, "fewer than 3 or more than 300", fixed = TRUE)
+    expect_match(err, "0 of 5 marker(s) in the object", fixed = TRUE)
+    expect_match(err, "pip install -e ~/github/MACA", fixed = TRUE)
+    expect_false(grepl("Traceback", err, fixed = TRUE))
 })
 
 test_that("scmapnet runner: asks for the clone and the checkpoint", {
