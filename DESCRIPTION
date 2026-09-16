@@ -89,7 +89,9 @@ Suggests:
     scmap,
     scPred,
     LICT,
-    mLLMCelltype
+    mLLMCelltype,
+    singscore,
+    withr
 Remotes:
     pwwang/enrichit,
     pwwang/plotthis,

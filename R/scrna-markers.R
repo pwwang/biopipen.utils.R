@@ -539,7 +539,7 @@ markers_to_ucell_list <- function(df) {
 #' Convert a marker table to the singscore format
 #'
 #' @description A named list of `up`/`down` gene sets, one per cell type, for
-#' [singscore::simpleScore()].
+#' `singscore::simpleScore()`.
 #'
 #' @details The direction is native here, so both marker directions are kept:
 #' positive-direction rows become `up` and negative-direction rows become

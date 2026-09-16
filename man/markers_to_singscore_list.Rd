@@ -15,7 +15,7 @@ cell types.
 }
 \description{
 A named list of \code{up}/\code{down} gene sets, one per cell type, for
-\code{\link[singscore:simpleScore]{singscore::simpleScore()}}.
+\code{singscore::simpleScore()}.
 }
 \details{
 The direction is native here, so both marker directions are kept:
