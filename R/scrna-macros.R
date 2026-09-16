@@ -4483,6 +4483,13 @@ RunModuleScoring <- function(
     cheetah        = list(level = "cell",    h5ad = FALSE),
     scclassify     = list(level = "cell",    h5ad = FALSE),
     scpred         = list(level = "cell",    h5ad = FALSE),
+    # MapQuery()/TransferData() predict per cell (`predicted.<use>`), so this is
+    # a cell-level tool like the four above.
+    mapquery       = list(level = "cell",    h5ad = FALSE),
+    # Azimuth is MapQuery() on a published reference and also predicts per cell,
+    # but biopipen's azimuth contract is the cluster mapping ("each cluster gets
+    # the majority call of its cells"), so it is declared cluster-level while
+    # still returning the per-cell labels as `cells`.
     azimuth        = list(level = "cluster", h5ad = FALSE),
     # ---- bundled-DB marker tools ----
     # Marker-table tools that are not pip-installable packages and are driven
@@ -4688,6 +4695,7 @@ RunCellTypeAnnotation <- function(
         scclassify     = .run_celltypeannotation_scclassify(object, args, ident, ctx),
         scpred         = .run_celltypeannotation_scpred(object, args, ident, ctx),
         azimuth        = .run_celltypeannotation_azimuth(object, args, ident, ctx),
+        mapquery       = .run_celltypeannotation_mapquery(object, args, ident, ctx),
         # ---- bundled-DB marker tools ----
         scsa           = .run_celltypeannotation_scsa(object, args, ident, ctx),
         maca           = .run_celltypeannotation_maca(object, args, ident, ctx),

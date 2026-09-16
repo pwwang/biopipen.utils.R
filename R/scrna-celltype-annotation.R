@@ -2890,6 +2890,92 @@ patch_garnett_run_classifier <- function(log) {
     list(mapping = mapping, type = "cluster", cells = result)
 }
 
+# ---- mapquery ----------------------------------------------------------------
+# Seurat's own reference mapping (Hao et al. 2021,
+# doi:10.1016/j.cell.2021.04.048): FindTransferAnchors() -> MapQuery().
+# RunSeuratMap2Ref() is the package's wrapper around exactly that pipeline (it is
+# what the SeuratMap2Ref proc calls), so this runner is argument plumbing plus
+# label extraction. The reference goes in `envs.mapquery.db`, the reference's
+# cell-type column in `envs.mapquery.use`. MapQuery()/TransferData() predict per
+# cell (`predicted.<use>`), so like the other cell-level tools this returns the
+# per-cell labels, and reduces them to one label per cluster by majority vote
+# when `ident` is given.
+# The reference must carry a reduction (used as `reference.reduction`) and a
+# model reduction (`reduction.model`, e.g. a UMAP built with `return.model =
+# TRUE`); RunSeuratMap2Ref() defaults them to the reference's first reduction and
+# "umap", and errors listing the alternatives when they are missing.
+.run_celltypeannotation_mapquery <- function(object, args, ident, ctx) {
+    log <- get_logger()
+    db <- args$db
+    use <- args$use
+
+    if (is.null(db)) { stop("`envs.mapquery.db` is not set") }
+    if (is.null(use)) {
+        stop(paste0(
+            "`envs.mapquery.use` is not set. It is the reference's metadata ",
+            "column holding the cell types to map the query onto"
+        ))
+    }
+
+    # The level follows the engine's `ident` (the pipeline's `envs.ident`): with
+    # it, each cluster gets the majority call of its cells; without it, the run
+    # stays cell-level. `args$ident` is not read for this -- the pipeline's
+    # `envs.mapquery.ident` is the SeuratMap2Ref-era *output* column name, which
+    # is now `envs.mapquery.ident_name`: RunSeuratMap2Ref() writes the labels into
+    # the column named by its `ident` argument (it drops the `predicted.<use>`
+    # column again), so that argument gets `ident_name` and the query's cluster
+    # column is never the one overwritten.
+    ident_name <- args$ident_name %||% "predicted.id"
+    clusters <- NULL
+    if (!is.null(ident)) {
+        # Read the clusters before the mapping call: it overwrites the column it
+        # writes to, which is the cluster column when the two names coincide.
+        clusters <- as.character(object@meta.data[[ident]])
+        # length 0, not NULL: a missing column gives NULL and as.character(NULL)
+        # is character(0)
+        if (length(clusters) == 0) {
+            stop(paste0(
+                "No `", ident, "` column in the query's metadata: ",
+                paste(colnames(object@meta.data), collapse = ", ")
+            ))
+        }
+    }
+
+    log$info("Mapping the query to the reference with RunSeuratMap2Ref ...")
+    object <- RunSeuratMap2Ref(
+        object,
+        ref = db,
+        use = use,
+        ident = ident_name,
+        refnorm = args$refnorm %||% "auto",
+        skip_if_normalized = args$skip_if_normalized %||% TRUE,
+        ncores = args$ncores %||% 1,
+        MapQueryArgs = args$map_query %||% list(),
+        FindTransferAnchorsArgs = args$find_transfer_anchors %||% list(),
+        SCTransformArgs = args$sctransform %||% list(),
+        NormalizeDataArgs = args$normalize_data %||% list(),
+        log = log,
+        cache = ctx$cache
+    )
+
+    labels <- as.character(object@meta.data[[ident_name]])
+    result <- data.frame(
+        mapquery_celltype = labels,
+        row.names = colnames(object)
+    )
+
+    if (is.null(ident)) {
+        list(mapping = result, type = "cell")
+    } else {
+        log$info("Aggregating mapquery results by cluster...")
+        mapping <- majority_vote(labels, clusters)
+        log$info(
+            "Mapped {length(mapping)} clusters to {length(unique(labels))} cell types"
+        )
+        list(mapping = mapping, type = "cluster", cells = result)
+    }
+}
+
 # ---- LLM annotators ---------------------------------------------------------
 # Both ask an LLM to name each cluster from its marker genes, so both need
 # credentials (or a local OpenAI-compatible endpoint) to return labels. Neither

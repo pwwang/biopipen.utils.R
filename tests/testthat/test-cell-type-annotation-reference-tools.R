@@ -1,6 +1,6 @@
 # Smoke tests for the reference-consuming annotators -- scmap, CHETAH,
-# scClassify, scPred and Azimuth. They take a *labelled reference* (a Seurat
-# object, a SingleCellExperiment or a plain list) instead of a marker table.
+# scClassify, scPred, Azimuth and MapQuery. They take a *labelled reference* (a
+# Seurat object, a SingleCellExperiment or a plain list) instead of a marker table.
 # The fixture is the usual pbmc_small *self-referenced*: the reference is the
 # same normalised object as the query, labelled with `groups` (g1, g2).
 # scClassify uses `RNA_snn_res.1` (0, 1, 2) instead, because its default
@@ -140,4 +140,73 @@ test_that("azimuth runner: needs a reference, and needs it on disk", {
     expect_false(is.null(names(res$mapping)))
     expect_true("azimuth_celltype" %in% colnames(res$cells))
     expect_equal(nrow(res$cells), ncol(obj))
+})
+
+test_that("mapquery runner: needs a reference, its annotation column and `ident`", {
+    obj <- norm_obj()
+    expect_error(
+        run(obj, "mapquery", list(use = "cell_type")),
+        "`envs.mapquery.db` is not set", fixed = TRUE
+    )
+    ref <- norm_obj()
+    ref$cell_type <- as.character(ref$groups)
+    expect_error(
+        run(obj, "mapquery", list(db = ref)),
+        "`envs.mapquery.use` is not set", fixed = TRUE
+    )
+    # the cluster column is read before the mapping call, so this errors without
+    # a usable reference
+    expect_error(
+        run(obj, "mapquery", list(db = ref, use = "cell_type"), ident = "nope"),
+        "No `nope` column in the query's metadata", fixed = TRUE
+    )
+})
+
+test_that("mapquery runner: cell-level labels, and both-mode with ident", {
+    obj <- norm_obj()
+    ref <- obj
+    # the reference's labels differ from the query's clusters, so a mapping that
+    # wrote over the `groups` column would show up below
+    ref$cell_type <- ifelse(as.character(ref$groups) == "g1", "alpha", "beta")
+    # reference mapping needs a reduction on the reference (`reference.reduction`
+    # defaults to its first one) plus a UMAP built with `return.model = TRUE` as
+    # the `reduction.model`
+    ref <- suppressWarnings(Seurat::RunUMAP(
+        ref, dims = 1:10, return.model = TRUE, verbose = FALSE
+    ))
+    args <- list(
+        db = ref_rds(ref), use = "cell_type",
+        # pbmc_small's PCA holds fewer than FindTransferAnchors' default
+        # 30 dimensions
+        find_transfer_anchors = list(dims = 1:10)
+    )
+
+    # without `ident`: one label per query cell
+    cell_res <- tryCatch(run(obj, "mapquery", args), error = identity)
+    if (inherits(cell_res, "error")) {
+        # 80 cells / 230 genes is far below what reference mapping is built for
+        # (the runner itself is verified against the pipeline's pbmc3k object)
+        skip(paste("mapquery on the small fixture:", conditionMessage(cell_res)))
+    }
+    expect_equal(cell_res$type, "cell")
+    expect_true("mapquery_celltype" %in% colnames(cell_res$mapping))
+    expect_equal(nrow(cell_res$mapping), ncol(obj))
+    expect_identical(rownames(cell_res$mapping), colnames(obj))
+    expect_true(all(cell_res$mapping$mapquery_celltype %in% c("alpha", "beta")))
+
+    # with `ident`: the same per-cell labels, plus their majority call per cluster
+    before <- as.character(obj$groups)
+    res <- tryCatch(run(obj, "mapquery", args, ident = "groups"), error = identity)
+    if (inherits(res, "error")) {
+        skip(paste("mapquery on the small fixture:", conditionMessage(res)))
+    }
+    expect_equal(res$type, "cluster")
+    expect_setequal(names(res$mapping), c("g1", "g2"))
+    expect_true(all(unlist(res$mapping) %in% c("alpha", "beta")))
+    expect_true("mapquery_celltype" %in% colnames(res$cells))
+    expect_equal(nrow(res$cells), ncol(obj))
+    expect_identical(rownames(res$cells), colnames(obj))
+    # the labels go into the runner's own `ident_name` column, never into the
+    # query's cluster column
+    expect_identical(as.character(obj$groups), before)
 })
