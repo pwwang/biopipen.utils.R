@@ -3,7 +3,8 @@
 # No provider key is set in CI, so these tests cover what runs without one:
 # the marker table the two runners build, the prompt mLLMCelltype produces, and
 # the loud failures both runners give instead of returning a placeholder label.
-# The key-gated tests at the bottom are skipped here and run where a key exists.
+# The key-gated tests at the bottom are skipped here and run where a key exists;
+# LICT's refine stage also needs all five providers, and is skipped without them.
 
 obj <- SeuratObject::pbmc_small
 obj$clusters <- factor(as.character(obj$groups), levels = c("g1", "g2"))
@@ -67,6 +68,23 @@ lict_key_vars <- c(
     "OPENAI_API_KEY", "openai.api_key", "openai_api_key", "Gemini_api_key",
     "ANTHROPIC_API_KEY", "ERNIE_api_key", "Llama3_api_key"
 )
+
+# The five providers LICT combines, each with the check LICT itself makes
+# before querying it: ERNIE and Llama need both their variables, the
+# OpenAI-compatible endpoint answers to any of its three names. The refinement
+# is gated on all five answering, so the tests below never name a provider
+# themselves -- they read off this table which ones the environment holds.
+lict_providers <- list(
+    ERNIE  = function() all(nzchar(Sys.getenv(c("ERNIE_api_key", "ERNIE_secret_key")))),
+    Gemini = function() nzchar(Sys.getenv("Gemini_api_key")),
+    GPT    = function() any(nzchar(Sys.getenv(c("OPENAI_API_KEY", "openai.api_key", "openai_api_key")))),
+    Llama  = function() all(nzchar(Sys.getenv(c("Llama3_api_key", "Llama3_secret_key")))),
+    Claude = function() nzchar(Sys.getenv("ANTHROPIC_API_KEY"))
+)
+
+lict_providers_present <- function() {
+    names(lict_providers)[vapply(lict_providers, function(check) check(), logical(1))]
+}
 
 test_that("lict: the runner names the missing provider key variables", {
     skip_if(
@@ -140,16 +158,80 @@ test_that("lict: a real run labels the clusters (needs a provider key)", {
     expect_null(rec$more)
 })
 
-test_that("lict: the validate stage returns the per-cluster table (needs a provider key)", {
+test_that("lict: the refinement is skipped when fewer than five providers answer", {
+    present <- lict_providers_present()
+    skip_if(length(present) == 0, "no provider key set")
     skip_if(
-        !any(nzchar(Sys.getenv(lict_key_vars))),
-        "no provider key set"
+        length(present) == length(lict_providers),
+        "all five provider keys are set: the refinement is not skipped"
     )
 
-    # one full run: the provider annotates (stage 1), then `Validate()` has it
-    # name the markers of those cell types, `Validate_Result_to_Df()` turns that
-    # answer into the table `Feedback_Info()` takes, and `Feedback_Info()` runs
-    # LICT's "talk-to-machine" refinement on it
+    # One real run with `validate` on (the default). `Validate()` only gets the
+    # tables of the providers that answered, and `Validate_Result_to_Df()` needs
+    # all five of them, so the runner skips the refinement instead of padding
+    # the empty slots. The reason is logged, and the log is read back as text.
+    out <- capture.output(rec <- RunCellTypeAnnotation(
+        obj, "lict",
+        args = list(species = "Human", tissue = "PBMC"),
+        ident = "clusters"
+    ))
+    log_text <- paste(out, collapse = "\n")
+
+    # the stage-1 labels come back as they are: the refinement would have
+    # relabelled the clusters and said so
+    expect_llm_mapping(rec)
+    expect_null(rec$more$validate)
+    expect_match(
+        log_text,
+        paste0("Annotated ", length(levels(obj$clusters)), " cluster(s) with '"),
+        fixed = TRUE
+    )
+    expect_false(grepl("Refined", log_text, fixed = TRUE))
+
+    # the skip names the count and the providers it is waiting on, and says why
+    # -- whichever provider answered, the others are the missing ones
+    missing <- setdiff(names(lict_providers), present)
+    expect_match(
+        log_text,
+        paste0(
+            "LICT refinement skipped: only ", length(present), " of 5 providers ",
+            "answered (missing: ", paste(missing, collapse = ", "), ")"
+        ),
+        fixed = TRUE
+    )
+    expect_match(log_text, "Validate_Result_to_Df()", fixed = TRUE)
+
+    # cat(), not message(): the test reporter hides messages of passing tests
+    cat(
+        "lict refinement skipped, log line: ",
+        grep(
+            "LICT refinement skipped",
+            strsplit(log_text, "\n", fixed = TRUE)[[1]], value = TRUE
+        ),
+        "\n  stage-1 mapping: ",
+        paste(names(rec$mapping), unlist(rec$mapping), sep = " = ", collapse = ", "),
+        "\n  more$validate: ",
+        if (is.null(rec$more$validate)) "NULL" else "not NULL",
+        "\n",
+        sep = ""
+    )
+})
+
+test_that("lict: the refine stage returns the per-cluster table (needs all five provider keys)", {
+    present <- lict_providers_present()
+    skip_if(
+        length(present) < length(lict_providers),
+        paste0(
+            "LICT's refine stage needs all five provider keys, one per table ",
+            "Validate_Result_to_Df() cbind()s by name (ERNIE, Gemini, GPT, ",
+            "Llama, Claude); with fewer providers the runner skips it"
+        )
+    )
+
+    # one full run: every provider annotates (stage 1), then `Validate()` has
+    # the model name the markers of those cell types, `Validate_Result_to_Df()`
+    # turns that answer into the table `Feedback_Info()` takes, and
+    # `Feedback_Info()` runs LICT's "talk-to-machine" refinement on it
     rec <- RunCellTypeAnnotation(
         obj, "lict",
         args = list(species = "Human", tissue = "PBMC"),
@@ -157,7 +239,7 @@ test_that("lict: the validate stage returns the per-cluster table (needs a provi
     )
     expect_llm_mapping(rec)
 
-    # the validated table has one row per cluster: the provider's labels plus
+    # the validated table has one row per cluster: the providers' labels plus
     # the markers the model named and the reliable/unreliable flags
     validated <- rec$more$validate
     expect_s3_class(validated, "data.frame")
@@ -170,6 +252,15 @@ test_that("lict: the validate stage returns the per-cluster table (needs a provi
     expect_true(
         all(c("clusters", "cell_type", "reliable", "unreliable") %in% names(validated))
     )
+    # every provider column belongs to a provider that answered: no slot is
+    # filled with another provider's numbers under a borrowed name
+    marker_cols <- grep(
+        "_(positive|negative)_marker$", names(validated), value = TRUE
+    )
+    expect_true(length(marker_cols) > 0)
+    expect_true(all(
+        sub("_(positive|negative)_marker$", "", marker_cols) %in% names(lict_providers)
+    ))
     # cat(), not message(): the test reporter hides messages of passing tests
     cat(
         "lict validate table: ", nrow(validated), " row(s) x ",

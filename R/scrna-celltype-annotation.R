@@ -3251,7 +3251,7 @@ patch_garnett_run_classifier <- function(log) {
     }
     mapping <- to_mapping(answered, paste0("provider '", provider, "'"))
 
-    # The second stage re-checks the provider's markers against the expression
+    # The second stage re-checks the providers' labels against the expression
     # data (`Validate()`), turns that answer into LICT's data frame
     # (`Validate_Result_to_Df()`) and asks the model for a second opinion on it
     # plus each cluster's 11th-20th DE genes (`Feedback_Info()`, LICT's
@@ -3265,53 +3265,57 @@ patch_garnett_run_classifier <- function(log) {
         # markers were grouped in, so the identity has to be `ident`
         Idents(object) <- ident
         more <- tryCatch({
-            checked <- LICT::Validate(res[provider], object, percent, species)
-            # `Validate()` hands back a list of per-provider tables with the
-            # marker columns it re-checked; `Feedback_Info()` takes the data
-            # frame `Validate_Result_to_Df()` derives from it:
-            # `clusters`, `cell_type`, `row`, `<provider>_positive_marker` and
-            # `<provider>_negative_marker` per provider, then `reliable` and
-            # `unreliable`.
-            #
-            # That function binds the five provider tables by name and slices
-            # the bound table by position (`df[, 26:27]`, and `[, 29:31]` in
-            # `Feedback_Info()`), so it only accepts all five providers. A run
-            # with fewer keys -- a single endpoint, as in this repo's tests --
-            # repeats the provider that answered into the empty slots, renamed
-            # after the slot: the repeated columns carry that provider's own
-            # marker check, and `Feedback_Info()` unions the marker genes and
-            # ORs the flags over them.
+            # `Validate()` re-checks the labels of every provider it is given
+            # and hands back a table per provider (its `clusters`, `cell_type`
+            # and `row` columns, plus that provider's `_positive_marker` and
+            # `_negative_marker`).
+            checked <- LICT::Validate(res, object, percent, species)
+            # `Validate_Result_to_Df()` is written for the full five-provider
+            # set: it `cbind`s the ERNIE, Gemini, GPT, Llama and Claude tables
+            # by name and then slices the bound table by position (`[, 26:27]`
+            # for `reliable`/`unreliable`; `Feedback_Info()` slices `[, 29:31]`
+            # for the marker genes it unions). A missing table makes that
+            # `cbind()` fail, and padding the empty slots with the provider that
+            # did answer would put its numbers on columns named after another
+            # provider. So the refinement runs only on a complete set, and
+            # otherwise the stage-1 labels stand as they are.
             providers <- c("ERNIE", "Gemini", "GPT", "Llama", "Claude")
-            validated <- LICT::Validate_Result_to_Df(stats::setNames(
-                lapply(providers, function(name) {
-                    slot <- checked[[provider]]
-                    names(slot) <- sub(
-                        paste0("^", provider, "_"), paste0(name, "_"),
-                        names(slot)
-                    )
-                    slot
-                }),
-                providers
-            ))
-            list(
-                validate = validated,
-                refined = tryCatch(
-                    # `Feedback_Info()` asks every provider (ERNIE first) no
-                    # matter which keys are set, so a partial provider set fails
-                    # in there before it reaches the one that answered
-                    to_mapping(
-                        LICT::Feedback_Info(validated, 11, 20, markers)[[provider]],
-                        "talk-to-machine refinement"
-                    ),
-                    error = function(e) {
-                        log$warn(
-                            "The LICT talk-to-machine refinement did not run: ",
-                            "{conditionMessage(e)}"
-                        )
-                        NULL
-                    }
+            missing <- setdiff(providers, names(checked))
+            if (length(missing) > 0) {
+                log$warn(
+                    "LICT refinement skipped: only ",
+                    "{length(providers) - length(missing)} of ",
+                    "{length(providers)} providers answered ",
+                    "(missing: {paste(missing, collapse = ', ')})"
                 )
-            )
+                log$info(
+                    "LICT's Validate_Result_to_Df() cbind()s the five provider ",
+                    "tables by name and slices the result by position, so it ",
+                    "needs all five of them; the stage-1 labels are returned ",
+                    "unrefined"
+                )
+                NULL
+            } else {
+                validated <- LICT::Validate_Result_to_Df(checked)
+                list(
+                    validate = validated,
+                    refined = tryCatch(
+                        # `Feedback_Info()` asks every provider (ERNIE first) no
+                        # matter which keys are set, so it needs the full set too
+                        to_mapping(
+                            LICT::Feedback_Info(validated, 11, 20, markers)[[provider]],
+                            "talk-to-machine refinement"
+                        ),
+                        error = function(e) {
+                            log$warn(
+                                "The LICT talk-to-machine refinement did not run: ",
+                                "{conditionMessage(e)}"
+                            )
+                            NULL
+                        }
+                    )
+                )
+            }
         }, error = function(e) {
             log$warn("The LICT validate stage failed: {conditionMessage(e)}")
             NULL
