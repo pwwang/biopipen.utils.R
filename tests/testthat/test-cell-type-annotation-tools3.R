@@ -39,6 +39,34 @@ test_that("heavy runners exist and are reachable through the engine", {
     suppressWarnings(reaches("celltypist"))
 })
 
+test_that("schdeepinsight is gated with an actionable message", {
+    # The runner checks the reference file first, so a real call attempt with an
+    # existing `ref` lands on the dependency gate: schdeepinsight does not run
+    # here at all, and the message has to name the package (what to install)
+    # instead of failing with a missing function or a bare ModuleNotFoundError.
+    obj <- SeuratObject::pbmc_small
+    ref <- tempfile("schdeepinsight-ref-", fileext = ".rds")
+    file.create(ref)
+    err <- tryCatch(
+        {
+            RunCellTypeAnnotation(
+                obj, "schdeepinsight",
+                args = list(ref = ref), cache = tempfile("cta-")
+            )
+            NULL
+        },
+        error = function(e) conditionMessage(e)
+    )
+    expect_false(is.null(err), info = "schdeepinsight unexpectedly succeeded")
+    expect_true(grepl("SCHdeepinsight", err, fixed = TRUE), info = err)
+
+    # Gated, not gone: the tool stays registered and dispatched to
+    expect_true("schdeepinsight" %in% names(celltype_annotation_tools()))
+    expect_true(
+        is.function(biopipen.utils:::.run_celltypeannotation_schdeepinsight)
+    )
+})
+
 test_that("the h5ad tools declare h5ad and get a cached conversion path", {
     tools <- celltype_annotation_tools()
     expect_true(all(vapply(
