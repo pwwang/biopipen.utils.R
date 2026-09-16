@@ -76,7 +76,7 @@ test_that("scsa runner: asks for the SCSA clone", {
         obj, "scsa",
         list(db = universal_markers(obj)), ident = "groups"
     )
-    expect_match(err, "envs.scsa.scsa_dir", fixed = TRUE)
+    expect_match(err, "scsa.scsa_dir", fixed = TRUE)
     expect_match(err, "bioinfo-ibms-pumc/SCSA", fixed = TRUE)
 })
 
@@ -169,13 +169,13 @@ test_that("scmapnet runner: asks for the clone and the checkpoint", {
     db <- universal_markers(obj)
 
     err <- run_error(obj, "scmapnet", list(db = db, python = PYTHON))
-    expect_match(err, "envs.scmapnet.scmapnet_dir", fixed = TRUE)
+    expect_match(err, "scmapnet.scmapnet_dir", fixed = TRUE)
     expect_match(err, "github.com/Yuz7/scMapNet", fixed = TRUE)
 
     err <- run_error(
         obj, "scmapnet",
         list(db = db, python = PYTHON, scmapnet_dir = tempdir())
     )
-    expect_match(err, "envs.scmapnet.weights", fixed = TRUE)
+    expect_match(err, "scmapnet.weights", fixed = TRUE)
     expect_match(err, "CC BY-NC 4.0", fixed = TRUE)
 })

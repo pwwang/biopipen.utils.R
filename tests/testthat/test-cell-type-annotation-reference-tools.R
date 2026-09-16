@@ -114,7 +114,7 @@ test_that("azimuth runner: needs a reference, and needs it on disk", {
     obj <- norm_obj()
     expect_error(
         run(obj, "azimuth", list(), ident = "groups"),
-        "needs `envs.azimuth.ref`", fixed = TRUE
+        "needs `azimuth.ref`", fixed = TRUE
     )
     # A reference *name* (e.g. "pbmcref") is resolved through SeuratData, which
     # downloads ~73 MB -- not something a test should do. A local directory is
@@ -159,13 +159,13 @@ test_that("mapquery runner: needs a reference, its annotation column and `ident`
     obj <- norm_obj()
     expect_error(
         run(obj, "mapquery", list(use = "cell_type")),
-        "`envs.mapquery.db` is not set", fixed = TRUE
+        "`mapquery.db` is not set", fixed = TRUE
     )
     ref <- norm_obj()
     ref$cell_type <- as.character(ref$groups)
     expect_error(
         run(obj, "mapquery", list(db = ref)),
-        "`envs.mapquery.use` is not set", fixed = TRUE
+        "`mapquery.use` is not set", fixed = TRUE
     )
     # the cluster column is read before the mapping call, so this errors without
     # a usable reference

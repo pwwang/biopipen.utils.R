@@ -408,7 +408,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     use_sensitivity <- args$use_sensitivity %||% TRUE
     threshold <- args$threshold %||% 0.0
 
-    if (is.null(db)) { stop("`envs.hitype.db` is not set") }
+    if (is.null(db)) { stop("`hitype.db` is not set") }
 
     # prepare gene sets
     log$info("Preparing gene sets...")
@@ -434,7 +434,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
             if (is_marker_canonical(db_markers)) {
                 # A universal marker table — consumed natively by hitype
                 # (>= 0.0.6). Filter the rows by
-                # `envs.tissue`/`envs.cancer`/`envs.species` here and keep
+                # `tissue`/`cancer`/`species` here and keep
                 # the table as is: notably a numeric `weight` column must
                 # survive (markers_to_sctype_df(), the sctype route, would
                 # drop it).
@@ -507,7 +507,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     species <- args$species
     db <- args$db
 
-    if (is.null(db)) { stop("`envs.sctype.db` is not set") }
+    if (is.null(db)) { stop("`sctype.db` is not set") }
 
     # prepare gene sets
     log$info("Preparing gene sets...")
@@ -528,7 +528,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         if (is_marker_canonical(db_markers)) {
             if (!is.null(tissue) && !"tissue" %in% colnames(db_markers)) {
                 stop(paste0(
-                    "`envs.sctype.tissue` is set to `", tissue,
+                    "`sctype.tissue` is set to `", tissue,
                     "` but the marker table has no `tissue` column."
                 ))
             }
@@ -663,7 +663,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     log <- get_logger()
     db <- args$db
 
-    if (is.null(db)) { stop("`envs.scsorter.db` is not set") }
+    if (is.null(db)) { stop("`scsorter.db` is not set") }
 
     log$info("Loading scSorter database ...")
     anno <- load_marker_table(db)
@@ -747,7 +747,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     log <- get_logger()
     db <- args$db
 
-    if (is.null(db)) { stop("`envs.singler.db` is not set") }
+    if (is.null(db)) { stop("`singler.db` is not set") }
 
     if (startsWith(db, "file://")) {
         db <- sub("^file://", "", db)
@@ -808,7 +808,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         if (is.null(labels)) {
             stop(paste(
                 "Cannot determine labels from reference.",
-                "Set `label` in `envs.singler.label`."
+                "Set `label` in `singler.label`."
             ))
         }
 
@@ -902,7 +902,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         if (is.null(types)) {
             stop(paste(
                 "Cannot determine cell types from reference.",
-                "Set `label` in `envs.singler.label`."
+                "Set `label` in `singler.label`."
             ))
         }
 
@@ -950,7 +950,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     log <- get_logger()
     db <- args$db
 
-    if (is.null(db)) { stop("`envs.scina.db` is not set") }
+    if (is.null(db)) { stop("`scina.db` is not set") }
 
     log$info("Loading SCINA signature file ...")
     mt <- load_marker_table(db)
@@ -1058,7 +1058,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     db <- args$db
 
     if (is.null(db)) {
-        stop("`envs.cellid.db` is required for CelliD annotation")
+        stop("`cellid.db` is required for CelliD annotation")
     }
 
     # Load marker gene list from file
@@ -1648,7 +1648,7 @@ patch_garnett_run_classifier <- function(log) {
     patch_garnett_marker_lexer(log)
 
     classifier_path <- args$classifier
-    if (is.null(classifier_path)) { stop("`envs.garnett.classifier` is not set") }
+    if (is.null(classifier_path)) { stop("`garnett.classifier` is not set") }
     if (!file.exists(classifier_path)) {
         stop(paste0("Garnett classifier file does not exist: ", classifier_path))
     }
@@ -1657,7 +1657,7 @@ patch_garnett_run_classifier <- function(log) {
     classifier <- read_obj(classifier_path)
     if (!inherits(classifier, "garnett_classifier")) {
         stop(paste0(
-            "The file in `envs.garnett.classifier` does not contain a ",
+            "The file in `garnett.classifier` does not contain a ",
             "Garnett classifier (garnett_classifier) object: ", classifier_path
         ))
     }
@@ -1668,7 +1668,7 @@ patch_garnett_run_classifier <- function(log) {
         if (!requireNamespace(db, quietly = TRUE)) {
             stop(paste0(
                 "The gene ID database package `", db,
-                "` from `envs.garnett.db` is not installed."
+                "` from `garnett.db` is not installed."
             ))
         }
         library(db, character.only = TRUE)
@@ -1684,7 +1684,7 @@ patch_garnett_run_classifier <- function(log) {
     unknown_args <- setdiff(names(args), formalArgs(garnett::classify_cells))
     if (length(unknown_args) > 0) {
         stop(paste0(
-            "Unknown arguments in `envs.garnett`: ",
+            "Unknown arguments in `garnett`: ",
             paste(unknown_args, collapse = ", "),
             " (not arguments of `garnett::classify_cells()`)"
         ))
@@ -1734,7 +1734,7 @@ patch_garnett_run_classifier <- function(log) {
         log$warn(paste(
             "The counts of the converted cell_data_set are not integers;",
             "garnett::classify_cells() expects raw counts. Results may be",
-            "unreliable. Set `envs.assay` to an assay with a counts layer."
+            "unreliable. Set `assay` to an assay with a counts layer."
         ))
     }
 
@@ -1772,7 +1772,7 @@ patch_garnett_run_classifier <- function(log) {
     if (n_unknown == length(labels)) {
         log$warn(paste(
             "All cells are classified as 'Unknown' by Garnett; check",
-            "`envs.garnett.db`/`envs.garnett.cds_gene_id_type` (classifier is",
+            "`garnett.db`/`garnett.cds_gene_id_type` (classifier is",
             "trained on", classifier@gene_id_type, "genes)"
         ))
     } else {
@@ -1932,7 +1932,7 @@ patch_garnett_run_classifier <- function(log) {
 
     schdeepinsight_ref <- args$ref
     if (is.null(schdeepinsight_ref)) {
-        stop("`envs.schdeepinsight.ref` is not set")
+        stop("`schdeepinsight.ref` is not set")
     }
     if (startsWith(schdeepinsight_ref, "file://")) {
         schdeepinsight_ref <- sub("^file://", "", schdeepinsight_ref)
@@ -1999,13 +1999,13 @@ patch_garnett_run_classifier <- function(log) {
     scbert_model <- args$model
     scbert_label_dict <- args$label_dict
     if (is.null(scbert_ref)) {
-        stop("`envs.scbert.ref` is required for scBERT annotation")
+        stop("`scbert.ref` is required for scBERT annotation")
     }
     if (is.null(scbert_model)) {
-        stop("`envs.scbert.model` is required for scBERT annotation")
+        stop("`scbert.model` is required for scBERT annotation")
     }
     if (is.null(scbert_label_dict)) {
-        stop("`envs.scbert.label_dict` is required for scBERT annotation")
+        stop("`scbert.label_dict` is required for scBERT annotation")
     }
 
     if (startsWith(scbert_model, "file://")) {
@@ -2102,7 +2102,7 @@ patch_garnett_run_classifier <- function(log) {
         sep = "\t", quote = FALSE, row.names = FALSE, col.names = TRUE
     )
 
-    # Config for the wrapper: `envs.scagenttype` minus the R-side and credential
+    # Config for the wrapper: `scagenttype` minus the R-side and credential
     # keys; `tissue`/`species` are folded into `tissue_context` when not given
     config <- args
     config$python <- NULL
@@ -2210,7 +2210,7 @@ patch_garnett_run_classifier <- function(log) {
 
     python <- args$python %||% Sys.which("python")
     if (python == "") {
-        stop("Python executable not found. Please specify `envs.cellassign.python`.")
+        stop("Python executable not found. Please specify `cellassign.python`.")
     }
     # load the right Python environment with tensorflow installed
     Sys.setenv(RETICULATE_PYTHON = python)
@@ -2218,7 +2218,7 @@ patch_garnett_run_classifier <- function(log) {
     log <- get_logger()
 
     if (is.null(cellassign_db)) {
-        stop("`envs.cellassign.db` is required for cellassign annotation")
+        stop("`cellassign.db` is required for cellassign annotation")
     }
 
     # Load marker gene info
@@ -2330,7 +2330,7 @@ patch_garnett_run_classifier <- function(log) {
     log <- get_logger()
     db <- args$db
 
-    if (is.null(db)) { stop("`envs.ucell.db` is not set") }
+    if (is.null(db)) { stop("`ucell.db` is not set") }
 
     log$info("Loading UCell marker table ...")
     mt <- load_marker_table(db)
@@ -2398,7 +2398,7 @@ patch_garnett_run_classifier <- function(log) {
     log <- get_logger()
     db <- args$db
 
-    if (is.null(db)) { stop("`envs.aucell.db` is not set") }
+    if (is.null(db)) { stop("`aucell.db` is not set") }
 
     log$info("Loading AUCell marker table ...")
     mt <- load_marker_table(db)
@@ -2466,7 +2466,7 @@ patch_garnett_run_classifier <- function(log) {
     log <- get_logger()
     db <- args$db
 
-    if (is.null(db)) { stop("`envs.gsva.db` is not set") }
+    if (is.null(db)) { stop("`gsva.db` is not set") }
 
     log$info("Loading GSVA marker table ...")
     mt <- load_marker_table(db)
@@ -2533,7 +2533,7 @@ patch_garnett_run_classifier <- function(log) {
     log <- get_logger()
     db <- args$db
 
-    if (is.null(db)) { stop("`envs.singscore.db` is not set") }
+    if (is.null(db)) { stop("`singscore.db` is not set") }
 
     log$info("Loading singscore marker table ...")
     mt <- load_marker_table(db)
@@ -2608,7 +2608,7 @@ patch_garnett_run_classifier <- function(log) {
 }
 
 # ---- reference-consuming annotators -----------------------------------------
-# These take a *labelled reference* in `envs.<tool>.db` -- read with read_obj(),
+# These take a *labelled reference* in `<tool>.db` -- read with read_obj(),
 # so an RDS/qs/qs2 file holding a Seurat object, a SingleCellExperiment or a
 # plain list -- instead of a marker table, and label the query by projecting it
 # onto that reference.
@@ -2626,7 +2626,7 @@ patch_garnett_run_classifier <- function(log) {
     log <- get_logger()
     db <- args$db
 
-    if (is.null(db)) { stop("`envs.scmap.db` is not set") }
+    if (is.null(db)) { stop("`scmap.db` is not set") }
 
     assay <- args$assay %||% "RNA"
     threshold <- args$threshold %||% 0.5
@@ -2655,7 +2655,7 @@ patch_garnett_run_classifier <- function(log) {
     if (!cluster_col %in% colnames(coldata)) {
         stop(paste0(
             "No `", cluster_col, "` column in the reference's colData. Set ",
-            "`envs.scmap.cluster_col` to the column holding the cell types."
+            "`scmap.cluster_col` to the column holding the cell types."
         ))
     }
     ref_labels <- as.character(coldata[[cluster_col]])
@@ -2735,7 +2735,7 @@ patch_garnett_run_classifier <- function(log) {
     log <- get_logger()
     db <- args$db
 
-    if (is.null(db)) { stop("`envs.cheetah.db` is not set") }
+    if (is.null(db)) { stop("`cheetah.db` is not set") }
 
     assay <- args$assay %||% "RNA"
     # the reference's colData column holding the cell types
@@ -2755,7 +2755,7 @@ patch_garnett_run_classifier <- function(log) {
     if (!label_col %in% colnames(SummarizedExperiment::colData(ref))) {
         stop(paste0(
             "No `", label_col, "` column in the reference's colData. Set ",
-            "`envs.cheetah.label` to the column holding the cell types."
+            "`cheetah.label` to the column holding the cell types."
         ))
     }
 
@@ -2807,7 +2807,7 @@ patch_garnett_run_classifier <- function(log) {
     log <- get_logger()
     db <- args$db
 
-    if (is.null(db)) { stop("`envs.scclassify.db` is not set") }
+    if (is.null(db)) { stop("`scclassify.db` is not set") }
 
     assay <- args$assay %||% "RNA"
 
@@ -2875,7 +2875,7 @@ patch_garnett_run_classifier <- function(log) {
     log <- get_logger()
     db <- args$db
 
-    if (is.null(db)) { stop("`envs.scpred.db` is not set") }
+    if (is.null(db)) { stop("`scpred.db` is not set") }
 
     pvar <- args$pvar %||% "cell_type"
     model <- args$model %||% "svmRadial"
@@ -2893,7 +2893,7 @@ patch_garnett_run_classifier <- function(log) {
     if (!pvar %in% colnames(reference@meta.data)) {
         stop(paste0(
             "No `", pvar, "` column in the reference's metadata. Set ",
-            "`envs.scpred.pvar` to the column holding the cell types."
+            "`scpred.pvar` to the column holding the cell types."
         ))
     }
 
@@ -2959,7 +2959,7 @@ patch_garnett_run_classifier <- function(log) {
 
     if (is.null(ref)) {
         stop(paste0(
-            "[RunCellTypeAnnotation] Tool 'azimuth' needs `envs.azimuth.ref`, ",
+            "[RunCellTypeAnnotation] Tool 'azimuth' needs `azimuth.ref`, ",
             "a reference name such as \"pbmcref\" or a directory holding ",
             "ref.Rds + idx.annoy"
         ))
@@ -3041,8 +3041,8 @@ patch_garnett_run_classifier <- function(log) {
 # doi:10.1016/j.cell.2021.04.048): FindTransferAnchors() -> MapQuery().
 # RunSeuratMap2Ref() is the package's wrapper around exactly that pipeline (it is
 # what the SeuratMap2Ref proc calls), so this runner is argument plumbing plus
-# label extraction. The reference goes in `envs.mapquery.db`, the reference's
-# cell-type column in `envs.mapquery.use`. MapQuery()/TransferData() predict per
+# label extraction. The reference goes in `mapquery.db`, the reference's
+# cell-type column in `mapquery.use`. MapQuery()/TransferData() predict per
 # cell (`predicted.<use>`), so like the other cell-level tools this returns the
 # per-cell labels, and reduces them to one label per cluster by majority vote
 # when `ident` is given.
@@ -3055,19 +3055,19 @@ patch_garnett_run_classifier <- function(log) {
     db <- args$db
     use <- args$use
 
-    if (is.null(db)) { stop("`envs.mapquery.db` is not set") }
+    if (is.null(db)) { stop("`mapquery.db` is not set") }
     if (is.null(use)) {
         stop(paste0(
-            "`envs.mapquery.use` is not set. It is the reference's metadata ",
+            "`mapquery.use` is not set. It is the reference's metadata ",
             "column holding the cell types to map the query onto"
         ))
     }
 
-    # The level follows the engine's `ident` (the pipeline's `envs.ident`): with
+    # The level follows the engine's `ident` (the pipeline's `ident`): with
     # it, each cluster gets the majority call of its cells; without it, the run
     # stays cell-level. `args$ident` is not read for this -- the pipeline's
-    # `envs.mapquery.ident` is the SeuratMap2Ref-era *output* column name, which
-    # is now `envs.mapquery.ident_name`: RunSeuratMap2Ref() writes the labels into
+    # `mapquery.ident` is the SeuratMap2Ref-era *output* column name, which
+    # is now `mapquery.ident_name`: RunSeuratMap2Ref() writes the labels into
     # the column named by its `ident` argument (it drops the `predicted.<use>`
     # column again), so that argument gets `ident_name` and the query's cluster
     # column is never the one overwritten.
@@ -3140,7 +3140,7 @@ patch_garnett_run_classifier <- function(log) {
 
     tissue <- args$tissue
     if (is.null(tissue) || !nzchar(tissue)) {
-        stop("`envs.mllmcelltype.tissue` is required (e.g. 'human PBMC')")
+        stop("`mllmcelltype.tissue` is required (e.g. 'human PBMC')")
     }
     # the tool reads no environment variables itself, so an OpenAI-compatible
     # endpoint is pointed at with OPENAI_MODEL/OPENAI_BASE_URL here
@@ -3284,7 +3284,7 @@ patch_garnett_run_classifier <- function(log) {
             "was found. Set one of `openai_api_key` (or `openai.api_key`), ",
             "`Gemini_api_key`, `ANTHROPIC_API_KEY`, `ERNIE_api_key` + ",
             "`ERNIE_secret_key`, `Llama3_api_key` + `Llama3_secret_key` in the ",
-            "environment, or pass them through `envs.lict.keys`"
+            "environment, or pass them through `lict.keys`"
         ))
     }
 
@@ -3295,7 +3295,7 @@ patch_garnett_run_classifier <- function(log) {
             log$warn(
                 "{length(res)} LICT providers answered ",
                 "({paste(names(res), collapse = ', ')}); using '{provider}'. ",
-                "Set `envs.lict.provider` to pick another one"
+                "Set `lict.provider` to pick another one"
             )
         }
     }
@@ -3423,7 +3423,7 @@ patch_garnett_run_classifier <- function(log) {
 # two-column TSV of the cell type and the gene, written into the scratch dir.
 .cta_py_marker_file <- function(db, scratch, tool) {
     if (is.null(db)) {
-        stop(paste0("`envs.", tool, ".db` is not set"))
+        stop(paste0("`", tool, ".db` is not set"))
     }
     df <- load_marker_table(db)
     if (!is.data.frame(df) || !is_marker_canonical(df)) {
@@ -3450,10 +3450,10 @@ patch_garnett_run_classifier <- function(log) {
     scsa_dir <- args$scsa_dir
     if (is.null(scsa_dir)) {
         stop(paste0(
-            "`envs.scsa.scsa_dir` is not set. SCSA is not on ",
+            "`scsa.scsa_dir` is not set. SCSA is not on ",
             "CRAN/Bioconductor/PyPI: clone ",
             "https://github.com/bioinfo-ibms-pumc/SCSA and point ",
-            "`envs.scsa.scsa_dir` at the clone (it holds `SCSA.py` and ",
+            "`scsa.scsa_dir` at the clone (it holds `SCSA.py` and ",
             "`whole.db`)."
         ))
     }
@@ -3583,18 +3583,18 @@ patch_garnett_run_classifier <- function(log) {
 
     if (is.null(args$scmapnet_dir)) {
         stop(paste0(
-            "`envs.scmapnet.scmapnet_dir` is not set. scMapNet is not a ",
+            "`scmapnet.scmapnet_dir` is not set. scMapNet is not a ",
             "package: clone https://github.com/Yuz7/scMapNet and point ",
-            "`envs.scmapnet.scmapnet_dir` at the clone (it holds ",
+            "`scmapnet.scmapnet_dir` at the clone (it holds ",
             "`main_finetune.py` and `generate_image_script.sh`)."
         ))
     }
     if (is.null(args$weights)) {
         stop(paste0(
-            "`envs.scmapnet.weights` is not set. The pre-trained weights are ",
+            "`scmapnet.weights` is not set. The pre-trained weights are ",
             "a manual download (they are not part of the repo, see ",
             "https://github.com/Yuz7/scMapNet) and are licensed CC BY-NC 4.0 ",
-            "(non-commercial); point `envs.scmapnet.weights` at a checkpoint ",
+            "(non-commercial); point `scmapnet.weights` at a checkpoint ",
             "fine-tuned on the cell types of the marker table."
         ))
     }
