@@ -56,6 +56,7 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache-version: 1
+          dependencies: '"hard"'
           extra-packages: |
             any::remotes, any::devtools, any::pkgdown, any::testthat, any::gglogger, any::ComplexHeatmap,
             any::plotthis, any::scplotter, any::enrichR, github::immunogenomics/presto,
