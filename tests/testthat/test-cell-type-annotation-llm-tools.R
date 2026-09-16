@@ -61,13 +61,16 @@ test_that("mllmcelltype: `tissue` is required", {
     )
 })
 
+# the provider key variables LICT reads; `OPENAI_API_KEY` is the one the
+# OpenAI-compatible endpoint variables come with
+lict_key_vars <- c(
+    "OPENAI_API_KEY", "openai.api_key", "openai_api_key", "Gemini_api_key",
+    "ANTHROPIC_API_KEY", "ERNIE_api_key", "Llama3_api_key"
+)
+
 test_that("lict: the runner names the missing provider key variables", {
-    key_vars <- c(
-        "openai.api_key", "openai_api_key", "Gemini_api_key",
-        "ANTHROPIC_API_KEY", "ERNIE_api_key", "Llama3_api_key"
-    )
     skip_if(
-        any(nzchar(Sys.getenv(key_vars))),
+        any(nzchar(Sys.getenv(lict_key_vars))),
         "provider keys are set in this environment"
     )
 
@@ -93,6 +96,17 @@ test_that("both LLM annotators are registered as cluster-level tools", {
     }
 })
 
+# the labels are free text, so only their shape is asserted: one non-empty
+# string per cluster, none missing
+expect_llm_mapping <- function(rec) {
+    expect_equal(rec$type, "cluster")
+    expect_setequal(names(rec$mapping), levels(obj$clusters))
+    labels <- unlist(rec$mapping, use.names = FALSE)
+    expect_type(labels, "character")
+    expect_false(anyNA(labels))
+    expect_true(all(nzchar(labels)))
+}
+
 test_that("mllmcelltype: a real run labels the clusters (needs OPENAI_API_KEY)", {
     skip_if(Sys.getenv("OPENAI_API_KEY") == "", "no OPENAI_API_KEY set")
 
@@ -101,18 +115,21 @@ test_that("mllmcelltype: a real run labels the clusters (needs OPENAI_API_KEY)",
         args = list(tissue = "human PBMC"),
         ident = "clusters"
     )
-    expect_equal(rec$type, "cluster")
-    expect_setequal(names(rec$mapping), c("g1", "g2"))
-    expect_true(all(nzchar(unlist(rec$mapping))))
+    expect_llm_mapping(rec)
 })
 
-test_that("lict: a real run labels the clusters (needs openai_api_key)", {
-    skip_if(Sys.getenv("openai_api_key") == "", "no openai_api_key set")
-
-    rec <- RunCellTypeAnnotation(
-        obj, "lict", args = list(species = "Human"), ident = "clusters"
+test_that("lict: a real run labels the clusters (needs a provider key)", {
+    skip_if(
+        !any(nzchar(Sys.getenv(lict_key_vars))),
+        "no provider key set"
     )
-    expect_equal(rec$type, "cluster")
-    expect_setequal(names(rec$mapping), c("g1", "g2"))
-    expect_true(all(nzchar(unlist(rec$mapping))))
+
+    # the validate stage asks the model a second time per cluster -- one call
+    # is enough to prove the labels come back
+    rec <- RunCellTypeAnnotation(
+        obj, "lict",
+        args = list(species = "Human", tissue = "PBMC", validate = FALSE),
+        ident = "clusters"
+    )
+    expect_llm_mapping(rec)
 })

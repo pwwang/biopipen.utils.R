@@ -2996,7 +2996,13 @@ patch_garnett_run_classifier <- function(log) {
     if (is.null(tissue) || !nzchar(tissue)) {
         stop("`envs.mllmcelltype.tissue` is required (e.g. 'human PBMC')")
     }
-    model <- args$model %||% "gpt-5.5"
+    # the tool reads no environment variables itself, so an OpenAI-compatible
+    # endpoint is pointed at with OPENAI_MODEL/OPENAI_BASE_URL here
+    env_or <- function(name) {
+        value <- Sys.getenv(name)
+        if (nzchar(value)) value
+    }
+    model <- args$model %||% env_or("OPENAI_MODEL") %||% "gpt-5.5"
     # the model decides which provider is called, and so which key it needs
     key_env <- if (grepl("^(anthropic|claude)", tolower(model))) {
         "ANTHROPIC_API_KEY"
@@ -3007,6 +3013,29 @@ patch_garnett_run_classifier <- function(log) {
     if (!nzchar(api_key)) {
         log$info("No {key_env} set; mLLMCelltype can only build the prompt")
         api_key <- NA
+    }
+    base_urls <- args$base_urls
+    if (is.null(base_urls)) {
+        # OPENAI_BASE_URL follows the SDK convention -- a host the client
+        # appends the path to -- while mLLMCelltype takes `base_urls` as the
+        # request URL in full, so a host-only base is completed here
+        base_urls <- env_or("OPENAI_BASE_URL")
+        if (!is.null(base_urls) && !grepl("/chat/completions/*$", base_urls)) {
+            base_urls <- paste0(
+                sub("/+$", "", base_urls),
+                if (grepl("/v[0-9]+$", base_urls)) {
+                    "/chat/completions"
+                } else {
+                    "/v1/chat/completions"
+                }
+            )
+        }
+    }
+    # the host only: the endpoint is not a secret, the key is
+    endpoint <- if (is.null(base_urls)) {
+        "the provider's default endpoint"
+    } else {
+        sub("/.*$", "", sub("^[^:/]+://", "", base_urls))
     }
 
     log$info("Find the markers for {ident} ...")
@@ -3023,8 +3052,9 @@ patch_garnett_run_classifier <- function(log) {
     call_args$tissue_name <- tissue
     call_args$model <- model
     call_args$api_key <- api_key
+    call_args$base_urls <- base_urls
 
-    log$info("Running mLLMCelltype with model '{model}' ...")
+    log$info("Running mLLMCelltype with model '{model}' via {endpoint} ...")
     res <- do_call(mLLMCelltype::annotate_cell_types, call_args)
 
     if (is.character(res) && length(res) == 1 && !is.na(res) &&
