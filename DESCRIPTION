@@ -95,10 +95,15 @@ Suggests:
 Remotes:
     pwwang/enrichit,
     pwwang/plotthis,
+    pwwang/hitype,
     pwwang/scplotter,
+    pwwang/LLMCellType,
     chris-mcginnis-ucsf/DoubletFinder,
-    mojaveazure/seurat-disk,
+    SeuratDisk=mojaveazure/seurat-disk,
+    SeuratWrappers=satijalab/seurat-wrappers,
     ZJU-UoE-CCW-LAB/scCDC,
-    Irrationone/cellassign
+    Irrationone/cellassign,
+    cole-trapnell-lab/garnett,
+    cole-trapnell-lab/monocle3
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
