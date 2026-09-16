@@ -3160,13 +3160,6 @@ patch_garnett_run_classifier <- function(log) {
         ))
     }
     answered <- res[[provider]]
-    if (!is.data.frame(answered) ||
-        !all(c("clusters", "cell_type") %in% names(answered))) {
-        stop(paste0(
-            "Unexpected result from the LICT provider '", provider, "': ",
-            paste(names(answered), collapse = ", ")
-        ))
-    }
 
     # the provider numbers the clusters from 0, in the order the markers were
     # grouped in (level order for a factor, sorted otherwise)
@@ -3175,25 +3168,33 @@ patch_garnett_run_classifier <- function(log) {
     } else {
         sort(unique(as.character(markers$cluster)))
     }
-    idx <- as.integer(answered$clusters) + 1
-    if (anyNA(idx) || any(idx < 1) || any(idx > length(clusters))) {
-        stop(paste0(
-            "LICT numbered its clusters outside the marker table: ",
-            paste(answered$clusters, collapse = ", "), " for ",
-            length(clusters), " cluster(s)"
-        ))
+    to_mapping <- function(answered, source) {
+        if (!is.data.frame(answered) ||
+            !all(c("clusters", "cell_type") %in% names(answered))) {
+            stop(paste0(
+                "Unexpected result from the LICT ", source, ": ",
+                paste(names(answered), collapse = ", ")
+            ))
+        }
+        idx <- as.integer(answered$clusters) + 1
+        if (anyNA(idx) || any(idx < 1) || any(idx > length(clusters))) {
+            stop(paste0(
+                "LICT numbered its clusters outside the marker table: ",
+                paste(answered$clusters, collapse = ", "), " for ",
+                length(clusters), " cluster(s)"
+            ))
+        }
+        stats::setNames(as.list(as.character(answered$cell_type)), clusters[idx])
     }
-    mapping <- stats::setNames(
-        as.list(as.character(answered$cell_type)),
-        clusters[idx]
-    )
+    mapping <- to_mapping(answered, paste0("provider '", provider, "'"))
 
-    # The refine/validate stage re-checks the provider's markers against the
-    # expression data and asks the model for a second opinion on them. It is
-    # best-effort: it costs extra LLM calls, needs reticulate + the python
-    # `openai` package, and its per-cluster reliability table is a report on the
-    # markers rather than a set of labels -- so a failure here still leaves the
-    # first-stage labels usable.
+    # The second stage re-checks the provider's markers against the expression
+    # data (`Validate()`), turns that answer into LICT's data frame
+    # (`Validate_Result_to_Df()`) and asks the model for a second opinion on it
+    # plus each cluster's 11th-20th DE genes (`Feedback_Info()`, LICT's
+    # "talk-to-machine"). It is best-effort: it costs extra LLM calls, needs
+    # reticulate + the python `openai` package, and a failure here still leaves
+    # the first-stage labels usable.
     more <- NULL
     if (isTRUE(validate)) {
         log$info("Validating the LICT labels ...")
@@ -3202,12 +3203,64 @@ patch_garnett_run_classifier <- function(log) {
         Idents(object) <- ident
         more <- tryCatch({
             checked <- LICT::Validate(res[provider], object, percent, species)
-            feedback <- LICT::Feedback_Info(checked, 11, 20, markers)
-            list(validate = LICT::Validate_Result_to_Df(feedback))
+            # `Validate()` hands back a list of per-provider tables with the
+            # marker columns it re-checked; `Feedback_Info()` takes the data
+            # frame `Validate_Result_to_Df()` derives from it:
+            # `clusters`, `cell_type`, `row`, `<provider>_positive_marker` and
+            # `<provider>_negative_marker` per provider, then `reliable` and
+            # `unreliable`.
+            #
+            # That function binds the five provider tables by name and slices
+            # the bound table by position (`df[, 26:27]`, and `[, 29:31]` in
+            # `Feedback_Info()`), so it only accepts all five providers. A run
+            # with fewer keys -- a single endpoint, as in this repo's tests --
+            # repeats the provider that answered into the empty slots, renamed
+            # after the slot: the repeated columns carry that provider's own
+            # marker check, and `Feedback_Info()` unions the marker genes and
+            # ORs the flags over them.
+            providers <- c("ERNIE", "Gemini", "GPT", "Llama", "Claude")
+            validated <- LICT::Validate_Result_to_Df(stats::setNames(
+                lapply(providers, function(name) {
+                    slot <- checked[[provider]]
+                    names(slot) <- sub(
+                        paste0("^", provider, "_"), paste0(name, "_"),
+                        names(slot)
+                    )
+                    slot
+                }),
+                providers
+            ))
+            list(
+                validate = validated,
+                refined = tryCatch(
+                    # `Feedback_Info()` asks every provider (ERNIE first) no
+                    # matter which keys are set, so a partial provider set fails
+                    # in there before it reaches the one that answered
+                    to_mapping(
+                        LICT::Feedback_Info(validated, 11, 20, markers)[[provider]],
+                        "talk-to-machine refinement"
+                    ),
+                    error = function(e) {
+                        log$warn(
+                            "The LICT talk-to-machine refinement did not run: ",
+                            "{conditionMessage(e)}"
+                        )
+                        NULL
+                    }
+                )
+            )
         }, error = function(e) {
             log$warn("The LICT validate stage failed: {conditionMessage(e)}")
             NULL
         })
+    }
+
+    if (!is.null(more$refined)) {
+        # the refinement relabels every cluster from the markers it re-checked
+        mapping <- more$refined
+        log$info(
+            "Refined {length(mapping)} cluster(s) with the talk-to-machine stage"
+        )
     }
 
     log$info("Annotated {length(mapping)} cluster(s) with '{provider}'")

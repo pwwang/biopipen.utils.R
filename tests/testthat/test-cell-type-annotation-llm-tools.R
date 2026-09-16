@@ -131,5 +131,51 @@ test_that("lict: a real run labels the clusters (needs a provider key)", {
         args = list(species = "Human", tissue = "PBMC", validate = FALSE),
         ident = "clusters"
     )
+    # `validate = FALSE` skips the second stage: the result is the first-stage
+    # mapping and nothing else, no validated table and no refined labels. The
+    # labels are free text, so they are compared by shape rather than against
+    # another run of the model.
     expect_llm_mapping(rec)
+    expect_named(rec, c("mapping", "type", "more"))
+    expect_null(rec$more)
+})
+
+test_that("lict: the validate stage returns the per-cluster table (needs a provider key)", {
+    skip_if(
+        !any(nzchar(Sys.getenv(lict_key_vars))),
+        "no provider key set"
+    )
+
+    # one full run: the provider annotates (stage 1), then `Validate()` has it
+    # name the markers of those cell types, `Validate_Result_to_Df()` turns that
+    # answer into the table `Feedback_Info()` takes, and `Feedback_Info()` runs
+    # LICT's "talk-to-machine" refinement on it
+    rec <- RunCellTypeAnnotation(
+        obj, "lict",
+        args = list(species = "Human", tissue = "PBMC"),
+        ident = "clusters"
+    )
+    expect_llm_mapping(rec)
+
+    # the validated table has one row per cluster: the provider's labels plus
+    # the markers the model named and the reliable/unreliable flags
+    validated <- rec$more$validate
+    expect_s3_class(validated, "data.frame")
+    expect_equal(nrow(validated), length(levels(obj$clusters)))
+    # the refinement only completes with a full provider set (`Feedback_Info()`
+    # asks all five); when it does, its labels are the returned annotation
+    if (!is.null(rec$more$refined)) {
+        expect_equal(rec$mapping, rec$more$refined)
+    }
+    expect_true(
+        all(c("clusters", "cell_type", "reliable", "unreliable") %in% names(validated))
+    )
+    # cat(), not message(): the test reporter hides messages of passing tests
+    cat(
+        "lict validate table: ", nrow(validated), " row(s) x ",
+        ncol(validated), " column(s)\n  columns: ",
+        paste(names(validated), collapse = ", "), "\n  cell_type: ",
+        paste(validated$cell_type, collapse = ", "), "\n",
+        sep = ""
+    )
 })
