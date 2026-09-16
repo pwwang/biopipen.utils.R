@@ -5,6 +5,8 @@
 # the loud failures both runners give instead of returning a placeholder label.
 # The key-gated tests at the bottom are skipped here and run where a key exists;
 # LICT's refine stage also needs all five providers, and is skipped without them.
+# Each tool's package is a Suggests, not a hard dependency, so the tests below
+# also skip where mLLMCelltype or LICT is not installed.
 
 obj <- SeuratObject::pbmc_small
 obj$clusters <- factor(as.character(obj$groups), levels = c("g1", "g2"))
@@ -18,6 +20,8 @@ llm_markers <- function() {
 }
 
 test_that("mllmcelltype: the runner stops rather than return a prompt", {
+    skip_if_not_installed("mLLMCelltype")
+
     err <- tryCatch(
         RunCellTypeAnnotation(
             obj, "mllmcelltype",
@@ -31,6 +35,8 @@ test_that("mllmcelltype: the runner stops rather than return a prompt", {
 })
 
 test_that("mllmcelltype: api_key = NA makes the tool build the prompt", {
+    skip_if_not_installed("mLLMCelltype")
+
     markers <- llm_markers()
     prompt <- mLLMCelltype::annotate_cell_types(
         markers, tissue_name = "human PBMC", api_key = NA
@@ -50,6 +56,8 @@ test_that("mllmcelltype: api_key = NA makes the tool build the prompt", {
 })
 
 test_that("mllmcelltype: `tissue` is required", {
+    skip_if_not_installed("mLLMCelltype")
+
     expect_error(
         RunCellTypeAnnotation(obj, "mllmcelltype", args = list(), ident = "clusters"),
         "tissue"
@@ -87,6 +95,7 @@ lict_providers_present <- function() {
 }
 
 test_that("lict: the runner names the missing provider key variables", {
+    skip_if_not_installed("LICT")
     skip_if(
         any(nzchar(Sys.getenv(lict_key_vars))),
         "provider keys are set in this environment"
