@@ -59,6 +59,7 @@ jobs:
           dependencies: '"hard"'
           extra-packages: |
             any::remotes, any::devtools, any::pkgdown, any::testthat, any::gglogger, any::ComplexHeatmap,
+            any::qs2,
             any::plotthis, any::scplotter, any::enrichR, github::immunogenomics/presto,
             github::mojaveazure/seurat-disk, github::satijalab/seurat-data, github::sgsokol/Deriv@v4.2.0,
             github::satijalab/azimuth, any::plotly, any::htmlwidgets, github::stuart-lab/signac@1.16.0
