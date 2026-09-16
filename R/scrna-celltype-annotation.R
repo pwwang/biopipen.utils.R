@@ -1093,6 +1093,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     min_size <- args$min_size %||% 10
     log_trans <- args$log_trans %||% TRUE
     p_adjust <- args$p_adjust %||% TRUE
+    group_gsea <- isTRUE(args$group_gsea)
 
     # Run MCA
     log$info("Running MCA with {nmcs} components ...")
@@ -1129,6 +1130,42 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
 
     if (is.null(ident)) {
         list(mapping = result, type = "cell")
+    } else if (group_gsea) {
+        # CelliD's own group mode: gene-set GSEA scores per group (one row per
+        # group x pathway, `group.by` is the metadata column); the cluster's
+        # type is the best-scoring gene set, i.e. the argmax of NES. `cells`
+        # stays the per-cell HGT annotation.
+        log$info("Running CelliD group-level GSEA over `{ident}` ...")
+        gsea <- as.data.frame(CelliD::RunGroupGSEA(
+            X = object,
+            pathways = pathways,
+            group.by = ident,
+            reduction = "mca",
+            dims = dims,
+            minSize = min_size
+        ))
+        if (nrow(gsea) == 0) {
+            # fgseaCelliD returns no rows when every gene set is filtered out
+            # by minSize/maxSize
+            log$warn(paste(
+                "RunGroupGSEA() returned no gene-set scores (all gene sets",
+                "filtered out by `minSize`/`maxSize`); falling back to the",
+                "per-cell majority vote."
+            ))
+            mapping <- majority_vote(
+                predicted, as.character(object@meta.data[[ident]])
+            )
+        } else {
+            mapping <- lapply(
+                split(gsea, as.character(gsea$group)),
+                function(scores) scores$pathway[which.max(scores$NES)]
+            )
+            log$info(
+                "Group GSEA assigned {length(mapping)} clusters",
+                " from {nrow(gsea)} group x pathway scores"
+            )
+        }
+        list(mapping = mapping, type = "cluster", cells = result)
     } else {
         # Aggregate per-cell results to cluster-level mapping (majority vote)
         log$info("Aggregating CelliD results by cluster...")
@@ -1701,6 +1738,22 @@ patch_garnett_run_classifier <- function(log) {
         ))
     }
 
+    # Garnett's own cluster mode (`cluster_extend = TRUE`): with a
+    # `garnett_cluster` column in the colData, classify_cells() labels each
+    # cluster from the assignments of its members, in the `cluster_ext_type`
+    # column, instead of us aggregating the per-cell labels by majority vote
+    cluster_extend <- isTRUE(args$cluster_extend)
+    if (cluster_extend && !is.null(ident)) {
+        clusters <- as.character(object@meta.data[[ident]])
+        names(clusters) <- row.names(object@meta.data)
+        SummarizedExperiment::colData(cds)$garnett_cluster <-
+            unname(clusters[colnames(cds)])
+        log$info(
+            "Using `{ident}` as Garnett's `garnett_cluster` column",
+            " ({length(unique(clusters))} clusters) ..."
+        )
+    }
+
     log$info("Classifying cells with Garnett ...")
     classify_args <- args
     classify_args$cds <- cds
@@ -1734,13 +1787,43 @@ patch_garnett_run_classifier <- function(log) {
         row.names = colnames(result_cds)
     )
 
+    # The cluster-extended labels, when the classifier was asked for them:
+    # one value for every cell of a cluster it extended, the per-cell labels
+    # (mixed) for a cluster it left alone
+    extended <- if (cluster_extend) {
+        SummarizedExperiment::colData(result_cds)$cluster_ext_type
+    }
+
     if (is.null(ident)) {
         list(mapping = result, type = "cell")
-    } else {
+    } else if (is.null(extended)) {
+        if (cluster_extend) {
+            log$warn(paste(
+                "`cluster_extend = TRUE` but the classified cell_data_set has",
+                "no `cluster_ext_type` column; aggregating the per-cell labels",
+                "by majority vote instead."
+            ))
+        }
         log$info("Aggregating Garnett results by cluster ...")
         mapping <- majority_vote(
             labels, as.character(object@meta.data[[ident]]),
             unknown = "Unknown"  # garnett's sentinel is capital-U
+        )
+        list(mapping = mapping, type = "cluster", cells = result)
+    } else {
+        extended <- as.character(extended)
+        # Cells excluded from classification (zero counts) come back NA
+        extended[is.na(extended)] <- "Unknown"
+        mapping <- lapply(
+            split(extended, as.character(object@meta.data[[ident]])),
+            function(cl_labels) {
+                types <- unique(cl_labels)
+                if (length(types) == 1) types else "Unknown"
+            }
+        )
+        log$info(
+            "Garnett extended {sum(unlist(mapping) != 'Unknown')}",
+            "/{length(mapping)} clusters from `cluster_ext_type`"
         )
         list(mapping = mapping, type = "cluster", cells = result)
     }
