@@ -18,18 +18,28 @@ universal_markers <- function(obj, n = 5) {
     f
 }
 
-test_that("scsorter runner: cluster-level mapping", {
+test_that("scsorter runner: cell-level and both-mode", {
     skip_if_not_installed("scSorter")
     obj <- norm_obj()
+    # without `ident`: upstream scSorter labels every cell it is given
     rec <- RunCellTypeAnnotation(
+        obj, "scsorter", args = list(db = universal_markers(obj)),
+        cache = tempfile("cta-")
+    )
+    expect_equal(rec$type, "cell")
+    expect_true("scsorter_celltype" %in% colnames(rec$mapping))
+    expect_equal(nrow(rec$mapping), ncol(obj))
+    expect_identical(rownames(rec$mapping), colnames(obj))
+
+    rec2 <- RunCellTypeAnnotation(
         obj, "scsorter", args = list(db = universal_markers(obj)),
         ident = "groups", cache = tempfile("cta-")
     )
-    expect_equal(rec$type, "cluster")
-    expect_setequal(names(rec$mapping), c("g1", "g2"))
+    expect_equal(rec2$type, "cluster")
+    expect_setequal(names(rec2$mapping), c("g1", "g2"))
 })
 
-test_that("singler runner: cluster-level mapping from a SummarizedExperiment reference", {
+test_that("singler runner: cell-level and both-mode from a SummarizedExperiment reference", {
     skip_if_not_installed("SingleR")
     skip_if_not_installed("SummarizedExperiment")
     obj <- norm_obj()
@@ -44,6 +54,17 @@ test_that("singler runner: cluster-level mapping from a SummarizedExperiment ref
     )
     rds <- tempfile(fileext = ".rds")
     saveRDS(ref, rds)
+
+    # without `ident`: no `clusters` is passed, so SingleR labels each cell
+    cell_rec <- suppressWarnings(suppressMessages(RunCellTypeAnnotation(
+        obj, "singler", args = list(db = rds), cache = tempfile("cta-")
+    )))
+    expect_equal(cell_rec$type, "cell")
+    expect_true("singler_celltype" %in% colnames(cell_rec$mapping))
+    expect_equal(nrow(cell_rec$mapping), ncol(obj))
+    expect_identical(rownames(cell_rec$mapping), colnames(obj))
+    expect_true(all(cell_rec$mapping$singler_celltype %in% c("TypeA", "TypeB")))
+
     rec <- suppressWarnings(suppressMessages(RunCellTypeAnnotation(
         obj, "singler", args = list(db = rds), ident = "groups", cache = tempfile("cta-")
     )))

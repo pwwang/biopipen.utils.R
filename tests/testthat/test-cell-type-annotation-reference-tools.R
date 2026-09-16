@@ -126,6 +126,19 @@ test_that("azimuth runner: needs a reference, and needs it on disk", {
         d <- file.path(tempfile("azimuth-ref-"), "")
         dir.create(d)
     }
+    # without `ident`: the per-cell `predicted.*` labels, one row per cell
+    cell_res <- tryCatch(run(obj, "azimuth", list(ref = d)), error = identity)
+    if (inherits(cell_res, "error")) {
+        skip(paste(
+            if (have_ref) "Azimuth on the small fixture:" else "No usable Azimuth reference offline:",
+            conditionMessage(cell_res)
+        ))
+    }
+    expect_equal(cell_res$type, "cell")
+    expect_true("azimuth_celltype" %in% colnames(cell_res$mapping))
+    expect_equal(nrow(cell_res$mapping), ncol(obj))
+    expect_identical(rownames(cell_res$mapping), colnames(obj))
+
     res <- tryCatch(run(obj, "azimuth", list(ref = d), ident = "groups"), error = identity)
     if (inherits(res, "error")) {
         # Without a reference the failure is the missing files; with one, an

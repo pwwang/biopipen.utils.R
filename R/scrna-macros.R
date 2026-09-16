@@ -4456,10 +4456,10 @@ RunModuleScoring <- function(
     sctype         = list(level = "cluster"),
     sccatch        = list(level = "cluster"),
     celltypist     = list(level = "cell",  h5ad = TRUE),
-    scsorter       = list(level = "cluster"),
+    scsorter       = list(level = "cell"),
     scina          = list(level = "cell"),
     garnett        = list(level = "cell"),
-    singler        = list(level = "cluster"),
+    singler        = list(level = "cell"),
     schdeepinsight = list(level = "cell",  h5ad = TRUE),
     llmcelltype    = list(level = "cluster"),
     cellassign     = list(level = "cell"),
@@ -4486,11 +4486,11 @@ RunModuleScoring <- function(
     # MapQuery()/TransferData() predict per cell (`predicted.<use>`), so this is
     # a cell-level tool like the four above.
     mapquery       = list(level = "cell",    h5ad = FALSE),
-    # Azimuth is MapQuery() on a published reference and also predicts per cell,
-    # but biopipen's azimuth contract is the cluster mapping ("each cluster gets
-    # the majority call of its cells"), so it is declared cluster-level while
-    # still returning the per-cell labels as `cells`.
-    azimuth        = list(level = "cluster", h5ad = FALSE),
+    # Azimuth is RunAzimuth() against a published reference, which is
+    # FindTransferAnchors() + MapQuery() and never clusters the query, so it
+    # predicts per cell like the five above and only aggregates to the cluster
+    # mapping when `ident` is given.
+    azimuth        = list(level = "cell", h5ad = FALSE),
     # ---- bundled-DB marker tools ----
     # Marker-table tools that are not pip-installable packages and are driven
     # through a cloned repository instead: the wrapper scripts of

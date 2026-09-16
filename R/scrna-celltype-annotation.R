@@ -702,11 +702,29 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     args$tissue <- NULL
     args$cancer <- NULL
     args$species <- NULL
+    args$db <- NULL  # db is passed separately as scsorter_db
+
+    if (is.null(ident)) {
+        # scSorter's own granularity: `expr` is genes x cells (one column per
+        # cell, one row per gene) and the function has no clustering argument,
+        # so it labels the cells it is given.
+        log$info("Running scSorter on each cell ...")
+        args$expr <- as.matrix(GetAssayData(object, layer = "data"))
+        args$anno <- anno
+        args$mc.cores <- args$mc.cores %||% 1L
+        results <- do_call(scSorter::scSorter, args)
+        return(list(
+            mapping = data.frame(
+                scsorter_celltype = unname(results$Pred_Type),
+                row.names = colnames(object)
+            ),
+            type = "cell"
+        ))
+    }
 
     log$info("Running RunScSorter...")
     # Set the active identity to the ident column
     Idents(object) <- ident
-    args$db <- NULL  # db is passed separately as scsorter_db
     args$object <- object
     args$anno <- anno
     args$mc.cores <- args$mc.cores %||% 1L
@@ -798,14 +816,36 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         log$info("Preparing expression matrix ...")
         exp <- as.matrix(GetAssayData(object, layer = "data"))
 
+        args$test <- exp
+        args$ref <- ref
+        args$labels <- labels
+
+        if (is.null(ident)) {
+            # SingleR's own granularity: `clusters` is the optional argument
+            # that makes it aggregate the cells into cluster profiles ("If set,
+            # annotation is performed on the aggregated cluster profiles,
+            # otherwise it defaults to per-cell annotation"), so leaving it out
+            # returns one row per cell.
+            log$info("Running SingleR on each cell...")
+            results <- do_call(SingleR::SingleR, args)
+            cell_labels <- as.character(results$pruned.labels)
+            na_mask <- is.na(cell_labels) | cell_labels == "NA"
+            if (any(na_mask)) {
+                cell_labels[na_mask] <- as.character(results$labels)[na_mask]
+            }
+            return(list(
+                mapping = data.frame(
+                    singler_celltype = unname(cell_labels),
+                    row.names = colnames(object)
+                ),
+                type = "cell"
+            ))
+        }
+
         clusters <- as.character(object@meta.data[[ident]])
         log$info(
             "Running SingleR with {length(unique(clusters))} clusters ..."
         )
-
-        args$test <- exp
-        args$ref <- ref
-        args$labels <- labels
         args$clusters <- clusters
 
         results <- do_call(SingleR::SingleR, args)
@@ -870,15 +910,29 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         log$info("Preparing expression matrix ...")
         sc_data <- as.matrix(GetAssayData(object, layer = "data"))
 
+        args$sc_data <- sc_data
+        args$ref_data <- ref_data
+        args$types <- types
+
+        if (is.null(ident)) {
+            # No `clusters` and no `method = "cluster"`: the CRAN API then
+            # annotates each cell on its own.
+            log$info("Running SingleR on each cell...")
+            results <- do_call(SingleR::SingleR, args)
+            return(list(
+                mapping = data.frame(
+                    singler_celltype = unname(as.character(results$labels)),
+                    row.names = colnames(object)
+                ),
+                type = "cell"
+            ))
+        }
+
         clusters <- as.factor(object@meta.data[[ident]])
         log$info(
             "Running SingleR with {length(levels(clusters))} clusters ..."
         )
-
         args$method <- "cluster"
-        args$sc_data <- sc_data
-        args$ref_data <- ref_data
-        args$types <- types
         args$clusters <- clusters
 
         results <- do_call(SingleR::SingleR, args)
@@ -2809,8 +2863,9 @@ patch_garnett_run_classifier <- function(log) {
 # directory holding `ref.Rds` + `idx.annoy`. The reference carries the cell type
 # levels and TransferData() puts a `predicted.<level>` column (plus
 # `predicted.<level>.score`) into the query metadata for each of them.
-# Cluster-level: the object's identity is set to `ident` for the run and each
-# cluster gets the majority call of its cells.
+# The call predicts per cell, like the other cell-level tools: without `ident`
+# the labels are returned as they are, and with it each cluster gets the
+# majority call of its cells.
 # The installed 0.5.1 has no `dims`/`k.anchor` argument -- it reads the
 # dimensionality off the reference's own annoy index.
 .run_celltypeannotation_azimuth <- function(object, args, ident, ctx) {
@@ -2836,8 +2891,13 @@ patch_garnett_run_classifier <- function(log) {
     }
 
     original_ident <- Idents(object)
-    log$info("Setting the object's identity to '{ident}' for Azimuth ...")
-    Idents(object) <- ident
+    # Azimuth itself never reads the identity (RunAzimuth.Seurat is
+    # FindTransferAnchors + MapQuery), and `Idents<-` rejects NULL, so it is set
+    # for the cluster-level run only.
+    if (!is.null(ident)) {
+        log$info("Setting the object's identity to '{ident}' for Azimuth ...")
+        Idents(object) <- ident
+    }
 
     log$info("Running Azimuth with reference '{ref}' ...")
     args$ref <- NULL
@@ -2879,15 +2939,18 @@ patch_garnett_run_classifier <- function(log) {
         ))
     }
     labels <- as.character(meta[[anno_col_in]])
-
-    log$info("Aggregating Azimuth results by cluster...")
-    mapping <- majority_vote(labels, as.character(meta[[ident]]))
     result <- data.frame(
         azimuth_celltype = labels,
         row.names = colnames(object)
     )
 
-    list(mapping = mapping, type = "cluster", cells = result)
+    if (is.null(ident)) {
+        list(mapping = result, type = "cell")
+    } else {
+        log$info("Aggregating Azimuth results by cluster...")
+        mapping <- majority_vote(labels, as.character(meta[[ident]]))
+        list(mapping = mapping, type = "cluster", cells = result)
+    }
 }
 
 # ---- mapquery ----------------------------------------------------------------
