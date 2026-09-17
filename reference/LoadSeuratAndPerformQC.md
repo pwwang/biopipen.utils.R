@@ -139,16 +139,11 @@ LoadSeuratAndPerformQC(
   Arguments to pass to scCDC package when `contam_correction` is
   "sccdc". It should be a list containing three sub-lists: Detection,
   Quantification and Correction, which are the arguments for
-  [`scCDC::ContaminationDetection`](https://rdrr.io/pkg/scCDC/man/ContaminationDetection.html),
-  [`scCDC::ContaminationQuantification`](https://rdrr.io/pkg/scCDC/man/ContaminationQuantification.html)
-  and
-  [`scCDC::ContaminationCorrection`](https://rdrr.io/pkg/scCDC/man/ContaminationCorrection.html)
-  functions, respectively. See
-  [`?scCDC::ContaminationDetection`](https://rdrr.io/pkg/scCDC/man/ContaminationDetection.html),
-  [`?scCDC::ContaminationQuantification`](https://rdrr.io/pkg/scCDC/man/ContaminationQuantification.html)
-  and
-  [`?scCDC::ContaminationCorrection`](https://rdrr.io/pkg/scCDC/man/ContaminationCorrection.html)
-  for details.
+  `scCDC::ContaminationDetection`, `scCDC::ContaminationQuantification`
+  and `scCDC::ContaminationCorrection` functions, respectively. See
+  `?scCDC::ContaminationDetection`,
+  `?scCDC::ContaminationQuantification` and
+  `?scCDC::ContaminationCorrection` for details.
 
 - keep_contam_assay:
 
@@ -195,10 +190,10 @@ obj <- LoadSeuratAndPerformQC(
    meta, cache = FALSE, cell_qc = "nFeature_RNA > 1000",
    gene_qc = list(min_cells = 3)
 )
-#> INFO    [2026-09-06 23:19:31] Loading each sample ...
-#> INFO    [2026-09-06 23:19:31] - Loading Sample1 and performing QC ...
-#> INFO    [2026-09-06 23:19:31] - Loading Sample2 and performing QC ...
-#> INFO    [2026-09-06 23:19:32] Merging samples ...
+#> INFO    [2026-09-17 23:45:06] Loading each sample ...
+#> INFO    [2026-09-17 23:45:06] - Loading Sample1 and performing QC ...
+#> INFO    [2026-09-17 23:45:06] - Loading Sample2 and performing QC ...
+#> INFO    [2026-09-17 23:45:07] Merging samples ...
 print(table(obj$.QC))
 #> 
 #> FALSE  TRUE 

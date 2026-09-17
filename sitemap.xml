@@ -21,6 +21,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/PerformSeuratCellQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RenameSeuratIdents.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/Reporter.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunCellTypeAnnotation.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunDEGAnalysis.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunGSEA.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunGSEAPreRank.html</loc></url>
@@ -47,8 +48,13 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratGeneQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/VizSeuratMap2Ref.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/WriteH5Group.Seurat.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/apply_marker_cols.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/apply_marker_filters.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/bQuote.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/biopipen.utils-package.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/canonicalize_marker_cols.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/case_info.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/celltype_annotation_tools.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/do_call.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-AssembleAssay.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-H5ADToH5Seurat.html</loc></url>
@@ -67,6 +73,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-sig_str.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/expand_cases.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/extract_vars.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/filter_positive_markers.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/format_args.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/gene_name_conversion.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/get_biopipen_dir.html</loc></url>
@@ -77,11 +84,25 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/h5group_to_list.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/html_escape.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/index.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/is_garnett_native_marker.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/is_marker_canonical.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/list_rename.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/list_to_h5group.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/list_update.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/list_update2.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/load_marker_table.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/majority_vote.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/markers_to_garnett_file.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/markers_to_named_list.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/markers_to_sccatch_df.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/markers_to_scsa_df.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/markers_to_scsorter_df.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/markers_to_sctype_df.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/markers_to_singscore_list.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/markers_to_ucell_list.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/monkey_patch.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/normalize_marker_direction.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/patch_garnett_make_predictions.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/re-exports.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/read_save_object.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/read_write_table.html</loc></url>
@@ -92,5 +113,6 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/save_plotcode.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/scPS.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/slugify.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/stop_on_filtering_native_db.html</loc></url>
 </urlset>
 

@@ -53,6 +53,9 @@
 - [`Reporter`](https://pwwang.github.io/biopipen.utils.R/reference/Reporter.md)
   : Add and save report
 
+- [`RunCellTypeAnnotation()`](https://pwwang.github.io/biopipen.utils.R/reference/RunCellTypeAnnotation.md)
+  : Run a cell type annotation tool
+
 - [`RunDEGAnalysis()`](https://pwwang.github.io/biopipen.utils.R/reference/RunDEGAnalysis.md)
   : Run differential gene expression analysis
 
@@ -122,11 +125,26 @@
   Visualize features between the query and reference Seurat objects by
   [`RunSeuratMap2Ref()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratMap2Ref.md)
 
+- [`apply_marker_cols()`](https://pwwang.github.io/biopipen.utils.R/reference/apply_marker_cols.md)
+  : Canonicalize the marker table columns and select a subset of them
+
+- [`apply_marker_filters()`](https://pwwang.github.io/biopipen.utils.R/reference/apply_marker_filters.md)
+  : Filter a marker table by tissue/cancer/species
+
 - [`bQuote()`](https://pwwang.github.io/biopipen.utils.R/reference/bQuote.md)
   : backtick quoting
 
+- [`canonicalize_marker_cols()`](https://pwwang.github.io/biopipen.utils.R/reference/canonicalize_marker_cols.md)
+  : Canonicalize the marker table column names
+
 - [`case_info()`](https://pwwang.github.io/biopipen.utils.R/reference/case_info.md)
   : Create information for a casename
+
+- [`celltype_annotation_tools()`](https://pwwang.github.io/biopipen.utils.R/reference/celltype_annotation_tools.md)
+  :
+
+  List the cell type annotation tools supported by
+  [`RunCellTypeAnnotation()`](https://pwwang.github.io/biopipen.utils.R/reference/RunCellTypeAnnotation.md)
 
 - [`do_call()`](https://pwwang.github.io/biopipen.utils.R/reference/do_call.md)
   : Call a function with a list of arguments
@@ -136,6 +154,9 @@
 
 - [`extract_vars()`](https://pwwang.github.io/biopipen.utils.R/reference/extract_vars.md)
   : Extract variables from a named list
+
+- [`filter_positive_markers()`](https://pwwang.github.io/biopipen.utils.R/reference/filter_positive_markers.md)
+  : Keep only the positive markers of a marker table
 
 - [`gene_name_conversion()`](https://pwwang.github.io/biopipen.utils.R/reference/gene_name_conversion.md)
   : Convert gene names between different formats
@@ -158,11 +179,53 @@
 - [`html_escape()`](https://pwwang.github.io/biopipen.utils.R/reference/html_escape.md)
   : Escape HTML entities
 
+- [`is_garnett_native_marker()`](https://pwwang.github.io/biopipen.utils.R/reference/is_garnett_native_marker.md)
+  : Detect a garnett-native marker file
+
+- [`is_marker_canonical()`](https://pwwang.github.io/biopipen.utils.R/reference/is_marker_canonical.md)
+  : Check whether a marker table has the canonical columns
+
 - [`list_rename()`](https://pwwang.github.io/biopipen.utils.R/reference/list_rename.md)
   : Rename to names of a list
 
 - [`list_update()`](https://pwwang.github.io/biopipen.utils.R/reference/list_update.md)
   : Update the first list based on other lists
+
+- [`load_marker_table()`](https://pwwang.github.io/biopipen.utils.R/reference/load_marker_table.md)
+  : Load a marker table
+
+- [`majority_vote()`](https://pwwang.github.io/biopipen.utils.R/reference/majority_vote.md)
+  : Majority vote the labels of each cluster
+
+- [`markers_to_garnett_file()`](https://pwwang.github.io/biopipen.utils.R/reference/markers_to_garnett_file.md)
+  : Convert a marker table to a garnett-native marker file
+
+- [`markers_to_named_list()`](https://pwwang.github.io/biopipen.utils.R/reference/markers_to_named_list.md)
+  : Convert a marker table to a named list
+
+- [`markers_to_sccatch_df()`](https://pwwang.github.io/biopipen.utils.R/reference/markers_to_sccatch_df.md)
+  : Convert a marker table to the scCATCH format
+
+- [`markers_to_scsa_df()`](https://pwwang.github.io/biopipen.utils.R/reference/markers_to_scsa_df.md)
+  : Convert a marker table to the python wrappers' marker file format
+
+- [`markers_to_scsorter_df()`](https://pwwang.github.io/biopipen.utils.R/reference/markers_to_scsorter_df.md)
+  : Convert a marker table to the scSorter format
+
+- [`markers_to_sctype_df()`](https://pwwang.github.io/biopipen.utils.R/reference/markers_to_sctype_df.md)
+  : Convert a marker table to the ScType format
+
+- [`markers_to_singscore_list()`](https://pwwang.github.io/biopipen.utils.R/reference/markers_to_singscore_list.md)
+  : Convert a marker table to the singscore format
+
+- [`markers_to_ucell_list()`](https://pwwang.github.io/biopipen.utils.R/reference/markers_to_ucell_list.md)
+  : Convert a marker table to the UCell signature format
+
+- [`normalize_marker_direction()`](https://pwwang.github.io/biopipen.utils.R/reference/normalize_marker_direction.md)
+  : Normalize the marker directions
+
+- [`patch_garnett_make_predictions()`](https://pwwang.github.io/biopipen.utils.R/reference/patch_garnett_make_predictions.md)
+  : Patch garnett's make_predictions for glmnet \>= 4.0 multinomial fits
 
 - [`RunEnrichment()`](https://pwwang.github.io/biopipen.utils.R/reference/re-exports.md)
   [`ParseGMT()`](https://pwwang.github.io/biopipen.utils.R/reference/re-exports.md)
@@ -198,3 +261,6 @@
 
 - [`slugify()`](https://pwwang.github.io/biopipen.utils.R/reference/slugify.md)
   : Slugify strings
+
+- [`stop_on_filtering_native_db()`](https://pwwang.github.io/biopipen.utils.R/reference/stop_on_filtering_native_db.md)
+  : Stop on filtering a native (non-universal) marker database

@@ -36,11 +36,9 @@ RunSeuratContamCorrection(
   Arguments to pass to scCDC function from the scCDC package. It is a
   list with 3 elements: Detection, Quantification and Correction, which
   are lists of arguments to pass to the corresponding functions from the
-  scCDC package:
-  [`scCDC::ContaminationDetection`](https://rdrr.io/pkg/scCDC/man/ContaminationDetection.html),
-  [`scCDC::ContaminationQuantification`](https://rdrr.io/pkg/scCDC/man/ContaminationQuantification.html)
-  and
-  [`scCDC::ContaminationCorrection`](https://rdrr.io/pkg/scCDC/man/ContaminationCorrection.html).
+  scCDC package: `scCDC::ContaminationDetection`,
+  `scCDC::ContaminationQuantification` and
+  `scCDC::ContaminationCorrection`.
 
 ## Value
 
