@@ -2758,6 +2758,17 @@ patch_garnett_run_classifier <- function(log) {
             "`cheetah.label` to the column holding the cell types."
         ))
     }
+    # CHETAH builds one profile per reference cell type, so the cells without
+    # a label (NA) would make the profiles' subscript NA
+    ref_labels <- SummarizedExperiment::colData(ref)[[label_col]]
+    unlabeled <- is.na(ref_labels) | ref_labels == ""
+    if (any(unlabeled)) {
+        log$info(
+            "Dropping {sum(unlabeled)} reference cells without a cell type ",
+            "in '{label_col}' ..."
+        )
+        ref <- ref[, !unlabeled]
+    }
 
     log$info("Preparing the query ...")
     query <- SingleCellExperiment::SingleCellExperiment(
@@ -2772,6 +2783,9 @@ patch_garnett_run_classifier <- function(log) {
     args$db <- NULL
     args$assay <- NULL
     args$label <- NULL
+    # CHETAHclassifier() type-checks every argument it is given, so the ones
+    # left unset have to fall back to its own defaults instead of NULL
+    args <- args[!vapply(args, is.null, logical(1))]
     args$input <- query
     args$ref_cells <- ref
     args$ref_ct <- label_col
