@@ -6,7 +6,7 @@ source:
   path: ..
 
 build:
-  number: 1
+  number: 3
   rpaths:
     - lib/R/lib/
     - lib/
@@ -72,7 +72,7 @@ requirements:
     - r-openxlsx
     - r-reshape2
     - r-stringr
-    - r-azimuth
+    # - r-azimuth  # has large database deps
     - r-scpred
     - r-withr
 
@@ -136,7 +136,7 @@ requirements:
     - r-openxlsx
     - r-reshape2
     - r-stringr
-    - r-azimuth
+    # - r-azimuth  # has large database deps
     - r-scpred
     - r-withr
 
