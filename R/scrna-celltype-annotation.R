@@ -3174,15 +3174,17 @@ patch_garnett_run_classifier <- function(log) {
         log$info("No {key_env} set; mLLMCelltype can only build the prompt")
         api_key <- NA
     }
-    base_urls <- args$base_urls
-    if (is.null(base_urls)) {
-        # OPENAI_BASE_URL follows the SDK convention -- a host the client
-        # appends the path to -- while mLLMCelltype takes `base_urls` as the
-        # request URL in full, so a host-only base is completed here
-        base_urls <- env_or("OPENAI_BASE_URL")
-        if (!is.null(base_urls) && !grepl("/chat/completions/*$", base_urls)) {
+    # OPENAI_BASE_URL follows the SDK convention -- a host the client appends
+    # the path to -- while mLLMCelltype takes `base_urls` as the request URL in
+    # full (it posts to whatever it is given, and a host-only URL 404s), so a
+    # single-URL base is completed here however it was given. A named list of
+    # per-provider URLs is the caller's to complete.
+    base_urls <- args$base_urls %||% env_or("OPENAI_BASE_URL")
+    if (is.character(base_urls) && length(base_urls) == 1 && nzchar(base_urls)) {
+        base_urls <- sub("/+$", "", base_urls)
+        if (!grepl("/chat/completions$", base_urls)) {
             base_urls <- paste0(
-                sub("/+$", "", base_urls),
+                base_urls,
                 if (grepl("/v[0-9]+$", base_urls)) {
                     "/chat/completions"
                 } else {

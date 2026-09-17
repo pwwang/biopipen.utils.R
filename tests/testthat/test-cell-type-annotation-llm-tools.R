@@ -70,6 +70,43 @@ test_that("mllmcelltype: `tissue` is required", {
     )
 })
 
+test_that("mllmcelltype: a host-only base URL is completed to the request URL", {
+    skip_if_not_installed("mLLMCelltype")
+
+    # mLLMCelltype posts to `base_urls` as it is given, while the other tools
+    # take a host and append the path themselves: a host-only base has to be
+    # completed here, or the request goes to the host root and 404s
+    seen <- NULL
+    local_mocked_bindings(
+        annotate_cell_types = function(input, tissue_name, model, api_key,
+                                       base_urls = NULL, ...) {
+            seen <<- base_urls
+            stats::setNames(c("A", "B"), c("g1", "g2"))
+        },
+        .package = "mLLMCelltype"
+    )
+    call <- function(base_urls) {
+        RunCellTypeAnnotation(
+            obj, "mllmcelltype",
+            args = list(
+                tissue = "human PBMC", api_key = "key", base_urls = base_urls
+            ),
+            ident = "clusters"
+        )
+    }
+
+    # a bare host, with or without the trailing slash, and a versioned host
+    call("https://api.deepseek.com")
+    expect_equal(seen, "https://api.deepseek.com/v1/chat/completions")
+    call("https://api.deepseek.com/")
+    expect_equal(seen, "https://api.deepseek.com/v1/chat/completions")
+    call("https://api.deepseek.com/v1")
+    expect_equal(seen, "https://api.deepseek.com/v1/chat/completions")
+    # a URL that already is the request URL is left alone
+    call("https://api.openai.com/v1/chat/completions")
+    expect_equal(seen, "https://api.openai.com/v1/chat/completions")
+})
+
 # the provider key variables LICT reads; `OPENAI_API_KEY` is the one the
 # OpenAI-compatible endpoint variables come with
 lict_key_vars <- c(
