@@ -208,6 +208,15 @@ test_that("cell cycle scoring", {
     expect_true(all(c("S.Score", "G2M.Score", "Phase") %in% colnames(res@meta.data)))
     expect_true(all(res$Phase %in% c("S", "G2M", "G1")))
 
+    res <- RunModuleScoring(
+        syn,
+        modules = list(`_` = list(features = "cc.genes")),
+        method = "scse"
+    )
+    expect_true(all(c("S.Score", "G2M.Score", "Phase") %in% colnames(res@meta.data)))
+
+    # the two ucell runs below are the only part of this test that needs UCell
+    skip_if_not_installed("UCell")
     res <- suppressWarnings(RunModuleScoring(
         syn,
         modules = list(CellCycle = list(features = "cc.genes.mouse")),
@@ -215,19 +224,11 @@ test_that("cell cycle scoring", {
     ))
     expect_true(all(c("CellCycle_S.Score", "CellCycle_G2M.Score", "CellCycle_Phase") %in% colnames(res@meta.data)))
 
-    skip_if_not_installed("UCell")
     res <- suppressWarnings(RunModuleScoring(
         syn,
         modules = list(`_` = list(features = "cc.genes")),
         method = "ucell"
     ))
-    expect_true(all(c("S.Score", "G2M.Score", "Phase") %in% colnames(res@meta.data)))
-
-    res <- RunModuleScoring(
-        syn,
-        modules = list(`_` = list(features = "cc.genes")),
-        method = "scse"
-    )
     expect_true(all(c("S.Score", "G2M.Score", "Phase") %in% colnames(res@meta.data)))
 })
 

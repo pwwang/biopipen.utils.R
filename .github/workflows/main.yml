@@ -56,8 +56,11 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache-version: 1
+          dependencies: '"hard"'
           extra-packages: |
             any::remotes, any::devtools, any::pkgdown, any::testthat, any::gglogger, any::ComplexHeatmap,
+            any::qs2, any::edgeR, any::fgsea, any::scDblFinder, any::GSVA, any::UCell, any::destiny, any::AUCell,
+            any::BiocParallel, any::celda, any::mygene, any::scmap, any::singscore, any::CHETAH,
             any::plotthis, any::scplotter, any::enrichR, github::immunogenomics/presto,
             github::mojaveazure/seurat-disk, github::satijalab/seurat-data, github::sgsokol/Deriv@v4.2.0,
             github::satijalab/azimuth, any::plotly, any::htmlwidgets, github::stuart-lab/signac@1.16.0

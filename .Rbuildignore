@@ -22,3 +22,4 @@
 .+\.qs$
 ^REFACTOR-ModuleScoreCalculator\.md$
 ^Rplots\.pdf$
+^tests\/testthat\/logs\/.*

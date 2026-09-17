@@ -1,3 +1,6 @@
+# every test in this file goes through mygene::queryMany()
+skip_if_not_installed("mygene")
+
 test_that("gene_name_conversion", {
     genes <- c("ENSG00000157764", "ENSG00000169174", "ENSG00000169174.11")
     out <- gene_name_conversion(genes, "ensg", "symbol", species = "human")

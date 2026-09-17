@@ -1,6 +1,6 @@
 Package: biopipen.utils
 Title: Common Utility Functions for Biopipen
-Version: 0.4.4-7
+Version: 0.4.5-3
 Authors@R:
     person("Panwen", "Wang", , "pwwang@pwwang.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-4614-8970"))
@@ -61,13 +61,49 @@ Suggests:
     GSVA,
     GSEABase,
     plotly,
-    htmlwidgets
+    htmlwidgets,
+    Biobase,
+    cellassign,
+    CelliD,
+    garnett,
+    glmnet,
+    HGNChelper,
+    hitype,
+    igraph,
+    LLMCellType,
+    monocle3,
+    openxlsx,
+    reshape2,
+    scCATCH,
+    SCINA,
+    scSorter,
+    SeuratWrappers,
+    SingleCellExperiment,
+    SingleR,
+    stringr,
+    SummarizedExperiment,
+    Azimuth,
+    CHETAH,
+    S4Vectors,
+    scClassify,
+    scmap,
+    scPred,
+    LICT,
+    mLLMCelltype,
+    singscore,
+    withr
 Remotes:
     pwwang/enrichit,
     pwwang/plotthis,
+    pwwang/hitype,
     pwwang/scplotter,
+    pwwang/LLMCellType,
     chris-mcginnis-ucsf/DoubletFinder,
-    mojaveazure/seurat-disk,
-    ZJU-UoE-CCW-LAB/scCDC
+    SeuratDisk=mojaveazure/seurat-disk,
+    SeuratWrappers=satijalab/seurat-wrappers,
+    ZJU-UoE-CCW-LAB/scCDC,
+    Irrationone/cellassign,
+    cole-trapnell-lab/garnett,
+    cole-trapnell-lab/monocle3
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
