@@ -1,11 +1,11 @@
 # The python-based marker tools -- scsa, maca and scmapnet. All three take a
 # universal marker table and shell out to a wrapper script shipped with
-# biopipen, so they need a python that can import scanpy (scsa, which computes
-# the per-cluster markers itself) or the tool itself (maca, scmapnet) -- none
-# of which is an R dependency. `scsa` and `maca` are exercised for real against
-# the SCSA clone and the modernized MACA fork on this machine; scMapNet cannot
-# be installed here (it is a clone plus a manually downloaded checkpoint), so
-# it is covered through the errors naming what it needs.
+# biopipen, so they need a python that can import scanpy or the tool itself --
+# none of which is an R dependency. `scsa` (its scoring is ported by the
+# wrapper, so there is nothing else to install) and `maca` are exercised for
+# real on this machine; scMapNet cannot be installed here (it is a clone plus a
+# manually downloaded checkpoint), so it is covered through the errors naming
+# what it needs.
 
 norm_obj <- function() {
     obj <- SeuratObject::pbmc_small
@@ -29,7 +29,6 @@ universal_markers <- function(obj, n = 5, genes = rownames(obj)) {
 PYTHON <- Sys.getenv(
     "BIOPIPEN_PYTHON", unset = "/home/pwwang/miniconda3/bin/python"
 )
-SCSA_DIR <- Sys.getenv("SCSA_DIR", unset = "/home/pwwang/github/SCSA")
 
 run <- function(obj, tool, args, ident = NULL) {
     suppressWarnings(suppressMessages(RunCellTypeAnnotation(
@@ -70,42 +69,30 @@ test_that("the python marker tools are registered and reachable", {
     )))
 })
 
-test_that("scsa runner: asks for the SCSA clone", {
+test_that("scsa runner: asks for the marker table", {
     obj <- norm_obj()
-    err <- run_error(
-        obj, "scsa",
-        list(db = universal_markers(obj)), ident = "groups"
-    )
-    expect_match(err, "scsa.scsa_dir", fixed = TRUE)
-    expect_match(err, "bioinfo-ibms-pumc/SCSA", fixed = TRUE)
+    err <- run_error(obj, "scsa", list(), ident = "groups")
+    expect_match(err, "`scsa.db` is not set", fixed = TRUE)
 })
 
-test_that("scsa runner: cluster-level mapping from the SCSA clone", {
+test_that("scsa runner: cluster-level mapping from the marker table", {
     skip_if_not(file.exists(PYTHON), paste("no python at", PYTHON))
-    skip_if_not(dir.exists(SCSA_DIR), paste("no SCSA clone at", SCSA_DIR))
     obj <- norm_obj()
-    rec <- tryCatch(
-        run(
-            obj, "scsa",
-            args = list(
-                db = universal_markers(obj, 15), python = PYTHON,
-                scsa_dir = SCSA_DIR, use_refdb = TRUE
-            ),
-            ident = "groups"
+    # the h5ad carries the object's variable features alone, so the markers have
+    # to be taken from those (as for maca below)
+    genes <- SeuratObject::VariableFeatures(obj)
+    n <- length(genes) %/% 2
+    skip_if(n < 1, paste("only", length(genes), "variable features"))
+    rec <- run(
+        obj, "scsa",
+        args = list(
+            db = universal_markers(obj, n, genes = genes), python = PYTHON,
+            # pbmc_small has 20 genes and 80 cells, so no marker survives SCSA's
+            # own thresholds (nothing there has an adjusted p-value near 0.05)
+            foldchange = 1, pvalue = 1
         ),
-        error = function(e) e
+        ident = "groups"
     )
-    if (inherits(rec, "error") &&
-        grepl("memoryview", conditionMessage(rec), fixed = TRUE)) {
-        # `write_deg_table()` of scsa-wrapper.py tests `adata.X.data`, which is
-        # a memoryview (no `.size`) for the dense X of an h5ad converted by
-        # ConvertSeuratToAnnData, so the wrapper dies before SCSA.py runs. It
-        # is a wrapper bug, not a runner one, so fail on anything else.
-        skip(paste(
-            "scsa-wrapper.py cannot read a dense h5ad:",
-            conditionMessage(rec)
-        ))
-    }
     expect_equal(rec$type, "cluster")
     expect_setequal(names(rec$mapping), c("g1", "g2"))
     expect_true("scsa_celltype" %in% colnames(rec$cells))

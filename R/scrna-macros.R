@@ -4492,10 +4492,11 @@ RunModuleScoring <- function(
     # mapping when `ident` is given.
     azimuth        = list(level = "cell", h5ad = FALSE),
     # ---- bundled-DB marker tools ----
-    # Marker-table tools that are not pip-installable packages and are driven
-    # through a cloned repository instead: the wrapper scripts of
-    # `biopipen/scripts/scrna/`, with the clone (and, for scMapNet, a manually
-    # downloaded checkpoint) passed in through the envs.
+    # Marker-table tools that are not pip-installable packages, driven through
+    # the wrapper scripts of `biopipen/scripts/scrna/`: SCSA's scoring and a
+    # modernized MACA are ported by their wrappers (nothing else to install),
+    # while scMapNet needs a clone and a manually downloaded checkpoint, passed
+    # in through the envs.
     scsa           = list(level = "cluster", h5ad = TRUE),
     maca           = list(level = "cell",    h5ad = TRUE),
     scmapnet       = list(level = "cell",    h5ad = TRUE),

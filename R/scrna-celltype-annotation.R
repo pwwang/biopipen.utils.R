@@ -3454,23 +3454,14 @@ patch_garnett_run_classifier <- function(log) {
     file
 }
 
-# SCSA labels whole clusters (its `-i` is a per-cluster marker table that the
+# SCSA labels whole clusters (its input is a per-cluster marker table that the
 # wrapper computes itself), and the wrapper maps the cluster labels back onto
-# the cells. `scsa_dir` is a clone of the SCSA repo: SCSA is not on
-# CRAN/Bioconductor/PyPI, and the clone carries the reference database.
+# the cells. SCSA is not on CRAN/Bioconductor/PyPI and its own script does not
+# run on current numpy/pandas, so the wrapper ports its scoring and no clone of
+# the SCSA repo is needed.
 .run_celltypeannotation_scsa <- function(object, args, ident, ctx) {
     log <- get_logger()
 
-    scsa_dir <- args$scsa_dir
-    if (is.null(scsa_dir)) {
-        stop(paste0(
-            "`scsa.scsa_dir` is not set. SCSA is not on ",
-            "CRAN/Bioconductor/PyPI: clone ",
-            "https://github.com/bioinfo-ibms-pumc/SCSA and point ",
-            "`scsa.scsa_dir` at the clone (it holds `SCSA.py` and ",
-            "`whole.db`)."
-        ))
-    }
     markers <- .cta_py_marker_file(args$db, ctx$scratch, "scsa")
 
     outfile <- file.path(ctx$scratch, "scsa.txt")
@@ -3481,22 +3472,18 @@ patch_garnett_run_classifier <- function(log) {
         "-i", ctx$h5ad,
         "-o", outfile,
         "-m", markers,
-        "--scsa-dir", scsa_dir,
         "--ident", ident
     )
-    if (isFALSE(args$use_refdb)) {
-        command <- c(command, "--norefdb")
+    if (!is.null(args$foldchange)) {
+        command <- c(command, "--foldchange", args$foldchange)
     }
-    if (!is.null(args$species)) {
-        command <- c(command, "-g", args$species)
-    }
-    if (!is.null(args$tissue)) {
-        command <- c(command, "-k", args$tissue)
+    if (!is.null(args$pvalue)) {
+        command <- c(command, "--pvalue", args$pvalue)
     }
 
     log$info("Running SCSA ...")
-    # The wrapper names what is missing (a clone without SCSA.py, no marker
-    # passing SCSA's own thresholds), so surface its output on failure
+    # The wrapper names what is missing (no marker passing SCSA's own
+    # thresholds), so surface its output on failure
     run_command(command, stdout = TRUE, stderr = TRUE)
 
     # (barcode, scsa_celltype), one row per cell
