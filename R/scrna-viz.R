@@ -143,7 +143,7 @@ VizDEGs <- function(
     if (
         !is.null(object) &&
         identical(other_args$layer %||% "scale.data", "scale.data") &&
-        plot_type %in% c("heatmap", "violin", "box", "bar", "ridge", "dot")
+        plot_type %in% c("heatmap", "dot")
     ) {
         assay <- other_args$assay %||% SeuratObject::DefaultAssay(object)
         missing_features <- setdiff(
