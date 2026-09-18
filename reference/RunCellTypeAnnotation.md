@@ -84,8 +84,8 @@ rec <- RunCellTypeAnnotation(
     args = list(cell_types = list(g1 = "T", g2 = "B", g3 = "Mono")),
     ident = "groups"
 )
-#> INFO    [2026-09-17 23:45:13] Running cell type annotation tool 'direct' ...
-#> WARN    [2026-09-17 23:45:13] The following clusters do not exist: g3
+#> INFO    [2026-09-18 05:48:02] Running cell type annotation tool 'direct' ...
+#> WARN    [2026-09-18 05:48:02] The following clusters do not exist: g3
 rec$type
 #> [1] "cluster"
 rec$mapping
