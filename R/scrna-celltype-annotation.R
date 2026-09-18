@@ -1208,6 +1208,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         }
         args$if_use_custom_marker <- TRUE
     } else {
+        cellmatch <- scCATCH::cellmatch
         args$cancer <- args$cancer %||% "Normal"
     }
     args$marker <- cellmatch
