@@ -34,6 +34,9 @@
 - [`LoadSeuratAndPerformQC()`](https://pwwang.github.io/biopipen.utils.R/reference/LoadSeuratAndPerformQC.md)
   : Load samples into a Seurat object
 
+- [`LoadSeuratSamples()`](https://pwwang.github.io/biopipen.utils.R/reference/LoadSeuratSamples.md)
+  : Load samples into a list of Seurat objects
+
 - [`MutateScRep()`](https://pwwang.github.io/biopipen.utils.R/reference/MutateScRep.md)
   [`ScRepMutate()`](https://pwwang.github.io/biopipen.utils.R/reference/MutateScRep.md)
   : Mutate scRepertorie object
@@ -47,6 +50,9 @@
 - [`PerformSeuratCellQC()`](https://pwwang.github.io/biopipen.utils.R/reference/PerformSeuratCellQC.md)
   : Perform cell QC
 
+- [`PerformSeuratQC()`](https://pwwang.github.io/biopipen.utils.R/reference/PerformSeuratQC.md)
+  : Perform cell and gene QC on a Seurat object
+
 - [`RenameSeuratIdents()`](https://pwwang.github.io/biopipen.utils.R/reference/RenameSeuratIdents.md)
   : Rename cluster names
 
@@ -55,6 +61,9 @@
 
 - [`RunCellTypeAnnotation()`](https://pwwang.github.io/biopipen.utils.R/reference/RunCellTypeAnnotation.md)
   : Run a cell type annotation tool
+
+- [`RunContamCorrection()`](https://pwwang.github.io/biopipen.utils.R/reference/RunContamCorrection.md)
+  : Run contaminant RNA correction on a Seurat object
 
 - [`RunDEGAnalysis()`](https://pwwang.github.io/biopipen.utils.R/reference/RunDEGAnalysis.md)
   : Run differential gene expression analysis
@@ -70,9 +79,6 @@
 
 - [`RunSeuratClustering()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratClustering.md)
   : Run seurat unsupervised clustering
-
-- [`RunSeuratContamCorrection()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratContamCorrection.md)
-  : Run contaminant RNA correction on a Seurat object
 
 - [`RunSeuratDEAnalysis()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDEAnalysis.md)
   : RunSeuratDEAnalysis

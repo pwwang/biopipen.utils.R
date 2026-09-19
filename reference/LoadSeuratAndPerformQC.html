@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">biopipen.utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -28,7 +28,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Load samples into a Seurat object</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pwwang/biopipen.utils.R/blob/master/R/scrna-macros.R" class="external-link"><code>R/scrna-macros.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pwwang/biopipen.utils.R/blob/master/R/scrna-load-qc.R" class="external-link"><code>R/scrna-load-qc.R</code></a></small>
       <div class="d-none name"><code>LoadSeuratAndPerformQC.Rd</code></div>
     </div>
 
@@ -95,6 +95,8 @@ You can also provide a list of values, where the names of the list are sample na
 and the values are the minimum number of features for each sample to load by
 <code><a href="https://satijalab.github.io/seurat-object/reference/CreateSeuratObject.html" class="external-link">Seurat::CreateSeuratObject()</a></code>.
 You can have a default value in the list with the name "DEFAULT" for the samples
+that are not listed.
+This won't work if data is loaded from a loom file or <code>meta</code> is a Seurat object.
 that are not listed.
 This won't work if data is loaded from a loom file or <code>meta</code> is a Seurat object.</p></dd>
 
@@ -190,10 +192,10 @@ In slot <code>misc</code>, there are two fields: <code>cell_qc_df</code> and <co
 <span class="r-in"><span>   <span class="va">meta</span>, cache <span class="op">=</span> <span class="cn">FALSE</span>, cell_qc <span class="op">=</span> <span class="st">"nFeature_RNA &gt; 1000"</span>,</span></span>
 <span class="r-in"><span>   gene_qc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>min_cells <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-09-19 03:42:35] Loading each sample ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-09-19 03:42:35] - Loading Sample1 and performing QC ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-09-19 03:42:35] - Loading Sample2 and performing QC ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-09-19 03:42:35] Merging samples ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-09-19 06:11:15] Loading each sample ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-09-19 06:11:15] - Loading Sample1 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-09-19 06:11:15] - Loading Sample2 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-09-19 06:11:15] Merging samples ...</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">obj</span><span class="op">$</span><span class="va">.QC</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> FALSE  TRUE </span>
