@@ -3664,3 +3664,268 @@ patch_garnett_run_classifier <- function(log) {
         list(mapping = mapping, type = "cluster", cells = results)
     }
 }
+
+# ---- Cell type annotation tools ---------------------------------------------
+# Static per-tool metadata. The runners themselves are .run_celltypeannotation_<tool>().
+# `level` = what the tool natively produces:
+# "cluster" tools need `ident`; "cell" tools return per-cell labels unless the
+# runner aggregates them (cell-level tool + ident => type "cluster", cells = data.frame).
+# `h5ad` = the tool needs the object converted to AnnData (python-based tools).
+.CELLTYPE_ANNOTATION_TOOLS <- list(
+    hitype         = list(level = "cell"),      # native cluster-level when `ident` is given
+    sctype         = list(level = "cluster"),
+    sccatch        = list(level = "cluster"),
+    celltypist     = list(level = "cell",  h5ad = TRUE),
+    scsorter       = list(level = "cell"),
+    scina          = list(level = "cell"),
+    garnett        = list(level = "cell"),
+    singler        = list(level = "cell"),
+    schdeepinsight = list(level = "cell",  h5ad = TRUE),
+    llmcelltype    = list(level = "cluster"),
+    cellassign     = list(level = "cell"),
+    scbert         = list(level = "cell",  h5ad = TRUE),
+    scagenttype    = list(level = "cluster", h5ad = TRUE),
+    cellid         = list(level = "cell"),
+    direct         = list(level = "cluster"),
+    cell           = list(level = "cell"),
+    # ---- equal-weighting scorers (no learned weights) ----
+    # Per-cell signature scores with unit weights; the label is the argmax of
+    # the signature scores, and `ident` aggregates them by majority vote.
+    ucell          = list(level = "cell"),
+    aucell         = list(level = "cell"),
+    gsva           = list(level = "cell"),
+    singscore      = list(level = "cell"),
+    # ---- reference-consuming annotators ----
+    # These take a labelled reference dataset in `db` (a Seurat object, a
+    # SingleCellExperiment or a plain list read by read_obj()) instead of a
+    # marker table.
+    scmap          = list(level = "cell",    h5ad = FALSE),
+    cheetah        = list(level = "cell",    h5ad = FALSE),
+    scclassify     = list(level = "cell",    h5ad = FALSE),
+    scpred         = list(level = "cell",    h5ad = FALSE),
+    # MapQuery()/TransferData() predict per cell (`predicted.<use>`), so this is
+    # a cell-level tool like the four above.
+    mapquery       = list(level = "cell",    h5ad = FALSE),
+    # Azimuth is RunAzimuth() against a published reference, which is
+    # FindTransferAnchors() + MapQuery() and never clusters the query, so it
+    # predicts per cell like the five above and only aggregates to the cluster
+    # mapping when `ident` is given.
+    azimuth        = list(level = "cell", h5ad = FALSE),
+    # ---- bundled-DB marker tools ----
+    # Marker-table tools that are not pip-installable packages, driven through
+    # the wrapper scripts of `biopipen/scripts/scrna/`: SCSA's scoring and a
+    # modernized MACA are ported by their wrappers (nothing else to install),
+    # while scMapNet needs a clone and a manually downloaded checkpoint, passed
+    # in through the envs.
+    scsa           = list(level = "cluster", h5ad = TRUE),
+    maca           = list(level = "cell",    h5ad = TRUE),
+    scmapnet       = list(level = "cell",    h5ad = TRUE),
+    # ---- LLM annotators ----
+    # Ask a large language model to name each cluster from its marker genes
+    # instead of matching them against a database, so both need credentials (or
+    # a local OpenAI-compatible endpoint) rather than a `db`. Without one they
+    # stop instead of returning a placeholder label.
+    mllmcelltype   = list(level = "cluster", h5ad = FALSE),
+    lict           = list(level = "cluster", h5ad = FALSE)
+)
+#' List the cell type annotation tools supported by [RunCellTypeAnnotation()]
+#'
+#' @param name The name(s) of the tool(s) to look up. If `NULL` (default), all
+#' supported tools are returned.
+#' @return A named list of the tools selected by `name`, each with:
+#' - `level`: `"cluster"` or `"cell"`, the level the tool natively annotates at.
+#' - `h5ad`: `TRUE` when the tool needs the object converted to AnnData
+#'   (python-based tools, omitted otherwise).
+#' @export
+#' @examples
+#' names(celltype_annotation_tools())
+#' celltype_annotation_tools("direct")
+celltype_annotation_tools <- function(name = NULL) {
+    tools <- .CELLTYPE_ANNOTATION_TOOLS
+    if (is.null(name)) {
+        return(tools)
+    }
+    missing <- setdiff(name, names(tools))
+    if (length(missing) > 0) {
+        stop(paste0(
+            "Unknown cell type annotation tool(s): ", paste(missing, collapse = ", "),
+            ". Supported tools: ", paste(names(tools), collapse = ", ")
+        ))
+    }
+    tools[name]
+}
+.H5AD_CTA_TOOLS <- function() {
+    names(Filter(function(x) isTRUE(x$h5ad), .CELLTYPE_ANNOTATION_TOOLS))
+}
+.cta_scratch <- function(cache, tool, args, ident) {
+    key <- digest::digest(.sig_str(list(tool = tool, args = args, ident = ident)))
+    file.path(cache, "celltype_annotation", tool, substr(key, 1, 8))
+}
+.cta_h5ad <- function(object, tool, args, cache, log) {
+    # Convert a Seurat object to AnnData (h5ad), cached by content. The Cache
+    # signature covers the object itself, so every case and every python tool on
+    # the same object share a single conversion; re-runs hit the cache.
+    # NOTE: no lock yet — a first-time conversion of the same object by two
+    # parallel cases can race. A proper lock is a planned follow-up; the layout
+    # here is what ships in this pass.
+    if (!inherits(object, "Seurat")) {
+        stop("[RunCellTypeAnnotation] Tool '", tool, "' needs an h5ad conversion, ",
+             "which is only supported for Seurat objects")
+    }
+    h5ad_dir <- file.path(cache, "h5ad")
+    dir.create(h5ad_dir, recursive = TRUE, showWarnings = FALSE)
+    live <- file.path(h5ad_dir, paste0(tool, ".h5ad"))
+    caching <- Cache$new(
+        list(object = object, tool = tool, assay = args$assay),   # content-keyed
+        prefix = "biopipen.utils.RunCellTypeAnnotation",
+        cache_dir = h5ad_dir,
+        kind = "file",
+        path = live
+    )
+    if (caching$is_cached()) {
+        log$info("Using cached h5ad conversion: {basename(caching$get_path())}")
+        return(caching$get_path())
+    }
+    log$info("Converting Seurat object to h5ad for '{tool}' ...")
+    ConvertSeuratToAnnData(object, outfile = live, assay = args$assay, log = log)
+    caching$save()
+    caching$get_path()
+}
+#' Run a cell type annotation tool
+#'
+#' A unified interface over the cell type annotation tools used by biopipen's
+#' `CellTypeAnnotation` process. The tool is picked by `tool` and its
+#' tool-specific parameters are passed in `args`; see
+#' [celltype_annotation_tools()] for the supported tools and the level each of
+#' them annotates at.
+#'
+#' Cluster-level tools (the ones with `level = "cluster"`) need `ident`, the
+#' metadata column holding the clusters, and label each cluster as a whole.
+#' Cell-level tools label individual cells; when `ident` is also given, the
+#' per-cell labels are aggregated to cluster-level ones by majority vote.
+#'
+#' @param object Seurat object, or a path to an RDS/qs/qs2/h5ad/h5seurat file to
+#' read the object from.
+#' @param tool One of the supported tool names, see
+#' [celltype_annotation_tools()].
+#' @param args Named list of tool arguments, e.g. `cell_types` for the `direct`
+#' tool.
+#' @param ident Metadata column with the clusters, required by cluster-level
+#' tools, optional for cell-level ones.
+#' @param cache Directory for conversions and tool scratch files, default
+#' `tempdir()`.
+#' @param log Logger.
+#' @return A list with:
+#' - `mapping`: a named list mapping each cluster to its cell type, or for
+#'   `type = "cell"` a data.frame of per-cell labels (cell IDs as row names, the
+#'   annotation in the first column).
+#' - `type`: `"cluster"` when the result is per cluster, `"cell"` when it is per
+#'   cell.
+#' - `cells`: the per-cell data.frame when `type = "cluster"` but the tool also
+#'   produced per-cell labels, `NULL` otherwise.
+#' - `more`: extra cluster mappings when the tool supports them (e.g. the
+#'   `more_cell_types` of the `direct` tool), `NULL` otherwise.
+#' @export
+#' @examples
+#' \donttest{
+#' obj <- SeuratObject::pbmc_small  # clusters in `groups`: g1, g2, g3
+#' rec <- RunCellTypeAnnotation(
+#'     obj, "direct",
+#'     args = list(cell_types = list(g1 = "T", g2 = "B", g3 = "Mono")),
+#'     ident = "groups"
+#' )
+#' rec$type
+#' rec$mapping
+#' }
+RunCellTypeAnnotation <- function(
+    object, tool, args = list(), ident = NULL, cache = NULL, log = NULL
+) {
+    log <- log %||% get_logger()
+    cache <- cache %||% gettempdir()
+
+    if (!(is.character(tool) && length(tool) == 1 &&
+          tool %in% names(.CELLTYPE_ANNOTATION_TOOLS))) {
+        stop(paste0(
+            "Unknown cell type annotation tool: ", deparse(tool),
+            ". Supported tools: ", paste(names(.CELLTYPE_ANNOTATION_TOOLS), collapse = ", ")
+        ))
+    }
+    if (identical(.CELLTYPE_ANNOTATION_TOOLS[[tool]]$level, "cluster") && is.null(ident)) {
+        stop(paste0(
+            "Tool '", tool, "' is cluster-level and needs `ident` ",
+            "(the metadata column with the clusters)"
+        ))
+    }
+
+    # 1. object: in-memory Seurat object or a path to an RDS/qs/qs2/h5ad/h5seurat file
+    if (is.character(object)) {
+        log$info("Reading the single-cell object from {object} ...")
+        object <- read_obj(object)
+    }
+    if (!inherits(object, "Seurat")) {
+        stop(paste0(
+            "`object` must be a Seurat object or a path to an ",
+            "RDS/qs/qs2/h5ad/h5seurat file, got: ",
+            paste(class(object), collapse = ", ")
+        ))
+    }
+
+    # 2. conversion needed by the tool (cached), and the per-tool scratch dir
+    ctx <- list(
+        cache = cache,
+        h5ad = NULL,
+        scratch = .cta_scratch(cache, tool, args, ident)
+    )
+    if (tool %in% .H5AD_CTA_TOOLS()) {
+        ctx$h5ad <- .cta_h5ad(object, tool, args, cache, log)
+    }
+    dir.create(ctx$scratch, recursive = TRUE, showWarnings = FALSE)
+
+    # 3. run the tool
+    log$info("Running cell type annotation tool '{tool}' ...")
+    log$debug("  Arguments: {format_args(args)}")
+    result <- switch(tool,
+        hitype         = .run_celltypeannotation_hitype(object, args, ident, ctx),
+        sctype         = .run_celltypeannotation_sctype(object, args, ident, ctx),
+        sccatch        = .run_celltypeannotation_sccatch(object, args, ident, ctx),
+        celltypist     = .run_celltypeannotation_celltypist(object, args, ident, ctx),
+        scsorter       = .run_celltypeannotation_scsorter(object, args, ident, ctx),
+        scina          = .run_celltypeannotation_scina(object, args, ident, ctx),
+        garnett        = .run_celltypeannotation_garnett(object, args, ident, ctx),
+        singler        = .run_celltypeannotation_singler(object, args, ident, ctx),
+        schdeepinsight = .run_celltypeannotation_schdeepinsight(object, args, ident, ctx),
+        llmcelltype    = .run_celltypeannotation_llmcelltype(object, args, ident, ctx),
+        cellassign     = .run_celltypeannotation_cellassign(object, args, ident, ctx),
+        scbert         = .run_celltypeannotation_scbert(object, args, ident, ctx),
+        scagenttype    = .run_celltypeannotation_scagenttype(object, args, ident, ctx),
+        cellid         = .run_celltypeannotation_cellid(object, args, ident, ctx),
+        direct         = .run_celltypeannotation_direct(object, args, ident, ctx),
+        cell           = .run_celltypeannotation_cell(object, args, ident, ctx),
+        ucell          = .run_celltypeannotation_ucell(object, args, ident, ctx),
+        aucell         = .run_celltypeannotation_aucell(object, args, ident, ctx),
+        gsva           = .run_celltypeannotation_gsva(object, args, ident, ctx),
+        singscore      = .run_celltypeannotation_singscore(object, args, ident, ctx),
+        # ---- reference-consuming annotators ----
+        scmap          = .run_celltypeannotation_scmap(object, args, ident, ctx),
+        cheetah        = .run_celltypeannotation_cheetah(object, args, ident, ctx),
+        scclassify     = .run_celltypeannotation_scclassify(object, args, ident, ctx),
+        scpred         = .run_celltypeannotation_scpred(object, args, ident, ctx),
+        azimuth        = .run_celltypeannotation_azimuth(object, args, ident, ctx),
+        mapquery       = .run_celltypeannotation_mapquery(object, args, ident, ctx),
+        # ---- bundled-DB marker tools ----
+        scsa           = .run_celltypeannotation_scsa(object, args, ident, ctx),
+        maca           = .run_celltypeannotation_maca(object, args, ident, ctx),
+        scmapnet       = .run_celltypeannotation_scmapnet(object, args, ident, ctx),
+        # ---- LLM annotators ----
+        mllmcelltype   = .run_celltypeannotation_mllmcelltype(object, args, ident, ctx),
+        lict           = .run_celltypeannotation_lict(object, args, ident, ctx)
+    )
+    if (is.null(result)) {
+        result <- list()
+    }
+    if (!is.list(result) ||
+        !identical(result$type, "cluster") && !identical(result$type, "cell")) {
+        stop(paste0("Tool '", tool, "' must return a list with `type` = 'cluster' or 'cell'"))
+    }
+    result
+}
