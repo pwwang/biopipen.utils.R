@@ -405,6 +405,8 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     species <- args$species
     db <- args$db
     norm <- args$norm %||% "sqrt"
+    assay <- args$assay
+    layer <- args$layer %||% "data"
     use_sensitivity <- args$use_sensitivity %||% TRUE
     threshold <- args$threshold %||% 0.0
 
@@ -470,7 +472,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     log$info("Running RunHitype...")
     object <- hitype::RunHitype(
         object, gs_list, ident = ident, threshold = threshold, make_unique = TRUE,
-        norm = norm, use_sensitivity = use_sensitivity
+        norm = norm, use_sensitivity = use_sensitivity, assay = assay, layer = layer
     )
 
     if (is.null(ident)) {
@@ -543,7 +545,10 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         gs_list <- gene_sets_prepare(tmp_db, tissue)
     }
 
-    scRNAseqData <- GetAssayData(object, layer = "scale.data")
+    layer <- args$layer %||% "data"
+    # the vendored ScType code below indexes and colSums()es the matrix as a
+    # base matrix; the data layer is sparse, which colSums() rejects
+    scRNAseqData <- as.matrix(GetAssayData(object, assay = args$assay, layer = layer))
     idents <- as.character(unique(object@meta.data[[ident]]))
     idents <- idents[order(as.numeric(idents))]
 
@@ -556,7 +561,9 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         log$info("  Calculating cell-type scores ...")
         es.max <- sctype_score(
             scRNAseqData = scRNAseqData,
-            scaled = TRUE,
+            # `scaled` says whether the matrix is already z-scored: only the
+            # scale.data layer is, anything else is z-scored by sctype_score()
+            scaled = layer == "scale.data",
             gs = gs_list[[i]]$gs_positive,
             gs2 = gs_list[[i]]$gs_negative
         )
@@ -709,7 +716,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         # cell, one row per gene) and the function has no clustering argument,
         # so it labels the cells it is given.
         log$info("Running scSorter on each cell ...")
-        args$expr <- as.matrix(GetAssayData(object, layer = "data"))
+        args$expr <- as.matrix(GetAssayData(object, assay = args$assay, layer = args$layer %||% "data"))
         args$anno <- anno
         args$mc.cores <- args$mc.cores %||% 1L
         results <- do_call(scSorter::scSorter, args)
@@ -773,6 +780,10 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     label_col <- args$label
     args$label <- NULL
     args$db <- NULL  # db is passed separately as singler_db
+    assay <- args$assay
+    layer <- args$layer %||% "data"
+    args$assay <- NULL
+    args$layer <- NULL
 
     # Prepare reference data and labels based on API version
     if (is_bioc) {
@@ -814,7 +825,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
 
         # Bioconductor SingleR call
         log$info("Preparing expression matrix ...")
-        exp <- as.matrix(GetAssayData(object, layer = "data"))
+        exp <- as.matrix(GetAssayData(object, assay = assay, layer = layer))
 
         args$test <- exp
         args$ref <- ref
@@ -862,7 +873,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         # CRAN API: ref_data is a matrix, types is a vector
         if (inherits(ref, "Seurat")) {
             log$info("Extracting data from Seurat reference ...")
-            ref_data <- as.matrix(GetAssayData(ref, layer = "data"))
+            ref_data <- as.matrix(GetAssayData(ref, assay = assay, layer = layer))
             meta <- ref@meta.data
         } else if (is(ref, "SummarizedExperiment")) {
             assay_name <- "logcounts"
@@ -908,7 +919,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
 
         # CRAN SingleR call
         log$info("Preparing expression matrix ...")
-        sc_data <- as.matrix(GetAssayData(object, layer = "data"))
+        sc_data <- as.matrix(GetAssayData(object, assay = assay, layer = layer))
 
         args$sc_data <- sc_data
         args$ref_data <- ref_data
@@ -980,6 +991,10 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     args$tissue <- NULL
     args$cancer <- NULL
     args$species <- NULL
+    assay <- args$assay
+    layer <- args$layer %||% "data"
+    args$assay <- NULL
+    args$layer <- NULL
 
     if (!is.list(signatures) || is.null(names(signatures))) {
         stop("SCINA signatures must be a named list")
@@ -987,7 +1002,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
 
     # Get expression matrix (log-normalized, genes x cells)
     log$info("Preparing expression matrix...")
-    exp <- as.matrix(GetAssayData(object, layer = "data"))
+    exp <- as.matrix(GetAssayData(object, assay = assay, layer = layer))
 
     # Drop signature genes not in the expression matrix, and simulate SCINA's
     # rm_overlap removal, so signatures emptied by either are dropped here
@@ -1227,8 +1242,10 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     }
 
     log$info("Running createscCATCH ...")
+    layer <- args$layer %||% "data"
+    args$layer <- NULL
     obj <- scCATCH::createscCATCH(
-        data = GetAssayData(object, assay = args$assay),
+        data = GetAssayData(object, assay = args$assay, layer = layer),
         cluster = as.character(object@meta.data[[ident]])
     )
     args$object <- obj
@@ -2429,7 +2446,9 @@ patch_garnett_run_classifier <- function(log) {
     sets <- markers_to_named_list(mt)
 
     # genes x cells, log-normalized data layer
-    expr <- as.matrix(GetAssayData(object, assay = args$assay, layer = "data"))
+    layer <- args$layer %||% "data"
+    args$layer <- NULL
+    expr <- as.matrix(GetAssayData(object, assay = args$assay, layer = layer))
     auc_max_rank <- args$aucMaxRank %||% ceiling(0.05 * nrow(expr))
     norm_auc <- args$normAUC %||% TRUE
 
@@ -2497,7 +2516,9 @@ patch_garnett_run_classifier <- function(log) {
     sets <- markers_to_named_list(mt)
 
     # genes x cells, log-normalized data layer (Gaussian kernel by default)
-    expr <- as.matrix(GetAssayData(object, assay = args$assay, layer = "data"))
+    layer <- args$layer %||% "data"
+    args$layer <- NULL
+    expr <- as.matrix(GetAssayData(object, assay = args$assay, layer = layer))
 
     log$info("Running GSVA on {length(sets)} signatures ...")
     scores <- GSVA::gsva(
@@ -2556,7 +2577,10 @@ patch_garnett_run_classifier <- function(log) {
     sets <- markers_to_singscore_list(mt)
 
     # genes x cells, log-normalized data layer
-    expr <- as.matrix(GetAssayData(object, assay = args$assay, layer = "data"))
+    layer <- args$layer %||% "data"
+    args$layer <- NULL
+
+    expr <- as.matrix(GetAssayData(object, assay = args$assay, layer = layer))
     log$info("Ranking the genes of {ncol(expr)} cells ...")
     ranked <- singscore::rankGenes(expr)
 
@@ -2629,7 +2653,9 @@ patch_garnett_run_classifier <- function(log) {
 
     if (is.null(db)) { stop("`scmap.db` is not set") }
 
-    assay <- args$assay %||% "RNA"
+    assay <- args$assay
+    layer <- args$layer %||% "data"
+    args$layer <- NULL
     threshold <- args$threshold %||% 0.5
     cluster_col <- args$cluster_col %||% "cell_type1"
     features <- args$features
@@ -2682,7 +2708,7 @@ patch_garnett_run_classifier <- function(log) {
     query <- SingleCellExperiment::SingleCellExperiment(
         assays = list(
             logcounts = as.matrix(
-                GetAssayData(object, assay = assay, layer = "data")
+                GetAssayData(object, assay = assay, layer = layer)
             )
         )
     )
@@ -2738,7 +2764,9 @@ patch_garnett_run_classifier <- function(log) {
 
     if (is.null(db)) { stop("`cheetah.db` is not set") }
 
-    assay <- args$assay %||% "RNA"
+    assay <- args$assay
+    layer <- args$layer %||% "counts"
+    args$layer <- NULL
     # the reference's colData column holding the cell types
     label_col <- args$label %||% args$ref_ct %||% "celltypes"
 
@@ -2775,7 +2803,7 @@ patch_garnett_run_classifier <- function(log) {
     query <- SingleCellExperiment::SingleCellExperiment(
         assays = list(
             counts = as.matrix(
-                GetAssayData(object, assay = assay, layer = "counts")
+                GetAssayData(object, assay = assay, layer = layer)
             )
         )
     )
@@ -2824,13 +2852,15 @@ patch_garnett_run_classifier <- function(log) {
 
     if (is.null(db)) { stop("`scclassify.db` is not set") }
 
-    assay <- args$assay %||% "RNA"
+    assay <- args$assay
+    layer <- args$layer %||% "data"
+    args$layer <- NULL
 
     log$info("Loading scClassify reference ...")
     ref <- read_obj(db)
 
     log$info("Preparing the query ...")
-    query <- as.matrix(GetAssayData(object, assay = assay, layer = "data"))
+    query <- as.matrix(GetAssayData(object, assay = assay, layer = layer))
 
     log$info("Running scClassify ...")
     args$db <- NULL
