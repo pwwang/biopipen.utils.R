@@ -87,31 +87,86 @@ PerformGeneQC <- function(object, gene_qc) {
         stringsAsFactors = FALSE
     )
 }
+
+#' Perform cell and gene QC on a Seurat object
+#'
+#' This is a convenience wrapper of [PerformSeuratCellQC()] and [PerformGeneQC()]
+#' for a single sample, as done by [LoadSeuratAndPerformQC()] per sample before
+#' the samples are merged.
+#' @param object Seurat object of a single sample
+#' @param cell_qc Cell QC criteria.
+#' It is an expression string to pass to `dplyr::filter` function to filter the cells.
+#' It can also be a list of expressions, where the names of the list are sample names.
+#' You can have a default expression in the list with the name "DEFAULT" for the samples
+#' that are not listed.
+#' @param gene_qc Gene QC criteria
+#' A list containing the following fields:
+#' * min_cells: Minimum number of cells a gene should be expressed in to be kept
+#' * excludes: A string or strings to exclude certain genes. Regular expressions are supported.
+#' Multiple strings can also be separated by commas in a single string.
+#' @return The Seurat object with the `.QC` column in `meta.data` and, if `gene_qc` is
+#' given, the gene QC results in `@misc$gene_qc`
+#' @export
+#' @examples
+#' \donttest{
+#' obj <- PerformSeuratQC(
+#'     SeuratObject::pbmc_small,
+#'     cell_qc = "nFeature_RNA > 40",
+#'     gene_qc = list(min_cells = 3)
+#' )
+#' table(obj$.QC)
+#' head(obj@misc$gene_qc)
+#' }
+PerformSeuratQC <- function(object, cell_qc = NULL, gene_qc = NULL) {
+    object <- PerformSeuratCellQC(object, cell_qc)
+    if (!is.null(gene_qc) && length(gene_qc) > 0) {
+        object@misc$gene_qc <- PerformGeneQC(object, gene_qc)
+    }
+
+    return(object)
+}
+
 #' Run contaminant RNA correction on a Seurat object
 #'
 #' @param object Seurat object
-#' @param method Method to use for contaminant RNA correction.
-#' Supported methods: "decontx" (using decontX function from the celda package) and "sccdc" (using scCDC package).
-#' @param decontXArgs Arguments to pass to decontX functionn from the celda package. See `?celda::decontX` for details.
+#' @param method Method to use for contaminant RNA correction. Must be one of "decontx"
+#' (using decontX function from the celda package) and "sccdc" (using scCDC package),
+#' case-insensitively.
+#' @param decontXArgs Arguments to pass to decontX function from the celda package. See `?celda::decontX` for details.
 #' @param scCDCArgs Arguments to pass to scCDC function from the scCDC package.
 #' It is a list with 3 elements: Detection, Quantification and Correction, which are lists of arguments to pass to the corresponding functions
 #' from the scCDC package: `scCDC::ContaminationDetection`, `scCDC::ContaminationQuantification` and `scCDC::ContaminationCorrection`.
-#' @return A Seurat object with contaminant RNA corrected counts in the "RNA" assay and the original counts in the "Contaminated" assay.
+#' @param keep_contam_assay Whether to keep the `Contaminated` assay (the original counts
+#' before contamination correction) in the object. If `FALSE` (default), the assay is dropped
+#' right after the correction to save memory.
+#' @param log Logger
+#' @return A Seurat object with contaminant RNA corrected counts in the "RNA" assay, the original
+#' counts in the "Contaminated" assay (unless `keep_contam_assay` is `FALSE`), and the tool used
+#' in `@misc$contamination$tool`. For scCDC, the detected GCGs and contamination ratios are
+#' recorded in `@misc$contamination` as well.
 #' @export
-RunSeuratContamCorrection <- function(
+RunContamCorrection <- function(
     object,
-    method = "decontx",
+    method,
     decontXArgs = list(),
     scCDCArgs = list(
         Detection = list(),
         Quantification = list(),
         Correction = list()
-    )
+    ),
+    keep_contam_assay = FALSE,
+    log = NULL
 ) {
+    log <- log %||% get_logger()
+    method <- match.arg(tolower(method), c("decontx", "sccdc"))
+
+    log$info(
+        "Performing contaminant RNA correction with method '{method}' on '{object@project.name}' ..."
+    )
     if (method == "decontx") {
         if (!requireNamespace("celda", quietly = TRUE)) {
             stop(
-                "[RunSeuratContamCorrection] The 'celda' package is required for decontX contaminant RNA correction. Please install it first."
+                "[RunContamCorrection] The 'celda' package is required for decontX contaminant RNA correction. Please install it first."
             )
         }
         # Run decontX
@@ -134,11 +189,10 @@ RunSeuratContamCorrection <- function(
         SeuratObject::DefaultAssay(object) <- "RNA"
         # Store the contamination fraction in meta.data
         object$decontX_contamination <- decontx_res$contamination
-        return(object)
-    } else if (method == "sccdc") {
+    } else {
         if (!requireNamespace("scCDC", quietly = TRUE)) {
             stop(
-                "[RunSeuratContamCorrection] The 'scCDC' package is required for scCDC contaminant RNA correction. Please install it first."
+                "[RunContamCorrection] The 'scCDC' package is required for scCDC contaminant RNA correction. Please install it first."
             )
         }
         # Quick clustering pass (needed if active.ident not already set)
@@ -189,15 +243,228 @@ RunSeuratContamCorrection <- function(
         object <- do_call(.scCDC.ContaminationCorrection, scCDCArgs$Correction)
         scCDCArgs$Correction$object <- NULL
         gc()
-
-        return(object)
-    } else {
-        stop(
-            "[RunSeuratContamCorrection] Unsupported contaminant RNA correction method: ",
-            method
-        )
     }
+
+    # scCDC records its GCGs and contamination ratios in @misc$contamination itself
+    contamination <- object@misc$contamination %||% list()
+    contamination$tool <- method
+    object@misc$contamination <- contamination
+
+    # The `Contaminated` assay (original counts) is only used by
+    # contamination-expression visualizations, which are done after merging
+    # and require `keep_contam_assay = TRUE`. Drop it here to avoid keeping
+    # ~2x the count data through merging and the cell/gene filtering.
+    if (!keep_contam_assay && "Contaminated" %in% names(object@assays)) {
+        object@assays$Contaminated <- NULL
+        invisible(gc())
+    }
+
+    return(object)
 }
+
+#' Load samples into a list of Seurat objects
+#'
+#' This loads each sample without performing any QC, so that QC can be done per sample by
+#' [PerformSeuratQC()] before the samples are merged by [LoadSeuratAndPerformQC()].
+#' @param meta Metadata of the samples
+#' Required columns: Sample, RNAData.
+#' The RNAData column should contain the path to the 10X or ParseBio data, either a directory or a file
+#' If the path is a directory, the function will look for barcodes.tsv.gz, features.tsv.gz and matrix.mtx.gz.
+#' The directory should be loaded by [Seurat::Read10X], [Seurat::ReadParseBio] or the HIVE data. Sometimes, there may be prefix in the file names,
+#' e.g. "'prefix'.barcodes.tsv.gz", which is also supported.
+#' If the path is a file ending with ".loom", it will be loaded by [SeuratDisk::Connect()] and converted to a Seurat object.
+#' Otherwise, if the path is a file, it should be a h5 file that can be loaded by [Seurat::Read10X_h5()]
+#'
+#' This can also be a Seurat object to split into samples. It requires the "Sample" column in the meta.data slot
+#' specifying the sample for each cell.
+#' @param min_cells Include features detected in at least this many cells.
+#' This will be applied to all samples and passed to the [Seurat::CreateSeuratObject()] function.
+#' QCs can be further performed on the object after loading.
+#' You can also provide a list of values, where the names of the list are sample names
+#' and the values are the minimum number of cells for each sample to load by
+#' [Seurat::CreateSeuratObject()].
+#' You can have a default value in the list with the name "DEFAULT" for the samples
+#' that are not listed.
+#' This won't work if data is loaded from a loom file or `meta` is a Seurat object.
+#' @param min_features Include cells where at least this many features are detected.
+#' This will be applied to all samples and passed to the [Seurat::CreateSeuratObject()] function.
+#' QCs can be further performed on the object after loading.
+#' You can also provide a list of values, where the names of the list are sample names
+#' and the values are the minimum number of features for each sample to load by
+#' [Seurat::CreateSeuratObject()].
+#' You can have a default value in the list with the name "DEFAULT" for the samples
+#' that are not listed.
+#' This won't work if data is loaded from a loom file or `meta` is a Seurat object.
+#' @param features A named character vector/list or a file path to rename features.
+#' If a named vector/list is given, the names are the original feature names and the values are
+#' the new names.
+#' If a file path is given, it should be a TAB-delimited file with two columns (no header);
+#' lines beginning with '#' are ignored. The first column contains the original feature names
+#' and the second column the new names.
+#' @param samples Samples to load. If NULL, all samples will be loaded
+#' @param LoadLoomArgs Arguments to pass to [SeuratDisk::LoadLoom()] when loading loom files.
+#' @param tmpdir Temporary directory to store intermediate files when there are prefix in the file names
+#' @param log Logger
+#' @return A named list of Seurat objects, one per sample. Samples that have no data or no
+#' cells are skipped with a warning.
+#' @importFrom dplyr filter
+#' @importFrom rlang sym %||%
+#' @importFrom Seurat CreateSeuratObject RenameCells
+#' @importFrom SeuratObject UpdateSeuratObject
+#' @export
+#' @examples
+#' \donttest{
+#' datadir <- system.file("extdata", "scrna", package = "biopipen.utils")
+#' meta <- data.frame(
+#'     Sample = c("Sample1", "Sample2"),
+#'     RNAData = c(
+#'         file.path(datadir, "Sample1"),
+#'         file.path(datadir, "Sample2")
+#'     )
+#' )
+#'
+#' objs <- LoadSeuratSamples(meta)
+#' names(objs)
+#' }
+LoadSeuratSamples <- function(
+    meta,
+    min_cells = 0,
+    min_features = 0,
+    features = NULL,
+    samples = NULL,
+    LoadLoomArgs = list(),
+    tmpdir = NULL,
+    log = NULL
+) {
+    log <- log %||% get_logger()
+
+    features_map <- .parse_features_map(features)
+
+    is_seurat <- inherits(meta, "Seurat")
+    if (!is_seurat) {
+        meta <- as.data.frame(meta)
+        samples <- samples %||% meta$Sample
+    } else {
+        meta <- UpdateSeuratObject(meta)
+        samples <- samples %||% unique(meta@meta.data$Sample)
+        assay <- DefaultAssay(meta)
+        if (identical(assay, "integrated")) {
+            log$warn(
+                "The default assay is 'integrated', which is not suitable for QC. Please set the default assay to the original assay (e.g. 'RNA') before calling this function."
+            )
+        }
+        if (!"Assay5" %in% class(meta[[assay]])) {
+            log$debug("Converting assay '{assay}' to Assay5 ...")
+            meta[[assay]] <- as(meta[[assay]], "Assay5")
+        }
+    }
+    stopifnot("No samples found" = length(samples) > 0)
+
+    tmpdir <- tmpdir %||% gettempdir()
+    dig <- digest::digest(.sig_str(meta), algo = "md5")
+    dig <- substr(dig, 1, 8)
+    tmpdir <- file.path(
+        tmpdir,
+        paste0("biopipen.utils.LoadSeuratSamples.", dig)
+    )
+
+    object_list <- list()
+    for (sam in samples) {
+        log$info("- Loading {sam} ...")
+        if (is_seurat) {
+            obj <- filter(meta, !!sym("Sample") == sam)
+            if (nrow(obj@meta.data) == 0) {
+                log$warn("  No cells found for sample '{sam}', skipping ...")
+                next
+            }
+        } else {
+            mdata <- meta[meta$Sample == sam, , drop = TRUE]
+            if (is.data.frame(mdata) && nrow(mdata) == 0) {
+                log$warn("  No metadata found for sample '{sam}', skipping ...")
+                next
+            }
+
+            path <- as.character(mdata$RNAData)
+            if (
+                is.na(path) ||
+                    !is.character(path) ||
+                    identical(path, "") ||
+                    identical(path, "NA")
+            ) {
+                log$warn("  No path found, skipping ...")
+                next
+            }
+
+            loaded <- .load_expression_data(
+                path,
+                sam,
+                tmpdir,
+                LoadLoomArgs,
+                log
+            )
+            exprs <- loaded$exprs
+            cell_meta <- loaded$cell_meta
+
+            if (
+                "Gene Expression" %in%
+                    names(exprs) &&
+                    !inherits(exprs, "Seurat")
+            ) {
+                exprs <- exprs[["Gene Expression"]]
+            }
+
+            minc <- if (is.list(min_cells)) {
+                min_cells[[sam]] %||% min_cells$DEFAULT %||% 0
+            } else {
+                min_cells
+            }
+            minf <- if (is.list(min_features)) {
+                min_features[[sam]] %||% min_features$DEFAULT %||% 0
+            } else {
+                min_features
+            }
+            if (inherits(exprs, "Seurat")) {
+                obj <- exprs
+                if (!is.null(features_map)) {
+                    obj <- .rename_seurat_features(obj, features_map)
+                }
+            } else {
+                if (!is.null(features_map)) {
+                    cur_names <- rownames(exprs)
+                    mask <- cur_names %in% names(features_map)
+                    if (any(mask)) {
+                        cur_names[mask] <- features_map[cur_names[mask]]
+                        rownames(exprs) <- cur_names
+                    }
+                }
+                obj <- CreateSeuratObject(
+                    exprs,
+                    project = sam,
+                    min.cells = minc,
+                    min.features = minf,
+                    meta.data = cell_meta
+                )
+            }
+            obj <- RenameCells(obj, add.cell.id = sam)
+
+            for (mname in names(mdata)) {
+                if (mname %in% c("RNAData", "TCRData", "BCRData")) {
+                    next
+                }
+                mdt <- mdata[[mname]]
+                if (is.factor(mdt)) {
+                    mdt <- levels(mdt)[mdt]
+                }
+                obj[[mname]] <- mdt
+            }
+        }
+
+        object_list[[sam]] <- obj
+    }
+
+    return(object_list)
+}
+
 #' Load samples into a Seurat object
 #'
 #' Cell QC will be performed, either per-sample or on the whole object
@@ -228,6 +495,8 @@ RunSeuratContamCorrection <- function(
 #' and the values are the minimum number of features for each sample to load by
 #' [Seurat::CreateSeuratObject()].
 #' You can have a default value in the list with the name "DEFAULT" for the samples
+#' that are not listed.
+#' This won't work if data is loaded from a loom file or `meta` is a Seurat object.
 #' that are not listed.
 #' This won't work if data is loaded from a loom file or `meta` is a Seurat object.
 #' @param samples Samples to load. If NULL, all samples will be loaded
@@ -337,172 +606,55 @@ LoadSeuratAndPerformQC <- function(
         log$info("Initialized and QC'ed data loaded from cache: {cached$get_path()}")
         return(cached$restore())
     }
-    is_seurat <- inherits(meta, "Seurat")
-    factor_levels <- NULL
-    if (!is_seurat) {
-        meta <- as.data.frame(meta)
-        samples <- samples %||% meta$Sample
-        factor_levels <- lapply(meta, function(x) if (is.factor(x)) levels(x) else NULL)
-    } else {
-        meta <- UpdateSeuratObject(meta)
-        samples <- samples %||% unique(meta@meta.data$Sample)
-        factor_levels <- lapply(meta@meta.data, function(x) if (is.factor(x)) levels(x) else NULL)
-        assay <- DefaultAssay(meta)
-        if (identical(assay, "integrated")) {
-            log$warn(
-                "The default assay is 'integrated', which is not suitable for QC. Please set the default assay to the original assay (e.g. 'RNA') before calling this function."
-            )
-        }
-        if (!"Assay5" %in% class(meta[[assay]])) {
-            log$debug("Converting assay '{assay}' to Assay5 ...")
-            meta[[assay]] <- as(meta[[assay]], "Assay5")
-        }
-    }
-    stopifnot("No samples found" = length(samples) > 0)
 
-    log$info("Loading each sample ...")
-    tmpdir <- tmpdir %||% gettempdir()
-    dig <- digest::digest(.sig_str(meta), algo = "md5")
-    dig <- substr(dig, 1, 8)
-    tmpdir <- file.path(
-        tmpdir,
-        paste0("biopipen.utils.LoadSeuratSamples.", dig)
+    # Captured before loading, so that the levels survive the merging of the samples
+    factor_levels <- lapply(
+        if (inherits(meta, "Seurat")) meta@meta.data else as.data.frame(meta),
+        function(x) if (is.factor(x)) levels(x) else NULL
     )
 
-    object_list <- list()
+    log$info("Loading each sample ...")
+    object_list <- LoadSeuratSamples(
+        meta,
+        min_cells = min_cells,
+        min_features = min_features,
+        features = features,
+        samples = samples,
+        LoadLoomArgs = LoadLoomArgs,
+        tmpdir = tmpdir,
+        log = log
+    )
+
     geneqc_df <- NULL
     contamination_info <- list()
-    contam_done <- FALSE
-    for (sam in samples) {
-        log$info("- Loading {sam} and performing QC ...")
-        if (is_seurat) {
-            obj <- filter(meta, !!sym("Sample") == sam)
-            if (nrow(obj@meta.data) == 0) {
-                log$warn("  No cells found for sample '{sam}', skipping ...")
-                next
-            }
-        } else {
-            mdata <- meta[meta$Sample == sam, , drop = TRUE]
-            if (is.data.frame(mdata) && nrow(mdata) == 0) {
-                log$warn("  No metadata found for sample '{sam}', skipping ...")
-                next
-            }
-
-            path <- as.character(mdata$RNAData)
-            if (
-                is.na(path) ||
-                    !is.character(path) ||
-                    identical(path, "") ||
-                    identical(path, "NA")
-            ) {
-                log$warn("  No path found, skipping ...")
-                next
-            }
-
-            loaded <- .load_expression_data(
-                path,
-                sam,
-                tmpdir,
-                LoadLoomArgs,
-                log
-            )
-            exprs <- loaded$exprs
-            cell_meta <- loaded$cell_meta
-
-            if (
-                "Gene Expression" %in%
-                    names(exprs) &&
-                    !inherits(exprs, "Seurat")
-            ) {
-                exprs <- exprs[["Gene Expression"]]
-            }
-
-            minc <- if (is.list(min_cells)) {
-                min_cells[[sam]] %||% min_cells$DEFAULT %||% 0
-            } else {
-                min_cells
-            }
-            minf <- if (is.list(min_features)) {
-                min_features[[sam]] %||% min_features$DEFAULT %||% 0
-            } else {
-                min_features
-            }
-            if (inherits(exprs, "Seurat")) {
-                obj <- exprs
-                if (!is.null(features_map)) {
-                    obj <- .rename_seurat_features(obj, features_map)
-                }
-            } else {
-                if (!is.null(features_map)) {
-                    cur_names <- rownames(exprs)
-                    mask <- cur_names %in% names(features_map)
-                    if (any(mask)) {
-                        cur_names[mask] <- features_map[cur_names[mask]]
-                        rownames(exprs) <- cur_names
-                    }
-                }
-                obj <- CreateSeuratObject(
-                    exprs,
-                    project = sam,
-                    min.cells = minc,
-                    min.features = minf,
-                    meta.data = cell_meta
-                )
-            }
-            obj <- RenameCells(obj, add.cell.id = sam)
-
-            for (mname in names(mdata)) {
-                if (mname %in% c("RNAData", "TCRData", "BCRData")) {
-                    next
-                }
-                mdt <- mdata[[mname]]
-                if (is.factor(mdt)) {
-                    mdt <- levels(mdt)[mdt]
-                }
-                obj[[mname]] <- mdt
-            }
-        }
-
-        obj <- PerformSeuratCellQC(obj, cell_qc)
+    for (sam in names(object_list)) {
+        obj <- PerformSeuratQC(
+            object_list[[sam]],
+            cell_qc = cell_qc,
+            gene_qc = gene_qc
+        )
         if (!is.null(gene_qc) && length(gene_qc) > 0) {
-            geneqc_df <- rbind(geneqc_df, PerformGeneQC(obj, gene_qc))
+            geneqc_df <- rbind(geneqc_df, obj@misc$gene_qc)
         }
 
         if (!is.null(contam_correction) && !isFALSE(contam_correction)) {
             if (isTRUE(contam_correction)) {
-                contam_correction <- "decontX"
+                contam_correction <- "decontx"
             }
-            contam_correction <- tolower(contam_correction)
-            contam_correction <- match.arg(
-                contam_correction,
-                c("decontx", "sccdc")
-            )
-            log$info(
-                "  Performing contaminant RNA correction with method '{contam_correction}' ..."
-            )
-            obj <- RunSeuratContamCorrection(
+            obj <- RunContamCorrection(
                 obj,
                 method = contam_correction,
                 decontXArgs = decontXArgs,
-                scCDCArgs = scCDCArgs
+                scCDCArgs = scCDCArgs,
+                keep_contam_assay = keep_contam_assay,
+                log = log
             )
-            contam_done <- TRUE
-            contamination_info[["tool"]] <- contam_correction
-
-            if (contam_correction == "sccdc") {
-                contamination_info[["GCGs"]] <- contamination_info[[
-                    "GCGs"
-                ]] %||%
-                    list()
-                contamination_info[["GCGs"]][[
-                    sam
-                ]] <- obj@misc$contamination$GCGs
-                contamination_info[[
-                    "contamination_ratio"
-                ]] <- contamination_info[["contamination_ratio"]] %||% list()
-                contamination_info[["contamination_ratio"]][[
-                    sam
-                ]] <- obj@misc$contamination$contamination_ratio
+            contam_info <- obj@misc$contamination
+            contamination_info[["tool"]] <- contam_info$tool
+            if (identical(contam_info$tool, "sccdc")) {
+                contamination_info[["GCGs"]][[sam]] <- contam_info$GCGs
+                contamination_info[["contamination_ratio"]][[sam]] <-
+                    contam_info$contamination_ratio
             }
         }
 
@@ -513,16 +665,6 @@ LoadSeuratAndPerformQC <- function(
             obj <- do_call(RunSeuratCellCycleScoring, ccs_args)
             ccs_args$object <- NULL
             gc()
-        }
-
-        # The `Contaminated` assay (original counts) is only used by
-        # contamination-expression visualizations, which are done after merging
-        # and require `keep_contam_assay = TRUE`. Drop it here to avoid keeping
-        # ~2x the count data through merging and the cell/gene filtering.
-        if (contam_done && !keep_contam_assay &&
-                "Contaminated" %in% names(obj@assays)) {
-            obj@assays$Contaminated <- NULL
-            invisible(gc())
         }
 
         object_list[[sam]] <- obj
