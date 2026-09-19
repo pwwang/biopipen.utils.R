@@ -148,11 +148,11 @@ test_that("aucell", {
 
 test_that("scps", {
     skip_if_not_installed("GSEABase")
-    # scPS runs PCA on the scale.data of the signature genes, so the
-    # object must be scaled for them
-    scaled <- ScaleData(obj, features = rownames(obj))
+    # scPS runs PCA on the scale.data of the signature genes; the ones the
+    # object has (data layer) but has not scaled are scaled on the way, so
+    # the object does not have to be scaled for them up front
     res <- suppressWarnings(RunModuleScoring(
-        scaled,
+        obj,
         modules = list(Scps = list(features = "MS4A1,CD79A,GZMB,GNLY,CST3,TCL1A")),
         method = "scps"
     ))

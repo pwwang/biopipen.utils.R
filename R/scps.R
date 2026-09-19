@@ -19,16 +19,6 @@ GS_PCA_Calculation <- function(Seurat_data, GeneSet) {
     # and covers the gene set genes, or RunPCA fails with a cryptic
     # "max(nu, nv) must be positive" error (or silently drops genes)
     sd_assay <- SeuratObject::DefaultAssay(Seurat_data)
-    sd_layers <- tryCatch(
-        SeuratObject::Layers(Seurat_data, assay = sd_assay),
-        error = function(e) character(0)
-    )
-    if (!("scale.data" %in% sd_layers)) {
-        stop(paste0(
-            "No layer matching pattern 'scale.data' not found. ",
-            "Please run ScaleData or SCTransform and retry"
-        ))
-    }
     scale_data <- SeuratObject::GetAssayData(Seurat_data, assay = sd_assay, layer = "scale.data")
     is_collection <- methods::is(GeneSet, "GeneSetCollection")
     GSdiscription <- if (is_collection) {
@@ -45,11 +35,23 @@ GS_PCA_Calculation <- function(Seurat_data, GeneSet) {
         }
         unscaled <- setdiff(genes, rownames(scale_data))
         if (length(unscaled) > 0) {
-            stop(paste0(
-                "Some genes of the gene set '", currGS, "' are not scaled in the '",
-                sd_assay, "' assay: ", paste(unscaled, collapse = ", "),
-                ". Please run ScaleData (with the genes) and retry"
-            ))
+            # EnsureSeuratScaleData() scales the genes the object has data for
+            # and only warns about the rest; those would take RunPCA down with
+            # the cryptic error above, so the warning is turned into an error
+            Seurat_data <- suppressWarnings(
+                EnsureSeuratScaleData(Seurat_data, unscaled, assay = sd_assay)
+            )
+            scale_data <- SeuratObject::GetAssayData(
+                Seurat_data, assay = sd_assay, layer = "scale.data"
+            )
+            unscaled <- setdiff(genes, rownames(scale_data))
+            if (length(unscaled) > 0) {
+                stop(paste0(
+                    "Some genes of the gene set '", currGS, "' are not scaled in the '",
+                    sd_assay, "' assay: ", paste(unscaled, collapse = ", "),
+                    ". Please run ScaleData (with the genes) and retry"
+                ))
+            }
         }
         GS_PCA[[currGS]] <- Seurat::RunPCA(
             Seurat_data, features = genes, npcs = 10,
