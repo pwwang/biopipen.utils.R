@@ -123,6 +123,8 @@ PerformSeuratQC <- function(object, cell_qc = NULL, gene_qc = NULL) {
         object@misc$gene_qc <- PerformGeneQC(object, gene_qc)
     }
 
+    object <- AddSeuratCommand(object, "PerformSeuratQC")
+
     return(object)
 }
 
@@ -145,6 +147,7 @@ PerformSeuratQC <- function(object, cell_qc = NULL, gene_qc = NULL) {
 #' in `@misc$contamination$tool`. For scCDC, the detected GCGs and contamination ratios are
 #' recorded in `@misc$contamination` as well.
 #' @export
+#' @importFrom SeuratObject GetAssayData CreateAssayObject RenameAssays
 RunContamCorrection <- function(
     object,
     method,
@@ -258,6 +261,8 @@ RunContamCorrection <- function(
         object@assays$Contaminated <- NULL
         invisible(gc())
     }
+
+    object <- AddSeuratCommand(object, "RunContamCorrection")
 
     return(object)
 }
