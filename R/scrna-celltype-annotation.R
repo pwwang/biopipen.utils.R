@@ -4072,3 +4072,113 @@ EmbedSeuratCellTypeAnnotation <- function(
     }
     object
 }
+
+#' Annotate the cell types of a Seurat object in one call
+#'
+#' Runs a cell type annotation tool with [RunCellTypeAnnotation()] and writes
+#' the result into the object with [EmbedSeuratCellTypeAnnotation()], so that a
+#' Seurat object goes in and an annotated Seurat object comes out. Use the two
+#' functions directly instead when the record itself is needed — biopipen's
+#' `CellTypeAnnotation` process keeps it per case to write its
+#' `cluster2celltype`/`cell2celltype` tables.
+#'
+#' `ident` is resolved the same way the `CellTypeAnnotation` process resolves
+#' it: the literal `"ident"` means the identity column, and the column the
+#' mapping is keyed on defaults to the identity column only for cluster-based
+#' calls (a cluster-level tool, or any call given an `ident`). A cell-level tool
+#' with no `ident` stays cell-level. For `celltypist` with `over_clustering`, the
+#' mapping is keyed on the `over_clustering` column rather than on `ident`.
+#'
+#' Calling this once per case with a different `case` reproduces the per-case
+#' columns of the process: [EmbedSeuratCellTypeAnnotation()] prefixes every new
+#' column with the case name unless `add_prefix` is `FALSE`.
+#'
+#' @param object Seurat object
+#' @param tool Name of the tool to run, see [celltype_annotation_tools()]. Case
+#' insensitive.
+#' @param args Arguments for the tool, as documented in
+#' [RunCellTypeAnnotation()].
+#' @param ident The metadata column with the clusters, or `"ident"` for the
+#' identity column. Defaults to the identity column for cluster-based calls.
+#' @param case Name of the case the annotation comes from, used as the prefix of
+#' the new column names unless `add_prefix` is `FALSE`. `NULL` (default) adds no
+#' prefix.
+#' @param anno_col Name of the metadata column to store the annotation in.
+#' @param add_prefix Whether to prefix the new column names with `case`.
+#' @param set_ident Whether to set the identity of the object to the annotation
+#' column.
+#' @param merge Whether to merge the clusters annotated with the same cell type.
+#' Otherwise a suffix (`.1`, `.2`, ...) is added to the cell types.
+#' @param cache Directory for conversions and tool scratch files, default
+#' `tempdir()`.
+#' @param log Logger.
+#' @return The Seurat object with the annotation added to the metadata
+#' @export
+#' @examples
+#' \donttest{
+#' obj <- SeuratObject::pbmc_small
+#' obj <- RunSeuratCellTypeAnnotation(
+#'     obj, "direct",
+#'     args = list(cell_types = list(g1 = "T", g2 = "B")),
+#'     ident = "groups"
+#' )
+#' table(obj$CellType)
+#' }
+RunSeuratCellTypeAnnotation <- function(
+    object, tool, args = list(), ident = NULL, case = NULL, anno_col = "CellType",
+    add_prefix = TRUE, set_ident = TRUE, merge = FALSE, cache = NULL, log = NULL
+) {
+    log <- log %||% get_logger()
+    # RunCellTypeAnnotation() takes a path as well, but the result has to be
+    # embedded into an object, so reject a path up front rather than after the
+    # tool has run
+    if (!inherits(object, "Seurat")) {
+        stop(paste0(
+            "[RunSeuratCellTypeAnnotation] `object` must be a Seurat object, got: ",
+            paste(class(object), collapse = ", ")
+        ))
+    }
+    if (!(is.character(tool) && length(tool) == 1)) {
+        stop("[RunSeuratCellTypeAnnotation] `tool` must be a single tool name")
+    }
+    tool <- tolower(tool)
+    level <- celltype_annotation_tools(tool)[[1]]$level
+
+    if (identical(ident, "ident")) {
+        # "ident" is an alias for the identity column
+        ident <- GetIdentityColumn(object)
+    }
+    over_clustering <- if (identical(tool, "celltypist")) {
+        args$over_clustering
+    }
+    has_over_clustering <- !is.null(over_clustering) && !isFALSE(over_clustering)
+    is_cluster_based <- identical(level, "cluster") ||
+        !is.null(ident) ||
+        has_over_clustering
+    if (is_cluster_based && is.null(ident)) {
+        ident <- GetIdentityColumn(object)
+    }
+
+    record <- RunCellTypeAnnotation(
+        object, tool, args = args, ident = ident, cache = cache, log = log
+    )
+
+    object <- EmbedSeuratCellTypeAnnotation(
+        object, record,
+        case = case,
+        # celltypist keys its cluster mapping on the over_clustering column, not
+        # on the `ident` the tool was run with
+        ident = if (has_over_clustering) over_clustering else ident,
+        anno_col = anno_col,
+        add_prefix = add_prefix,
+        set_ident = set_ident,
+        merge = merge,
+        log = log
+    )
+
+    AddSeuratCommand(
+        object,
+        "RunSeuratCellTypeAnnotation",
+        params = list(tool = tool, ident = ident, anno_col = anno_col)
+    )
+}

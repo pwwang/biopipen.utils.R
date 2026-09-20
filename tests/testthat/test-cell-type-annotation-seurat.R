@@ -138,6 +138,126 @@ test_that("records can be applied one after another, and overwrite their columns
     expect_setequal(as.character(out$c1_CellType), c("T", "B"))
 })
 
+test_that("RunSeuratCellTypeAnnotation is the two calls in one", {
+    direct_args <- list(cell_types = list(g1 = "T", g2 = "B"))
+
+    rec <- RunCellTypeAnnotation(obj, "direct", args = direct_args, ident = "groups")
+    manual <- EmbedSeuratCellTypeAnnotation(obj, rec, ident = "groups")
+
+    out <- RunSeuratCellTypeAnnotation(obj, "direct", args = direct_args, ident = "groups")
+
+    expect_setequal(colnames(out@meta.data), colnames(manual@meta.data))
+    expect_equal(as.character(out$CellType), as.character(manual$CellType))
+    expect_equal(levels(out$CellType), levels(manual$CellType))
+    expect_equal(as.character(Idents(out)), as.character(Idents(manual)))
+
+    # provenance, as the other Run* entry points of the package
+    expect_true("RunSeuratCellTypeAnnotation" %in% names(out@commands))
+})
+
+test_that("RunSeuratCellTypeAnnotation composes over cases", {
+    out <- RunSeuratCellTypeAnnotation(
+        obj, "direct", args = list(cell_types = list(g1 = "T", g2 = "B")),
+        ident = "groups", case = "c1"
+    )
+    out <- RunSeuratCellTypeAnnotation(
+        out, "direct", args = list(cell_types = list(g1 = "U", g2 = "V")),
+        ident = "groups", case = "c2"
+    )
+
+    expect_true(all(c("c1_CellType", "c2_CellType") %in% colnames(out@meta.data)))
+    expect_setequal(as.character(out$c2_CellType), c("U", "V"))
+    expect_equal(as.character(Idents(out)), as.character(out$c2_CellType))
+})
+
+test_that("RunSeuratCellTypeAnnotation resolves `ident` like the process", {
+    direct_args <- list(cell_types = list(g1 = "T", g2 = "B"))
+
+    # "ident" is an alias for the identity column, which on pbmc_small is
+    # RNA_snn_res.1 (the column matching Idents(), not `groups`)
+    alias <- RunSeuratCellTypeAnnotation(
+        obj, "direct", args = direct_args, ident = "ident", set_ident = FALSE
+    )
+    expect_true("CellType" %in% colnames(alias@meta.data))
+
+    # a cluster-level tool with no ident falls back to the identity column too
+    fallback <- RunSeuratCellTypeAnnotation(
+        obj, "direct", args = direct_args, set_ident = FALSE
+    )
+    expect_equal(as.character(fallback$CellType), as.character(alias$CellType))
+
+    # ...while the cell-level tool stays cell-level: the annotation is the
+    # tool's first column, not an aggregation over clusters
+    f <- cell_tsv()
+    cell_only <- RunSeuratCellTypeAnnotation(
+        obj, "cell", args = list(cell_types = paste0(f, "#1,2,3"))
+    )
+    expect_true(all(c("CellType", "T2") %in% colnames(cell_only@meta.data)))
+    expect_equal(unique(as.character(cell_only$CellType)), "CT1")
+})
+
+test_that("RunSeuratCellTypeAnnotation keys celltypist on over_clustering", {
+    # celltypist is not runnable here, so the two calls are stubbed to capture
+    # the `ident` the wrapper hands to the embedding
+    run_with <- NULL
+    embedded_with <- NULL
+    local_mocked_bindings(
+        RunCellTypeAnnotation = function(object, tool, args = list(), ident = NULL, ...) {
+            run_with <<- ident
+            list(mapping = list(g1 = "T", g2 = "B"), type = "cluster", more = NULL)
+        },
+        EmbedSeuratCellTypeAnnotation = function(object, record, ident = NULL, ...) {
+            embedded_with <<- ident
+            object
+        },
+        .package = "biopipen.utils"
+    )
+    cta <- function(...) RunSeuratCellTypeAnnotation(obj, "celltypist", ..., set_ident = FALSE)
+
+    # an explicit `ident`: the tool is run on it, the mapping is keyed on
+    # over_clustering
+    cta(args = list(over_clustering = "groups", model = "x.pkl"), ident = "groups")
+    expect_equal(run_with, "groups")
+    expect_equal(embedded_with, "groups")
+
+    # no `ident`: the identity column is resolved for the run, and the mapping is
+    # still keyed on over_clustering
+    cta(args = list(over_clustering = "over_clusters", model = "x.pkl"))
+    expect_equal(run_with, "RNA_snn_res.1")
+    expect_equal(embedded_with, "over_clusters")
+
+    # over_clustering = FALSE is not a key: without an `ident` the call is not
+    # cluster-based at all
+    cta(args = list(over_clustering = FALSE, model = "x.pkl"))
+    expect_null(run_with)
+    expect_null(embedded_with)
+})
+
+test_that("RunSeuratCellTypeAnnotation validates its input", {
+    direct_args <- list(cell_types = list(g1 = "T", g2 = "B"))
+
+    # a path is rejected before the tool runs
+    expect_error(
+        RunSeuratCellTypeAnnotation("obj.rds", "direct", args = direct_args),
+        "`object` must be a Seurat object"
+    )
+    expect_error(
+        RunSeuratCellTypeAnnotation(obj, c("direct", "cell")), "`tool` must be a single tool name"
+    )
+    expect_error(
+        RunSeuratCellTypeAnnotation(obj, "nope"), "Unknown cell type annotation tool"
+    )
+    # the tool name is case insensitive
+    expect_equal(
+        as.character(RunSeuratCellTypeAnnotation(
+            obj, "DIRECT", args = direct_args, ident = "groups"
+        )$CellType),
+        as.character(RunSeuratCellTypeAnnotation(
+            obj, "direct", args = direct_args, ident = "groups"
+        )$CellType)
+    )
+})
+
 test_that("EmbedSeuratCellTypeAnnotation validates its input", {
     rec <- RunCellTypeAnnotation(
         obj, "direct", args = list(cell_types = list(g1 = "T", g2 = "B")),
