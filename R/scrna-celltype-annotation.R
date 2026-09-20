@@ -3929,3 +3929,146 @@ RunCellTypeAnnotation <- function(
     }
     result
 }
+
+#' Add cell type annotation results to a Seurat object
+#'
+#' Writes the record returned by [RunCellTypeAnnotation()] into the object's
+#' metadata, so that the annotation can be used by the downstream steps. The
+#' per-cell labels the tool produced (`record$cells` for cluster-level tools
+#' that also predict per cell, `record$mapping` for cell-level tools) are added
+#' as metadata columns, and the annotation itself is stored in `anno_col`.
+#'
+#' Unlike [RunCellTypeAnnotation()], no tool is run here: the caller runs the
+#' tool and passes the record in, so the same record can be applied to different
+#' objects or under different column names. Calling this once per record with a
+#' different `case` reproduces the per-case columns of biopipen's
+#' `CellTypeAnnotation` process.
+#'
+#' @param object Seurat object
+#' @param record A record returned by [RunCellTypeAnnotation()]
+#' @param case Name of the case the record came from, used as the prefix of the
+#' new column names unless `add_prefix` is `FALSE`. `NULL` (default) adds no
+#' prefix.
+#' @param ident The metadata column the `record$mapping` is keyed on, ie. the
+#' `ident` the tool was run with. Only used for `record$type = "cluster"`, where
+#' it defaults to the identity column ([GetIdentityColumn()]).
+#' @param anno_col Name of the metadata column to store the annotation in.
+#' @param add_prefix Whether to prefix the new column names with `case`.
+#' @param set_ident Whether to set the identity of the object to the annotation
+#' column.
+#' @param merge Whether to merge the clusters annotated with the same cell type.
+#' Otherwise a suffix (`.1`, `.2`, ...) is added to the cell types.
+#' @param log Logger.
+#' @return The Seurat object with the annotation added to the metadata
+#' @export
+#' @examples
+#' \donttest{
+#' obj <- SeuratObject::pbmc_small
+#' rec <- RunCellTypeAnnotation(
+#'     obj, "direct",
+#'     args = list(cell_types = list(g1 = "T", g2 = "B")),
+#'     ident = "groups"
+#' )
+#' obj <- EmbedSeuratCellTypeAnnotation(obj, rec, ident = "groups")
+#' table(obj$CellType)
+#' }
+EmbedSeuratCellTypeAnnotation <- function(
+    object, record, case = NULL, ident = NULL, anno_col = "CellType",
+    add_prefix = TRUE, set_ident = TRUE, merge = FALSE, log = NULL
+) {
+    log <- log %||% get_logger()
+    if (!inherits(object, "Seurat")) {
+        stop(paste0(
+            "[EmbedSeuratCellTypeAnnotation] `object` must be a Seurat object, got: ",
+            paste(class(object), collapse = ", ")
+        ))
+    }
+    if (!is.list(record) ||
+        !(identical(record$type, "cluster") || identical(record$type, "cell"))) {
+        stop(paste0(
+            "[EmbedSeuratCellTypeAnnotation] `record` must be a record returned ",
+            "by RunCellTypeAnnotation(), with `type` = 'cluster' or 'cell'"
+        ))
+    }
+    if (!(is.character(anno_col) && length(anno_col) == 1 && nzchar(anno_col))) {
+        stop("[EmbedSeuratCellTypeAnnotation] `anno_col` must be a single column name")
+    }
+    is_cluster <- identical(record$type, "cluster")
+    if (is_cluster) {
+        ident <- ident %||% GetIdentityColumn(object)
+        if (is.null(ident) || !ident %in% colnames(object@meta.data)) {
+            stop(paste0(
+                "[EmbedSeuratCellTypeAnnotation] Cannot determine the column the ",
+                "annotation is keyed on. Please provide `ident` (the metadata ",
+                "column with the clusters)"
+            ))
+        }
+    }
+
+    # The identity column may be renamed by RenameSeuratIdents() below; restore
+    # it unless `set_ident` asks for the annotation to become the identity
+    original_ident <- GetIdentityColumn(object)
+
+    prefix <- if (isTRUE(add_prefix) && !is.null(case)) paste0(case, "_") else ""
+    case_anno_col <- paste0(prefix, anno_col)
+
+    # The per-cell labels: `cells` for cluster-level tools that also predict per
+    # cell, `mapping` for cell-level tools
+    cells <- if (is_cluster) record$cells else record$mapping
+    if (!is.null(cells)) {
+        colnames(cells) <- paste0(prefix, colnames(cells))
+        for (col in intersect(colnames(cells), colnames(object@meta.data))) {
+            object@meta.data[[col]] <- NULL
+        }
+        object@meta.data <- cbind(object@meta.data, cells)
+        log$info(
+            "Added cell-level annotation(s): {paste(colnames(cells), collapse = ', ')}"
+        )
+    }
+
+    if (is_cluster) {
+        log$info("Adding annotation as new column: {case_anno_col}")
+        object <- RenameSeuratIdents(
+            object,
+            mapping = record$mapping,
+            ident = ident,
+            save_as = case_anno_col,
+            merge = merge
+        )
+        if (!is.null(original_ident)) {
+            Idents(object) <- original_ident
+        }
+        # Additional mappings from tools that support them (eg. the
+        # `more_cell_types` of the `direct` tool)
+        for (key in names(record$more)) {
+            more_col <- paste0(prefix, key)
+            log$info("Adding additional annotation column: {more_col}")
+            object <- RenameSeuratIdents(
+                object,
+                mapping = record$more[[key]],
+                ident = ident,
+                save_as = more_col,
+                merge = merge
+            )
+            if (!is.null(original_ident)) {
+                Idents(object) <- original_ident
+            }
+        }
+    } else {
+        # Cell-level: the first column of the per-cell labels is the annotation
+        annotation_col <- colnames(cells)[1]
+        if (!identical(annotation_col, case_anno_col)) {
+            colnames(object@meta.data)[
+                colnames(object@meta.data) == annotation_col
+            ] <- case_anno_col
+            log$info(
+                "Renamed annotation column '{annotation_col}' to '{case_anno_col}'"
+            )
+        }
+    }
+
+    if (isTRUE(set_ident)) {
+        Idents(object) <- case_anno_col
+    }
+    object
+}
