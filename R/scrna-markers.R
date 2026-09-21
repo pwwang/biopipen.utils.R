@@ -568,6 +568,38 @@ markers_to_singscore_list <- function(df) {
     sets
 }
 
+# Convert a canonical marker table to the ScInfeR format
+# Only positive markers are kept: the tool has no direction, and a
+# negative-direction marker would otherwise be counted as a marker of the cell
+# type instead of one it should not express
+#' Convert a marker table to the ScInfeR format
+#'
+#' @description A data.frame with `celltype`, `marker` and `weight` columns, the
+#' `ct_marker_df` that `ScInfeR::predict_celltype_scRNA_seurat()` takes.
+#'
+#' @details Only positive markers are kept: ScInfeR has no direction, so a
+#' negative-direction marker would be counted as a marker of the cell type. The
+#' tool accepts per-marker weights but the universal marker table does not have
+#' to carry them: without a `weight` column every marker gets weight `1`
+#' (ScInfeR's own database weights each marker).
+#'
+#' @param df A canonical marker table.
+#' @param tissue The tissue to filter by. If NULL, no filtering is done.
+#' @param cancer The cancer to filter by. If NULL, no filtering is done.
+#' @param species The species to filter by. If NULL, no filtering is done.
+#' @return A data.frame with `celltype`, `marker` and `weight` columns.
+#' @export
+markers_to_scinfer_df <- function(df, tissue = NULL, cancer = NULL, species = NULL) {
+    df <- apply_marker_filters(df, tissue, cancer, species)
+    df <- filter_positive_markers(df)
+    data.frame(
+        celltype = as.character(df$cell_type),
+        marker = as.character(df$gene),
+        weight = if ("weight" %in% colnames(df)) as.numeric(df$weight) else 1,
+        stringsAsFactors = FALSE
+    )
+}
+
 # Majority-vote helper for cell-level tools with ident
 #' Majority vote the labels of each cluster
 #'

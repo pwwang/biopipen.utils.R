@@ -62,6 +62,7 @@ requirements:
     - pwwang::r-seuratwrappers
     - pwwang::r-lict
     - pwwang::r-mllmcelltype
+    - pwwang::r-scinfer
     - r-qs2
     - r-plotly
     - r-htmlwidgets
@@ -126,6 +127,7 @@ requirements:
     - pwwang::r-seuratwrappers
     - pwwang::r-lict
     - pwwang::r-mllmcelltype
+    - pwwang::r-scinfer
     - r-qs2
     - r-plotly
     - r-htmlwidgets

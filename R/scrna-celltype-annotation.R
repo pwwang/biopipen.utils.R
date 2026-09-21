@@ -3665,6 +3665,145 @@ patch_garnett_run_classifier <- function(log) {
     }
 }
 
+# ScInfeR (Swain, Shekhawat & Yadav, 2025, doi:10.1093/bib/bbaf253; there is a
+# published correction, doi:10.1093/bib/bbaf337) is an R package distributed on
+# GitHub only (GPL-3, not on CRAN): annotate the clusters with the marker table
+# in `db`, or with its own ScInfeRDB tissue set in `tissue`. It reads a
+# reduction off the object (its message-passing round walks the reduction's
+# neighbourhood graph), so the object has to carry the one it is asked for.
+# The reference/hybrid path of the package (get_marker_from_ref_matrix(),
+# markers learned from a labelled reference matrix) is not covered here.
+.run_celltypeannotation_scinfer <- function(object, args, ident, ctx) {
+    log <- get_logger()
+
+    require_package("ScInfeR")
+
+    if (is.null(args$db) && is.null(args$tissue)) {
+        stop(paste0(
+            "Neither `scinfer.db` nor `scinfer.tissue` is set: ScInfeR needs ",
+            "a marker table -- a universal one in `scinfer.db`, or one of its ",
+            "own in `scinfer.tissue`."
+        ))
+    }
+
+    reduction <- args$reduction %||% "umap"
+    if (!reduction %in% Reductions(object)) {
+        stop(paste0(
+            "`scinfer.reduction` is '", reduction, "', which the object has no ",
+            "reduction for. ScInfeR walks the neighbourhood graph of that ",
+            "reduction, so the object must carry it (it has: ",
+            paste(Reductions(object), collapse = ", "),
+            "); compute it first, or point `scinfer.reduction` at one of those."
+        ))
+    }
+
+    log$info("Loading the ScInfeR marker table ...")
+    if (!is.null(args$db)) {
+        mt <- load_marker_table(args$db)
+        if (!is_marker_canonical(mt)) {
+            # Native marker formats (a named list, a matrix, a ScType xlsx)
+            # have no tissue/cancer/species columns to filter by, and no
+            # markers ScInfeR could score either
+            stop_on_filtering_native_db(args$tissue, args$cancer, args$species)
+            stop(paste0(
+                "The ScInfeR db must be a universal marker table (a table with ",
+                "`cell_type` and `gene` columns)."
+            ))
+        }
+        # A ScInfeRDB sheet handed in as a file is canonicalized on load
+        # (`celltype`/`marker` are aliases of `cell_type`/`gene`), so its
+        # `weight` column reaches the tool through markers_to_scinfer_df()
+        ct_marker_df <- markers_to_scinfer_df(
+            mt,
+            tissue = args$tissue,
+            cancer = args$cancer,
+            species = args$species
+        )
+    } else {
+        tissue <- args$tissue
+        # The tissue types of `ScInfeR::fetch_markerset()`; it reads the sheet
+        # of the tissue off GitHub at call time (ScInfeRDB is not bundled with
+        # the package), so this arm needs network access
+        tissues <- c(
+            "Bladder", "Bone marrow", "Brain", "Breast", "Eye", "Heart",
+            "Intestine", "Kidney", "Liver", "Lungs", "Pancreas", "PBMC", "Skin"
+        )
+        log$info(paste0(
+            "Fetching the ScInfeRDB marker set for tissue '{tissue}' from ",
+            "GitHub (ScInfeRDB is not part of the package, so this arm needs ",
+            "network access; available tissues: ",
+            paste(tissues, collapse = ", "), ") ..."
+        ))
+        ct_marker_df <- ScInfeR::fetch_markerset(tissue)
+        # An unknown tissue comes back as the table of available tissues
+        if (!is.data.frame(ct_marker_df) ||
+            !all(c("celltype", "marker", "weight") %in% colnames(ct_marker_df))) {
+            stop(paste0(
+                "ScInfeRDB has no tissue type `", tissue, "`. Available: ",
+                paste(tissues, collapse = ", ")
+            ))
+        }
+        ct_marker_df <- ct_marker_df[, c("celltype", "marker", "weight")]
+    }
+
+    subtype_present <- isTRUE(args$subtype_present)
+    log$info(paste0(
+        "Running ScInfeR on ", length(unique(ct_marker_df$celltype)),
+        " cell type(s) and ", nrow(ct_marker_df), " marker(s) (subtype_present ",
+        "= ", subtype_present, ", reduction = '", reduction, "') ..."
+    ))
+
+    # ScInfeR opens its own log at `getwd()/scinfer.log`: run it from the
+    # scratch dir so it does not drop that file into the caller's directory
+    old_wd <- setwd(ctx$scratch)
+    on.exit(setwd(old_wd), add = TRUE)
+
+    result <- ScInfeR::predict_celltype_scRNA_seurat(
+        object,
+        group_annt = as.character(object@meta.data[[ident]]),
+        ct_marker_df = ct_marker_df,
+        subtype_present = subtype_present,
+        subtype_info = args$subtype_info %||% FALSE,
+        assay_name = args$assay %||% "RNA",
+        # `slot_name` is taken but ignored by the tool in this version: it reads
+        # the assay's default layer whichever slot is asked for
+        slot_name = args$slot %||% "counts",
+        reduction = reduction,
+        own_weightage = args$own_weightage %||% 0.5,
+        n_neighbor = args$n_neighbor %||% 10
+    )
+
+    # One row per cell, in the object's cell order (`result` carries only the
+    # default 1..n row names): `celltype` holds the round-1 call -- which is per
+    # cell already, since a cluster with a second cell type within 0.1 of the
+    # best score is resolved cell by cell -- and `subtype` the second round of
+    # `subtype_present`, NA for the cell types it has no subtype markers for
+    labels <- as.character(result$celltype)
+    if (subtype_present && !is.null(result$subtype)) {
+        subtype <- as.character(result$subtype)
+        labels <- ifelse(is.na(subtype), labels, subtype)
+    }
+    cells_df <- data.frame(scinfer_celltype = labels, row.names = colnames(object))
+
+    log$info("Aggregating ScInfeR results by cluster ...")
+    clusters <- as.character(object@meta.data[[ident]])
+    mapping <- majority_vote(labels, clusters)
+    disagreeing <- names(Filter(
+        function(cl_labels) length(unique(cl_labels)) > 1,
+        split(labels, clusters)
+    ))
+    if (length(disagreeing) > 0) {
+        log$warn(paste0(
+            "The cells of cluster(s) ", paste(disagreeing, collapse = ", "),
+            " have different ScInfeR labels (the tool resolves a cluster per ",
+            "cell when two cell types score within 0.1 of each other); using ",
+            "the majority vote."
+        ))
+    }
+
+    list(mapping = mapping, type = "cluster", cells = cells_df)
+}
+
 # ---- Cell type annotation tools ---------------------------------------------
 # Static per-tool metadata. The runners themselves are .run_celltypeannotation_<tool>().
 # `level` = what the tool natively produces:
@@ -3688,6 +3827,13 @@ patch_garnett_run_classifier <- function(log) {
     cellid         = list(level = "cell"),
     direct         = list(level = "cluster"),
     cell           = list(level = "cell"),
+    # ---- ScInfeR ----
+    # GitHub-only R package (GPL-3). It calls the clusters from a marker table
+    # (a universal one in `db`, or its own ScInfeRDB in `tissue`) and needs a
+    # reduction off the object for the per-cell round it falls back to when a
+    # second cell type scores within 0.1 of the best, so the per-cell labels it
+    # produces are returned as `cells`.
+    scinfer        = list(level = "cluster", h5ad = FALSE),
     # ---- equal-weighting scorers (no learned weights) ----
     # Per-cell signature scores with unit weights; the label is the argmax of
     # the signature scores, and `ident` aggregates them by majority vote.
@@ -3901,6 +4047,8 @@ RunCellTypeAnnotation <- function(
         cellid         = .run_celltypeannotation_cellid(object, args, ident, ctx),
         direct         = .run_celltypeannotation_direct(object, args, ident, ctx),
         cell           = .run_celltypeannotation_cell(object, args, ident, ctx),
+        # ---- ScInfeR ----
+        scinfer        = .run_celltypeannotation_scinfer(object, args, ident, ctx),
         ucell          = .run_celltypeannotation_ucell(object, args, ident, ctx),
         aucell         = .run_celltypeannotation_aucell(object, args, ident, ctx),
         gsva           = .run_celltypeannotation_gsva(object, args, ident, ctx),
