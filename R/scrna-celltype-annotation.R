@@ -1665,6 +1665,24 @@ patch_garnett_run_classifier <- function(log) {
     patch_garnett_run_classifier(log)
     patch_garnett_marker_lexer(log)
 
+    # garnett::classify_cells() (and the run_classifier()/make_predictions() it
+    # calls) use SummarizedExperiment's accessors *unqualified* -- both getters
+    # (colData, rowData) and setters (colData<-, rowData<-) -- plus counts(),
+    # and garnett's NAMESPACE imports none of them. They resolve only through
+    # the search path, i.e. only when the package defining them is attached:
+    #   colData, colData<-, rowData, rowData<-, assay  <- SummarizedExperiment
+    #   counts                                          <- SingleCellExperiment
+    # (checked against the installed packages; neither package alone covers the
+    # set). Without the attach every garnett arm dies with
+    #   Error in colData(cds) : could not find function "colData"
+    # and, once the getter resolves, with
+    #   Error in colData(cds) <- `*vtmp*` : could not find function "colData<-".
+    for (pkg in c("SummarizedExperiment", "SingleCellExperiment")) {
+        if (!paste0("package:", pkg) %in% search()) {
+            suppressMessages(attachNamespace(pkg))
+        }
+    }
+
     classifier_path <- args$classifier
     if (is.null(classifier_path)) { stop("`garnett.classifier` is not set") }
     if (!file.exists(classifier_path)) {
@@ -3665,6 +3683,91 @@ patch_garnett_run_classifier <- function(log) {
     }
 }
 
+# patch_scinfer_subtype_classification — fix the upstream crash in ScInfeR's
+# subtype_classification() when a cluster contains a marker gene that is not
+# expressed in any of its cells.
+#
+# Upstream bug: the per-cell subtype call is built as
+#   hybrid_mat_norm <- (t(t(hybrid_mat)/colSums(hybrid_mat))) * 10000
+#   colmean_ct <- t(apply(hybrid_mat_norm, 1,
+#       function(x) tapply(x, colnames(hybrid_mat_norm), mean)))
+#   st_call <- colnames(colmean_ct)[apply(colmean_ct, 1, which.max)]
+# A gene column whose values are all zero (marker not expressed in that cluster)
+# divides by zero and becomes Inf/NaN; `tapply(..., mean)` has no `na.rm`, so a
+# single such column makes every cell-type mean of every cell non-finite,
+# which.max() then returns integer(0) for all cells, st_call comes back as
+# character(0), and core_func() dies at
+#   result_df[which(clus_bool), 1] <- st_predictions_clus
+# with `Error in x[[jj]][iseq] <- vjj : replacement has length zero`. On pbmc3k
+# cluster 1: 7 of 56 marker columns are all-zero -> all 143 rows non-finite ->
+# the arm produces no labels at all.
+# Fix (values unchanged wherever the original was finite): divide the zero-sum
+# columns by Inf, so they contribute 0 — "not expressed in this cluster" — and
+# let the argmax treat any remaining non-finite entry as -Inf, so one label per
+# cell is always returned.
+patch_scinfer_subtype_classification <- function(log) {
+    fix_subtype_classification <- function() {
+        src <- deparse(get(
+            "subtype_classification", envir = asNamespace("ScInfeR")
+        ))
+        # deparse() returns one element per line, and the normalization
+        # expression is split across two of them: join before substituting,
+        # otherwise the pattern can never match.
+        src <- paste(src, collapse = "\n")
+        norm_pat <- paste0(
+            "hybrid_mat_norm <- \\(t\\(t\\(hybrid_mat\\)/colSums\\(hybrid_mat\\)\\)\\)",
+            " \\*\\s*10000"
+        )
+        norm_rep <- paste0(
+            "cs_hybrid <- colSums(hybrid_mat); ",
+            "cs_hybrid[!is.finite(cs_hybrid) | cs_hybrid == 0] <- Inf; ",
+            "hybrid_mat_norm <- (t(t(hybrid_mat)/cs_hybrid)) * 10000"
+        )
+        call_pat <- paste0(
+            "st_call <- colnames\\(colmean_ct\\)\\[",
+            "apply\\(colmean_ct, 1, which\\.max\\)\\]"
+        )
+        call_rep <- paste0(
+            "st_call <- colnames(colmean_ct)[apply(colmean_ct, 1, ",
+            "function(x) { x[!is.finite(x)] <- -Inf; which.max(x) })]"
+        )
+        src <- gsub(norm_pat, norm_rep, src)
+        src <- gsub(call_pat, call_rep, src)
+        # A silent no-op would be worse than a loud failure: if ScInfeR's
+        # internals change, the substitutions above stop matching.
+        if (!any(grepl("cs_hybrid <- colSums(hybrid_mat)", src, fixed = TRUE)) ||
+                !any(grepl("x[!is.finite(x)] <- -Inf", src, fixed = TRUE))) {
+            stop(paste(
+                "subtype_classification substitution did not match the",
+                "installed ScInfeR:::subtype_classification source; the",
+                "all-zero marker column crash fix is NOT applied"
+            ))
+        }
+        eval(
+            parse(text = paste(src, collapse = "\n")),
+            envir = asNamespace("ScInfeR")
+        )
+    }
+    tryCatch(
+        {
+            monkey_patch(
+                "ScInfeR", "subtype_classification",
+                fix_subtype_classification()
+            )
+            log$info(paste(
+                "Patched ScInfeR:::subtype_classification",
+                "(all-zero marker column crash fix)"
+            ))
+        },
+        error = function(e) {
+            log$warn(paste(
+                "Failed to patch ScInfeR:::subtype_classification",
+                "(all-zero marker column crash fix):", conditionMessage(e)
+            ))
+        }
+    )
+}
+
 # ScInfeR (Swain, Shekhawat & Yadav, 2025, doi:10.1093/bib/bbaf253; there is a
 # published correction, doi:10.1093/bib/bbaf337) is an R package distributed on
 # GitHub only (GPL-3, not on CRAN): annotate the clusters with the marker table
@@ -3677,6 +3780,7 @@ patch_garnett_run_classifier <- function(log) {
     log <- get_logger()
 
     require_package("ScInfeR")
+    patch_scinfer_subtype_classification(log)
 
     if (is.null(args$db) && is.null(args$tissue)) {
         stop(paste0(
