@@ -136,6 +136,131 @@ RunSeuratTransformation <- function(
     cached$save(object)
     object
 }
+
+#' Run data integration on Seurat object
+#'
+#' @param object Seurat object
+#' @param no_integration Whether to skip integration, just join layers
+#' @param IntegrateLayersArgs Arguments to pass to [Seurat::IntegrateLayers]
+#' @param log Logger
+#' @param cache Directory to cache the results. Set to `FALSE` to disable caching
+#' @return The Seurat object with integrated data
+#' @export
+#' @importFrom utils getFromNamespace
+#' @importFrom Seurat IntegrateLayers
+#' @importFrom rlang %||%
+#' @importFrom SeuratObject JoinLayers
+RunSeuratIntegration <- function(
+    object,
+    no_integration = FALSE,
+    IntegrateLayersArgs = list(),
+    log = NULL,
+    cache = NULL
+) {
+    log <- log %||% get_logger()
+    cache <- cache %||% gettempdir()
+    cached <- Cache$new(
+        list(object, no_integration, IntegrateLayersArgs),
+        prefix = "biopipen.utils.RunSeuratIntegration",
+        cache_dir = cache
+    )
+    if (cached$is_cached()) {
+        log$info("Integrated data loaded from cache: {cached$get_path()}")
+        return(cached$restore())
+    }
+
+    log$info("Performing data integration ...")
+    if (!no_integration) {
+        method <- IntegrateLayersArgs$method %||% "rpca"
+        if (
+            !is.null(IntegrateLayersArgs$reference) &&
+                is.character(IntegrateLayersArgs$reference)
+        ) {
+            log$info(
+                "  Using reference samples: {paste(IntegrateLayersArgs$reference, collapse = ', ')}"
+            )
+            samples <- if (is.factor(object$Sample)) {
+                levels(object$Sample)
+            } else {
+                unique(object$Sample)
+            }
+            IntegrateLayersArgs$reference <- match(
+                IntegrateLayersArgs$reference,
+                samples
+            )
+            log$debug(
+                "  Transferred to indices: {paste(IntegrateLayersArgs$reference, collapse = ', ')}"
+            )
+        }
+        log$info("- Running IntegrateLayers (method = {method}) ...")
+        method <- switch(
+            method,
+            "CCA" = "CCAIntegration",
+            "cca" = "CCAIntegration",
+            "RPCA" = "RPCAIntegration",
+            "rpca" = "RPCAIntegration",
+            "Harmony" = "HarmonyIntegration",
+            "harmony" = "HarmonyIntegration",
+            "FastMNN" = "FastMNNIntegration",
+            "fastmnn" = "FastMNNIntegration",
+            "scVI" = "scVIIntegration",
+            "scvi" = "scVIIntegration",
+            stop(paste0("Unknown integration method: ", method))
+        )
+        IntegrateLayersArgs$method <- getFromNamespace(method, "Seurat")
+        IntegrateLayersArgs$assay <- IntegrateLayersArgs$assay %||%
+            DefaultAssay(object)
+        if (IntegrateLayersArgs$assay == "SCT") {
+            IntegrateLayersArgs$normalization.method <- IntegrateLayersArgs$normalization.method %||%
+                "SCT"
+        }
+
+        new_reductions <- list(
+            "CCAIntegration" = "integrated.cca",
+            "RPCAIntegration" = "integrated.rpca",
+            "HarmonyIntegration" = "harmony",
+            "FastMNNIntegration" = "integration.mnn",
+            "scVIIntegration" = "integrated.scvi"
+        )
+        IntegrateLayersArgs$new.reduction <- IntegrateLayersArgs$new.reduction %||%
+            new_reductions[[method]]
+
+        log$debug("  Arguments: {format_args(IntegrateLayersArgs)}")
+        IntegrateLayersArgs$object <- object
+        ia <<- IntegrateLayersArgs
+        object <- do_call(IntegrateLayers, IntegrateLayersArgs)
+        IntegrateLayersArgs$object <- NULL
+        gc()
+
+        # Save it for dimension reduction plots
+        object@misc$integrated_new_reduction <- IntegrateLayersArgs$new.reduction
+    }
+
+    log$info("- Joining layers ...")
+    # https://github.com/satijalab/seurat/issues/8558#issuecomment-2591323978
+    object <- JoinLayers(object, assay = "RNA")
+    object <- AddSeuratCommand(
+        object,
+        "RunSeuratIntegration",
+        "RunSeuratIntegration(object, no_integration, IntegrateLayersArgs)",
+        params = list(
+            no_integration = no_integration,
+            IntegrateLayersArgs = IntegrateLayersArgs
+        )
+    )
+
+    if (inherits(object[[DefaultAssay(object)]], "SCTAssay")) {
+        log$info("- Running PrepSCTFindMarkers() ...")
+        object <- PrepSCTFindMarkers(object)
+        object <- AddSeuratCommand(object, "PrepSCTFindMarkers")
+    }
+
+    invisible(gc())
+    # gc before serialization: qs2 allocations don't trigger R's gc
+    cached$save(object)
+    object
+}
+
 #' Run seurat UMAP
 #'
 #' In additional to [Seurat::RunUMAP()], we provide an additional arguments to use
@@ -361,6 +486,7 @@ RunSeuratUMAP <- function(
     )
     object
 }
+
 #' Run seurat unsupervised clustering
 #'
 #' @param object Seurat object
@@ -556,6 +682,7 @@ RunSeuratClustering <- function(
 
     object
 }
+
 #' Run subset clustering on a Seurat object
 #'
 #' It's unlike [`Seurat::FindSubCluster`], which only finds subclusters of a single
@@ -792,6 +919,7 @@ RunSeuratSubClustering <- function(
     cached$save(object)
     object
 }
+
 #' Rename cluster names
 #'
 #' @param object Seurat object
@@ -976,128 +1104,7 @@ RenameSeuratIdents <- function(
 
     object
 }
-#' Run data integration on Seurat object
-#'
-#' @param object Seurat object
-#' @param no_integration Whether to skip integration, just join layers
-#' @param IntegrateLayersArgs Arguments to pass to [Seurat::IntegrateLayers]
-#' @param log Logger
-#' @param cache Directory to cache the results. Set to `FALSE` to disable caching
-#' @return The Seurat object with integrated data
-#' @export
-#' @importFrom utils getFromNamespace
-#' @importFrom Seurat IntegrateLayers
-#' @importFrom rlang %||%
-#' @importFrom SeuratObject JoinLayers
-RunSeuratIntegration <- function(
-    object,
-    no_integration = FALSE,
-    IntegrateLayersArgs = list(),
-    log = NULL,
-    cache = NULL
-) {
-    log <- log %||% get_logger()
-    cache <- cache %||% gettempdir()
-    cached <- Cache$new(
-        list(object, no_integration, IntegrateLayersArgs),
-        prefix = "biopipen.utils.RunSeuratIntegration",
-        cache_dir = cache
-    )
-    if (cached$is_cached()) {
-        log$info("Integrated data loaded from cache: {cached$get_path()}")
-        return(cached$restore())
-    }
 
-    log$info("Performing data integration ...")
-    if (!no_integration) {
-        method <- IntegrateLayersArgs$method %||% "rpca"
-        if (
-            !is.null(IntegrateLayersArgs$reference) &&
-                is.character(IntegrateLayersArgs$reference)
-        ) {
-            log$info(
-                "  Using reference samples: {paste(IntegrateLayersArgs$reference, collapse = ', ')}"
-            )
-            samples <- if (is.factor(object$Sample)) {
-                levels(object$Sample)
-            } else {
-                unique(object$Sample)
-            }
-            IntegrateLayersArgs$reference <- match(
-                IntegrateLayersArgs$reference,
-                samples
-            )
-            log$debug(
-                "  Transferred to indices: {paste(IntegrateLayersArgs$reference, collapse = ', ')}"
-            )
-        }
-        log$info("- Running IntegrateLayers (method = {method}) ...")
-        method <- switch(
-            method,
-            "CCA" = "CCAIntegration",
-            "cca" = "CCAIntegration",
-            "RPCA" = "RPCAIntegration",
-            "rpca" = "RPCAIntegration",
-            "Harmony" = "HarmonyIntegration",
-            "harmony" = "HarmonyIntegration",
-            "FastMNN" = "FastMNNIntegration",
-            "fastmnn" = "FastMNNIntegration",
-            "scVI" = "scVIIntegration",
-            "scvi" = "scVIIntegration",
-            stop(paste0("Unknown integration method: ", method))
-        )
-        IntegrateLayersArgs$method <- getFromNamespace(method, "Seurat")
-        IntegrateLayersArgs$assay <- IntegrateLayersArgs$assay %||%
-            DefaultAssay(object)
-        if (IntegrateLayersArgs$assay == "SCT") {
-            IntegrateLayersArgs$normalization.method <- IntegrateLayersArgs$normalization.method %||%
-                "SCT"
-        }
-
-        new_reductions <- list(
-            "CCAIntegration" = "integrated.cca",
-            "RPCAIntegration" = "integrated.rpca",
-            "HarmonyIntegration" = "harmony",
-            "FastMNNIntegration" = "integration.mnn",
-            "scVIIntegration" = "integrated.scvi"
-        )
-        IntegrateLayersArgs$new.reduction <- IntegrateLayersArgs$new.reduction %||%
-            new_reductions[[method]]
-
-        log$debug("  Arguments: {format_args(IntegrateLayersArgs)}")
-        IntegrateLayersArgs$object <- object
-        object <- do_call(IntegrateLayers, IntegrateLayersArgs)
-        IntegrateLayersArgs$object <- NULL
-        gc()
-
-        # Save it for dimension reduction plots
-        object@misc$integrated_new_reduction <- IntegrateLayersArgs$new.reduction
-    }
-
-    log$info("- Joining layers ...")
-    # https://github.com/satijalab/seurat/issues/8558#issuecomment-2591323978
-    object <- JoinLayers(object, assay = "RNA")
-    object <- AddSeuratCommand(
-        object,
-        "RunSeuratIntegration",
-        "RunSeuratIntegration(object, no_integration, IntegrateLayersArgs)",
-        params = list(
-            no_integration = no_integration,
-            IntegrateLayersArgs = IntegrateLayersArgs
-        )
-    )
-
-    if (inherits(object[[DefaultAssay(object)]], "SCTAssay")) {
-        log$info("- Running PrepSCTFindMarkers() ...")
-        object <- PrepSCTFindMarkers(object)
-        object <- AddSeuratCommand(object, "PrepSCTFindMarkers")
-    }
-
-    invisible(gc())
-    # gc before serialization: qs2 allocations don't trigger R's gc
-    cached$save(object)
-    object
-}
 #' Run Seurat CellCycleScoring
 #'
 #' This function will run Seurat's CellCycleScoring on the given Seurat object and add the scores and predicted cell cycle phase to the metadata.
