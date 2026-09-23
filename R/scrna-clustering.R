@@ -261,6 +261,71 @@ RunSeuratIntegration <- function(
     object
 }
 
+#' Prepare a Seurat object for downstream analysis
+#'
+#' Data transformation (via [RunSeuratTransformation()]) and sample integration
+#' (via [RunSeuratIntegration()]) are run in one go.
+#'
+#' @inheritParams RunSeuratTransformation
+#' @inheritParams RunSeuratIntegration
+#' @return The transformed and integrated Seurat object
+#' @export
+#' @examples
+#' \donttest{
+#' # `pbmc_small` ships with a v3 assay, which integration doesn't support
+#' obj <- SeuratObject::pbmc_small
+#' obj[["RNA"]] <- as(obj[["RNA"]], "Assay5")
+#' obj <- RunSeuratPreparation(obj, no_integration = TRUE)
+#' }
+RunSeuratPreparation <- function(
+    object,
+    use_sct = FALSE,
+    SCTransformArgs = list(),
+    NormalizeDataArgs = list(),
+    FindVariableFeaturesArgs = list(),
+    ScaleDataArgs = list(),
+    RunPCAArgs = list(),
+    no_integration = FALSE,
+    IntegrateLayersArgs = list(),
+    log = NULL,
+    cache = NULL
+) {
+    object <- RunSeuratTransformation(
+        object,
+        use_sct = use_sct,
+        SCTransformArgs = SCTransformArgs,
+        NormalizeDataArgs = NormalizeDataArgs,
+        FindVariableFeaturesArgs = FindVariableFeaturesArgs,
+        ScaleDataArgs = ScaleDataArgs,
+        RunPCAArgs = RunPCAArgs,
+        log = log,
+        cache = cache
+    )
+    object <- RunSeuratIntegration(
+        object,
+        no_integration = no_integration,
+        IntegrateLayersArgs = IntegrateLayersArgs,
+        log = log,
+        cache = cache
+    )
+    AddSeuratCommand(
+        object,
+        name = "RunSeuratPreparation",
+        params = list(
+            use_sct = use_sct,
+            SCTransformArgs = SCTransformArgs,
+            NormalizeDataArgs = NormalizeDataArgs,
+            FindVariableFeaturesArgs = FindVariableFeaturesArgs,
+            ScaleDataArgs = ScaleDataArgs,
+            RunPCAArgs = RunPCAArgs,
+            no_integration = no_integration,
+            IntegrateLayersArgs = IntegrateLayersArgs,
+            log = log,
+            cache = cache
+        )
+    )
+}
+
 #' Run seurat UMAP
 #'
 #' In additional to [Seurat::RunUMAP()], we provide an additional arguments to use
