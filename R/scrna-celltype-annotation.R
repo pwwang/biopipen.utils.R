@@ -359,6 +359,15 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
   # z-scale if not
   print("  sctype_score: Z-scaling ...")
   if(!scaled) Z <- t(scale(t(scRNAseqData))) else Z <- scRNAseqData
+  # GUARD (local patch for the gse96583 cluster-mapping fix): scale() returns NaN
+  # for genes with zero variance in the given cells (all-zero genes are plentiful
+  # here -- the marker table comes from the train split, the scoring matrix from the
+  # test split). A single such gene in a cell type's marker set turns that cell
+  # type's whole score vector into NaN, .run_celltypeannotation_sctype() then drops
+  # the row as all-NA, and es.max can end up with 0 rows -> "arguments imply
+  # differing number of rows: 1, 0". A zero-variance gene cannot discriminate
+  # anything, so its z-score contribution is taken to be 0.
+  Z[!is.finite(Z)] <- 0
 
   # multiple by marker sensitivity
   print("  sctype_score: Multiplying by marker sensitivity ...")
@@ -571,27 +580,56 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         log$info("  Merging cell-type scores by cluster ...")
         cl_resutls <- do_call(
             "rbind",
-            lapply(
-                idents,
-                function(cl) {
-                    es.max.cl <- sort(
-                        rowSums(es.max[
-                            ,
-                            rownames(object@meta.data[
-                                object@meta.data[[ident]] == cl,
-                            ])
-                        ]),
-                        decreasing = !0
-                    )
-                    head(data.frame(
-                        cluster = cl,
-                        type = names(es.max.cl),
-                        scores = es.max.cl,
-                        ncells = sum(object@meta.data[[ident]] == cl)
-                    ), 10)
-                }
+            Filter(
+                Negate(is.null),
+                lapply(
+                    idents,
+                    function(cl) {
+                        es.max.cl <- sort(
+                            rowSums(es.max[
+                                ,
+                                rownames(object@meta.data[
+                                    object@meta.data[[ident]] == cl,
+                                ]),
+                                drop = FALSE
+                            ]),
+                            decreasing = !0
+                        )
+                        # GUARD (local patch for the gse96583 cluster-mapping fix):
+                        # when sctype_score() returns a 0-row score matrix (every cell
+                        # type dropped as all-NA -- see the z-scaling guard above),
+                        # rowSums() is numeric(0) and
+                        #     data.frame(cluster = cl, type = names(es.max.cl), ...)
+                        # fails with "arguments imply differing number of rows: 1, 0".
+                        # Skip this cluster; it is labelled "Unknown" below.
+                        if (length(es.max.cl) == 0) {
+                            log$info(
+                                "  [guard] no scores for cluster {cl}; 'Unknown'."
+                            )
+                            return(NULL)
+                        }
+                        head(data.frame(
+                            cluster = cl,
+                            type = names(es.max.cl),
+                            scores = es.max.cl,
+                            ncells = sum(object@meta.data[[ident]] == cl)
+                        ), 10)
+                    }
+                )
             )
         )
+
+        if (is.null(cl_resutls) || nrow(cl_resutls) == 0) {
+            # GUARD (same patch): nothing scored at this level. Degrade to "Unknown"
+            # for every cluster instead of letting data.frame()/dplyr crash the job.
+            log$info(
+                "  [guard] no cell type scored; labelling all clusters 'Unknown'."
+            )
+            unknown <- rep("Unknown", length(idents))
+            names(unknown) <- idents
+            cell_types_list[[i]] <- unknown
+            next
+        }
 
         sctype_scores <- cl_resutls %>%
             group_by(cluster) %>%
