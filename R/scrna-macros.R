@@ -445,12 +445,70 @@ RunSeuratDEAnalysis <- function(
     cached$save(degs)
     degs
 }
+#' Record the scale clip range applied to an assay
+#'
+#' [Seurat::ScaleData()] and [Seurat::SCTransform()] clip the values they write
+#' to the scale.data layer. The range they used is recorded in
+#' `object@misc$scale_clip[[assay]]`, so [EnsureSeuratScaleData()] can reuse the
+#' same range for the features it adds, without being told.
+#'
+#' @param object Seurat object
+#' @param assay Assay the scaling was applied to. If NULL, the default assay is used.
+#' @param clip.range Numeric vector of length 2: the lower and upper bound that was applied. `Inf` means unbounded.
+#' @return The Seurat object with the range recorded in `@misc$scale_clip[[assay]]`
+#' @importFrom SeuratObject DefaultAssay
+#' @noRd
+RecordScaleClip <- function(object, assay = NULL, clip.range) {
+    if (!is.numeric(clip.range) || length(clip.range) != 2) {
+        stop("[RecordScaleClip] `clip.range` must be a numeric vector of length 2")
+    }
+    assay <- assay %||% DefaultAssay(object)
+    object@misc$scale_clip[[assay]] <- clip.range
+    object
+}
+
+# The range recorded for an assay, NULL when the scaling recorded none
+scale_clip_of <- function(object, assay) {
+    object@misc$scale_clip[[assay]]
+}
+
+# The effective clip of the SCT models of an assay, read back after an
+# SCTransform call. Every model of a call carries the same `sct.clip.range`,
+# but a merged/integrated assay can hold models that disagree; record the union.
+record_sct_scale_clip <- function(object, assay = NULL) {
+    assay <- assay %||% DefaultAssay(object)
+    clips <- Filter(Negate(is.null), lapply(levels(object[[assay]]), function(model) {
+        SCTResults(object[[assay]], "arguments", model = model)$sct.clip.range
+    }))
+    if (length(clips) == 0) {
+        return(object)
+    }
+    lower <- min(vapply(clips, `[[`, numeric(1), 1))
+    upper <- max(vapply(clips, `[[`, numeric(1), 2))
+    if (length(unique(clips)) > 1) {
+        log_warn(paste0(
+            "[RecordScaleClip] SCT models of assay '", assay,
+            "' disagree on sct.clip.range; recording the union [",
+            lower, ", ", upper, "]"
+        ))
+    }
+    RecordScaleClip(object, assay, c(lower, upper))
+}
 #' Ensure marker genes are in the scale.data layer of an assay of the Seurat object
+#'
+#' Values added for the missing features are clamped to a range resolved as:
+#' the `clip.range` argument when one is given, otherwise the range the scalers
+#' recorded in `@misc$scale_clip[[assay]]`, otherwise
+#' the `c(-10, 10)` default. Pass `NULL` or a range of `Inf` to add the values
+#' uncapped. The range applies to both the z-scores of an RNA assay and the
+#' residuals of an SCT assay; for the latter a recorded range (e.g. the clip of
+#' the SCT models) is normally wider than the +/- 10 default and wins over it.
 #'
 #' @param object Seurat object
 #' @param features Character vector, or a list of character vectors, of feature names to ensure in the scale.data layer
 #' @param assay Assay to use. If NULL, the default assay will be used.
 #' @param umi_assay Assay to use for the UMI counts. Default is "RNA". This is used to get the counts for scaling.
+#' @param clip.range Numeric vector of length 2: the lower and upper bound applied to the added values, in the units of the scale.data layer (z-scores, or residuals for an SCT assay). `Inf` means unbounded. When omitted, the range recorded in `object@misc$scale_clip[[assay]]` is reused, falling back to the `c(-10, 10)` default. Pass `NULL` (or `c(-Inf, Inf)`) to clamp nothing.
 #' @return The Seurat object with the features ensured in the scale.data layer
 #' @importFrom SeuratObject DefaultAssay Cells GetAssayData SetAssayData
 #' @importFrom Seurat SCTResults
@@ -459,10 +517,32 @@ EnsureSeuratScaleData <- function(
     object,
     features,
     assay = NULL,
-    umi_assay = "RNA"
+    umi_assay = "RNA",
+    clip.range = c(-10, 10)
 ) {
     assay <- assay %||% DefaultAssay(object)
     is_sct <- inherits(object[[assay]], "SCTAssay")
+    # An explicit range wins over the recorded one, and is not written back. An
+    # omitted one reuses the record when there is one, else the default above.
+    # `clip.range = NULL` is an explicit opt-out of clamping, so the record must
+    # not be consulted for it.
+    if (missing(clip.range)) {
+        clip.range <- scale_clip_of(object, assay) %||% clip.range
+    }
+    if (!is.null(clip.range) && (!is.numeric(clip.range) || length(clip.range) != 2)) {
+        stop("[EnsureSeuratScaleData] `clip.range` must be a numeric vector of length 2, or NULL for no clamping")
+    }
+    clip <- clip.range
+    # Apply a finite bound as a hard clamp on both tails; the values inside the
+    # range (and the NA of cells not covered) are left alone.
+    clamp <- function(x) {
+        if (is.null(clip)) {
+            return(x)
+        }
+        if (is.finite(clip[1])) x[which(x < clip[1])] <- clip[1]
+        if (is.finite(clip[2])) x[which(x > clip[2])] <- clip[2]
+        x
+    }
     # features can be a (named) list of feature groups, e.g. cell-type markers
     features <- if (is.list(features)) unlist(features, use.names = FALSE) else features
     missing <- setdiff(unique(features), rownames(suppressWarnings(GetAssayData(
@@ -554,7 +634,9 @@ EnsureSeuratScaleData <- function(
         }
         residuals <- Filter(Negate(is.null), lapply(models, model_residuals))
         if (length(residuals) > 0) {
-            object <- merge_scale_data(residuals)
+            # The models already clip their residuals; a recorded range tighter
+            # than the one they enforce clamps them further
+            object <- merge_scale_data(lapply(residuals, clamp))
         }
     } else {
         # `Seurat::ScaleData()` would rebuild the whole `scale.data` layer,
@@ -580,7 +662,10 @@ EnsureSeuratScaleData <- function(
         newdata <- t(scale(t(as.matrix(data[f, , drop = FALSE]))))
         # Zero-variance features yield NaN; keep the rows, zero them out.
         newdata[!is.finite(newdata)] <- 0
-        object <- merge_scale_data(newdata)
+        # A single outlier cell pushes |z| up to ~sqrt(n_cells - 1), letting a
+        # marker row dominate the heatmap colour scale. Clamp both tails;
+        # Seurat::ScaleData() caps only the upper tail.
+        object <- merge_scale_data(clamp(newdata))
     }
     return(object)
 }

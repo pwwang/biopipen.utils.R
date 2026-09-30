@@ -212,6 +212,8 @@ RunContamCorrection <- function(
         )
         vfeats <- Seurat::VariableFeatures(object)
         object <- Seurat::ScaleData(object, features = vfeats)
+        # Seurat::ScaleData()'s default upper bound is scale.max = 10
+        object <- RecordScaleClip(object, clip.range = c(-10, 10))
         object <- Seurat::RunPCA(object, features = vfeats)
         max_dims <- min(30, ncol(object[["pca"]]))
         object <- Seurat::FindNeighbors(object, dims = 1:max_dims)

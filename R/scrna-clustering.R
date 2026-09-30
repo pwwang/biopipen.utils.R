@@ -73,6 +73,7 @@ RunSeuratTransformation <- function(
         SCTransformArgs$object <- object
         object <- do_call(SCTransform, SCTransformArgs)
         SCTransformArgs$object <- NULL
+        object <- record_sct_scale_clip(object)
         gc()
     } else {
         log$info("{log_prefix}Running NormalizeData ...")
@@ -97,6 +98,18 @@ RunSeuratTransformation <- function(
         }
         object <- do_call(ScaleData, ScaleDataArgs)
         ScaleDataArgs$object <- NULL
+        # ScaleData caps the upper tail at scale.max (10 by default) and
+        # produces no z-scores at all with do.scale = FALSE
+        scale.max <- if (isFALSE(ScaleDataArgs$do.scale)) {
+            Inf
+        } else {
+            abs(ScaleDataArgs$scale.max %||% 10)
+        }
+        object <- RecordScaleClip(
+            object,
+            ScaleDataArgs$assay,
+            c(-scale.max, scale.max)
+        )
         gc()
     }
 

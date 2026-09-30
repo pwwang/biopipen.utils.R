@@ -307,6 +307,7 @@ RunSeuratMap2Ref <- function(
                 SCTransformArgs$object <- object
                 object <- do_call(SCTransform, SCTransformArgs)
                 SCTransformArgs$object <- NULL
+                object <- record_sct_scale_clip(object)
                 gc()
             }
         } else {
@@ -433,6 +434,11 @@ RunSeuratMap2Ref <- function(
             merge.dr = MapQueryArgs$reference.reduction
         )
         object <- JoinLayers(object)
+        if (refnorm == "SCT") {
+            # merge() recombines the SCT models of the per-split SCTransform
+            # calls, so the clip is recorded from the final object
+            object <- record_sct_scale_clip(object)
+        }
     } else {
         MapQueryArgs$query <- object
         MapQueryArgs$reference <- reference
