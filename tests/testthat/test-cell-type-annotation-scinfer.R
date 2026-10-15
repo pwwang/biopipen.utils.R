@@ -81,6 +81,7 @@ test_that("markers_to_scinfer_df drops the negative markers, weights by 1", {
 })
 
 test_that("scinfer runner: cluster mapping and per-cell labels on pbmc_small", {
+    skip_if_not_installed("ScInfeR")
     obj <- scinfer_obj()
     rec <- run(
         obj, "scinfer",
@@ -97,6 +98,7 @@ test_that("scinfer runner: cluster mapping and per-cell labels on pbmc_small", {
 })
 
 test_that("scinfer runner: names the reduction the object is missing", {
+    skip_if_not_installed("ScInfeR")
     obj <- scinfer_obj()
     err <- run_error(
         obj, "scinfer",
