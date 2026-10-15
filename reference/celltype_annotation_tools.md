@@ -34,10 +34,10 @@ names(celltype_annotation_tools())
 #>  [5] "scsorter"       "scina"          "garnett"        "singler"       
 #>  [9] "schdeepinsight" "llmcelltype"    "cellassign"     "scbert"        
 #> [13] "scagenttype"    "cellid"         "direct"         "cell"          
-#> [17] "ucell"          "aucell"         "gsva"           "singscore"     
-#> [21] "scmap"          "cheetah"        "scclassify"     "scpred"        
-#> [25] "mapquery"       "azimuth"        "scsa"           "maca"          
-#> [29] "scmapnet"       "mllmcelltype"   "lict"          
+#> [17] "scinfer"        "ucell"          "aucell"         "gsva"          
+#> [21] "singscore"      "scmap"          "cheetah"        "scclassify"    
+#> [25] "scpred"         "mapquery"       "azimuth"        "scsa"          
+#> [29] "maca"           "scmapnet"       "mllmcelltype"   "lict"          
 celltype_annotation_tools("direct")
 #> $direct
 #> $direct$level

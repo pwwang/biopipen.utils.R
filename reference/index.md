@@ -21,6 +21,9 @@
   : Convert a Seurat object (or RDS/H5Seurat/qs2 file) to an AnnData
   object file
 
+- [`EmbedSeuratCellTypeAnnotation()`](https://pwwang.github.io/biopipen.utils.R/reference/EmbedSeuratCellTypeAnnotation.md)
+  : Add cell type annotation results to a Seurat object
+
 - [`EnsureSeuratScaleData()`](https://pwwang.github.io/biopipen.utils.R/reference/EnsureSeuratScaleData.md)
   : Ensure marker genes are in the scale.data layer of an assay of the
   Seurat object
@@ -77,6 +80,9 @@
 - [`RunModuleScoring()`](https://pwwang.github.io/biopipen.utils.R/reference/RunModuleScoring.md)
   : Run module scoring for expression programs on a Seurat object
 
+- [`RunSeuratCellTypeAnnotation()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratCellTypeAnnotation.md)
+  : Annotate the cell types of a Seurat object in one call
+
 - [`RunSeuratClustering()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratClustering.md)
   : Run seurat unsupervised clustering
 
@@ -91,6 +97,9 @@
 
 - [`RunSeuratMap2Ref()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratMap2Ref.md)
   : Run Seurat MapQuery to reference
+
+- [`RunSeuratPreparation()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratPreparation.md)
+  : Prepare a Seurat object for downstream analysis
 
 - [`RunSeuratSubClustering()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratSubClustering.md)
   : Run subset clustering on a Seurat object
@@ -211,6 +220,9 @@
 
 - [`markers_to_sccatch_df()`](https://pwwang.github.io/biopipen.utils.R/reference/markers_to_sccatch_df.md)
   : Convert a marker table to the scCATCH format
+
+- [`markers_to_scinfer_df()`](https://pwwang.github.io/biopipen.utils.R/reference/markers_to_scinfer_df.md)
+  : Convert a marker table to the ScInfeR format
 
 - [`markers_to_scsa_df()`](https://pwwang.github.io/biopipen.utils.R/reference/markers_to_scsa_df.md)
   : Convert a marker table to the python wrappers' marker file format

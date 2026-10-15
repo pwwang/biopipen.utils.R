@@ -9,6 +9,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/Cache.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ConvertAnnDataToSeurat.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/ConvertSeuratToAnnData.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/EmbedSeuratCellTypeAnnotation.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/EnsureSeuratScaleData.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/FinishSeuratQC.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/GS_Experssion_Calculation.html</loc></url>
@@ -30,12 +31,14 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunGSEAPreRank.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunModuleScoring.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratCellCycleScoring.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratCellTypeAnnotation.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratClustering.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDEAnalysis.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDoubletDetection.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratDoubletFinder.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratIntegration.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratMap2Ref.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratPreparation.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratScDblFinder.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratSubClustering.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratTransformation.html</loc></url>
@@ -97,6 +100,7 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/markers_to_garnett_file.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/markers_to_named_list.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/markers_to_sccatch_df.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/markers_to_scinfer_df.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/markers_to_scsa_df.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/markers_to_scsorter_df.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/markers_to_sctype_df.html</loc></url>

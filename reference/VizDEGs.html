@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">biopipen.utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,6 +52,7 @@
 <span>  select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">plot_type</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"volcano"</span>, <span class="st">"volcano_log2fc"</span>, <span class="st">"volcano_pct"</span>,</span>
 <span>    <span class="st">"jitter"</span>, <span class="st">"jitter_log2fc"</span>, <span class="st">"jitter_pct"</span>, <span class="st">"heatmap_log2fc"</span>, <span class="st">"heatmap_pct"</span><span class="op">)</span>, <span class="fl">5</span>, <span class="fl">10</span><span class="op">)</span>,</span>
 <span>  outprefix <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  subset <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  devpars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>res <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>,</span>
 <span>  more_formats <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  save_code <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -164,6 +165,10 @@ filter the overall data, others filter within the remaining data.</p></li>
 
 <dt id="arg-outprefix">outprefix<a class="anchor" aria-label="anchor" href="#arg-outprefix"></a></dt>
 <dd><p>Prefix of the output file</p></dd>
+
+
+<dt id="arg-subset">subset<a class="anchor" aria-label="anchor" href="#arg-subset"></a></dt>
+<dd><p>A logical expression to subset the markers data frame before plotting</p></dd>
 
 
 <dt id="arg-devpars">devpars<a class="anchor" aria-label="anchor" href="#arg-devpars"></a></dt>
