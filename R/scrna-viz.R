@@ -4,6 +4,7 @@
 #'
 #' @inheritParams scplotter::MarkersPlot
 #' @inheritDotParams scplotter::MarkersPlot
+#' @param subset A logical expression to subset the markers data frame before plotting
 #' @param outprefix Prefix of the output file
 #' @param devpars List of parameters to save the plot
 #' @param more_formats Additional formats to save the plot in addition to 'png'
@@ -100,6 +101,7 @@ VizDEGs <- function(
         ), 5, 10
     ),
     outprefix = NULL,
+    subset = NULL,
     devpars = list(res = 100), more_formats = c(), save_code = FALSE,
     log = NULL, log_prefix = "", cache = NULL,
     ...) {
@@ -111,7 +113,7 @@ VizDEGs <- function(
     if (is.null(outprefix)) {
         cached <- Cache$new(
             list(
-                markers, object, plot_type, each, facet_each, p_adjust,
+                markers, object, plot_type, each, facet_each, p_adjust, subset,
                 cutoff, order_by, select, outprefix, other_args
             ),
             prefix = "biopipen.utils.VizDEGs",
@@ -124,7 +126,7 @@ VizDEGs <- function(
     } else {
         cached <- Cache$new(
             list(
-                markers, object, plot_type, each, facet_each, p_adjust,
+                markers, object, plot_type, each, facet_each, p_adjust, subset,
                 cutoff, order_by, select, outprefix, other_args
             ),
             prefix = "biopipen.utils.VizDEGs",
@@ -137,6 +139,10 @@ VizDEGs <- function(
             cached$restore()
             return(invisible(NULL))
         }
+    }
+
+    if (!is.null(subset)) {
+        markers <- dplyr::filter(markers, !!rlang::parse_expr(subset))
     }
 
     # not cached, generate the plot

@@ -18,6 +18,7 @@ VizDEGs(
   select = ifelse(plot_type \%in\% c("volcano", "volcano_log2fc", "volcano_pct",
     "jitter", "jitter_log2fc", "jitter_pct", "heatmap_log2fc", "heatmap_pct"), 5, 10),
   outprefix = NULL,
+  subset = NULL,
   devpars = list(res = 100),
   more_formats = c(),
   save_code = FALSE,
@@ -109,6 +110,8 @@ filter the overall data, others filter within the remaining data.
 }}
 
 \item{outprefix}{Prefix of the output file}
+
+\item{subset}{A logical expression to subset the markers data frame before plotting}
 
 \item{devpars}{List of parameters to save the plot}
 
