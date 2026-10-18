@@ -20,6 +20,7 @@ EmbedSeuratCellTypeAnnotation(
   add_prefix = TRUE,
   set_ident = TRUE,
   merge = FALSE,
+  subset = NULL,
   log = NULL
 )
 ```
@@ -65,6 +66,14 @@ EmbedSeuratCellTypeAnnotation(
   Whether to merge the clusters annotated with the same cell type.
   Otherwise a suffix (`.1`, `.2`, ...) is added to the cell types.
 
+- subset:
+
+  A character vector of cell names the `record` covers. When given, the
+  new columns are filled with `NA` for the cells not in `subset`. For
+  cluster-level records the mapping is restricted to the subset cells
+  even when the other cells share their clusters. `NULL` (default)
+  applies the record to every cell.
+
 - log:
 
   Logger.
@@ -93,9 +102,9 @@ rec <- RunCellTypeAnnotation(
     args = list(cell_types = list(g1 = "T", g2 = "B")),
     ident = "groups"
 )
-#> INFO    [2026-10-15 04:36:00] Running cell type annotation tool 'direct' ...
+#> INFO    [2026-10-18 06:44:35] Running cell type annotation tool 'direct' ...
 obj <- EmbedSeuratCellTypeAnnotation(obj, rec, ident = "groups")
-#> INFO    [2026-10-15 04:36:00] Adding annotation as new column: CellType
+#> INFO    [2026-10-18 06:44:35] Adding annotation as new column: CellType
 table(obj$CellType)
 #> 
 #>  T  B 

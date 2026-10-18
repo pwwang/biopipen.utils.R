@@ -23,6 +23,7 @@ RunSeuratCellTypeAnnotation(
   set_ident = TRUE,
   merge = FALSE,
   cache = NULL,
+  subset = NULL,
   log = NULL
 )
 ```
@@ -77,6 +78,15 @@ RunSeuratCellTypeAnnotation(
   Directory for conversions and tool scratch files, default
   [`tempdir()`](https://rdrr.io/r/base/tempfile.html).
 
+- subset:
+
+  An expression to subset the cells to annotate, passed to
+  [`tidyseurat::filter()`](https://stemangiola.github.io/tidyseurat/reference/filter.html)
+  on the metadata (the same convention as biopipen's
+  `CellTypeAnnotation` process). The tool only runs on the subset, and
+  the new columns are `NA` for the other cells. `NULL` (default)
+  annotates every cell.
+
 - log:
 
   Logger.
@@ -111,8 +121,8 @@ obj <- RunSeuratCellTypeAnnotation(
     args = list(cell_types = list(g1 = "T", g2 = "B")),
     ident = "groups"
 )
-#> INFO    [2026-10-15 04:36:19] Running cell type annotation tool 'direct' ...
-#> INFO    [2026-10-15 04:36:19] Adding annotation as new column: CellType
+#> INFO    [2026-10-18 06:44:52] Running cell type annotation tool 'direct' ...
+#> INFO    [2026-10-18 06:44:52] Adding annotation as new column: CellType
 table(obj$CellType)
 #> 
 #>  T  B 

@@ -17,7 +17,7 @@ cluster2celltype/cell2celltype tables."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">biopipen.utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,6 +64,7 @@ functions directly instead when the record itself is needed — biopipen's
 <span>  set_ident <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  merge <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  cache <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  subset <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  log <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -120,6 +121,13 @@ Otherwise a suffix (<code>.1</code>, <code>.2</code>, ...) is added to the cell 
 <code><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir()</a></code>.</p></dd>
 
 
+<dt id="arg-subset">subset<a class="anchor" aria-label="anchor" href="#arg-subset"></a></dt>
+<dd><p>An expression to subset the cells to annotate, passed to
+<code><a href="https://stemangiola.github.io/tidyseurat/reference/filter.html" class="external-link">tidyseurat::filter()</a></code> on the metadata (the same convention as biopipen's
+<code>CellTypeAnnotation</code> process). The tool only runs on the subset, and the new
+columns are <code>NA</code> for the other cells. <code>NULL</code> (default) annotates every cell.</p></dd>
+
+
 <dt id="arg-log">log<a class="anchor" aria-label="anchor" href="#arg-log"></a></dt>
 <dd><p>Logger.</p></dd>
 
@@ -150,8 +158,8 @@ column with the case name unless <code>add_prefix</code> is <code>FALSE</code>.<
 <span class="r-in"><span>    args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>cell_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>g1 <span class="op">=</span> <span class="st">"T"</span>, g2 <span class="op">=</span> <span class="st">"B"</span><span class="op">)</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    ident <span class="op">=</span> <span class="st">"groups"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-10-15 04:36:19] Running cell type annotation tool 'direct' ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-10-15 04:36:19] Adding annotation as new column: CellType</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-10-18 06:44:52] Running cell type annotation tool 'direct' ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-10-18 06:44:52] Adding annotation as new column: CellType</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">obj</span><span class="op">$</span><span class="va">CellType</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  T  B </span>
