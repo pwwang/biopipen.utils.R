@@ -4248,6 +4248,11 @@ RunCellTypeAnnotation <- function(
 #' column.
 #' @param merge Whether to merge the clusters annotated with the same cell type.
 #' Otherwise a suffix (`.1`, `.2`, ...) is added to the cell types.
+#' @param subset A character vector of cell names the `record` covers. When
+#' given, the new columns are filled with `NA` for the cells not in `subset`.
+#' For cluster-level records the mapping is restricted to the subset cells even
+#' when the other cells share their clusters. `NULL` (default) applies the
+#' record to every cell.
 #' @param log Logger.
 #' @return The Seurat object with the annotation added to the metadata
 #' @export
@@ -4264,7 +4269,8 @@ RunCellTypeAnnotation <- function(
 #' }
 EmbedSeuratCellTypeAnnotation <- function(
     object, record, case = NULL, ident = NULL, anno_col = "CellType",
-    add_prefix = TRUE, set_ident = TRUE, merge = FALSE, log = NULL
+    add_prefix = TRUE, set_ident = TRUE, merge = FALSE, subset = NULL,
+    log = NULL
 ) {
     log <- log %||% get_logger()
     if (!inherits(object, "Seurat")) {
@@ -4282,6 +4288,9 @@ EmbedSeuratCellTypeAnnotation <- function(
     }
     if (!(is.character(anno_col) && length(anno_col) == 1 && nzchar(anno_col))) {
         stop("[EmbedSeuratCellTypeAnnotation] `anno_col` must be a single column name")
+    }
+    if (!is.null(subset)) {
+        subset <- as.character(subset)
     }
     is_cluster <- identical(record$type, "cluster")
     if (is_cluster) {
@@ -4307,6 +4316,25 @@ EmbedSeuratCellTypeAnnotation <- function(
     cells <- if (is_cluster) record$cells else record$mapping
     if (!is.null(cells)) {
         colnames(cells) <- paste0(prefix, colnames(cells))
+        if (!is.null(subset)) {
+            # The record only covers `subset`; align its labels to all cells of
+            # the object by name and leave the other cells NA. Records with no
+            # usable row names (the `cell` tool keeps the TSV row indices) are
+            # in the object's cell order, like every record, so fall back to
+            # their position for those.
+            all_cells <- rownames(object@meta.data)
+            source <- match(subset, rownames(cells))
+            source[is.na(source)] <- which(is.na(source))
+            cells <- as.data.frame(
+                lapply(cells, function(col) {
+                    aligned <- col[rep(NA_integer_, length(all_cells))]
+                    aligned[match(subset, all_cells)] <- col[source]
+                    aligned
+                }),
+                stringsAsFactors = FALSE
+            )
+            rownames(cells) <- all_cells
+        }
         for (col in intersect(colnames(cells), colnames(object@meta.data))) {
             object@meta.data[[col]] <- NULL
         }
@@ -4317,11 +4345,40 @@ EmbedSeuratCellTypeAnnotation <- function(
     }
 
     if (is_cluster) {
+        # RenameSeuratIdents() keys the mapping on the cluster column, so cells
+        # outside `subset` sharing a cluster would get the label too. Use a
+        # temporary ident column holding the real clusters for the subset cells
+        # and a sentinel elsewhere; the sentinel maps to itself (mapping it to
+        # NA would subset the object, dropping the other cells) and its cells
+        # are turned into NA after the renaming.
+        subset_sentinel <- "__not_annotated__"
+        map_ident <- ident
+        hidden_ident <- NULL
+        if (!is.null(subset)) {
+            hidden_ident <- tail(
+                make.unique(c(colnames(object@meta.data), ".cta_subset_ident")), 1
+            )
+            ident_values <- object@meta.data[[ident]]
+            if (!is.factor(ident_values)) {
+                ident_values <- as.factor(ident_values)
+            }
+            in_subset <- rownames(object@meta.data) %in% subset
+            object@meta.data[[hidden_ident]] <- factor(
+                ifelse(in_subset, as.character(ident_values), subset_sentinel),
+                levels = c(levels(ident_values), subset_sentinel)
+            )
+            map_ident <- hidden_ident
+        }
+
         log$info("Adding annotation as new column: {case_anno_col}")
+        mapping <- record$mapping
+        if (!is.null(hidden_ident)) {
+            mapping[[subset_sentinel]] <- subset_sentinel
+        }
         object <- RenameSeuratIdents(
             object,
-            mapping = record$mapping,
-            ident = ident,
+            mapping = mapping,
+            ident = map_ident,
             save_as = case_anno_col,
             merge = merge
         )
@@ -4333,16 +4390,36 @@ EmbedSeuratCellTypeAnnotation <- function(
         for (key in names(record$more)) {
             more_col <- paste0(prefix, key)
             log$info("Adding additional annotation column: {more_col}")
+            mapping <- record$more[[key]]
+            if (!is.null(hidden_ident)) {
+                mapping[[subset_sentinel]] <- subset_sentinel
+            }
             object <- RenameSeuratIdents(
                 object,
-                mapping = record$more[[key]],
-                ident = ident,
+                mapping = mapping,
+                ident = map_ident,
                 save_as = more_col,
                 merge = merge
             )
             if (!is.null(original_ident)) {
                 Idents(object) <- original_ident
             }
+        }
+
+        if (!is.null(hidden_ident)) {
+            outside <- object@meta.data[[hidden_ident]] == subset_sentinel
+            for (col in c(case_anno_col, paste0(prefix, names(record$more)))) {
+                values <- object@meta.data[[col]]
+                values[outside] <- NA
+                if (is.factor(values)) {
+                    values <- factor(
+                        as.character(values),
+                        levels = setdiff(levels(values), subset_sentinel)
+                    )
+                }
+                object@meta.data[[col]] <- values
+            }
+            object@meta.data[[hidden_ident]] <- NULL
         }
     } else {
         # Cell-level: the first column of the per-cell labels is the annotation
@@ -4399,6 +4476,10 @@ EmbedSeuratCellTypeAnnotation <- function(
 #' column.
 #' @param merge Whether to merge the clusters annotated with the same cell type.
 #' Otherwise a suffix (`.1`, `.2`, ...) is added to the cell types.
+#' @param subset An expression to subset the cells to annotate, passed to
+#' [tidyseurat::filter()] on the metadata (the same convention as biopipen's
+#' `CellTypeAnnotation` process). The tool only runs on the subset, and the new
+#' columns are `NA` for the other cells. `NULL` (default) annotates every cell.
 #' @param cache Directory for conversions and tool scratch files, default
 #' `tempdir()`.
 #' @param log Logger.
@@ -4416,7 +4497,8 @@ EmbedSeuratCellTypeAnnotation <- function(
 #' }
 RunSeuratCellTypeAnnotation <- function(
     object, tool, args = list(), ident = NULL, case = NULL, anno_col = "CellType",
-    add_prefix = TRUE, set_ident = TRUE, merge = FALSE, cache = NULL, log = NULL
+    add_prefix = TRUE, set_ident = TRUE, merge = FALSE, cache = NULL,
+    subset = NULL, log = NULL
 ) {
     log <- log %||% get_logger()
     # RunCellTypeAnnotation() takes a path as well, but the result has to be
@@ -4449,8 +4531,22 @@ RunSeuratCellTypeAnnotation <- function(
         ident <- GetIdentityColumn(object)
     }
 
+    object_to_annotate <- object
+    subset_cells <- NULL
+    if (!is.null(subset)) {
+        object_to_annotate <- filter(object, !!rlang::parse_expr(subset))
+        subset_cells <- colnames(object_to_annotate)
+        if (length(subset_cells) == 0) {
+            stop(paste0(
+                "[RunSeuratCellTypeAnnotation] `subset` selects no cells: ", subset
+            ))
+        }
+        log$info("Subsetting the object to {length(subset_cells)} cells ...")
+    }
+
     record <- RunCellTypeAnnotation(
-        object, tool, args = args, ident = ident, cache = cache, log = log
+        object_to_annotate, tool, args = args, ident = ident, cache = cache,
+        log = log
     )
 
     object <- EmbedSeuratCellTypeAnnotation(
@@ -4463,6 +4559,7 @@ RunSeuratCellTypeAnnotation <- function(
         add_prefix = add_prefix,
         set_ident = set_ident,
         merge = merge,
+        subset = subset_cells,
         log = log
     )
 

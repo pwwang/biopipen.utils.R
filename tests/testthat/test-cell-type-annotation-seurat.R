@@ -258,6 +258,52 @@ test_that("RunSeuratCellTypeAnnotation validates its input", {
     )
 })
 
+test_that("`subset` leaves cells outside a cell-level record NA", {
+    subset_cells <- colnames(obj)[1:30]
+    obj_sub <- subset(obj, cells = subset_cells)
+    f <- cell_tsv()
+    rec <- RunCellTypeAnnotation(
+        obj_sub, "cell", args = list(cell_types = paste0(f, "#1,2,3"))
+    )
+
+    out <- EmbedSeuratCellTypeAnnotation(
+        obj, rec, subset = subset_cells, set_ident = FALSE
+    )
+    inside <- colnames(obj) %in% subset_cells
+    expect_false(anyNA(out$CellType[inside]))
+    expect_equal(unique(as.character(out$CellType[inside])), "CT1")
+    expect_true(all(is.na(out$CellType[!inside])))
+    # the other label columns from the record are aligned as well
+    expect_equal(unique(as.character(out$T2[inside])), "CT2")
+    expect_true(all(is.na(out$T2[!inside])))
+})
+
+test_that("`subset` keeps out-of-subset cells NA in a cluster mapping", {
+    subset_cells <- c(
+        colnames(obj)[obj$groups == "g1"][1:10],
+        colnames(obj)[obj$groups == "g2"][1:10]
+    )
+    obj_sub <- subset(obj, cells = subset_cells)
+    rec <- RunCellTypeAnnotation(
+        obj_sub, "direct",
+        args = list(cell_types = list(g1 = "T", g2 = "B")), ident = "groups"
+    )
+
+    out <- EmbedSeuratCellTypeAnnotation(
+        obj, rec, ident = "groups", subset = subset_cells, set_ident = FALSE
+    )
+    inside <- colnames(obj) %in% subset_cells
+    expect_false(anyNA(out$CellType[inside]))
+    expect_equal(
+        as.character(out$CellType[inside]),
+        ifelse(as.character(obj$groups[inside]) == "g1", "T", "B")
+    )
+    expect_true(all(is.na(out$CellType[!inside])))
+    # the other cells do share clusters with the subset: only the sentinel
+    # keeps them unannotated
+    expect_true(all(c("g1", "g2") %in% obj$groups[!inside]))
+})
+
 test_that("EmbedSeuratCellTypeAnnotation validates its input", {
     rec <- RunCellTypeAnnotation(
         obj, "direct", args = list(cell_types = list(g1 = "T", g2 = "B")),

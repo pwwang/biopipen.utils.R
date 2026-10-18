@@ -770,6 +770,7 @@ FinishSeuratQC <- function(object, keep_contam_assay = FALSE) {
         time.stamp = time.stamp
     )
 }
+
 #' Run DoubletFinder on a Seurat object
 #'
 #' @param object Seurat object
