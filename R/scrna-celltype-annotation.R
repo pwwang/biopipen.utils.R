@@ -4355,7 +4355,7 @@ EmbedSeuratCellTypeAnnotation <- function(
         map_ident <- ident
         hidden_ident <- NULL
         if (!is.null(subset)) {
-            hidden_ident <- tail(
+            hidden_ident <- utils::tail(
                 make.unique(c(colnames(object@meta.data), ".cta_subset_ident")), 1
             )
             ident_values <- object@meta.data[[ident]]

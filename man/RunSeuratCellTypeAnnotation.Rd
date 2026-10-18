@@ -15,6 +15,7 @@ RunSeuratCellTypeAnnotation(
   set_ident = TRUE,
   merge = FALSE,
   cache = NULL,
+  subset = NULL,
   log = NULL
 )
 }
@@ -46,6 +47,11 @@ Otherwise a suffix (\code{.1}, \code{.2}, ...) is added to the cell types.}
 
 \item{cache}{Directory for conversions and tool scratch files, default
 \code{tempdir()}.}
+
+\item{subset}{An expression to subset the cells to annotate, passed to
+\code{\link[tidyseurat:filter]{tidyseurat::filter()}} on the metadata (the same convention as biopipen's
+\code{CellTypeAnnotation} process). The tool only runs on the subset, and the new
+columns are \code{NA} for the other cells. \code{NULL} (default) annotates every cell.}
 
 \item{log}{Logger.}
 }

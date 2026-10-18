@@ -13,6 +13,7 @@ EmbedSeuratCellTypeAnnotation(
   add_prefix = TRUE,
   set_ident = TRUE,
   merge = FALSE,
+  subset = NULL,
   log = NULL
 )
 }
@@ -38,6 +39,12 @@ column.}
 
 \item{merge}{Whether to merge the clusters annotated with the same cell type.
 Otherwise a suffix (\code{.1}, \code{.2}, ...) is added to the cell types.}
+
+\item{subset}{A character vector of cell names the \code{record} covers. When
+given, the new columns are filled with \code{NA} for the cells not in \code{subset}.
+For cluster-level records the mapping is restricted to the subset cells even
+when the other cells share their clusters. \code{NULL} (default) applies the
+record to every cell.}
 
 \item{log}{Logger.}
 }

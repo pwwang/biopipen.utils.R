@@ -240,7 +240,7 @@ RunSeuratIntegration <- function(
 
         log$debug("  Arguments: {format_args(IntegrateLayersArgs)}")
         IntegrateLayersArgs$object <- object
-        ia <<- IntegrateLayersArgs
+        # ia <<- IntegrateLayersArgs
         object <- do_call(IntegrateLayers, IntegrateLayersArgs)
         IntegrateLayersArgs$object <- NULL
         gc()
