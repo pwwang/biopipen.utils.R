@@ -165,7 +165,7 @@
         if (file.exists(path)) {
             return(list(exprs = Read10X_h5(path), cell_meta = NULL))
         }
-        stop("[LoadSeuratSample] {sam}: Path not found: {path}")
+        stop(sprintf("[LoadSeuratSample] %s: Path not found: %s", sam, path))
     }
 
     # Directory-based formats
