@@ -186,6 +186,74 @@ test_that("jasmine and scse", {
     expect_true(all(is.na(res@meta.data$Sig3)))
 })
 
+test_that("mean: the expression level itself", {
+    counts <- GetAssayData(obj, layer = "counts")
+
+    # single feature: the value is the raw count of that feature
+    res <- RunModuleScoring(
+        obj,
+        modules = list(CAR = list(features = "CD3D")),
+        method = "mean"
+    )
+    expect_equal(res$CAR, counts["CD3D", ])
+
+    # multiple features: the per-cell mean of the features
+    feats <- c("MS4A1", "CD79A")
+    res <- RunModuleScoring(
+        obj,
+        modules = list(Mean = list(features = feats)),
+        method = "mean"
+    )
+    expect_equal(
+        res$Mean,
+        Matrix::colMeans(counts[feats, , drop = FALSE])
+    )
+
+    # `slot` is accepted as an alias of `layer`
+    res_slot <- RunModuleScoring(
+        obj,
+        modules = list(CAR = list(features = "CD3D", slot = "counts")),
+        method = "mean"
+    )
+    expect_equal(res_slot$CAR, counts["CD3D", ])
+})
+
+test_that("mean: missing features", {
+    counts <- GetAssayData(obj, layer = "counts")
+
+    # a missing feature is reported, the present ones are still used
+    res <- NULL
+    expect_output(
+        res <- RunModuleScoring(
+            obj,
+            modules = list(Mix = list(features = "CD3D,NOTAGENE")),
+            method = "mean"
+        ),
+        "NOTAGENE"
+    )
+    expect_equal(res$Mix, counts["CD3D", ])
+
+    expect_error(
+        RunModuleScoring(
+            obj,
+            modules = list(AllMissing = list(features = "NOTAGENE")),
+            method = "mean"
+        ),
+        "Module 'AllMissing': none of the features are present"
+    )
+})
+
+test_that("mean: cell cycle scoring is not supported", {
+    expect_error(
+        RunModuleScoring(
+            obj,
+            modules = list(CC = list(kind = "cc")),
+            method = "mean"
+        ),
+        "does not support"
+    )
+})
+
 # synthetic object with human cc genes (pbmc_small lacks them)
 set.seed(1)
 syn_genes <- c("GNLY", "MS4A1", "CD79A", "GZMB", "CST3", "TCL1A",

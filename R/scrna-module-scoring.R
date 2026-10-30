@@ -62,6 +62,9 @@
 #' @param method The default method to calculate the module scores.
 #' - seurat: `Seurat::AddModuleScore()`
 #' - ucell: `UCell::AddModuleScore_UCell()`
+#' - mean: the per-cell mean of the module's features on the layer given by
+#'   `layer` (alias `slot`, default `"counts"`), i.e. the expression level
+#'   itself, without control subtraction
 #' - aucell: `AUCell::AUCell_buildRankings()` and `AUCell::AUCell_calcAUC()`
 #' - ssgsea: `GSVA::gsva()` with `method = "ssgsea"`
 #' - jasmine: JASMINE scoring (see references)
@@ -73,7 +76,8 @@
 #' `Seurat::AddModuleScore()`. See [Seurat::AddModuleScore()] for details.
 #' @param ... Additional default parameters for the tools, e.g. `maxRank`,
 #' `w_neg` and `slot` for UCell, `aucMaxRank` and `plotStats` for AUCell,
-#' `kcdf` and `verbose` for ssGSEA, `layer` for the matrix-based tools.
+#' `kcdf` and `verbose` for ssGSEA, `layer` for the matrix-based tools and for
+#' `mean` (alias `slot`, default `"counts"`).
 #' These can also be set per module in `modules`.
 #' @param log Logger
 #' @return The Seurat object with the module scores added to the metadata.
@@ -139,7 +143,7 @@ RunModuleScoring <- function(
         stop("No modules provided. Please provide a named list of modules.")
     }
 
-    methods <- c("seurat", "ucell", "aucell", "ssgsea", "jasmine", "scse", "scps")
+    methods <- c("seurat", "ucell", "mean", "aucell", "ssgsea", "jasmine", "scse", "scps")
     defaults <- list(
         method = method,
         nbin = nbin,
@@ -317,6 +321,9 @@ RunModuleScoring <- function(
         }
 
         if (is_cc) {
+            if (mthd == "mean") {
+                stop('Cell-cycle scoring (`kind: "cc"`) does not support `method = "mean"`')
+            }
             module$features <- NULL
             # score columns are prefixed by the module key unless it is empty
             cc_cols <- paste0(prefix, c("S.Score", "G2M.Score"))
@@ -430,6 +437,30 @@ RunModuleScoring <- function(
             nc <- ncol(object@meta.data)
             n <- length(features)
             colnames(object@meta.data)[(nc - n + 1):nc] <- col_names
+        } else if (mthd == "mean") {
+            # the expression level itself, without control subtraction
+            layer <- module$layer %||% module$slot %||% "counts"
+            assay <- module$assay %||% DefaultAssay(object)
+            expr <- GetAssayData(object, assay = assay, layer = layer)
+            present <- rownames(expr)
+            missing <- setdiff(unlist(features, use.names = FALSE), present)
+            if (length(missing) > 0) {
+                log$warn("Module '{key}': feature(s) not present in the object: {paste(missing, collapse = ', ')}")
+            }
+            scores <- lapply(features, function(feats) {
+                feats <- feats[feats %in% present]
+                if (length(feats) == 0) {
+                    stop(paste0(
+                        "Module '", key, "': none of the features are present in the object ",
+                        "(assay '", assay, "', layer '", layer, "')"
+                    ))
+                }
+                Matrix::colMeans(expr[feats, , drop = FALSE])
+            })
+            scores <- as.data.frame(scores, check.names = FALSE)
+            colnames(scores) <- col_names
+            rownames(scores) <- colnames(object)
+            object <- AddMetaData(object, scores)
         } else {
             scores <- .RunModuleScoringMatrix(object, features, mthd, module, log)
             colnames(scores) <- col_names
