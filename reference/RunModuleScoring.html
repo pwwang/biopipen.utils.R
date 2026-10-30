@@ -13,7 +13,7 @@ Seurat::CellCycleScoring(), UCell, AUCell, ssGSEA, JASMINE, SCSE and scPS."></he
 
     <a class="navbar-brand me-2" href="../index.html">biopipen.utils</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,6 +80,9 @@ should be provided for each module.</p></dd>
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
 <dd><p>The default method to calculate the module scores.</p><ul><li><p>seurat: <code><a href="https://satijalab.org/seurat/reference/AddModuleScore.html" class="external-link">Seurat::AddModuleScore()</a></code></p></li>
 <li><p>ucell: <code><a href="https://rdrr.io/pkg/UCell/man/AddModuleScore_UCell.html" class="external-link">UCell::AddModuleScore_UCell()</a></code></p></li>
+<li><p>mean: the per-cell mean of the module's features on the layer given by
+<code>layer</code> (alias <code>slot</code>, default <code>"counts"</code>), i.e. the expression level
+itself, without control subtraction</p></li>
 <li><p>aucell: <code><a href="https://rdrr.io/pkg/AUCell/man/AUCell_buildRankings.html" class="external-link">AUCell::AUCell_buildRankings()</a></code> and <code><a href="https://rdrr.io/pkg/AUCell/man/AUCell_calcAUC.html" class="external-link">AUCell::AUCell_calcAUC()</a></code></p></li>
 <li><p>ssgsea: <code><a href="https://rdrr.io/pkg/GSVA/man/gsva.html" class="external-link">GSVA::gsva()</a></code> with <code>method = "ssgsea"</code></p></li>
 <li><p>jasmine: JASMINE scoring (see references)</p></li>
@@ -98,7 +101,8 @@ implementation ported from the scPS script
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional default parameters for the tools, e.g. <code>maxRank</code>,
 <code>w_neg</code> and <code>slot</code> for UCell, <code>aucMaxRank</code> and <code>plotStats</code> for AUCell,
-<code>kcdf</code> and <code>verbose</code> for ssGSEA, <code>layer</code> for the matrix-based tools.
+<code>kcdf</code> and <code>verbose</code> for ssGSEA, <code>layer</code> for the matrix-based tools and for
+<code>mean</code> (alias <code>slot</code>, default <code>"counts"</code>).
 These can also be set per module in <code>modules</code>.</p></dd>
 
 
@@ -178,8 +182,8 @@ from the <code>data</code> layer (or the layer specified by <code>layer</code>).
 <span class="r-in"><span>    <span class="co"># small object needs small `nbin`/`ctrl` (see the hint on error)</span></span></span>
 <span class="r-in"><span>    nbin <span class="op">=</span> <span class="fl">10</span>, ctrl <span class="op">=</span> <span class="fl">5</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-10-18 06:44:44] Calculating module 'Exhaustion' with method 'seurat' ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-10-18 06:44:44] Calculating module 'Prolif' with method 'seurat' ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-10-30 23:44:14] Calculating module 'Exhaustion' with method 'seurat' ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-10-30 23:44:14] Calculating module 'Prolif' with method 'seurat' ...</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">obj</span><span class="op">@</span><span class="va">meta.data</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Exhaustion"</span>, <span class="st">"Prolif"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                Exhaustion     Prolif</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ATGCCAGAACGACT -1.0627307 -1.4906462</span>
@@ -198,7 +202,7 @@ from the <code>data</code> layer (or the layer specified by <code>layer</code>).
 <span class="r-in"><span>    <span class="op">)</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">obj</span><span class="op">@</span><span class="va">meta.data</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CellCycle_S.Score"</span>, <span class="st">"CellCycle_G2M.Score"</span>, <span class="st">"CellCycle_Phase"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-10-18 06:44:44] Calculating module 'CellCycle' with method 'ucell' ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-10-30 23:44:14] Calculating module 'CellCycle' with method 'ucell' ...</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Over half of genes (100%) in specified signatures are missing from data. Check the integrity of your dataset.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>The following genes were not found and will be</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>                         imputed to exp=0:</span>

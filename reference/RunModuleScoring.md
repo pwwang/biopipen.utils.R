@@ -49,6 +49,10 @@ RunModuleScoring(
   - ucell:
     [`UCell::AddModuleScore_UCell()`](https://rdrr.io/pkg/UCell/man/AddModuleScore_UCell.html)
 
+  - mean: the per-cell mean of the module's features on the layer given
+    by `layer` (alias `slot`, default `"counts"`), i.e. the expression
+    level itself, without control subtraction
+
   - aucell:
     [`AUCell::AUCell_buildRankings()`](https://rdrr.io/pkg/AUCell/man/AUCell_buildRankings.html)
     and
@@ -77,8 +81,9 @@ RunModuleScoring(
 
   Additional default parameters for the tools, e.g. `maxRank`, `w_neg`
   and `slot` for UCell, `aucMaxRank` and `plotStats` for AUCell, `kcdf`
-  and `verbose` for ssGSEA, `layer` for the matrix-based tools. These
-  can also be set per module in `modules`.
+  and `verbose` for ssGSEA, `layer` for the matrix-based tools and for
+  `mean` (alias `slot`, default `"counts"`). These can also be set per
+  module in `modules`.
 
 - log:
 
@@ -196,8 +201,8 @@ obj <- RunModuleScoring(
     # small object needs small `nbin`/`ctrl` (see the hint on error)
     nbin = 10, ctrl = 5
 )
-#> INFO    [2026-10-18 06:44:44] Calculating module 'Exhaustion' with method 'seurat' ...
-#> INFO    [2026-10-18 06:44:44] Calculating module 'Prolif' with method 'seurat' ...
+#> INFO    [2026-10-30 23:44:14] Calculating module 'Exhaustion' with method 'seurat' ...
+#> INFO    [2026-10-30 23:44:14] Calculating module 'Prolif' with method 'seurat' ...
 head(obj@meta.data[, c("Exhaustion", "Prolif")])
 #>                Exhaustion     Prolif
 #> ATGCCAGAACGACT -1.0627307 -1.4906462
@@ -216,7 +221,7 @@ if (requireNamespace("UCell", quietly = TRUE)) {
     )
     head(obj@meta.data[, c("CellCycle_S.Score", "CellCycle_G2M.Score", "CellCycle_Phase")])
 }
-#> INFO    [2026-10-18 06:44:44] Calculating module 'CellCycle' with method 'ucell' ...
+#> INFO    [2026-10-30 23:44:14] Calculating module 'CellCycle' with method 'ucell' ...
 #> Warning: Over half of genes (100%) in specified signatures are missing from data. Check the integrity of your dataset.
 #> Warning: The following genes were not found and will be
 #>                         imputed to exp=0:
