@@ -13,6 +13,9 @@ RunSeuratTransformation(
   FindVariableFeaturesArgs = list(),
   ScaleDataArgs = list(),
   RunPCAArgs = list(),
+  min_cells_layer = 3,
+  on_degenerate = c("error", "drop"),
+  cell_qc = NULL,
   log = NULL,
   from_ccs = FALSE,
   cache = NULL
@@ -57,6 +60,21 @@ RunSeuratTransformation(
   Arguments to pass to
   [Seurat::RunPCA](https://satijalab.org/seurat/reference/RunPCA.html)
 
+- min_cells_layer:
+
+  A counts layer (one per sample) with fewer cells than this is
+  considered degenerate. Set to `0` to disable the check.
+
+- on_degenerate:
+
+  What to do with degenerate layers: `"error"` (default) fails with a
+  message naming the samples, `"drop"` removes those samples with a
+  warning and continues.
+
+- cell_qc:
+
+  The cell QC expression, used only in messages about degenerate layers.
+
 - log:
 
   Logger
@@ -79,12 +97,12 @@ The transformed Seurat object
 ``` r
 # \donttest{
 RunSeuratTransformation(SeuratObject::pbmc_small)
-#> INFO    [2026-10-30 23:45:02] Performing data transformation and scaling ...
-#> INFO    [2026-10-30 23:45:02] - Running NormalizeData ...
-#> INFO    [2026-10-30 23:45:05] - Running FindVariableFeatures ...
-#> INFO    [2026-10-30 23:45:06] - Running ScaleData ...
+#> INFO    [2026-10-31 19:33:37] Performing data transformation and scaling ...
+#> INFO    [2026-10-31 19:33:37] - Running NormalizeData ...
+#> INFO    [2026-10-31 19:33:39] - Running FindVariableFeatures ...
+#> INFO    [2026-10-31 19:33:40] - Running ScaleData ...
 #> Centering and scaling data matrix
-#> INFO    [2026-10-30 23:45:08] - Running RunPCA (npcs=50) ...
+#> INFO    [2026-10-31 19:33:41] - Running RunPCA (npcs=50) ...
 #> Warning: You're computing too large a percentage of total singular values, use a standard svd instead.
 #> PC_ 1 
 #> Positive:  TYMP, LST1, AIF1, CST3, IFITM3, LYZ, FCGRT, GRN, BID, SERPINA1 
