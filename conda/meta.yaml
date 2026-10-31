@@ -1,12 +1,12 @@
 package:
   name: r-biopipen.utils
-  version: 0.4.13
+  version: 0.4.14
 
 source:
   path: ..
 
 build:
-  number: 0
+  number: 1
   rpaths:
     - lib/R/lib/
     - lib/

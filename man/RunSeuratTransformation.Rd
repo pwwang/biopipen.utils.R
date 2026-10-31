@@ -12,6 +12,9 @@ RunSeuratTransformation(
   FindVariableFeaturesArgs = list(),
   ScaleDataArgs = list(),
   RunPCAArgs = list(),
+  min_cells_layer = 3,
+  on_degenerate = c("error", "drop"),
+  cell_qc = NULL,
   log = NULL,
   from_ccs = FALSE,
   cache = NULL
@@ -32,6 +35,16 @@ RunSeuratTransformation(
 You can use \code{features = "__all__"} to scale all features, which will be expanded to all features in the object.}
 
 \item{RunPCAArgs}{Arguments to pass to \link[Seurat:RunPCA]{Seurat::RunPCA}}
+
+\item{min_cells_layer}{A counts layer (one per sample) with fewer cells than
+this is considered degenerate. Set to \code{0} to disable the check.}
+
+\item{on_degenerate}{What to do with degenerate layers: \code{"error"} (default)
+fails with a message naming the samples, \code{"drop"} removes those samples with
+a warning and continues.}
+
+\item{cell_qc}{The cell QC expression, used only in messages about
+degenerate layers.}
 
 \item{log}{Logger}
 

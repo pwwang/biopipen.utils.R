@@ -30,6 +30,9 @@ should be provided for each module.}
 \itemize{
 \item seurat: \code{Seurat::AddModuleScore()}
 \item ucell: \code{UCell::AddModuleScore_UCell()}
+\item mean: the per-cell mean of the module's features on the layer given by
+\code{layer} (alias \code{slot}, default \code{"counts"}), i.e. the expression level
+itself, without control subtraction
 \item aucell: \code{AUCell::AUCell_buildRankings()} and \code{AUCell::AUCell_calcAUC()}
 \item ssgsea: \code{GSVA::gsva()} with \code{method = "ssgsea"}
 \item jasmine: JASMINE scoring (see references)
@@ -44,7 +47,8 @@ implementation ported from the scPS script
 
 \item{...}{Additional default parameters for the tools, e.g. \code{maxRank},
 \code{w_neg} and \code{slot} for UCell, \code{aucMaxRank} and \code{plotStats} for AUCell,
-\code{kcdf} and \code{verbose} for ssGSEA, \code{layer} for the matrix-based tools.
+\code{kcdf} and \code{verbose} for ssGSEA, \code{layer} for the matrix-based tools and for
+\code{mean} (alias \code{slot}, default \code{"counts"}).
 These can also be set per module in \code{modules}.}
 
 \item{log}{Logger}
