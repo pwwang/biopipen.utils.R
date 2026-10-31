@@ -8,6 +8,13 @@
 #' @param ScaleDataArgs Arguments to pass to [Seurat::ScaleData]
 #' You can use `features = "__all__"` to scale all features, which will be expanded to all features in the object.
 #' @param RunPCAArgs Arguments to pass to [Seurat::RunPCA]
+#' @param min_cells_layer A counts layer (one per sample) with fewer cells than
+#' this is considered degenerate. Set to `0` to disable the check.
+#' @param on_degenerate What to do with degenerate layers: `"error"` (default)
+#' fails with a message naming the samples, `"drop"` removes those samples with
+#' a warning and continues.
+#' @param cell_qc The cell QC expression, used only in messages about
+#' degenerate layers.
 #' @param from_ccs Whether this is called from [RunSeuratCellCycleScoring].
 #' @param log Logger
 #' @param cache Directory to cache the results. Set to `FALSE` to disable caching
@@ -26,11 +33,15 @@ RunSeuratTransformation <- function(
     FindVariableFeaturesArgs = list(),
     ScaleDataArgs = list(),
     RunPCAArgs = list(),
+    min_cells_layer = 3,
+    on_degenerate = c("error", "drop"),
+    cell_qc = NULL,
     log = NULL,
     from_ccs = FALSE,
     cache = NULL
 ) {
     log <- log %||% get_logger()
+    on_degenerate <- match.arg(on_degenerate)
     cache <- cache %||% gettempdir()
     cached <- Cache$new(
         list(
@@ -41,7 +52,9 @@ RunSeuratTransformation <- function(
             FindVariableFeaturesArgs,
             ScaleDataArgs,
             RunPCAArgs,
-            from_ccs
+            from_ccs,
+            min_cells_layer,
+            on_degenerate
         ),
         prefix = "biopipen.utils.RunSeuratTransformations",
         cache_dir = cache
@@ -53,6 +66,116 @@ RunSeuratTransformation <- function(
             log$info("Transformed data loaded from cache: {cached$get_path()}")
         }
         return(cached$restore())
+    }
+
+    # A counts layer with too few cells breaks SCTransform inside
+    # sctransform::vst (row_gmean() receives a vector, not a matrix), so check
+    # before any transform and name the samples involved.
+    assay <- SCTransformArgs$assay %||% NormalizeDataArgs$assay %||%
+        DefaultAssay(object)
+    counts_layers <- SeuratObject::Layers(object[[assay]], search = "counts")
+    layer_cell_counts <- vapply(
+        counts_layers,
+        function(layer) ncol(SeuratObject::LayerData(object, layer = layer)),
+        integer(1)
+    )
+    layer_sample <- function(layer) {
+        if ("Sample" %in% colnames(object@meta.data)) {
+            cells <- colnames(SeuratObject::LayerData(object, layer = layer))
+            return(paste(unique(object@meta.data[cells, "Sample"]), collapse = ","))
+        }
+        sub("\\.SeuratProject.*$", "", sub("^counts\\.", "", layer))
+    }
+    layer_samples <- vapply(counts_layers, layer_sample, character(1))
+
+    if (min_cells_layer > 0 && length(counts_layers) > 0) {
+        degenerate <- which(layer_cell_counts < min_cells_layer)
+        if (length(degenerate) > 0) {
+            inventory <- paste0(
+                "  - ", layer_samples[degenerate], ": ",
+                layer_cell_counts[degenerate], " ",
+                ifelse(layer_cell_counts[degenerate] == 1, "cell", "cells"),
+                collapse = "\n"
+            )
+            if (length(degenerate) == length(counts_layers)) {
+                stop(paste0(
+                    "[RunSeuratTransformation] all ", length(counts_layers),
+                    " counts layers have fewer than min_cells_layer = ",
+                    min_cells_layer, " cells:\n", inventory, "\n",
+                    "Nothing would be left to transform. Relax `cell_qc` and/or ",
+                    "lower `min_cells_layer`."
+                ), call. = FALSE)
+            }
+            if (on_degenerate == "error") {
+                stop(paste0(
+                    "[RunSeuratTransformation] ", length(degenerate), " of ",
+                    length(counts_layers),
+                    " counts layers have fewer than min_cells_layer = ",
+                    min_cells_layer, " cells:\n", inventory, "\n",
+                    "These are usually samples whose cells were removed by the QC filter\n",
+                    if (!is.null(cell_qc)) {
+                        paste0('cell_qc = "', cell_qc, '".\n')
+                    },
+                    "A layer with too few cells makes SCTransform fail inside ",
+                    "sctransform's row_gmean().\n",
+                    "Relax `cell_qc`, or set `on_degenerate = \"drop\"` to remove ",
+                    "these samples and continue."
+                ), call. = FALSE)
+            }
+            log$warn(paste0(
+                "[RunSeuratTransformation] Dropping ", length(degenerate), " of ",
+                length(counts_layers),
+                " counts layers with fewer than min_cells_layer = ",
+                min_cells_layer, " cells: ",
+                paste0(
+                    layer_samples[degenerate], " (",
+                    layer_cell_counts[degenerate], " ",
+                    ifelse(layer_cell_counts[degenerate] == 1, "cell", "cells"),
+                    ")",
+                    collapse = ", "
+                )
+            ))
+            keep_cells <- unlist(
+                lapply(
+                    counts_layers[-degenerate],
+                    function(layer) {
+                        colnames(SeuratObject::LayerData(object, layer = layer))
+                    }
+                ),
+                use.names = FALSE
+            )
+            object <- subset(object, cells = keep_cells)
+            object@misc$degenerate_layers <- data.frame(
+                layer = counts_layers[degenerate],
+                sample = layer_samples[degenerate],
+                cells = as.integer(layer_cell_counts[degenerate]),
+                stringsAsFactors = FALSE
+            )
+            counts_layers <- SeuratObject::Layers(
+                object[[assay]],
+                search = "counts"
+            )
+            layer_cell_counts <- vapply(
+                counts_layers,
+                function(layer) {
+                    ncol(SeuratObject::LayerData(object, layer = layer))
+                },
+                integer(1)
+            )
+        }
+    }
+
+    transform_error <- function(tool, error) {
+        if (length(counts_layers) <= 1) {
+            stop(error)
+        }
+        stop(paste0(
+            "[RunSeuratTransformation] ", tool, " failed on a ",
+            length(counts_layers), "-layer object (assay '", assay,
+            "'; layer cells: ",
+            paste(counts_layers, layer_cell_counts, sep = "=", collapse = ", "),
+            ").\nOriginal error: ", conditionMessage(error)
+        ), call. = FALSE)
     }
 
     if (from_ccs) {
@@ -71,7 +194,10 @@ RunSeuratTransformation <- function(
         # log to stdout but don't populate it to running log
         log$debug("  Arguments: {format_args(SCTransformArgs)}")
         SCTransformArgs$object <- object
-        object <- do_call(SCTransform, SCTransformArgs)
+        object <- tryCatch(
+            do_call(SCTransform, SCTransformArgs),
+            error = function(e) transform_error("SCTransform", e)
+        )
         SCTransformArgs$object <- NULL
         object <- record_sct_scale_clip(object)
         gc()
@@ -79,7 +205,10 @@ RunSeuratTransformation <- function(
         log$info("{log_prefix}Running NormalizeData ...")
         log$debug("  Arguments: {format_args(NormalizeDataArgs)}")
         NormalizeDataArgs$object <- object
-        object <- do_call(NormalizeData, NormalizeDataArgs)
+        object <- tryCatch(
+            do_call(NormalizeData, NormalizeDataArgs),
+            error = function(e) transform_error("NormalizeData", e)
+        )
         NormalizeDataArgs$object <- NULL
         gc()
 
@@ -141,7 +270,9 @@ RunSeuratTransformation <- function(
             FindVariableFeaturesArgs = FindVariableFeaturesArgs,
             ScaleDataArgs = ScaleDataArgs,
             RunPCAArgs = RunPCAArgs,
-            from_ccs = from_ccs
+            from_ccs = from_ccs,
+            min_cells_layer = min_cells_layer,
+            on_degenerate = on_degenerate
         )
     )
     invisible(gc())
