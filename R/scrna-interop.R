@@ -239,6 +239,20 @@ RunSeuratMap2Ref <- function(
     }
     FindTransferAnchorsArgs$normalization.method <- refnorm
 
+    # FindTransferAnchors() takes its anchor features from VariableFeatures(reference)
+    # when reference.reduction is used. A reference saved from an SCT assay often has
+    # none (its features already ARE the variable genes), which fails deep inside
+    # Seurat with "No features to use in finding transfer anchors".
+    if (!is.null(FindTransferAnchorsArgs$reference.reduction) &&
+            length(SeuratObject::VariableFeatures(reference)) == 0) {
+        SeuratObject::VariableFeatures(reference) <- rownames(reference)
+        log$warn(paste0(
+            "[RunSeuratMap2Ref] reference has no VariableFeatures; using its ",
+            length(rownames(reference)),
+            " assay features as the anchor features."
+        ))
+    }
+
     defassay <- DefaultAssay(object)
 
     if (!is.null(split_by)) {
