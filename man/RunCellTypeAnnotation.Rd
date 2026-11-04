@@ -10,7 +10,8 @@ RunCellTypeAnnotation(
   args = list(),
   ident = NULL,
   cache = NULL,
-  log = NULL
+  log = NULL,
+  return_object = FALSE
 )
 }
 \arguments{
@@ -30,6 +31,12 @@ tools, optional for cell-level ones.}
 \code{tempdir()}.}
 
 \item{log}{Logger.}
+
+\item{return_object}{Whether to also return the object the tool produced,
+as \verb{list(record = <record>, object = <object>)}. Only the \code{mapquery} tool
+returns one (the mapped query object carrying its reference projections);
+\code{object} is \code{NULL} for all other tools. Default \code{FALSE} returns the record
+alone.}
 }
 \value{
 A list with:

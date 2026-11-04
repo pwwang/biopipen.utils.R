@@ -99,10 +99,11 @@ They will be swapped only if:
 processed through \code{plotthis::prepare_enrichr_result()}. The function
 auto-detects the format based on column names.}
 
-\item{top_term}{Integer. Number of top terms (by significance) to display per
-group/facet combination. Default: \code{6} for all plot types except
-\code{"enrichmap"} which defaults to \code{100}. Note that terms are not
-filtered globally — the top terms are selected independently within each
+\item{top_term}{Integer. Number of top terms to display per group/facet
+combination, ranked by the coloring metric: smallest values for p-value
+columns, largest values otherwise. Default: \code{6} for all plot types
+except \code{"enrichmap"} which defaults to \code{100}. Note that terms are
+not filtered globally — the top terms are selected independently within each
 combination of \code{split_by}, \code{group_by}, and \code{facet_by} levels.}
 
 \item{plot_type}{Character. The type of plot to generate. One of:
@@ -126,9 +127,9 @@ Default: \code{NULL} (defaults to \code{"GeneRatio"} for comparison,
 (defaults to \code{"Non-significant"} when \code{cutoff} is set).}
 
 \item{fill_name}{Character. Legend title for the fill color scale (the
-significance metric). Applies to \code{"comparison"}, \code{"dot"}, and
-\code{"lollipop"} plot types. Default: \code{NULL} (auto-generated as
-\code{"-log10(metric)"}).}
+coloring metric). Applies to \code{"comparison"}, \code{"dot"}, and
+\code{"lollipop"} plot types. Default: \code{NULL} (auto-generated from
+\code{metric}, e.g. \code{"-log10(p.adjust)"} or \code{"zScore"}).}
 
 \item{values_fill}{Numeric. The fill value for missing entries in the heatmap
 matrix. Used only for \code{"heatmap"} plot type. Default: \code{0}.}
@@ -179,25 +180,44 @@ Default: \code{NULL}.}
 \code{group_by} columns. Used only for \code{"comparison"} plot type.
 Default: \code{"_"}.}
 
-\item{metric}{Character. The column name in \code{data} to use as the
-significance metric for ordering and coloring terms. Common choices are
-\code{"p.adjust"} (default), \code{"pvalue"}, or \code{"qvalue"}. When the
-metric is a p-value column, a \eqn{-log_{10}} transformation is applied
-automatically so that more significant terms have higher values.}
+\item{metric}{Character. The column name in \code{data} to use for coloring
+terms, or two column names separated by \code{":"} to use one column for
+coloring and another for significance. \code{"p.adjust"} (default),
+\code{"pvalue"}, and \code{"qvalue"} are transformed with
+\eqn{-log_{10}} so that more significant terms have higher values; other
+columns are used as-is. With \code{"zScore:p.adjust"}, cells are colored by
+\code{zScore} while \code{cutoff} is applied to \code{p.adjust}. A single
+column is shorthand for \code{"column:column"}. See the
+\emph{Metric transformation} section.}
 
-\item{cutoff}{Numeric. A significance threshold to mark on the plot.
-Default: \code{NULL} (no marking). The behavior depends on \code{plot_type}:
+\item{cutoff}{Numeric. A significance threshold applied to the significance
+metric (the column after \code{":"} in \code{metric}, or \code{metric}
+itself when no modifier is given). Default: \code{NULL} (no marking).
+When \code{metric} supplies a separate significance metric, a term failing
+the cutoff in every group is dropped before \code{top_term} selection. A
+term that passes in at least one group is kept in all of them, so its
+cells are not left empty. Dot, lollipop, and comparison plots are the
+exception: they show insignificant terms in gray, so nothing is dropped.
+The behavior on the plot itself depends on \code{plot_type}:
 \itemize{
 \item \code{"bar"} — Adds a vertical dashed line at the transformed cutoff
-(e.g., \eqn{-log_{10}(0.05)}).
-\item \code{"dot"}, \code{"lollipop"}, \code{"comparison"} — Terms above
-the cutoff are colored gray with the legend label from
-\code{fill_cutoff_name}.
-\item \code{"heatmap"} — Adds asterisk (\code{*}) labels to cells where
-the metric exceeds the cutoff.
-\item \code{"network"}, \code{"enrichmap"}, \code{"wordcloud"} — No effect.
+(e.g., \eqn{-log_{10}(0.05)}). No line is drawn when the significance
+metric differs from the coloring metric, since it would sit on a
+different scale; terms are still filtered.
+\item \code{"dot"}, \code{"lollipop"}, \code{"comparison"} — Terms that
+fail the cutoff are colored gray with the legend label from
+\code{fill_cutoff_name}, while fill color still follows the coloring
+metric.
+\item \code{"heatmap"} — Adds asterisk (\code{*}) labels to cells whose
+significance metric passes the cutoff, plus a legend entry labelled
+\code{"<significance metric> < <cutoff>"} (legend title from
+\code{label_name}, default \code{"Significance"}).
+\item \code{"network"}, \code{"enrichmap"}, \code{"wordcloud"} — Nothing
+is marked on the plot; terms are still filtered when a significance
+metric is given.
 }
-This parameter only marks terms — it does not filter them. Use
+Without a separate significance metric, this parameter only marks terms —
+it does not filter them. Use
 \code{top_term} to control how many terms are shown.}
 
 \item{palette}{Character. Color palette name for the fill scale. See

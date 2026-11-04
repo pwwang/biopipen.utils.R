@@ -3212,15 +3212,19 @@ patch_garnett_run_classifier <- function(log) {
     )
 
     if (is.null(ident)) {
-        list(mapping = result, type = "cell")
+        result <- list(mapping = result, type = "cell")
     } else {
         log$info("Aggregating mapquery results by cluster...")
         mapping <- majority_vote(labels, clusters)
         log$info(
             "Mapped {length(mapping)} clusters to {length(unique(labels))} cell types"
         )
-        list(mapping = mapping, type = "cluster", cells = result)
+        result <- list(mapping = mapping, type = "cluster", cells = result)
     }
+    # The mapped object carries the reference projection (e.g. ref.umap); attach
+    # it so RunCellTypeAnnotation(return_object = TRUE) can hand it back
+    attr(result, "object") <- object
+    result
 }
 
 # ---- LLM annotators ---------------------------------------------------------
@@ -4103,6 +4107,11 @@ celltype_annotation_tools <- function(name = NULL) {
 #' @param cache Directory for conversions and tool scratch files, default
 #' `tempdir()`.
 #' @param log Logger.
+#' @param return_object Whether to also return the object the tool produced,
+#' as `list(record = <record>, object = <object>)`. Only the `mapquery` tool
+#' returns one (the mapped query object carrying its reference projections);
+#' `object` is `NULL` for all other tools. Default `FALSE` returns the record
+#' alone.
 #' @return A list with:
 #' - `mapping`: a named list mapping each cluster to its cell type, or for
 #'   `type = "cell"` a data.frame of per-cell labels (cell IDs as row names, the
@@ -4126,7 +4135,8 @@ celltype_annotation_tools <- function(name = NULL) {
 #' rec$mapping
 #' }
 RunCellTypeAnnotation <- function(
-    object, tool, args = list(), ident = NULL, cache = NULL, log = NULL
+    object, tool, args = list(), ident = NULL, cache = NULL, log = NULL,
+    return_object = FALSE
 ) {
     log <- log %||% get_logger()
     cache <- cache %||% gettempdir()
@@ -4217,7 +4227,37 @@ RunCellTypeAnnotation <- function(
         !identical(result$type, "cluster") && !identical(result$type, "cell")) {
         stop(paste0("Tool '", tool, "' must return a list with `type` = 'cluster' or 'cell'"))
     }
+    mapped <- attr(result, "object")
+    attr(result, "object") <- NULL
+    if (isTRUE(return_object)) {
+        return(list(record = result, object = mapped))
+    }
     result
+}
+
+#' Extract the dimensional reductions of a Seurat object as a compact payload
+#'
+#' Returns one entry per dimensional reduction of `object` (except those named
+#' in `exclude`) with the cell embeddings, the reduction key and its assay, so
+#' that a forked annotation run can hand a case's projections back without
+#' keeping the whole object alive.
+#'
+#' @param object Seurat object
+#' @param exclude Names of reductions to skip
+#' @return A list with one entry per reduction: `name`, `embeddings` (matrix,
+#' cells x dims), `key`, `assay`.
+#' @importFrom Seurat Key
+#' @export
+SeuratProjectionPayload <- function(object, exclude = NULL) {
+    lapply(setdiff(Reductions(object), exclude), function(name) {
+        reduction <- object[[name]]
+        list(
+            name = name,
+            embeddings = reduction@cell.embeddings,
+            key = Key(reduction),
+            assay = DefaultAssay(reduction)
+        )
+    })
 }
 
 #' Add cell type annotation results to a Seurat object
