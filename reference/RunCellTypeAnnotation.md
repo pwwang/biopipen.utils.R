@@ -15,7 +15,8 @@ RunCellTypeAnnotation(
   args = list(),
   ident = NULL,
   cache = NULL,
-  log = NULL
+  log = NULL,
+  return_object = FALSE
 )
 ```
 
@@ -48,6 +49,14 @@ RunCellTypeAnnotation(
 - log:
 
   Logger.
+
+- return_object:
+
+  Whether to also return the object the tool produced, as
+  `list(record = <record>, object = <object>)`. Only the `mapquery` tool
+  returns one (the mapped query object carrying its reference
+  projections); `object` is `NULL` for all other tools. Default `FALSE`
+  returns the record alone.
 
 ## Value
 
@@ -84,8 +93,8 @@ rec <- RunCellTypeAnnotation(
     args = list(cell_types = list(g1 = "T", g2 = "B", g3 = "Mono")),
     ident = "groups"
 )
-#> INFO    [2026-11-02 15:59:43] Running cell type annotation tool 'direct' ...
-#> WARN    [2026-11-02 15:59:43] The following clusters do not exist: g3
+#> INFO    [2026-11-04 17:42:03] Running cell type annotation tool 'direct' ...
+#> WARN    [2026-11-04 17:42:03] The following clusters do not exist: g3
 rec$type
 #> [1] "cluster"
 rec$mapping

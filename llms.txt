@@ -130,6 +130,10 @@ library(biopipen.utils)
 - [`ScRepSubset()`](https://pwwang.github.io/biopipen.utils.R/reference/ScRepSubset.md)
   : Subset scRepertorie object
 
+- [`SeuratProjectionPayload()`](https://pwwang.github.io/biopipen.utils.R/reference/SeuratProjectionPayload.md)
+  : Extract the dimensional reductions of a Seurat object as a compact
+  payload
+
 - [`VizBulkDEGs()`](https://pwwang.github.io/biopipen.utils.R/reference/VizBulkDEGs.md)
   : Visualize DEGs
 

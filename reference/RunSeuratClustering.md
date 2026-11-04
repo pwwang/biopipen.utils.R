@@ -70,9 +70,8 @@ The Seurat object with clustering results
 ``` r
 # \donttest{
 obj <- RunSeuratClustering(SeuratObject::pbmc_small)
-#> INFO    [2026-11-02 15:59:51] Running RunPCA (npcs=50, dims=1:30) ...
+#> INFO    [2026-11-04 17:42:13] Running RunPCA (npcs=50, dims=1:30) ...
 #> Warning: You're computing too large a percentage of total singular values, use a standard svd instead.
-#> Warning: did not converge--results might be invalid!; try increasing maxit or work
 #> Warning: Requested number is larger than the number of available items (20). Setting to 20.
 #> Warning: Requested number is larger than the number of available items (20). Setting to 20.
 #> Warning: Requested number is larger than the number of available items (20). Setting to 20.
@@ -82,22 +81,22 @@ obj <- RunSeuratClustering(SeuratObject::pbmc_small)
 #> Positive:  SDPR, PF4, PPBP, TUBB1, CA2, TREML1, MYL9, PGRMC1, RUFY1, PARVB 
 #> Negative:  HLA-DPB1, HLA-DQA1, S100A9, S100A8, GNLY, RP11-290F20.3, CD1C, AKR1C3, IGLL5, VDAC3 
 #> PC_ 2 
-#> Positive:  GNLY, AKR1C3, VDAC3, PGRMC1, TUBB1, PF4, TREML1, RUFY1, CA2, PPBP 
-#> Negative:  HLA-DPB1, HLA-DQA1, S100A8, S100A9, CD1C, RP11-290F20.3, PARVB, IGLL5, MYL9, SDPR 
+#> Positive:  HLA-DPB1, HLA-DQA1, S100A8, S100A9, CD1C, RP11-290F20.3, PARVB, IGLL5, MYL9, SDPR 
+#> Negative:  GNLY, AKR1C3, VDAC3, PGRMC1, TUBB1, PF4, TREML1, RUFY1, CA2, PPBP 
 #> PC_ 3 
-#> Positive:  HLA-DQA1, CD1C, IGLL5, HLA-DPB1, RUFY1, PF4, VDAC3, SDPR, TREML1, CA2 
-#> Negative:  S100A9, S100A8, RP11-290F20.3, AKR1C3, PARVB, GNLY, PPBP, PGRMC1, MYL9, TUBB1 
+#> Positive:  S100A9, S100A8, RP11-290F20.3, AKR1C3, PARVB, GNLY, PPBP, PGRMC1, MYL9, TUBB1 
+#> Negative:  HLA-DQA1, CD1C, IGLL5, HLA-DPB1, RUFY1, PF4, VDAC3, SDPR, TREML1, CA2 
 #> PC_ 4 
 #> Positive:  IGLL5, RP11-290F20.3, VDAC3, PPBP, TUBB1, TREML1, PF4, CA2, PARVB, MYL9 
 #> Negative:  CD1C, AKR1C3, S100A8, GNLY, HLA-DPB1, HLA-DQA1, S100A9, PGRMC1, RUFY1, SDPR 
 #> PC_ 5 
 #> Positive:  VDAC3, RP11-290F20.3, RUFY1, CD1C, HLA-DQA1, CA2, S100A8, PPBP, GNLY, SDPR 
 #> Negative:  MYL9, PARVB, IGLL5, TREML1, AKR1C3, PGRMC1, HLA-DPB1, S100A9, TUBB1, PF4 
-#> INFO    [2026-11-02 15:59:53] Running FindNeighbors (reduction=pca) ...
+#> INFO    [2026-11-04 17:42:14] Running FindNeighbors (reduction=pca) ...
 #> Computing nearest neighbor graph
 #> Computing SNN
-#> INFO    [2026-11-02 15:59:54] Running FindClusters ...
-#> INFO    [2026-11-02 15:59:54]   applying resolution: 0.8
+#> INFO    [2026-11-04 17:42:16] Running FindClusters ...
+#> INFO    [2026-11-04 17:42:16]   applying resolution: 0.8
 #> Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
 #> 
 #> Number of nodes: 80
@@ -107,14 +106,14 @@ obj <- RunSeuratClustering(SeuratObject::pbmc_small)
 #> Maximum modularity in 10 random starts: 0.4014
 #> Number of communities: 2
 #> Elapsed time: 0 seconds
-#> INFO    [2026-11-02 15:59:55]   Found clusters (with resolution 0.8):
-#> INFO    [2026-11-02 15:59:55]    | c1(44), c2(36)
-#> INFO    [2026-11-02 15:59:55] Running RunUMAP ...
-#> INFO    [2026-11-02 15:59:55]   reduction=pca, dims=1:19, umap.method=uwot, n.neighbors=30
-#> 15:59:55 UMAP embedding parameters a = 0.9922 b = 1.112
-#> 15:59:55 Read 80 rows and found 19 numeric columns
-#> 15:59:55 Using Annoy for neighbor search, n_neighbors = 30
-#> 15:59:55 Building Annoy index with metric = cosine, n_trees = 50
+#> INFO    [2026-11-04 17:42:17]   Found clusters (with resolution 0.8):
+#> INFO    [2026-11-04 17:42:17]    | c1(44), c2(36)
+#> INFO    [2026-11-04 17:42:17] Running RunUMAP ...
+#> INFO    [2026-11-04 17:42:17]   reduction=pca, dims=1:19, umap.method=uwot, n.neighbors=30
+#> 17:42:17 UMAP embedding parameters a = 0.9922 b = 1.112
+#> 17:42:17 Read 80 rows and found 19 numeric columns
+#> 17:42:17 Using Annoy for neighbor search, n_neighbors = 30
+#> 17:42:17 Building Annoy index with metric = cosine, n_trees = 50
 #> 0%   10   20   30   40   50   60   70   80   90   100%
 #> [----|----|----|----|----|----|----|----|----|----|
 #> *
@@ -168,16 +167,16 @@ obj <- RunSeuratClustering(SeuratObject::pbmc_small)
 #> *
 #> *
 #> |
-#> 15:59:55 Writing NN index file to temp file /tmp/RtmpWRpNIC/file2c456e30520d
-#> 15:59:55 Searching Annoy index using 1 thread, search_k = 3000
-#> 15:59:55 Annoy recall = 100%
-#> 15:59:56 Commencing smooth kNN distance calibration using 1 thread
+#> 17:42:17 Writing NN index file to temp file /tmp/RtmpZiGBia/file93a736ab6147
+#> 17:42:17 Searching Annoy index using 1 thread, search_k = 3000
+#> 17:42:17 Annoy recall = 100%
+#> 17:42:18 Commencing smooth kNN distance calibration using 1 thread
 #>  with target n_neighbors = 30
-#> 15:59:56 7 smooth knn distance failures
-#> 15:59:59 Initializing from normalized Laplacian + noise (using RSpectra)
-#> 15:59:59 Commencing optimization for 500 epochs, with 2660 positive edges
-#> 15:59:59 Using rng type: pcg
-#> 16:00:00 Optimization finished
+#> 17:42:18 7 smooth knn distance failures
+#> 17:42:20 Initializing from normalized Laplacian + noise (using RSpectra)
+#> 17:42:20 Commencing optimization for 500 epochs, with 2664 positive edges
+#> 17:42:20 Using rng type: pcg
+#> 17:42:21 Optimization finished
 GetIdentityColumn(obj)
 #> Warning: [GetIdentityColumn] Using 'seurat_clusters' as the identity column, other candidates: seurat_clusters.0.8
 #> [1] "seurat_clusters"
