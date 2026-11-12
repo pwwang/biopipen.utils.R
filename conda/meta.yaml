@@ -6,7 +6,7 @@ source:
   path: ..
 
 build:
-  number: 0
+  number: 1
   rpaths:
     - lib/R/lib/
     - lib/
@@ -51,7 +51,7 @@ requirements:
     - bioconda::bioconductor-singscore
     - bioconda::bioconductor-s4vectors
     - r-ggplot2 >4
-    - pwwang::r-scplotter
+    - pwwang::r-scplotter =0.10
     - pwwang::r-seuratdisk
     - pwwang::r-cellid
     - pwwang::r-hitype
@@ -116,7 +116,7 @@ requirements:
     - bioconda::bioconductor-singscore
     - bioconda::bioconductor-s4vectors
     - r-ggplot2 >4
-    - pwwang::r-scplotter
+    - pwwang::r-scplotter =0.10
     - pwwang::r-seuratdisk
     - pwwang::r-cellid
     - pwwang::r-hitype
