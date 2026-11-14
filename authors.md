@@ -11,12 +11,13 @@ Source:
 [`DESCRIPTION`](https://github.com/pwwang/biopipen.utils.R/blob/master/DESCRIPTION)
 
 Wang P (2026). *biopipen.utils: Common Utility Functions for Biopipen*.
-R package version 0.4.16, <https://github.com/pwwang/biopipen.utils.R>.
+R package version 0.4.16-2,
+<https://github.com/pwwang/biopipen.utils.R>.
 
     @Manual{,
       title = {biopipen.utils: Common Utility Functions for Biopipen},
       author = {Panwen Wang},
       year = {2026},
-      note = {R package version 0.4.16},
+      note = {R package version 0.4.16-2},
       url = {https://github.com/pwwang/biopipen.utils.R},
     }
