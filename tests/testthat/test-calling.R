@@ -52,3 +52,32 @@ test_that("run_command: errors when command not found", {
     expect_error(expect_warning(run_command(c("not_a_command"), print_command = NULL)))
     expect_error(expect_warning(run_command(c("exit", "1"), stdout = TRUE, print_command = NULL)))
 })
+
+test_that("run_command: exposes the original error", {
+    script <- tempfile(fileext = ".R")
+    writeLines(c(
+        'writeLines(c("line one", "line two", "ValueError: original child error"))',
+        'quit(status = 7)'
+    ), script)
+    # The output is streamed to stderr whole: R would cut an error message at
+    # 1000 characters, losing the child's last line
+    output <- capture.output(
+        err <- tryCatch(
+            expect_warning(
+                run_command(
+                    c("Rscript", script),
+                    stdout = TRUE, stderr = TRUE, print_command = NULL
+                ),
+                "had status 7"
+            ),
+            error = function(e) conditionMessage(e)
+        ),
+        type = "message"
+    )
+    unlink(script)
+    expect_equal(
+        output,
+        c("line one", "line two", "ValueError: original child error")
+    )
+    expect_equal(err, "Command failed with exit code 7")
+})
