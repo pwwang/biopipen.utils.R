@@ -1601,3 +1601,41 @@ WriteH5Group.Seurat <- function(x, name, hgroup, verbose = TRUE) {
   }
   return(invisible(x = NULL))
 }
+
+#' Patch for SeuratDisk's GetImages function
+#'
+#' R >= 4.5 validates `unlist()`'s `recursive` argument; SeuratDisk passes
+#' `index$global$images` there *positionally*:
+#' `unique(x = c(unlist(x = assays.images, index$global$images)))`.
+#' R 4.4 silently ignored it, R 4.5 aborts with
+#' "'recursive' must be a length-1 vector", so `LoadH5Seurat()` fails on any
+#' h5Seurat file that carries global images. Keep the union of the assay images
+#' and the global images, without the positional argument.
+#' @keywords internal
+.GetImages <- function(images, index, assays = NULL) {
+    GetAssays <- utils::getFromNamespace(x = "GetAssays", ns = "SeuratDisk")
+
+    if (isFALSE(x = images)) {
+        return(NULL)
+    } else if (!is.null(x = images) && all(is.na(x = images))) {
+        return(index$global$images)
+    } else if (is.null(x = images)) {
+        images <- unique(x = unlist(x = lapply(
+            X = names(x = index),
+            FUN = function(x) {
+                return(index[[x]]$images)
+            }
+        )))
+    }
+    assays <- GetAssays(assays = assays, index = index)
+    assays.images <- lapply(
+        X = names(x = assays),
+        FUN = function(x) {
+            return(index[[x]]$images)
+        }
+    )
+    # the upstream call was `unlist(x = assays.images, index$global$images)`,
+    # i.e. the global images were passed as `recursive`
+    assays.images <- unique(x = c(unlist(x = assays.images), index$global$images))
+    return(intersect(x = images, y = assays.images))
+}
