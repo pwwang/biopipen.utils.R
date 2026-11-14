@@ -201,8 +201,8 @@ obj <- RunModuleScoring(
     # small object needs small `nbin`/`ctrl` (see the hint on error)
     nbin = 10, ctrl = 5
 )
-#> INFO    [2026-11-04 17:42:04] Calculating module 'Exhaustion' with method 'seurat' ...
-#> INFO    [2026-11-04 17:42:04] Calculating module 'Prolif' with method 'seurat' ...
+#> INFO    [2026-11-14 05:11:19] Calculating module 'Exhaustion' with method 'seurat' ...
+#> INFO    [2026-11-14 05:11:19] Calculating module 'Prolif' with method 'seurat' ...
 head(obj@meta.data[, c("Exhaustion", "Prolif")])
 #>                Exhaustion     Prolif
 #> ATGCCAGAACGACT -1.0627307 -1.4906462
@@ -221,17 +221,13 @@ if (requireNamespace("UCell", quietly = TRUE)) {
     )
     head(obj@meta.data[, c("CellCycle_S.Score", "CellCycle_G2M.Score", "CellCycle_Phase")])
 }
-#> INFO    [2026-11-04 17:42:04] Calculating module 'CellCycle' with method 'ucell' ...
-#> Warning: Over half of genes (100%) in specified signatures are missing from data. Check the integrity of your dataset.
-#> Warning: The following genes were not found and will be
-#>                         imputed to exp=0:
-#> * MCM5,PCNA,TYMS,FEN1,MCM7,MCM4,RRM1,UNG,GINS2,MCM6,CDCA7,DTL,PRIM1,UHRF1,CENPU,HELLS,RFC2,POLR1B,NASP,RAD51AP1,GMNN,WDR76,SLBP,CCNE2,UBR7,POLD3,MSH2,ATAD2,RAD51,RRM2,CDC45,CDC6,EXO1,TIPIN,DSCC1,BLM,CASP8AP2,USP1,CLSPN,POLA1,CHAF1B,MRPL36,E2F8,HMGB2,CDK1,NUSAP1,UBE2C,BIRC5,TPX2,TOP2A,NDC80,CKS2,NUF2,CKS1B,MKI67,TMPO,CENPF,TACC3,PIMREG,SMC4,CCNB2,CKAP2L,CKAP2,AURKB,BUB1,KIF11,ANP32E,TUBB4B,GTSE1,KIF20B,HJURP,CDCA3,JPT1,CDC20,TTK,CDC25C,KIF2C,RANGAP1,NCAPD2,DLGAP5,CDCA2,CDCA8,ECT2,KIF23,HMMR,AURKA,PSRC1,ANLN,LBR,CKAP5,CENPE,CTCF,NEK2,G2E3,GAS2L3,CBX5,CENPA
+#> INFO    [2026-11-14 05:11:19] Calculating module 'CellCycle' with method 'ucell' ...
 #>                CellCycle_S.Score CellCycle_G2M.Score CellCycle_Phase
-#> ATGCCAGAACGACT         0.4573770           0.4657763             G2M
-#> CATGGCCTGTGCAT         0.4491803           0.4574290             G2M
-#> GAACCTGATGAACC         0.4524590           0.4607679             G2M
-#> TGACTGGATTCTCA         0.4426230           0.4507513             G2M
-#> AGTCAGACTGCACA         0.4475410           0.4557596             G2M
-#> TCTGATACACGTGT         0.4557377           0.4641068             G2M
+#> ATGCCAGAACGACT                 0                   0              G1
+#> CATGGCCTGTGCAT                 0                   0              G1
+#> GAACCTGATGAACC                 0                   0              G1
+#> TGACTGGATTCTCA                 0                   0              G1
+#> AGTCAGACTGCACA                 0                   0              G1
+#> TCTGATACACGTGT                 0                   0              G1
 # }
 ```

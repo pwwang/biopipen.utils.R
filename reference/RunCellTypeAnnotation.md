@@ -75,6 +75,13 @@ A list with:
 - `more`: extra cluster mappings when the tool supports them (e.g. the
   `more_cell_types` of the `direct` tool), `NULL` otherwise.
 
+- `scores`: for the tools that compute per-cell scores, a per-cell
+  data.frame with one `<tool>.score` column holding the score of the
+  label assigned to that cell (cell IDs as row names, `NA` where the
+  tool has no score). It is returned for `type = "cell"` and, alongside
+  `cells`, for `type = "cluster"`; absent for the tools that do not
+  score cells.
+
 ## Details
 
 Cluster-level tools (the ones with `level = "cluster"`) need `ident`,
@@ -93,8 +100,8 @@ rec <- RunCellTypeAnnotation(
     args = list(cell_types = list(g1 = "T", g2 = "B", g3 = "Mono")),
     ident = "groups"
 )
-#> INFO    [2026-11-04 17:42:03] Running cell type annotation tool 'direct' ...
-#> WARN    [2026-11-04 17:42:03] The following clusters do not exist: g3
+#> INFO    [2026-11-14 05:11:17] Running cell type annotation tool 'direct' ...
+#> WARN    [2026-11-14 05:11:17] The following clusters do not exist: g3
 rec$type
 #> [1] "cluster"
 rec$mapping
