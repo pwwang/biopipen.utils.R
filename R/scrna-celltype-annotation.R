@@ -6,6 +6,13 @@
 #   cells: per-cell data.frame returned alongside type = "cluster" when the tool
 #          also produced per-cell labels ("both-mode")
 #   more:  extra cluster mappings (direct's more_cell_types)
+#   scores: optional per-cell data.frame of numeric scores (rownames = cells, ONE
+#           column named "<tool>.score", e.g. "mapquery.score"), holding the
+#           score of the LABEL ASSIGNED to that cell (out of the scores the tool
+#           computed for each candidate cell type, this is the score of the
+#           winning label). Returned for `type = "cell"` and, when the tool also
+#           labels cells, for `type = "cluster"` (alongside `cells`). NA where
+#           the tool has no score.
 # ctx: list(cache = <dir>, h5ad = <h5ad path or NULL>, scratch = <per-run dir>)
 
 .run_celltypeannotation_direct <- function(object, args, ident, ctx) {
@@ -562,6 +569,9 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     idents <- idents[order(as.numeric(idents))]
 
     log$info("Working on different levels of cell type labels ...")
+    # One score matrix per level, kept (not overwritten) so the multi-level
+    # merge below can score the finest level's own label
+    es_max_list <- list()
     cell_types_list <- list()
     for (i in seq_along(gs_list)) {
         log$info("- Working on level {i} ...")
@@ -576,6 +586,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
             gs = gs_list[[i]]$gs_positive,
             gs2 = gs_list[[i]]$gs_negative
         )
+        es_max_list[[i]] <- es.max
 
         log$info("  Merging cell-type scores by cluster ...")
         cl_resutls <- do_call(
@@ -687,7 +698,28 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         }
     }
 
-    list(mapping = celltypes, type = "cluster")
+    # Per-cell scores: the score of the label each cell's cluster got. With one
+    # level that is the level's own label; with several the returned label
+    # concatenates the levels, so the score comes from the LAST level that
+    # produced a usable matrix (the finest-grained call), and clusters labelled
+    # "Unknown" have no candidate row to score (NA).
+    scores <- NULL
+    usable <- which(vapply(
+        es_max_list,
+        function(m) !is.null(m) && nrow(m) > 0 && ncol(m) > 0,
+        logical(1)
+    ))
+    if (length(usable) > 0) {
+        level <- tail(usable, 1)
+        percell_labels <- unlist(cell_types_list[[level]])[
+            as.character(object@meta.data[[ident]])
+        ]
+        scores <- .cta_label_scores(
+            es_max_list[[level]], unname(percell_labels), "sctype"
+        )
+    }
+
+    list(mapping = celltypes, type = "cluster", scores = scores)
 }
 
 # ---- scsorter ---------------------------------------------------------------
@@ -882,12 +914,25 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
             if (any(na_mask)) {
                 cell_labels[na_mask] <- as.character(results$labels)[na_mask]
             }
+            scores_df <- if (is.null(results$scores)) {
+                NULL
+            } else {
+                .cta_label_scores(
+                    results$scores, unname(cell_labels), "singler"
+                )
+            }
+            # SingleR leaves the score matrix itself un-row-named; its rows
+            # follow `rownames(results)` (the test cells, `colnames(test)`)
+            if (!is.null(scores_df) && nrow(scores_df) == nrow(results)) {
+                rownames(scores_df) <- rownames(results)
+            }
             return(list(
                 mapping = data.frame(
                     singler_celltype = unname(cell_labels),
                     row.names = colnames(object)
                 ),
-                type = "cell"
+                type = "cell",
+                scores = scores_df
             ))
         }
 
@@ -905,6 +950,24 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         na_mask <- is.na(mapping) | mapping == "NA"
         if (any(na_mask)) {
             mapping[na_mask] <- as.list(results$labels[na_mask])
+        }
+
+        # SingleR aggregated the cells into cluster profiles, so the score is
+        # the cluster's; paint it onto its cells (constant within a cluster).
+        # The score matrix is un-row-named; its rows follow `rownames(results)`
+        # (the cluster profiles).
+        scores_df <- NULL
+        if (!is.null(results$scores)) {
+            cluster_scores <- .cta_label_scores(
+                results$scores, unname(unlist(mapping)), "singler"
+            )
+            if (nrow(cluster_scores) == nrow(results)) {
+                rownames(cluster_scores) <- rownames(results)
+            }
+            scores_df <- cluster_scores[
+                as.character(object@meta.data[[ident]]), , drop = FALSE
+            ]
+            rownames(scores_df) <- colnames(object)
         }
 
     } else {
@@ -968,12 +1031,25 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
             # annotates each cell on its own.
             log$info("Running SingleR on each cell...")
             results <- do_call(SingleR::SingleR, args)
+            scores_df <- if (is.null(results$scores)) {
+                NULL
+            } else {
+                .cta_label_scores(
+                    results$scores,
+                    unname(as.character(results$labels)),
+                    "singler"
+                )
+            }
+            if (!is.null(scores_df) && nrow(scores_df) == length(colnames(object))) {
+                rownames(scores_df) <- colnames(object)
+            }
             return(list(
                 mapping = data.frame(
                     singler_celltype = unname(as.character(results$labels)),
                     row.names = colnames(object)
                 ),
-                type = "cell"
+                type = "cell",
+                scores = scores_df
             ))
         }
 
@@ -988,9 +1064,27 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
 
         # Build mapping from labels
         mapping <- as.list(results$labels)
+
+        # The CRAN API scores the cluster profiles as well; paint the cluster's
+        # score onto its cells (constant within a cluster)
+        scores_df <- NULL
+        if (!is.null(results$scores)) {
+            cluster_scores <- .cta_label_scores(
+                results$scores, unname(unlist(mapping)), "singler"
+            )
+            if (is.null(rownames(results$scores)) &&
+                nrow(cluster_scores) == length(mapping)) {
+                rownames(cluster_scores) <- names(unlist(mapping))
+            }
+            clusters <- as.character(object@meta.data[[ident]])
+            if (all(clusters %in% rownames(cluster_scores))) {
+                scores_df <- cluster_scores[clusters, , drop = FALSE]
+                rownames(scores_df) <- colnames(object)
+            }
+        }
     }
 
-    list(mapping = mapping, type = "cluster")
+    list(mapping = mapping, type = "cluster", scores = scores_df)
 }
 
 # ---- scina ------------------------------------------------------------------
@@ -1091,16 +1185,23 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         scina_celltype = unname(cell_labels),
         row.names = names(cell_labels)
     )
+    # SCINA returns its per-cell-type probabilities (cell types x cells); the
+    # "unknown" call has no probability row to score (NA)
+    scores_df <- if (is.null(results$probabilities)) {
+        NULL
+    } else {
+        .cta_label_scores(results$probabilities, cell_labels, "scina")
+    }
 
     if (is.null(ident)) {
-        list(mapping = result, type = "cell")
+        list(mapping = result, type = "cell", scores = scores_df)
     } else {
         # Aggregate per-cell results to cluster-level mapping (majority vote)
         log$info("Aggregating SCINA results by cluster...")
         mapping <- majority_vote(
             cell_labels, as.character(object@meta.data[[ident]])
         )
-        list(mapping = mapping, type = "cluster", cells = result)
+        list(mapping = mapping, type = "cluster", cells = result, scores = scores_df)
     }
 }
 
@@ -1174,6 +1275,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     pred_idx <- apply(enrichment, 2, which.max)
     predicted <- cell_type_names[pred_idx]
     names(predicted) <- colnames(enrichment)
+    scores_df <- .cta_label_scores(enrichment, predicted, "cellid")
 
     # Build cell annotations data frame
     result <- data.frame(
@@ -1182,7 +1284,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
     )
 
     if (is.null(ident)) {
-        list(mapping = result, type = "cell")
+        list(mapping = result, type = "cell", scores = scores_df)
     } else if (group_gsea) {
         # CelliD's own group mode: gene-set GSEA scores per group (one row per
         # group x pathway, `group.by` is the metadata column); the cluster's
@@ -1218,14 +1320,14 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
                 " from {nrow(gsea)} group x pathway scores"
             )
         }
-        list(mapping = mapping, type = "cluster", cells = result)
+        list(mapping = mapping, type = "cluster", cells = result, scores = scores_df)
     } else {
         # Aggregate per-cell results to cluster-level mapping (majority vote)
         log$info("Aggregating CelliD results by cluster...")
         mapping <- majority_vote(
             predicted, as.character(object@meta.data[[ident]])
         )
-        list(mapping = mapping, type = "cluster", cells = result)
+        list(mapping = mapping, type = "cluster", cells = result, scores = scores_df)
     }
 }
 
@@ -1986,16 +2088,26 @@ patch_garnett_run_classifier <- function(log) {
     annotations <- celltypist_out[, output_col, drop = FALSE]
     colnames(annotations) <- output_col
 
+    # Per-cell confidence of the predicted label (celltypist writes it next to
+    # `predicted_labels`/`majority_voting`; not every model/version does)
+    scores_df <- NULL
+    if ("conf_score" %in% colnames(celltypist_out)) {
+        scores_df <- data.frame(
+            celltypist.score = celltypist_out$conf_score,
+            row.names = rownames(celltypist_out)
+        )
+    }
+
     if (is.null(over_clustering) || isFALSE(over_clustering)) {
         # Cell-level prediction only
-        list(mapping = annotations, type = "cell")
+        list(mapping = annotations, type = "cell", scores = scores_df)
     } else {
         # Cluster-level mapping by majority vote
         clusters <- as.character(
             object@meta.data[[over_clustering]][rownames(celltypist_out)]
         )
         mapping <- majority_vote(celltypist_out[[output_col]], clusters)
-        list(mapping = mapping, type = "cluster", cells = annotations)
+        list(mapping = mapping, type = "cluster", cells = annotations, scores = scores_df)
     }
 }
 
@@ -2137,8 +2249,18 @@ patch_garnett_run_classifier <- function(log) {
     results <- read.table(
         outfile, sep = "\t", header = TRUE, row.names = 1
     )
+    # The wrapper also writes `scbert_score` next to the label; an older
+    # wrapper has no such column and simply yields no scores. The score is
+    # reported through `scores`, so the label table is returned without it.
+    scores_df <- NULL
+    if ("scbert_score" %in% colnames(results)) {
+        scores <- suppressWarnings(as.numeric(results[["scbert_score"]]))
+        scores[!is.finite(scores)] <- NA
+        scores_df <- data.frame(scbert.score = scores, row.names = rownames(results))
+        results[["scbert_score"]] <- NULL
+    }
     if (is.null(ident)) {
-        list(mapping = results, type = "cell")
+        list(mapping = results, type = "cell", scores = scores_df)
     } else {
         # Aggregate per-cell results to cluster-level mapping (majority vote)
         log$info("Aggregating scBERT results by cluster...")
@@ -2146,7 +2268,7 @@ patch_garnett_run_classifier <- function(log) {
             results[["scbert_celltype"]],
             as.character(object@meta.data[[ident]][rownames(results)])
         )
-        list(mapping = mapping, type = "cluster", cells = results)
+        list(mapping = mapping, type = "cluster", cells = results, scores = scores_df)
     }
 }
 
@@ -2383,15 +2505,26 @@ patch_garnett_run_classifier <- function(log) {
         row.names = names(cell_types)
     )
 
+    # cellassign's `mle_params$gamma` is the cells x cell-types assignment
+    # probability matrix its argmax call comes from
+    scores_df <- NULL
+    gamma <- fit$mle_params$gamma
+    if (!is.null(gamma)) {
+        scores_df <- .cta_label_scores(gamma, cell_types, "cellassign")
+        if (nrow(scores_df) == length(colnames(object))) {
+            rownames(scores_df) <- colnames(object)
+        }
+    }
+
     if (is.null(ident)) {
-        list(mapping = result, type = "cell")
+        list(mapping = result, type = "cell", scores = scores_df)
     } else {
         # Aggregate per-cell results to cluster-level mapping (majority vote)
         log$info("Aggregating cellassign results by cluster...")
         mapping <- majority_vote(
             cell_types, as.character(object@meta.data[[ident]])
         )
-        list(mapping = mapping, type = "cluster", cells = result)
+        list(mapping = mapping, type = "cluster", cells = result, scores = scores_df)
     }
 }
 
@@ -2449,6 +2582,7 @@ patch_garnett_run_classifier <- function(log) {
     )
     colnames(scores) <- set_names
     labels <- colnames(scores)[max.col(scores, ties.method = "first")]
+    scores_df <- .cta_label_scores(scores, labels, "ucell")
 
     result <- data.frame(
         ucell_celltype = unname(labels),
@@ -2456,11 +2590,11 @@ patch_garnett_run_classifier <- function(log) {
     )
 
     if (is.null(ident)) {
-        list(mapping = result, type = "cell")
+        list(mapping = result, type = "cell", scores = scores_df)
     } else {
         log$info("Aggregating UCell results by cluster...")
         mapping <- majority_vote(labels, as.character(object@meta.data[[ident]]))
-        list(mapping = mapping, type = "cluster", cells = result)
+        list(mapping = mapping, type = "cluster", cells = result, scores = scores_df)
     }
 }
 
@@ -2519,6 +2653,7 @@ patch_garnett_run_classifier <- function(log) {
     # getAUC() is sets x cells; transpose to cells x sets for the argmax
     scores <- t(AUCell::getAUC(auc))
     labels <- colnames(scores)[max.col(scores, ties.method = "first")]
+    scores_df <- .cta_label_scores(scores, labels, "aucell")
 
     result <- data.frame(
         aucell_celltype = unname(labels),
@@ -2526,11 +2661,11 @@ patch_garnett_run_classifier <- function(log) {
     )
 
     if (is.null(ident)) {
-        list(mapping = result, type = "cell")
+        list(mapping = result, type = "cell", scores = scores_df)
     } else {
         log$info("Aggregating AUCell results by cluster...")
         mapping <- majority_vote(labels, as.character(object@meta.data[[ident]]))
-        list(mapping = mapping, type = "cluster", cells = result)
+        list(mapping = mapping, type = "cluster", cells = result, scores = scores_df)
     }
 }
 
@@ -2588,6 +2723,7 @@ patch_garnett_run_classifier <- function(log) {
     )
     # gsva() returns sets x cells; max.col() needs the cells as rows
     labels <- rownames(scores)[max.col(t(scores), ties.method = "first")]
+    scores_df <- .cta_label_scores(scores, labels, "gsva")
 
     result <- data.frame(
         gsva_celltype = unname(labels),
@@ -2595,11 +2731,11 @@ patch_garnett_run_classifier <- function(log) {
     )
 
     if (is.null(ident)) {
-        list(mapping = result, type = "cell")
+        list(mapping = result, type = "cell", scores = scores_df)
     } else {
         log$info("Aggregating GSVA results by cluster...")
         mapping <- majority_vote(labels, as.character(object@meta.data[[ident]]))
-        list(mapping = mapping, type = "cluster", cells = result)
+        list(mapping = mapping, type = "cluster", cells = result, scores = scores_df)
     }
 }
 
@@ -2670,9 +2806,12 @@ patch_garnett_run_classifier <- function(log) {
     rownames(scores) <- scored_cells
     labels <- colnames(scores)[max.col(scores, ties.method = "first")]
     names(labels) <- scored_cells
+    scores_df <- .cta_label_scores(scores, labels, "singscore")
     # Align back to the object, so the result always has one row per cell (NA
     # for the cells `subSamples` left out)
     labels <- labels[colnames(object)]
+    scores_df <- scores_df[colnames(object), , drop = FALSE]
+    rownames(scores_df) <- colnames(object)
 
     result <- data.frame(
         singscore_celltype = unname(labels),
@@ -2680,11 +2819,11 @@ patch_garnett_run_classifier <- function(log) {
     )
 
     if (is.null(ident)) {
-        list(mapping = result, type = "cell")
+        list(mapping = result, type = "cell", scores = scores_df)
     } else {
         log$info("Aggregating singscore results by cluster...")
         mapping <- majority_vote(labels, as.character(object@meta.data[[ident]]))
-        list(mapping = mapping, type = "cluster", cells = result)
+        list(mapping = mapping, type = "cluster", cells = result, scores = scores_df)
     }
 }
 
@@ -2795,12 +2934,24 @@ patch_garnett_run_classifier <- function(log) {
         row.names = colnames(object)
     )
 
+    # scmap_cluster_siml holds, per cell, the similarity to the cluster it was
+    # assigned to; "unassigned" cells (below `threshold`) have no label to score
+    scores_df <- NULL
+    siml <- projected$scmap_cluster_siml
+    if (!is.null(siml) && nrow(siml) == length(labels)) {
+        scores_df <- data.frame(
+            scmap.score = siml[, 1],
+            row.names = colnames(object)
+        )
+        scores_df$scmap.score[labels == "unassigned"] <- NA
+    }
+
     if (is.null(ident)) {
-        list(mapping = result, type = "cell")
+        list(mapping = result, type = "cell", scores = scores_df)
     } else {
         log$info("Aggregating scmap results by cluster...")
         mapping <- majority_vote(labels, as.character(object@meta.data[[ident]]))
-        list(mapping = mapping, type = "cluster", cells = result)
+        list(mapping = mapping, type = "cluster", cells = result, scores = scores_df)
     }
 }
 
@@ -3031,12 +3182,23 @@ patch_garnett_run_classifier <- function(log) {
         row.names = colnames(object)
     )
 
+    # scPredict puts the winning class's probability in `scpred_max`; a call
+    # rejected by `threshold` is "unassigned", so it has no label to score
+    scores_df <- NULL
+    if ("scpred_max" %in% colnames(meta)) {
+        scores_df <- data.frame(
+            scpred.score = meta[["scpred_max"]],
+            row.names = colnames(object)
+        )
+        scores_df$scpred.score[labels == "unassigned"] <- NA
+    }
+
     if (is.null(ident)) {
-        list(mapping = result, type = "cell")
+        list(mapping = result, type = "cell", scores = scores_df)
     } else {
         log$info("Aggregating scPred results by cluster...")
         mapping <- majority_vote(labels, as.character(object@meta.data[[ident]]))
-        list(mapping = mapping, type = "cluster", cells = result)
+        list(mapping = mapping, type = "cluster", cells = result, scores = scores_df)
     }
 }
 
@@ -3128,12 +3290,22 @@ patch_garnett_run_classifier <- function(log) {
         row.names = colnames(object)
     )
 
+    # Azimuth writes `predicted.<level>.score` next to `predicted.<level>`
+    scores_df <- NULL
+    score_col <- paste0(anno_col_in, ".score")
+    if (score_col %in% colnames(meta)) {
+        scores_df <- data.frame(
+            azimuth.score = meta[[score_col]],
+            row.names = colnames(object)
+        )
+    }
+
     if (is.null(ident)) {
-        list(mapping = result, type = "cell")
+        list(mapping = result, type = "cell", scores = scores_df)
     } else {
         log$info("Aggregating Azimuth results by cluster...")
         mapping <- majority_vote(labels, as.character(meta[[ident]]))
-        list(mapping = mapping, type = "cluster", cells = result)
+        list(mapping = mapping, type = "cluster", cells = result, scores = scores_df)
     }
 }
 
@@ -3205,6 +3377,16 @@ patch_garnett_run_classifier <- function(log) {
         cache = ctx$cache
     )
 
+    # RunSeuratMap2Ref() renames `predicted.<use>.score` to `<ident>.score`
+    scores_df <- NULL
+    score_col <- paste0(ident_name, ".score")
+    if (score_col %in% colnames(object@meta.data)) {
+        scores_df <- data.frame(
+            mapquery.score = object@meta.data[[score_col]],
+            row.names = colnames(object)
+        )
+    }
+
     labels <- as.character(object@meta.data[[ident_name]])
     result <- data.frame(
         mapquery_celltype = labels,
@@ -3212,14 +3394,14 @@ patch_garnett_run_classifier <- function(log) {
     )
 
     if (is.null(ident)) {
-        result <- list(mapping = result, type = "cell")
+        result <- list(mapping = result, type = "cell", scores = scores_df)
     } else {
         log$info("Aggregating mapquery results by cluster...")
         mapping <- majority_vote(labels, clusters)
         log$info(
             "Mapped {length(mapping)} clusters to {length(unique(labels))} cell types"
         )
-        result <- list(mapping = mapping, type = "cluster", cells = result)
+        result <- list(mapping = mapping, type = "cluster", cells = result, scores = scores_df)
     }
     # The mapped object carries the reference projection (e.g. ref.umap); attach
     # it so RunCellTypeAnnotation(return_object = TRUE) can hand it back
@@ -3524,6 +3706,23 @@ patch_garnett_run_classifier <- function(log) {
     list(mapping = mapping, type = "cluster", more = more)
 }
 
+# ---- score channel ----------------------------------------------------------
+# The score of the label a tool assigned to each cell, out of the per-candidate
+# score matrix it computed. `scores` is cells x candidates, or candidates x
+# cells (transposed here); `labels` are the assigned labels in cell order.
+.cta_label_scores <- function(scores, labels, name) {
+    scores <- as.matrix(scores)
+    if (nrow(scores) != length(labels) && ncol(scores) == length(labels)) {
+        scores <- t(scores)
+    }
+    out <- scores[cbind(seq_len(nrow(scores)), match(labels, colnames(scores)))]
+    out[!is.finite(out)] <- NA
+    out <- data.frame(out)
+    colnames(out) <- paste0(name, ".score")
+    rownames(out) <- rownames(scores)
+    out
+}
+
 # ---- python-based marker tools (scsa, maca, scmapnet) ------------------------
 
 # The marker table these three wrappers take as `-m/--marker`: a headerless
@@ -3586,6 +3785,15 @@ patch_garnett_run_classifier <- function(log) {
         scsa_celltype = unname(results[["scsa_celltype"]]),
         row.names = rownames(results)
     )
+    # The wrapper also writes `scsa_score` next to the label (the cluster's
+    # score painted onto its cells, NaN for unannotated cells); an older
+    # wrapper has no such column and simply yields no scores
+    scores_df <- NULL
+    if ("scsa_score" %in% colnames(results)) {
+        scores <- suppressWarnings(as.numeric(results[["scsa_score"]]))
+        scores[!is.finite(scores)] <- NA
+        scores_df <- data.frame(scsa.score = scores, row.names = rownames(results))
+    }
     # SCSA labels the clusters, so the cells of a cluster share a label unless
     # the wrapper could not map a cell back; vote instead of trusting the
     # first cell, and say so when that happens
@@ -3609,7 +3817,7 @@ patch_garnett_run_classifier <- function(log) {
         ))
     }
 
-    list(mapping = mapping, type = "cluster", cells = cells_df)
+    list(mapping = mapping, type = "cluster", cells = cells_df, scores = scores_df)
 }
 
 # MACA must be installed in the python the process runs with; the wrapper
@@ -3655,8 +3863,18 @@ patch_garnett_run_classifier <- function(log) {
     run_command(command, stdout = TRUE, stderr = TRUE)
 
     results <- read.table(outfile, sep = "\t", header = TRUE, row.names = 1)
+    # The wrapper also writes `maca_score` next to the label; an older wrapper
+    # has no such column and simply yields no scores. The score is reported
+    # through `scores`, so the label table is returned without it.
+    scores_df <- NULL
+    if ("maca_score" %in% colnames(results)) {
+        scores <- suppressWarnings(as.numeric(results[["maca_score"]]))
+        scores[!is.finite(scores)] <- NA
+        scores_df <- data.frame(maca.score = scores, row.names = rownames(results))
+        results[["maca_score"]] <- NULL
+    }
     if (is.null(ident)) {
-        list(mapping = results, type = "cell")
+        list(mapping = results, type = "cell", scores = scores_df)
     } else {
         log$info("Aggregating MACA results by cluster...")
         mapping <- majority_vote(
@@ -3665,7 +3883,7 @@ patch_garnett_run_classifier <- function(log) {
             # by row (a `[[ident]][<barcodes>]` lookup would be all NA)
             as.character(object@meta.data[rownames(results), ident])
         )
-        list(mapping = mapping, type = "cluster", cells = results)
+        list(mapping = mapping, type = "cluster", cells = results, scores = scores_df)
     }
 }
 
@@ -4122,6 +4340,11 @@ celltype_annotation_tools <- function(name = NULL) {
 #'   produced per-cell labels, `NULL` otherwise.
 #' - `more`: extra cluster mappings when the tool supports them (e.g. the
 #'   `more_cell_types` of the `direct` tool), `NULL` otherwise.
+#' - `scores`: for the tools that compute per-cell scores, a per-cell data.frame
+#'   with one `<tool>.score` column holding the score of the label assigned to
+#'   that cell (cell IDs as row names, `NA` where the tool has no score). It is
+#'   returned for `type = "cell"` and, alongside `cells`, for `type = "cluster"`;
+#'   absent for the tools that do not score cells.
 #' @export
 #' @examples
 #' \donttest{
