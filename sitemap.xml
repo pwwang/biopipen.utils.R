@@ -63,12 +63,14 @@
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/celltype_annotation_tools.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/do_call.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-AssembleAssay.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-GetImages.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-H5ADToH5Seurat.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-H5SeuratToH5AD.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-dir.copy.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-expand_findclusters_resolution.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-expand_number.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-load_expression_data.html</loc></url>
+<url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-normalize_h5ad_nullable_strings.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-parse_features_map.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-recode_clusters.html</loc></url>
 <url><loc>https://pwwang.github.io/biopipen.utils.R/reference/dot-rename_seurat_features.html</loc></url>
