@@ -710,7 +710,7 @@ sctype_score <- function(scRNAseqData, scaled = !0, gs, gs2 = NULL, gene_names_t
         logical(1)
     ))
     if (length(usable) > 0) {
-        level <- tail(usable, 1)
+        level <- utils::tail(usable, 1)
         percell_labels <- unlist(cell_types_list[[level]])[
             as.character(object@meta.data[[ident]])
         ]
