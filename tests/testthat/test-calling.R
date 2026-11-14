@@ -54,6 +54,11 @@ test_that("run_command: errors when command not found", {
 })
 
 test_that("run_command: exposes the original error", {
+    # Use the same R installation as the parent test process.
+    rscript <- file.path(
+        R.home("bin"),
+        if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript"
+    )
     script <- tempfile(fileext = ".R")
     writeLines(c(
         'writeLines(c("line one", "line two", "ValueError: original child error"))',
@@ -65,7 +70,7 @@ test_that("run_command: exposes the original error", {
         err <- tryCatch(
             expect_warning(
                 run_command(
-                    c("Rscript", script),
+                    c(rscript, script),
                     stdout = TRUE, stderr = TRUE, print_command = NULL
                 ),
                 "had status 7"
