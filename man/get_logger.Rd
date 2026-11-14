@@ -22,7 +22,7 @@ For example, "stdout" will be converted to \link[logger:appender_stdout]{logger:
 
 \item{level}{The log level. Default is "INFO"
 Either a string or a logger level object. If string is provided, it will be converted to the corresponding logger level object.
-For example, "INFO" will be converted to \link[logger:log_levels]{logger::INFO}}
+For example, "INFO" will be converted to \link[logger:INFO]{logger::INFO}}
 }
 \value{
 A list of logging functions

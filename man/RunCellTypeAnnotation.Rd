@@ -50,6 +50,11 @@ cell.
 produced per-cell labels, \code{NULL} otherwise.
 \item \code{more}: extra cluster mappings when the tool supports them (e.g. the
 \code{more_cell_types} of the \code{direct} tool), \code{NULL} otherwise.
+\item \code{scores}: for the tools that compute per-cell scores, a per-cell data.frame
+with one \verb{<tool>.score} column holding the score of the label assigned to
+that cell (cell IDs as row names, \code{NA} where the tool has no score). It is
+returned for \code{type = "cell"} and, alongside \code{cells}, for \code{type = "cluster"};
+absent for the tools that do not score cells.
 }
 }
 \description{
