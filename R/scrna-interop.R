@@ -778,6 +778,88 @@ ConvertSeuratToAnnData <- function(
     h5ad$close_all()
     rm(h5ad)
 }
+#' Normalize nullable string columns in an h5ad file
+#'
+#' anndata >= 0.13 writes every string column of `obs`, `var` and `raw/var`,
+#' including the index column, as a group with `values` and `mask` datasets
+#' (nullable string encoding) instead of a plain string dataset. SeuratDisk
+#' expects plain datasets, so rewrite those groups on a temporary copy of the
+#' file. `mask == TRUE` means the value is missing.
+#'
+#' `hdf5r` cannot store `NA_character_` faithfully (it writes the literal "NA"),
+#' so missing values are written as `""` instead.
+#'
+#' @param infile Input h5ad file
+#' @param log Logger
+#' @return `infile` if it has no nullable string column, otherwise the path to
+#' a temporary copy with those columns rewritten
+#' @keywords internal
+.normalize_h5ad_nullable_strings <- function(infile, log) {
+    NullableCols <- function(grp) {
+        names(grp)[vapply(names(grp), function(nm) {
+            obj <- grp[[nm]]
+            inherits(obj, "H5Group") &&
+                all(c("values", "mask") %in% names(obj))
+        }, logical(1))]
+    }
+
+    blocks <- c("obs", "var", "raw/var")
+    fin <- hdf5r::H5File$new(infile, "r")
+    cols <- tryCatch(
+        {
+            # exists() errors instead of returning FALSE when a parent is missing
+            blocks <- blocks[vapply(blocks, function(blk) {
+                tryCatch(fin$exists(blk), error = function(e) FALSE)
+            }, logical(1))]
+            stats::setNames(
+                lapply(blocks, function(blk) NullableCols(fin[[blk]])),
+                blocks
+            )
+        },
+        finally = fin$close_all()
+    )
+    ncols <- sum(lengths(cols))
+    if (ncols == 0) {
+        return(infile)
+    }
+
+    outfile <- tempfile(fileext = ".h5ad")
+    file.copy(infile, outfile, overwrite = TRUE)
+    ok <- FALSE
+    on.exit(if (!ok) unlink(outfile), add = TRUE)
+
+    f <- hdf5r::H5File$new(outfile, "r+")
+    on.exit(f$close_all(), add = TRUE)
+    st <- hdf5r::H5T_STRING$new(size = Inf)
+    nmissing <- 0L
+    for (blk in names(cols)) {
+        grp <- f[[blk]]
+        for (nm in cols[[blk]]) {
+            obj <- grp[[nm]]
+            vals <- as.character(obj[["values"]][])
+            # hdf5r writes NA_character_ as the literal "NA", so use "" instead
+            miss <- as.logical(obj[["mask"]][])
+            nmissing <- nmissing + sum(miss, na.rm = TRUE)
+            vals[miss] <- ""
+            grp$link_delete(nm)
+            grp$create_dataset(nm, robj = vals, dtype = st)
+        }
+    }
+    ok <- TRUE
+
+    log$info(paste0(
+        "Rewrote ", ncols, " nullable string column(s) (",
+        paste(unlist(cols), collapse = ", "),
+        ") on a temporary copy of the h5ad file"
+    ))
+    if (nmissing > 0L) {
+        log$warn(paste0(
+            nmissing, " missing value(s) in obs/var/raw/var were written as ",
+            "empty strings ('') because hdf5r cannot store NA in string datasets"
+        ))
+    }
+    outfile
+}
 #' Convert an AnnData file (h5ad) to a Seurat object or an RDS/qs2 file
 #' @param infile Input file
 #' @param outfile Output file. If "NULL" (default) is given, a temporary file will be created
@@ -851,7 +933,13 @@ ConvertAnnDataToSeurat <- function(
         }
     }
     fin$close_all()
-    SeuratDisk::Convert(infile, destfile, assay = assay, overwrite = TRUE)
+    # anndata >= 0.13 stores string columns as values/mask groups, which
+    # SeuratDisk cannot read; normalize them on a temporary copy
+    infile_norm <- .normalize_h5ad_nullable_strings(infile, log)
+    if (!identical(infile_norm, infile)) {
+        on.exit(unlink(infile_norm), add = TRUE)
+    }
+    SeuratDisk::Convert(infile_norm, destfile, assay = assay, overwrite = TRUE)
 
     # Fixing categorical data
     # See: https://github.com/mojaveazure/seurat-disk/issues/109#issuecomment-1722394184
