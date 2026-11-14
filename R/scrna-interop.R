@@ -885,6 +885,7 @@ ConvertAnnDataToSeurat <- function(
     )
     monkey_patch("SeuratDisk", "H5ADToH5Seurat", .H5ADToH5Seurat)
     monkey_patch("SeuratDisk", "AssembleAssay", .AssembleAssay)
+    monkey_patch("SeuratDisk", "GetImages", .GetImages)
 
     log <- log %||% get_logger()
     return_object <- is.null(outfile)

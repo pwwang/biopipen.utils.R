@@ -111,166 +111,138 @@ import(ggplot2)
 import(tidyseurat)
 importFrom(Matrix,rowMeans)
 importFrom(R6,R6Class)
-importFrom(Seurat,
-  "DefaultAssay<-",
-  AddMetaData,
-  AddModuleScore,
-  CellCycleScoring,
-  CreateDimReducObject,
-  CreateSeuratObject,
-  DefaultAssay,
-  Embeddings,
-  FindClusters,
-  FindMarkers,
-  FindNeighbors,
-  FindTransferAnchors,
-  FindVariableFeatures,
-  GetAssay,
-  GetAssayData,
-  IntegrateLayers,
-  Key,
-  MapQuery,
-  MappingScore,
-  NormalizeData,
-  PercentageFeatureSet,
-  PrepSCTFindMarkers,
-  Read10X,
-  Read10X_h5,
-  ReadParseBio,
-  Reductions,
-  RenameCells,
-  RunPCA,
-  RunUMAP,
-  SCTResults,
-  SCTransform,
-  ScaleData,
-  SplitObject,
-  UpdateSCTAssays
-)
-importFrom(SeuratObject,
-  "Idents<-",
-  Cells,
-  CreateAssayObject,
-  DefaultAssay,
-  DefaultDimReduc,
-  GetAssayData,
-  Idents,
-  JoinLayers,
-  Misc,
-  Reductions,
-  RenameAssays,
-  SetAssayData,
-  UpdateSeuratObject
-)
+importFrom(Seurat,"DefaultAssay<-")
+importFrom(Seurat,AddMetaData)
+importFrom(Seurat,AddModuleScore)
+importFrom(Seurat,CellCycleScoring)
+importFrom(Seurat,CreateDimReducObject)
+importFrom(Seurat,CreateSeuratObject)
+importFrom(Seurat,DefaultAssay)
+importFrom(Seurat,Embeddings)
+importFrom(Seurat,FindClusters)
+importFrom(Seurat,FindMarkers)
+importFrom(Seurat,FindNeighbors)
+importFrom(Seurat,FindTransferAnchors)
+importFrom(Seurat,FindVariableFeatures)
+importFrom(Seurat,GetAssay)
+importFrom(Seurat,GetAssayData)
+importFrom(Seurat,IntegrateLayers)
+importFrom(Seurat,Key)
+importFrom(Seurat,MapQuery)
+importFrom(Seurat,MappingScore)
+importFrom(Seurat,NormalizeData)
+importFrom(Seurat,PercentageFeatureSet)
+importFrom(Seurat,PrepSCTFindMarkers)
+importFrom(Seurat,Read10X)
+importFrom(Seurat,Read10X_h5)
+importFrom(Seurat,ReadParseBio)
+importFrom(Seurat,Reductions)
+importFrom(Seurat,RenameCells)
+importFrom(Seurat,RunPCA)
+importFrom(Seurat,RunUMAP)
+importFrom(Seurat,SCTResults)
+importFrom(Seurat,SCTransform)
+importFrom(Seurat,ScaleData)
+importFrom(Seurat,SplitObject)
+importFrom(Seurat,UpdateSCTAssays)
+importFrom(SeuratObject,"Idents<-")
+importFrom(SeuratObject,Cells)
+importFrom(SeuratObject,CreateAssayObject)
+importFrom(SeuratObject,DefaultAssay)
+importFrom(SeuratObject,DefaultDimReduc)
+importFrom(SeuratObject,GetAssayData)
+importFrom(SeuratObject,Idents)
+importFrom(SeuratObject,JoinLayers)
+importFrom(SeuratObject,Misc)
+importFrom(SeuratObject,Reductions)
+importFrom(SeuratObject,RenameAssays)
+importFrom(SeuratObject,SetAssayData)
+importFrom(SeuratObject,UpdateSeuratObject)
 importFrom(bracer,glob)
-importFrom(dplyr,
-  "%>%",
-  all_of,
-  any_of,
-  arrange,
-  coalesce,
-  count,
-  desc,
-  distinct,
-  everything,
-  filter,
-  group_by,
-  if_else,
-  left_join,
-  mutate,
-  n,
-  pull,
-  rename,
-  select,
-  slice_head,
-  slice_max,
-  slice_min,
-  summarise,
-  ungroup
-)
-importFrom(enrichit,
-  EnrichIt,
-  ParseGMT
-)
-importFrom(grDevices,
-  dev.off,
-  pdf
-)
+importFrom(dplyr,"%>%")
+importFrom(dplyr,all_of)
+importFrom(dplyr,any_of)
+importFrom(dplyr,arrange)
+importFrom(dplyr,coalesce)
+importFrom(dplyr,count)
+importFrom(dplyr,desc)
+importFrom(dplyr,distinct)
+importFrom(dplyr,everything)
+importFrom(dplyr,filter)
+importFrom(dplyr,group_by)
+importFrom(dplyr,if_else)
+importFrom(dplyr,left_join)
+importFrom(dplyr,mutate)
+importFrom(dplyr,n)
+importFrom(dplyr,pull)
+importFrom(dplyr,rename)
+importFrom(dplyr,select)
+importFrom(dplyr,slice_head)
+importFrom(dplyr,slice_max)
+importFrom(dplyr,slice_min)
+importFrom(dplyr,summarise)
+importFrom(dplyr,ungroup)
+importFrom(enrichit,EnrichIt)
+importFrom(enrichit,ParseGMT)
+importFrom(grDevices,dev.off)
+importFrom(grDevices,pdf)
 importFrom(jsonlite,toJSON)
-importFrom(logger,
-  appender_stderr,
-  appender_stdout,
-  layout_glue_generator,
-  log_appender,
-  log_debug,
-  log_error,
-  log_errors,
-  log_fatal,
-  log_info,
-  log_layout,
-  log_success,
-  log_threshold,
-  log_trace,
-  log_warn
-)
+importFrom(logger,appender_stderr)
+importFrom(logger,appender_stdout)
+importFrom(logger,layout_glue_generator)
+importFrom(logger,log_appender)
+importFrom(logger,log_debug)
+importFrom(logger,log_error)
+importFrom(logger,log_errors)
+importFrom(logger,log_fatal)
+importFrom(logger,log_info)
+importFrom(logger,log_layout)
+importFrom(logger,log_success)
+importFrom(logger,log_threshold)
+importFrom(logger,log_trace)
+importFrom(logger,log_warn)
 importFrom(matrixStats,rowSds)
-importFrom(methods,
-  as,
-  formalArgs,
-  is,
-  new,
-  slot
-)
+importFrom(methods,as)
+importFrom(methods,formalArgs)
+importFrom(methods,is)
+importFrom(methods,new)
+importFrom(methods,slot)
 importFrom(parallel,mclapply)
-importFrom(plotthis,
-  BarPlot,
-  BoxPlot,
-  GSEAPlot,
-  GSEASummaryPlot,
-  Heatmap,
-  Histogram,
-  LinePlot,
-  PieChart,
-  ScatterPlot,
-  ViolinPlot,
-  palette_this
-)
-importFrom(rlang,
-  "%||%",
-  ":=",
-  dots_n,
-  parse_expr,
-  sym,
-  syms
-)
+importFrom(plotthis,BarPlot)
+importFrom(plotthis,BoxPlot)
+importFrom(plotthis,GSEAPlot)
+importFrom(plotthis,GSEASummaryPlot)
+importFrom(plotthis,Heatmap)
+importFrom(plotthis,Histogram)
+importFrom(plotthis,LinePlot)
+importFrom(plotthis,PieChart)
+importFrom(plotthis,ScatterPlot)
+importFrom(plotthis,ViolinPlot)
+importFrom(plotthis,palette_this)
+importFrom(rlang,"%||%")
+importFrom(rlang,":=")
+importFrom(rlang,dots_n)
+importFrom(rlang,parse_expr)
+importFrom(rlang,sym)
+importFrom(rlang,syms)
 importFrom(scales,number)
-importFrom(scplotter,
-  CellDimPlot,
-  EnrichmentPlot,
-  FeatureStatPlot,
-  MarkersPlot
-)
-importFrom(stats,
-  median,
-  na.omit,
-  sd,
-  setNames
-)
-importFrom(tibble,
-  as_tibble,
-  rownames_to_column,
-  tibble
-)
-importFrom(tidyr,
-  pivot_longer,
-  pivot_wider
-)
-importFrom(utils,
-  capture.output,
-  getFromNamespace,
-  head,
-  packageVersion,
-  read.csv,
-  read.table,
-  write.table
-)
+importFrom(scplotter,CellDimPlot)
+importFrom(scplotter,EnrichmentPlot)
+importFrom(scplotter,FeatureStatPlot)
+importFrom(scplotter,MarkersPlot)
+importFrom(stats,median)
+importFrom(stats,na.omit)
+importFrom(stats,sd)
+importFrom(stats,setNames)
+importFrom(tibble,as_tibble)
+importFrom(tibble,rownames_to_column)
+importFrom(tibble,tibble)
+importFrom(tidyr,pivot_longer)
+importFrom(tidyr,pivot_wider)
+importFrom(utils,capture.output)
+importFrom(utils,getFromNamespace)
+importFrom(utils,head)
+importFrom(utils,packageVersion)
+importFrom(utils,read.csv)
+importFrom(utils,read.table)
+importFrom(utils,write.table)

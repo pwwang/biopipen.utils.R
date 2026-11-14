@@ -11,7 +11,7 @@ based on that signature.
 \examples{
 
 ## ------------------------------------------------
-## Method `Cache$new()`
+## Method `Cache$new`
 ## ------------------------------------------------
 
 \dontrun{
@@ -31,65 +31,69 @@ cache$clear_all()
 }
 }
 \section{Public fields}{
-  \if{html}{\out{<div class="r6-fields">}}
-  \describe{
-    \item{\code{cache_dir}}{Directory where cached files are stored}
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{cache_dir}}{Directory where cached files are stored}
 
-    \item{\code{source}}{path to the original file/directory/prefix}
-  }
-  \if{html}{\out{</div>}}
+\item{\code{source}}{path to the original file/directory/prefix}
+}
+\if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-Cache-initialize}{\code{Cache$new()}}
-    \item \href{#method-Cache-clear}{\code{Cache$clear()}}
-    \item \href{#method-Cache-clear_all}{\code{Cache$clear_all()}}
-    \item \href{#method-Cache-restore}{\code{Cache$restore()}}
-    \item \href{#method-Cache-is_cached}{\code{Cache$is_cached()}}
-    \item \href{#method-Cache-get_path}{\code{Cache$get_path()}}
-    \item \href{#method-Cache-save}{\code{Cache$save()}}
-    \item \href{#method-Cache-clone}{\code{Cache$clone()}}
-  }
+\itemize{
+\item \href{#method-Cache-new}{\code{Cache$new()}}
+\item \href{#method-Cache-clear}{\code{Cache$clear()}}
+\item \href{#method-Cache-clear_all}{\code{Cache$clear_all()}}
+\item \href{#method-Cache-restore}{\code{Cache$restore()}}
+\item \href{#method-Cache-is_cached}{\code{Cache$is_cached()}}
+\item \href{#method-Cache-get_path}{\code{Cache$get_path()}}
+\item \href{#method-Cache-save}{\code{Cache$save()}}
+\item \href{#method-Cache-clone}{\code{Cache$clone()}}
+}
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Cache-initialize"></a>}}
-\if{latex}{\out{\hypertarget{method-Cache-initialize}{}}}
-\subsection{\code{Cache$new()}}{
-  Initialize a new Cache object
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Cache$new(
+\if{html}{\out{<a id="method-Cache-new"></a>}}
+\if{latex}{\out{\hypertarget{method-Cache-new}{}}}
+\subsection{Method \code{new()}}{
+Initialize a new Cache object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Cache$new(
   sig_object,
   prefix,
   cache_dir,
   save_sig = FALSE,
   kind = c("object", "file", "dir", "prefix"),
   path = NULL
-)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{sig_object}}{Object used to generate the cache signature}
-      \item{\code{prefix}}{Prefix for the cache filename}
-      \item{\code{cache_dir}}{Directory where cached files are stored}
-      \item{\code{save_sig}}{Whether to save the signature to a file}
-      \item{\code{kind}}{Type of cache: "object", "file", "dir" or "prefix"
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{sig_object}}{Object used to generate the cache signature}
+
+\item{\code{prefix}}{Prefix for the cache filename}
+
+\item{\code{cache_dir}}{Directory where cached files are stored}
+
+\item{\code{save_sig}}{Whether to save the signature to a file}
+
+\item{\code{kind}}{Type of cache: "object", "file", "dir" or "prefix"
 \itemize{
 \item object: cache an R object
 \item file: cache a file
 \item dir: cache a directory
 \item prefix: cache files/directories with the same prefix
 }}
-      \item{\code{path}}{Path to the file or directory to cache
+
+\item{\code{path}}{Path to the file or directory to cache
 This is required when \code{kind} is "file", "dir", or "prefix"}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Details}{
-    The \code{sig_object} is used to generate a unique signature for the cache.
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Details}{
+The \code{sig_object} is used to generate a unique signature for the cache.
 The signature is based on an expanded \code{utils::str()} representation of the object,
 which helps in determining if the cached version is still valid.
 The \code{prefix} is used to create a unique identifier for the cached files.
@@ -106,13 +110,15 @@ It specifies the path to the file or directory to cache.
 If \code{cache_dir} is NULL or an empty string, caching will not be performed.
 If \code{cache_dir} is FALSE, caching will not be performed.
 }
-  }
-  \subsection{Returns}{
-    A new Cache object
-  }
-  \subsection{Examples}{
-    \if{html}{\out{<div class="r example copy">}}
-    \preformatted{# Create a Cache object for an R object
+}
+
+\subsection{Returns}{
+A new Cache object
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\dontrun{
+# Create a Cache object for an R object
 cache <- Cache$new(sig_object = mtcars, prefix = "mtcars_cache",
                    cache_dir = tempdir(), save_sig = TRUE, kind = "object")
 # Save the object to cache
@@ -126,117 +132,105 @@ cache$clear()
 # Clear all cached objects in the cache directory
 cache$clear_all()
 }
-    \if{html}{\out{</div>}}
-  }
+}
+\if{html}{\out{</div>}}
+
 }
 
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Cache-clear"></a>}}
 \if{latex}{\out{\hypertarget{method-Cache-clear}{}}}
-\subsection{\code{Cache$clear()}}{
-  Clear the current cached object/file/directory
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Cache$clear()}
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clear()}}{
+Clear the current cached object/file/directory
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Cache$clear()}\if{html}{\out{</div>}}
 }
 
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Cache-clear_all"></a>}}
 \if{latex}{\out{\hypertarget{method-Cache-clear_all}{}}}
-\subsection{\code{Cache$clear_all()}}{
-  Clear all cached objects in the cache directory
+\subsection{Method \code{clear_all()}}{
+Clear all cached objects in the cache directory
 Be careful with this operation as it will remove all cached files in the cache directory
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Cache$clear_all()}
-    \if{html}{\out{</div>}}
-  }
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Cache$clear_all()}\if{html}{\out{</div>}}
 }
 
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Cache-restore"></a>}}
 \if{latex}{\out{\hypertarget{method-Cache-restore}{}}}
-\subsection{\code{Cache$restore()}}{
-  Retrieve the cached object/file/directory
+\subsection{Method \code{restore()}}{
+Retrieve the cached object/file/directory
 When NULL is returned, it means the cache does not exist
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Cache$restore()}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    The cached object if kind is "object", otherwise NULL
-  }
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Cache$restore()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+The cached object if kind is "object", otherwise NULL
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Cache-is_cached"></a>}}
 \if{latex}{\out{\hypertarget{method-Cache-is_cached}{}}}
-\subsection{\code{Cache$is_cached()}}{
-  Check if we have a cached object/file/directory
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Cache$is_cached()}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    TRUE if the cached object/file/directory exists, FALSE otherwise
-  }
+\subsection{Method \code{is_cached()}}{
+Check if we have a cached object/file/directory
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Cache$is_cached()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+TRUE if the cached object/file/directory exists, FALSE otherwise
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Cache-get_path"></a>}}
 \if{latex}{\out{\hypertarget{method-Cache-get_path}{}}}
-\subsection{\code{Cache$get_path()}}{
-  Get the path to the cached object/file/directory
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Cache$get_path()}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    The path to the cached object/file/directory
-  }
+\subsection{Method \code{get_path()}}{
+Get the path to the cached object/file/directory
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Cache$get_path()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+The path to the cached object/file/directory
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Cache-save"></a>}}
 \if{latex}{\out{\hypertarget{method-Cache-save}{}}}
-\subsection{\code{Cache$save()}}{
-  Save an object/file/directory/prefix to cache
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Cache$save(data = NULL)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{data}}{The object to cache, or NULL for non-"object" kinds}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{save()}}{
+Save an object/file/directory/prefix to cache
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Cache$save(data = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{data}}{The object to cache, or NULL for non-"object" kinds}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Cache-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-Cache-clone}{}}}
-\subsection{\code{Cache$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Cache$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Cache$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }

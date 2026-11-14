@@ -52,7 +52,7 @@ Rename cluster names
 This function provides a convenient way to rename clusters in a Seurat object.
 You can provide the mapping of old cluster names to new cluster names either
 as named arguments or as a single list.
-Unlike \code{\link[Seurat:RenameIdents]{Seurat::RenameIdents()}}, this function also renames the cluster names in the metadata column,
+Unlike \code{\link[Seurat:reexports]{Seurat::RenameIdents()}}, this function also renames the cluster names in the metadata column,
 so that the changes are persistent. If \code{save_as} is provided, the renamed clusters will be saved
 to a new column, otherwise the original column will be overwritten.
 In addition, the order of the clusters will be preserved based on the order of the original cluster names.

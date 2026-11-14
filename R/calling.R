@@ -118,7 +118,12 @@ run_command <- function(
     } else {
         status <- attr(out, "status")
         if (is.integer(status) && status != 0) {
-            stop(sprintf("Command failed: code (%s): %s", status, out))
+            # R prints only the first `warning.length` (1000) characters of an
+            # error message, so the output goes to stderr whole instead of into
+            # the message, where a traceback would be cut before its last and
+            # most informative line
+            writeLines(out, stderr())
+            stop(sprintf("Command failed with exit code %s", status))
         }
         return(out)
     }

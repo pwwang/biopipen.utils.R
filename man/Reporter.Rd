@@ -9,7 +9,7 @@ Add report to a report.json to pipen-report to build a report
 \examples{
 
 ## ------------------------------------------------
-## Method `Reporter$image()`
+## Method `Reporter$image`
 ## ------------------------------------------------
 
 reporter <- get_reporter()
@@ -23,122 +23,127 @@ reporter$add(
 )
 }
 \section{Public fields}{
-  \if{html}{\out{<div class="r6-fields">}}
-  \describe{
-    \item{\code{report}}{The report}
-  }
-  \if{html}{\out{</div>}}
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{report}}{The report}
+}
+\if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-Reporter-initialize}{\code{Reporter$new()}}
-    \item \href{#method-Reporter-add}{\code{Reporter$add()}}
-    \item \href{#method-Reporter-add2}{\code{Reporter$add2()}}
-    \item \href{#method-Reporter-image}{\code{Reporter$image()}}
-    \item \href{#method-Reporter-clear}{\code{Reporter$clear()}}
-    \item \href{#method-Reporter-save}{\code{Reporter$save()}}
-    \item \href{#method-Reporter-clone}{\code{Reporter$clone()}}
-  }
+\itemize{
+\item \href{#method-Reporter-new}{\code{Reporter$new()}}
+\item \href{#method-Reporter-add}{\code{Reporter$add()}}
+\item \href{#method-Reporter-add2}{\code{Reporter$add2()}}
+\item \href{#method-Reporter-image}{\code{Reporter$image()}}
+\item \href{#method-Reporter-clear}{\code{Reporter$clear()}}
+\item \href{#method-Reporter-save}{\code{Reporter$save()}}
+\item \href{#method-Reporter-clone}{\code{Reporter$clone()}}
+}
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Reporter-initialize"></a>}}
-\if{latex}{\out{\hypertarget{method-Reporter-initialize}{}}}
-\subsection{\code{Reporter$new()}}{
-  Initialize the reporter
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Reporter$new()}
-    \if{html}{\out{</div>}}
-  }
+\if{html}{\out{<a id="method-Reporter-new"></a>}}
+\if{latex}{\out{\hypertarget{method-Reporter-new}{}}}
+\subsection{Method \code{new()}}{
+Initialize the reporter
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Reporter$new()}\if{html}{\out{</div>}}
 }
 
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Reporter-add"></a>}}
 \if{latex}{\out{\hypertarget{method-Reporter-add}{}}}
-\subsection{\code{Reporter$add()}}{
-  Add a content to the report
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Reporter$add(..., h1, h2 = "#", h3 = "#", ui = "flat")}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{...}}{The content to add}
-      \item{\code{h1}}{The first level heading of the report}
-      \item{\code{h2}}{The second level heading of the report}
-      \item{\code{h3}}{The third level heading of the report}
-      \item{\code{ui}}{The user interface of the report}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{add()}}{
+Add a content to the report
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Reporter$add(..., h1, h2 = "#", h3 = "#", ui = "flat")}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{The content to add}
+
+\item{\code{h1}}{The first level heading of the report}
+
+\item{\code{h2}}{The second level heading of the report}
+
+\item{\code{h3}}{The third level heading of the report}
+
+\item{\code{ui}}{The user interface of the report}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Reporter-add2"></a>}}
 \if{latex}{\out{\hypertarget{method-Reporter-add2}{}}}
-\subsection{\code{Reporter$add2()}}{
-  Add a content to the report, but infer the headings from headings and sub-headings
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Reporter$add2(..., hs, hs2 = c(), ui = "flat", collapse = ": ")}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{...}}{The content to add}
-      \item{\code{hs}}{The headings of the case}
-      \item{\code{hs2}}{The headings that must be shown.
+\subsection{Method \code{add2()}}{
+Add a content to the report, but infer the headings from headings and sub-headings
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Reporter$add2(..., hs, hs2 = c(), ui = "flat", collapse = ": ")}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{The content to add}
+
+\item{\code{hs}}{The headings of the case}
+
+\item{\code{hs2}}{The headings that must be shown.
 When there are more items in \code{hs}, they will be concatenated.
 For example, if \code{hs = c("Section1", "Case1")}, and \code{hs2 = c("A", "B")}, then
 headings will be \code{h1 = "Section1: Case1"} and \code{h2 = "A"} and \code{h3 = "B"}.}
-      \item{\code{ui}}{The user interface of the report}
-      \item{\code{collapse}}{The separator to concatenate the headings}
-    }
-    \if{html}{\out{</div>}}
-  }
-}
 
+\item{\code{ui}}{The user interface of the report}
+
+\item{\code{collapse}}{The separator to concatenate the headings}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Reporter-image"></a>}}
 \if{latex}{\out{\hypertarget{method-Reporter-image}{}}}
-\subsection{\code{Reporter$image()}}{
-  Generate a report for an image to be added.
+\subsection{Method \code{image()}}{
+Generate a report for an image to be added.
 If \verb{<prefix>.html} exists, the image is treated as an interactive (Plotly) plot
 and a Plotly component schema is returned instead of an Image schema.
 In that case, \code{more_formats} and \code{save_code} are not supported and a warning
 is issued if they are provided.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Reporter$image(
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Reporter$image(
   prefix,
   more_formats = c(),
   save_code = FALSE,
   kind = "image",
   ...
-)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{prefix}}{The prefix of the image}
-      \item{\code{more_formats}}{More formats of the image available}
-      \item{\code{save_code}}{Whether to save the code to reproduce the plot}
-      \item{\code{kind}}{The kind of the report, default is "image"}
-      \item{\code{...}}{Other arguments to add to the report}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    a list of the report for the image
-  }
-  \subsection{Examples}{
-    \if{html}{\out{<div class="r example copy">}}
-    \preformatted{reporter <- get_reporter()
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{prefix}}{The prefix of the image}
+
+\item{\code{more_formats}}{More formats of the image available}
+
+\item{\code{save_code}}{Whether to save the code to reproduce the plot}
+
+\item{\code{kind}}{The kind of the report, default is "image"}
+
+\item{\code{...}}{Other arguments to add to the report}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+a list of the report for the image
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{reporter <- get_reporter()
 reporter$add(
   list(
      name = "Image 1",
@@ -148,61 +153,57 @@ reporter$add(
   h2 = "Image 1"
 )
 }
-    \if{html}{\out{</div>}}
-  }
+\if{html}{\out{</div>}}
+
 }
 
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Reporter-clear"></a>}}
 \if{latex}{\out{\hypertarget{method-Reporter-clear}{}}}
-\subsection{\code{Reporter$clear()}}{
-  Clear the report
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Reporter$clear()}
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clear()}}{
+Clear the report
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Reporter$clear()}\if{html}{\out{</div>}}
 }
 
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Reporter-save"></a>}}
 \if{latex}{\out{\hypertarget{method-Reporter-save}{}}}
-\subsection{\code{Reporter$save()}}{
-  Save the report to a file
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Reporter$save(path, clear = TRUE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{path}}{The path to save the report
-If the path is a directory, the report will be saved as \code{report.json} in the directory
-Otherwise, the report will be saved to the path}
-      \item{\code{clear}}{Whether to clear the report after saving}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{save()}}{
+Save the report to a file
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Reporter$save(path, clear = TRUE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{path}}{The path to save the report
+If the path is a directory, the report will be saved as \code{report.json} in the directory
+Otherwise, the report will be saved to the path}
+
+\item{\code{clear}}{Whether to clear the report after saving}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Reporter-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-Reporter-clone}{}}}
-\subsection{\code{Reporter$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Reporter$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Reporter$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }
