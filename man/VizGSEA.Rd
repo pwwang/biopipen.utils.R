@@ -63,8 +63,8 @@ to the heatmap.}
 
 \item{...}{Additional arguments passed to the plotting function
 \itemize{
-\item When \code{plot_type} is "summary", they are passed to \code{\link[plotthis:gsea]{plotthis::GSEASummaryPlot()}}
-\item When \code{plot_type} is "gsea", they are passed to \code{\link[plotthis:gsea]{plotthis::GSEAPlot()}}
+\item When \code{plot_type} is "summary", they are passed to \code{\link[plotthis:GSEASummaryPlot]{plotthis::GSEASummaryPlot()}}
+\item When \code{plot_type} is "gsea", they are passed to \code{\link[plotthis:GSEAPlot]{plotthis::GSEAPlot()}}
 }}
 }
 \value{

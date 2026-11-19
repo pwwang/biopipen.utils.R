@@ -12,13 +12,18 @@ pipelines.
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/pwwang/biopipen.utils.R https://pwwang.github.io/biopipen.utils.R/}
+  \item \url{https://github.com/pwwang/biopipen.utils.R} \url{https://pwwang.github.io/biopipen.utils.R/}
   \item Report bugs at \url{https://github.com/pwwang/biopipen.utils.R/issues}
 }
 
 }
 \author{
 \strong{Maintainer}: Panwen Wang \email{pwwang@pwwang.com} (\href{https://orcid.org/0000-0002-4614-8970}{ORCID})
+
+Authors:
+\itemize{
+  \item Panwen Wang \email{pwwang@pwwang.com} (\href{https://orcid.org/0000-0002-4614-8970}{ORCID})
+}
 
 }
 \keyword{internal}

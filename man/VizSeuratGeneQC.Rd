@@ -25,7 +25,7 @@ before and after filtering}
 \item{ylab}{Y-axis label
 When plot_type is ridge, it will be used as x-axis label}
 
-\item{...}{Additional arguments to pass to the plot function \code{\link[plotthis:barplot]{plotthis::BarPlot()}}}
+\item{...}{Additional arguments to pass to the plot function \code{\link[plotthis:BarPlot]{plotthis::BarPlot()}}}
 }
 \value{
 The plot

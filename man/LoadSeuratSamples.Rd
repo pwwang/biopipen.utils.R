@@ -29,21 +29,21 @@ This can also be a Seurat object to split into samples. It requires the "Sample"
 specifying the sample for each cell.}
 
 \item{min_cells}{Include features detected in at least this many cells.
-This will be applied to all samples and passed to the \code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}} function.
+This will be applied to all samples and passed to the \code{\link[Seurat:CreateSeuratObject]{Seurat::CreateSeuratObject()}} function.
 QCs can be further performed on the object after loading.
 You can also provide a list of values, where the names of the list are sample names
 and the values are the minimum number of cells for each sample to load by
-\code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}}.
+\code{\link[Seurat:CreateSeuratObject]{Seurat::CreateSeuratObject()}}.
 You can have a default value in the list with the name "DEFAULT" for the samples
 that are not listed.
 This won't work if data is loaded from a loom file or \code{meta} is a Seurat object.}
 
 \item{min_features}{Include cells where at least this many features are detected.
-This will be applied to all samples and passed to the \code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}} function.
+This will be applied to all samples and passed to the \code{\link[Seurat:CreateSeuratObject]{Seurat::CreateSeuratObject()}} function.
 QCs can be further performed on the object after loading.
 You can also provide a list of values, where the names of the list are sample names
 and the values are the minimum number of features for each sample to load by
-\code{\link[Seurat:reexports]{Seurat::CreateSeuratObject()}}.
+\code{\link[Seurat:CreateSeuratObject]{Seurat::CreateSeuratObject()}}.
 You can have a default value in the list with the name "DEFAULT" for the samples
 that are not listed.
 This won't work if data is loaded from a loom file or \code{meta} is a Seurat object.}
