@@ -548,6 +548,11 @@ RunSeuratUMAP <- function(
     reduction <- RunUMAPArgs[['reduction']] %||%
         object@misc$integrated_new_reduction %||%
         "pca"
+    # The reduction was resolved for the log line only; without this assignment
+    # RunUMAP() fell back to Seurat's default ("pca"), so the embedding ignored
+    # the integration while the log reported it. FindNeighbors below assigns its
+    # reduction this way and was unaffected.
+    RunUMAPArgs$reduction <- reduction
     log_piece <- paste0("reduction=", reduction)
     if (!is.null(RunUMAPArgs$features) && !is.null(RunUMAPArgs$dims)) {
         log$warn(
