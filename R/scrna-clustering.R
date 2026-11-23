@@ -351,14 +351,6 @@ RunSeuratIntegration <- function(
             "scvi" = "scVIIntegration",
             stop(paste0("Unknown integration method: ", method))
         )
-        IntegrateLayersArgs$method <- getFromNamespace(method, "Seurat")
-        IntegrateLayersArgs$assay <- IntegrateLayersArgs$assay %||%
-            DefaultAssay(object)
-        if (IntegrateLayersArgs$assay == "SCT") {
-            IntegrateLayersArgs$normalization.method <- IntegrateLayersArgs$normalization.method %||%
-                "SCT"
-        }
-
         new_reductions <- list(
             "CCAIntegration" = "integrated.cca",
             "RPCAIntegration" = "integrated.rpca",
@@ -369,15 +361,159 @@ RunSeuratIntegration <- function(
         IntegrateLayersArgs$new.reduction <- IntegrateLayersArgs$new.reduction %||%
             new_reductions[[method]]
 
-        log$debug("  Arguments: {format_args(IntegrateLayersArgs)}")
-        IntegrateLayersArgs$object <- object
-        # ia <<- IntegrateLayersArgs
-        object <- do_call(IntegrateLayers, IntegrateLayersArgs)
-        IntegrateLayersArgs$object <- NULL
-        gc()
+        # SeuratWrappers provides FastMNNIntegration and scVIIntegration.
+        .resolve_integration_method <- function(fn) {
+            for (ns in c("Seurat", "SeuratWrappers")) {
+                if (
+                    requireNamespace(ns, quietly = TRUE) &&
+                        exists(fn, asNamespace(ns), inherits = FALSE)
+                ) {
+                    return(get(fn, envir = asNamespace(ns)))
+                }
+            }
+            stop(
+                "Integration method function '", fn, "' was not found in ",
+                "Seurat or SeuratWrappers.",
+                if (fn %in% c("FastMNNIntegration", "scVIIntegration")) {
+                    " Install the SeuratWrappers package to use it."
+                } else ""
+            )
+        }
 
-        # Save it for dimension reduction plots
-        object@misc$integrated_new_reduction <- IntegrateLayersArgs$new.reduction
+        if (!is.null(IntegrateLayersArgs$group.by.vars)) {
+            if (method != "HarmonyIntegration") {
+                stop(
+                    "Only the harmony method supports `group.by.vars`; ",
+                    method, " has no such parameter. Use method = \"harmony\" ",
+                    "to correct on metadata columns, or remove `group.by.vars`."
+                )
+            }
+            # HarmonyIntegration ignores `group.by.vars`: it builds batches from
+            # assay layers/SCT models via CreateIntegrationGroups() and passes
+            # vars_use = "group". Run harmony directly on the PCA embeddings so
+            # the requested metadata columns are actually used.
+            if (!requireNamespace("harmony", quietly = TRUE)) {
+                stop(
+                    "Package 'harmony' is required to run harmony integration ",
+                    "with `group.by.vars`."
+                )
+            }
+            reduction <- IntegrateLayersArgs$orig.reduction %||% "pca"
+            if (!reduction %in% Reductions(object)) {
+                stop(
+                    "Reduction '", reduction, "' not found in the object. ",
+                    "Available reductions: ",
+                    paste(Reductions(object), collapse = ", ")
+                )
+            }
+            group.by.vars <- IntegrateLayersArgs$group.by.vars
+            missing_vars <- setdiff(group.by.vars, colnames(object@meta.data))
+            if (length(missing_vars) > 0) {
+                stop(
+                    "Unknown `group.by.vars` column(s): ",
+                    paste(missing_vars, collapse = ", "),
+                    ". Available metadata columns: ",
+                    paste(colnames(object@meta.data), collapse = ", ")
+                )
+            }
+            for (var in group.by.vars) {
+                values <- object@meta.data[[var]]
+                if (length(unique(values[!is.na(values)])) < 2) {
+                    warning(
+                        "`group.by.vars` column '", var, "' has fewer than 2 ",
+                        "distinct non-NA values; correcting on it is a no-op.",
+                        call. = FALSE
+                    )
+                }
+            }
+            embeddings <- Embeddings(object[[reduction]])
+            meta <- object@meta.data[
+                rownames(embeddings), group.by.vars, drop = FALSE
+            ]
+
+            # RunHarmony.default() takes these directly; the rest belong in
+            # harmony_options().
+            harmony_args <- IntegrateLayersArgs
+            harmony_args[c(
+                "method", "assay", "layers", "scale.layer", "features",
+                "new.reduction", "reference", "normalization.method",
+                "orig.reduction", "group.by.vars", "key", "object"
+            )] <- NULL
+            run_args <- harmony_args[intersect(
+                names(harmony_args),
+                c(
+                    "theta", "sigma", "lambda", "nclust", "max_iter",
+                    "early_stop", "ncores", "plot_convergence", "verbose",
+                    ".options"
+                )
+            )]
+            if (!is.null(harmony_args$max.iter.harmony) && is.null(run_args$max_iter)) {
+                run_args$max_iter <- harmony_args$max.iter.harmony
+            }
+            options <- run_args$.options %||% harmony::harmony_options()
+            for (opt in intersect(
+                names(harmony_args),
+                c(
+                    "tau", "block.size", "max.iter.cluster",
+                    "epsilon.cluster", "epsilon.harmony"
+                )
+            )) {
+                options[[opt]] <- harmony_args[[opt]]
+            }
+            run_args$.options <- options
+
+            log$info(
+                "  Running harmony::RunHarmony (vars_use = {paste(group.by.vars, collapse = ', ')}) ..."
+            )
+            harmony_embed <- do_call(
+                harmony::RunHarmony,
+                c(
+                    list(
+                        data_mat = embeddings,
+                        meta_data = meta,
+                        vars_use = group.by.vars
+                    ),
+                    run_args
+                )
+            )
+            rownames(harmony_embed) <- rownames(embeddings)
+            new_reduction <- IntegrateLayersArgs$new.reduction
+            object[[new_reduction]] <- CreateDimReducObject(
+                embeddings = harmony_embed,
+                key = IntegrateLayersArgs$key %||% "harmony_",
+                assay = DefaultAssay(object)
+            )
+            # Save it for dimension reduction plots
+            object@misc$integrated_new_reduction <- new_reduction
+            object <- AddSeuratCommand(
+                object,
+                name = "RunHarmonyIntegration",
+                call.string = "RunHarmonyIntegration(object, group.by.vars, reduction, new.reduction)",
+                params = list(
+                    group.by.vars = group.by.vars,
+                    reduction = reduction,
+                    n_new_reduction = new_reduction
+                )
+            )
+        } else {
+            IntegrateLayersArgs$method <- .resolve_integration_method(method)
+            IntegrateLayersArgs$assay <- IntegrateLayersArgs$assay %||%
+                DefaultAssay(object)
+            if (IntegrateLayersArgs$assay == "SCT") {
+                IntegrateLayersArgs$normalization.method <- IntegrateLayersArgs$normalization.method %||%
+                    "SCT"
+            }
+
+            log$debug("  Arguments: {format_args(IntegrateLayersArgs)}")
+            IntegrateLayersArgs$object <- object
+            # ia <<- IntegrateLayersArgs
+            object <- do_call(IntegrateLayers, IntegrateLayersArgs)
+            IntegrateLayersArgs$object <- NULL
+            gc()
+
+            # Save it for dimension reduction plots
+            object@misc$integrated_new_reduction <- IntegrateLayersArgs$new.reduction
+        }
     }
 
     log$info("- Joining layers ...")

@@ -48,6 +48,7 @@ Suggests:
     covr,
     hdf5r,
     gglogger,
+    harmony,
     SeuratDisk,
     DESeq2,
     edgeR,
