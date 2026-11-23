@@ -102,9 +102,9 @@ rec <- RunCellTypeAnnotation(
     args = list(cell_types = list(g1 = "T", g2 = "B")),
     ident = "groups"
 )
-#> INFO    [2026-11-19 14:48:19] Running cell type annotation tool 'direct' ...
+#> INFO    [2026-11-23 05:38:30] Running cell type annotation tool 'direct' ...
 obj <- EmbedSeuratCellTypeAnnotation(obj, rec, ident = "groups")
-#> INFO    [2026-11-19 14:48:19] Adding annotation as new column: CellType
+#> INFO    [2026-11-23 05:38:30] Adding annotation as new column: CellType
 table(obj$CellType)
 #> 
 #>  T  B 
