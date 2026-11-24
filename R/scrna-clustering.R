@@ -837,6 +837,145 @@ RunSeuratUMAP <- function(
     object
 }
 
+#' Run seurat t-SNE
+#'
+#' In addition to [Seurat::RunTSNE()], we provide an additional argument to use
+#' markers as features for t-SNE, which makes the t-SNE more separated for different clusters.
+#'
+#' @param object Seurat object
+#' @param RunTSNEArgs Arguments to pass to [Seurat::RunTSNE()].
+#' `RunTSNEArgs$features` can be a character vector of features directly used for t-SNE,
+#' or a list with the following fields:
+#' * `order`: The order of the markers to use for t-SNE, e.g. "desc(abs(avg_log2FC))"
+#' * `n`: The number of total features to use for t-SNE, e.g. 30
+#' If `RunTSNEArgs$features` is a list, it will run [RunSeuratDEAnalysis()] to get the markers
+#' for each group, and then select the top `n`/`ngroups` features for each group
+#' based on the `order` field.
+#' If `RunTSNEArgs$features` is a numeric value, it will be treated as the `n` field
+#' in the list above, with the default `order` being "desc(abs(avg_log2FC))".
+#' @details
+#' Scalar `RunTSNEArgs$dims = N` expands to `1:N`.
+#' When both `RunTSNEArgs$features` and `RunTSNEArgs$dims` are provided,
+#' `RunTSNEArgs$dims` will be ignored and set to `NULL`.
+#' The `features` path always reads the default assay because [Seurat::RunTSNE()] has
+#' no `assay` argument.
+#' If neither `RunTSNEArgs$features` nor `RunTSNEArgs$dims` is provided,
+#' `RunTSNEArgs$dims` will be set to `1:min(30, ceiling(ncells/3), ncol(object@reductions[[reduction]]))`,
+#' where `ncells` is the number of cells in the object (or `length(RunTSNEArgs$cells)` when `cells` is set),
+#' and `reduction` is `RunTSNEArgs$reduction` (default: `object@misc$integrated_new_reduction` or `"pca"`).
+#' When `RunTSNEArgs$perplexity` is not provided, it defaults to
+#' `max(1, min(30, floor((ncells - 1) / 3)))` so small objects stay within Rtsne's perplexity bound.
+#' @export
+#' @param cache Directory to cache the all markers, which can be reused later if
+#' DE analysis is desired.
+#' @param log The logger to use. If NULL, a default logger will be used.
+#' @return The Seurat object with t-SNE results
+#' @importFrom Seurat RunTSNE
+#' @importFrom SeuratObject Idents
+#' @importFrom rlang %||% parse_expr
+#' @importFrom dplyr arrange group_by slice_head pull
+#' @examples
+#' \donttest{
+#' obj <- RunSeuratTSNE(SeuratObject::pbmc_small, list(dims = 10))
+#' }
+RunSeuratTSNE <- function(
+    object,
+    RunTSNEArgs = list(),
+    cache = NULL,
+    log = NULL
+) {
+    log <- log %||% get_logger()
+    if (length(RunTSNEArgs$features) == 1 && is.numeric(RunTSNEArgs$features)) {
+        RunTSNEArgs$features <- list(
+            order = "desc(abs(avg_log2FC))",
+            n = RunTSNEArgs$features
+        )
+    }
+    if (is.list(RunTSNEArgs$features)) {
+        log$info("  Running RunSeuratDEAnalysis to get markers for t-SNE ...")
+        ident <- GetIdentityColumn(object)
+        markers <- RunSeuratDEAnalysis(object, group_by = ident, cache = cache)
+        attr(markers, "object") <- NULL
+        gc()
+
+        RunTSNEArgs$features$order <- RunTSNEArgs$features$order %||%
+            "desc(abs(avg_log2FC))"
+        RunTSNEArgs$features$n <- RunTSNEArgs$features$n %||% 30
+
+        ngroups <- length(unique(markers[[ident]]))
+        each_n <- ceiling(RunTSNEArgs$features$n / ngroups)
+        RunTSNEArgs$features <- markers %>%
+            arrange(!!parse_expr(RunTSNEArgs$features$order)) %>%
+            group_by(!!sym(ident)) %>%
+            slice_head(n = each_n) %>%
+            pull("gene") %>%
+            unique()
+
+        rm(markers)
+        gc()
+    }
+    ncells <- if (!is.null(RunTSNEArgs$cells)) {
+        length(RunTSNEArgs$cells)
+    } else {
+        ncol(object)
+    }
+    reduction <- RunTSNEArgs[['reduction']] %||%
+        object@misc$integrated_new_reduction %||%
+        "pca"
+    RunTSNEArgs$reduction <- reduction
+    log_piece <- paste0("reduction=", reduction)
+    if (!is.null(RunTSNEArgs$features)) {
+        if (!is.null(RunTSNEArgs$dims)) {
+            log$warn(
+                "  'RunTSNEArgs$features' and 'RunTSNEArgs$dims' are both set, 'RunTSNEArgs$dims' will be ignored"
+            )
+        }
+        RunTSNEArgs["dims"] <- list(NULL)
+        log_piece <- c(
+            log_piece,
+            paste0("features=", length(RunTSNEArgs$features))
+        )
+    } else {
+        RunTSNEArgs$dims <- RunTSNEArgs$dims %||%
+            1:min(30, ceiling(ncells / 3), ncol(object@reductions[[reduction]]))
+        RunTSNEArgs$dims <- .expand_number(RunTSNEArgs$dims)
+        log_piece <- c(log_piece, paste0("dims=1:", max(RunTSNEArgs$dims)))
+    }
+    RunTSNEArgs$tsne.method <- RunTSNEArgs$tsne.method %||% "Rtsne"
+    log_piece <- c(log_piece, paste0("tsne.method=", RunTSNEArgs$tsne.method))
+    max_perplexity <- floor((ncells - 1) / 3)
+    RunTSNEArgs$perplexity <- RunTSNEArgs$perplexity %||%
+        max(1, min(30, max_perplexity))
+    if (3 * RunTSNEArgs$perplexity > ncells - 1) {
+        stop(sprintf(
+            "[RunSeuratTSNE] 'perplexity' (%s) is too large for %d cells; largest workable value is %d.",
+            RunTSNEArgs$perplexity,
+            ncells,
+            max_perplexity
+        ))
+    }
+    log_piece <- c(log_piece, paste0("perplexity=", RunTSNEArgs$perplexity))
+    RunTSNEArgs$reduction.name <- RunTSNEArgs$reduction.name %||% "tsne"
+    log_piece <- c(
+        log_piece,
+        paste0("reduction.name=", RunTSNEArgs$reduction.name)
+    )
+    log$info("  {paste(log_piece, collapse=', ')}")
+    log$debug("  Arguments: {format_args(RunTSNEArgs)}")
+    RunTSNEArgs$object <- object
+    object <- do_call(RunTSNE, RunTSNEArgs)
+    RunTSNEArgs$object <- NULL
+    gc()
+
+    object <- AddSeuratCommand(
+        object,
+        name = "RunSeuratTSNE",
+        call.string = "RunSeuratTSNE(object, RunTSNEArgs)",
+        params = list(RunTSNEArgs = RunTSNEArgs)
+    )
+    object
+}
+
 #' Run seurat unsupervised clustering
 #'
 #' @param object Seurat object
@@ -849,6 +988,8 @@ RunSeuratUMAP <- function(
 #' If `RunUMAPArgs$features` is a list, it will run [RunSeuratDEAnalysis()] to get the markers
 #' for each group, and then select the top `n`/`ngroups` features for each group
 #' based on the `order` field.
+#' @param RunTSNEArgs Arguments to pass to [RunSeuratTSNE()]. If `NULL` (default),
+#' t-SNE is skipped; if a list, runs t-SNE after UMAP using [RunSeuratTSNE()].
 #' @param FindNeighborsArgs Arguments to pass to [Seurat::FindNeighbors()]
 #' @param FindClustersArgs Arguments to pass to [Seurat::FindClusters()]
 #' @param log Logger
@@ -869,6 +1010,7 @@ RunSeuratClustering <- function(
     object,
     RunPCAArgs = list(),
     RunUMAPArgs = list(),
+    RunTSNEArgs = NULL,
     FindNeighborsArgs = list(),
     FindClustersArgs = list(),
     log = NULL,
@@ -1030,6 +1172,27 @@ RunSeuratClustering <- function(
         caching$save(object)
     }
 
+    if (!is.null(RunTSNEArgs)) {
+        caching <- Cache$new(
+            list(object, RunTSNEArgs),
+            prefix = "biopipen.utils.RunSeuratClustering.RunSeuratTSNE",
+            cache_dir = cache
+        )
+        if (caching$is_cached()) {
+            log$info("t-SNE results loaded from cache")
+            object <- caching$restore()
+        } else {
+            log$info("Running RunTSNE ...")
+            object <- RunSeuratTSNE(
+                object,
+                RunTSNEArgs = RunTSNEArgs,
+                cache = cache,
+                log = log
+            )
+            caching$save(object)
+        }
+    }
+
     object
 }
 
@@ -1056,6 +1219,8 @@ RunSeuratClustering <- function(
 #' If `RunUMAPArgs$features` is a list, it will run [RunSeuratDEAnalysis()] to get the markers
 #' for each group, and then select the top `n`/`ngroups` features for each group
 #' based on the `order` field.
+#' @param RunTSNEArgs Arguments to pass to [RunSeuratTSNE()]. If `NULL` (default),
+#' t-SNE is skipped; if a list, runs t-SNE after UMAP using [RunSeuratTSNE()].
 #' @param FindNeighborsArgs Arguments to pass to [Seurat::FindNeighbors()]
 #' @param FindClustersArgs Arguments to pass to [Seurat::FindClusters()]
 #' @param log Logger
@@ -1096,6 +1261,7 @@ RunSeuratSubClustering <- function(
     name = "subcluster",
     RunPCAArgs = list(),
     RunUMAPArgs = list(),
+    RunTSNEArgs = NULL,
     FindNeighborsArgs = list(),
     FindClustersArgs = list(),
     log = NULL,
@@ -1103,16 +1269,20 @@ RunSeuratSubClustering <- function(
 ) {
     log <- log %||% get_logger()
     cache <- cache %||% gettempdir()
+    cache_sig <- list(
+        object,
+        subset,
+        name,
+        RunPCAArgs,
+        RunUMAPArgs,
+        FindNeighborsArgs,
+        FindClustersArgs
+    )
+    if (!is.null(RunTSNEArgs)) {
+        cache_sig <- c(cache_sig, list(RunTSNEArgs))
+    }
     cached <- Cache$new(
-        list(
-            object,
-            subset,
-            name,
-            RunPCAArgs,
-            RunUMAPArgs,
-            FindNeighborsArgs,
-            FindClustersArgs
-        ),
+        cache_sig,
         prefix = "biopipen.utils.RunSeuratSubClustering",
         cache_dir = cache
     )
@@ -1234,15 +1404,33 @@ RunSeuratSubClustering <- function(
         log = log
     )
 
+    if (!is.null(RunTSNEArgs)) {
+        RunTSNEArgs$reduction.key <- RunTSNEArgs$reduction.key %||%
+            paste0(toupper(name), "TSNE_")
+        RunTSNEArgs$reduction <- RunTSNEArgs[['reduction']] %||%
+            object@misc$integrated_new_reduction %||%
+            "pca"
+        tsne_name <- RunTSNEArgs$reduction.name %||% "tsne"
+        log$info("- Running RunTSNE ...")
+        log$debug("  Arguments: {format_args(RunTSNEArgs)}")
+        subobj <- RunSeuratTSNE(
+            subobj,
+            RunTSNEArgs = RunTSNEArgs,
+            cache = cache,
+            log = log
+        )
+    }
+
     object <- AddSeuratCommand(
         object,
         name = paste0("RunSeuratSubClustering.", name),
-        call.string = "RunSeuratSubClustering(object, subset, name, RunPCAArgs, RunUMAPArgs, FindNeighborsArgs, FindClustersArgs)",
+        call.string = "RunSeuratSubClustering(object, subset, name, RunPCAArgs, RunUMAPArgs, RunTSNEArgs, FindNeighborsArgs, FindClustersArgs)",
         params = list(
             subset = subset,
             name = name,
             RunPCAArgs = RunPCAArgs,
             RunUMAPArgs = RunUMAPArgs,
+            RunTSNEArgs = RunTSNEArgs,
             FindNeighborsArgs = FindNeighborsArgs,
             FindClustersArgs = FindClustersArgs
         )
@@ -1265,6 +1453,11 @@ RunSeuratSubClustering <- function(
     # Add the subclusters reduction to the original object
     object@reductions[[paste0(name, ".pca")]] <- subobj@reductions[["pca"]]
     object@reductions[[paste0(name, ".umap")]] <- subobj@reductions[["umap"]]
+    if (!is.null(RunTSNEArgs)) {
+        object@reductions[[paste0(name, ".", tsne_name)]] <- subobj@reductions[[
+            tsne_name
+        ]]
+    }
 
     cached$save(object)
     object

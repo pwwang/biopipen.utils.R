@@ -10,6 +10,7 @@ RunSeuratSubClustering(
   name = "subcluster",
   RunPCAArgs = list(),
   RunUMAPArgs = list(),
+  RunTSNEArgs = NULL,
   FindNeighborsArgs = list(),
   FindClustersArgs = list(),
   log = NULL,
@@ -40,6 +41,9 @@ If \code{RunUMAPArgs$features} is a list, it will run \code{\link[=RunSeuratDEAn
 for each group, and then select the top \code{n}/\code{ngroups} features for each group
 based on the \code{order} field.
 }}
+
+\item{RunTSNEArgs}{Arguments to pass to \code{\link[=RunSeuratTSNE]{RunSeuratTSNE()}}. If \code{NULL} (default),
+t-SNE is skipped; if a list, runs t-SNE after UMAP using \code{\link[=RunSeuratTSNE]{RunSeuratTSNE()}}.}
 
 \item{FindNeighborsArgs}{Arguments to pass to \code{\link[Seurat:FindNeighbors]{Seurat::FindNeighbors()}}}
 

@@ -44,6 +44,7 @@ export(RunSeuratIntegration)
 export(RunSeuratMap2Ref)
 export(RunSeuratPreparation)
 export(RunSeuratSubClustering)
+export(RunSeuratTSNE)
 export(RunSeuratTransformation)
 export(RunSeuratUMAP)
 export(ScRepMutate)
@@ -140,6 +141,7 @@ importFrom(Seurat,
   Reductions,
   RenameCells,
   RunPCA,
+  RunTSNE,
   RunUMAP,
   SCTResults,
   SCTransform,
