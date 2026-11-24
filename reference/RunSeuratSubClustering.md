@@ -15,6 +15,7 @@ RunSeuratSubClustering(
   name = "subcluster",
   RunPCAArgs = list(),
   RunUMAPArgs = list(),
+  RunTSNEArgs = NULL,
   FindNeighborsArgs = list(),
   FindClustersArgs = list(),
   log = NULL,
@@ -63,6 +64,14 @@ RunSeuratSubClustering(
     to get the markers for each group, and then select the top
     `n`/`ngroups` features for each group based on the `order` field.
 
+- RunTSNEArgs:
+
+  Arguments to pass to
+  [`RunSeuratTSNE()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratTSNE.md).
+  If `NULL` (default), t-SNE is skipped; if a list, runs t-SNE after
+  UMAP using
+  [`RunSeuratTSNE()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratTSNE.md).
+
 - FindNeighborsArgs:
 
   Arguments to pass to
@@ -96,11 +105,11 @@ obj <- suppressMessages(Seurat::RunUMAP(obj, dims = 1:10))
 obj <- suppressWarnings(suppressMessages(RunSeuratSubClustering(
    obj, subset = "groups == 'g1'", name = "g1subcluster"
 )))
-#> INFO    [2026-11-23 06:01:41] Subsetting seurat object (groups == 'g1') ...
-#> INFO    [2026-11-23 06:01:42] - Running RunPCA (reduction.key=G1SUBCLUSTERPC_, dims=1:30, npcs=43) ...
-#> INFO    [2026-11-23 06:01:43] - Running FindNeighbors (reduction=pca) ...
-#> INFO    [2026-11-23 06:01:45] - Running FindClusters ...
-#> INFO    [2026-11-23 06:01:45]   applying resolution: 0.8
+#> INFO    [2026-11-24 23:53:33] Subsetting seurat object (groups == 'g1') ...
+#> INFO    [2026-11-24 23:53:34] - Running RunPCA (reduction.key=G1SUBCLUSTERPC_, dims=1:30, npcs=43) ...
+#> INFO    [2026-11-24 23:53:35] - Running FindNeighbors (reduction=pca) ...
+#> INFO    [2026-11-24 23:53:36] - Running FindClusters ...
+#> INFO    [2026-11-24 23:53:36]   applying resolution: 0.8
 #> Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
 #> 
 #> Number of nodes: 44
@@ -110,10 +119,10 @@ obj <- suppressWarnings(suppressMessages(RunSeuratSubClustering(
 #> Maximum modularity in 10 random starts: 0.2121
 #> Number of communities: 2
 #> Elapsed time: 0 seconds
-#> INFO    [2026-11-23 06:01:46]   Found subclusters (with resolution 0.8):
-#> INFO    [2026-11-23 06:01:46]    | s1(25), s2(19)
-#> INFO    [2026-11-23 06:01:46] - Running RunUMAP ...
-#> INFO    [2026-11-23 06:01:46]   reduction=pca, dims=1:15, umap.method=uwot, n.neighbors=30
+#> INFO    [2026-11-24 23:53:37]   Found subclusters (with resolution 0.8):
+#> INFO    [2026-11-24 23:53:37]    | s1(25), s2(19)
+#> INFO    [2026-11-24 23:53:37] - Running RunUMAP ...
+#> INFO    [2026-11-24 23:53:37]   reduction=pca, dims=1:15, umap.method=uwot, n.neighbors=30
 
 scplotter::CellDimPlot(
     obj, reduction = "umap", group_by = "groups",

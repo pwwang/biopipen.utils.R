@@ -104,6 +104,9 @@
 - [`RunSeuratSubClustering()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratSubClustering.md)
   : Run subset clustering on a Seurat object
 
+- [`RunSeuratTSNE()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratTSNE.md)
+  : Run seurat t-SNE
+
 - [`RunSeuratTransformation()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratTransformation.md)
   : Run transformations on a Seurat object
 

@@ -42,6 +42,7 @@
 <span>  <span class="va">object</span>,</span>
 <span>  RunPCAArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  RunUMAPArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  RunTSNEArgs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  FindNeighborsArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  FindClustersArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  log <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -72,6 +73,11 @@ based on the <code>order</code> field.</p></li>
 </ul></dd>
 
 
+<dt id="arg-runtsneargs">RunTSNEArgs<a class="anchor" aria-label="anchor" href="#arg-runtsneargs"></a></dt>
+<dd><p>Arguments to pass to <code><a href="RunSeuratTSNE.html">RunSeuratTSNE()</a></code>. If <code>NULL</code> (default),
+t-SNE is skipped; if a list, runs t-SNE after UMAP using <code><a href="RunSeuratTSNE.html">RunSeuratTSNE()</a></code>.</p></dd>
+
+
 <dt id="arg-findneighborsargs">FindNeighborsArgs<a class="anchor" aria-label="anchor" href="#arg-findneighborsargs"></a></dt>
 <dd><p>Arguments to pass to <code><a href="https://satijalab.org/seurat/reference/FindNeighbors.html" class="external-link">Seurat::FindNeighbors()</a></code></p></dd>
 
@@ -97,7 +103,7 @@ based on the <code>order</code> field.</p></li>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="fu">RunSeuratClustering</span><span class="op">(</span><span class="fu">SeuratObject</span><span class="fu">::</span><span class="va"><a href="https://satijalab.github.io/seurat-object/reference/pbmc_small.html" class="external-link">pbmc_small</a></span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-11-23 06:01:15] Running RunPCA (npcs=50, dims=1:30) ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-11-24 23:53:11] Running RunPCA (npcs=50, dims=1:30) ...</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>You're computing too large a percentage of total singular values, use a standard svd instead.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Requested number is larger than the number of available items (20). Setting to 20.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Requested number is larger than the number of available items (20). Setting to 20.</span>
@@ -111,19 +117,19 @@ based on the <code>order</code> field.</p></li>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  HLA-DPB1, HLA-DQA1, S100A8, S100A9, CD1C, RP11-290F20.3, PARVB, IGLL5, MYL9, SDPR </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  GNLY, AKR1C3, VDAC3, PGRMC1, TUBB1, PF4, TREML1, RUFY1, CA2, PPBP </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> PC_ 3 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  S100A9, S100A8, RP11-290F20.3, AKR1C3, PARVB, GNLY, PPBP, PGRMC1, MYL9, TUBB1 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  HLA-DQA1, CD1C, IGLL5, HLA-DPB1, RUFY1, PF4, VDAC3, SDPR, TREML1, CA2 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  HLA-DQA1, CD1C, IGLL5, HLA-DPB1, RUFY1, PF4, VDAC3, SDPR, TREML1, CA2 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  S100A9, S100A8, RP11-290F20.3, AKR1C3, PARVB, GNLY, PPBP, PGRMC1, MYL9, TUBB1 </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> PC_ 4 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  IGLL5, RP11-290F20.3, VDAC3, PPBP, TUBB1, TREML1, PF4, CA2, PARVB, MYL9 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  CD1C, AKR1C3, S100A8, GNLY, HLA-DPB1, HLA-DQA1, S100A9, PGRMC1, RUFY1, SDPR </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  CD1C, AKR1C3, S100A8, GNLY, HLA-DPB1, HLA-DQA1, S100A9, PGRMC1, RUFY1, SDPR </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  IGLL5, RP11-290F20.3, VDAC3, PPBP, TUBB1, TREML1, PF4, CA2, PARVB, MYL9 </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> PC_ 5 </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  VDAC3, RP11-290F20.3, RUFY1, CD1C, HLA-DQA1, CA2, S100A8, PPBP, GNLY, SDPR </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  MYL9, PARVB, IGLL5, TREML1, AKR1C3, PGRMC1, HLA-DPB1, S100A9, TUBB1, PF4 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-11-23 06:01:18] Running FindNeighbors (reduction=pca) ...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Positive:  MYL9, PARVB, IGLL5, TREML1, AKR1C3, PGRMC1, HLA-DPB1, S100A9, TUBB1, PF4 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Negative:  VDAC3, RP11-290F20.3, RUFY1, CD1C, HLA-DQA1, CA2, S100A8, PPBP, GNLY, SDPR </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-11-24 23:53:13] Running FindNeighbors (reduction=pca) ...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Computing nearest neighbor graph</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Computing SNN</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-11-23 06:01:19] Running FindClusters ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-11-23 06:01:19]   applying resolution: 0.8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-11-24 23:53:14] Running FindClusters ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-11-24 23:53:14]   applying resolution: 0.8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Number of nodes: 80</span>
@@ -133,14 +139,14 @@ based on the <code>order</code> field.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Maximum modularity in 10 random starts: 0.4014</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Number of communities: 2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Elapsed time: 0 seconds</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-11-23 06:01:20]   Found clusters (with resolution 0.8):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-11-23 06:01:20]    | c1(44), c2(36)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-11-23 06:01:20] Running RunUMAP ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-11-23 06:01:20]   reduction=pca, dims=1:19, umap.method=uwot, n.neighbors=30</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:01:20 UMAP embedding parameters a = 0.9922 b = 1.112</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:01:20 Read 80 rows and found 19 numeric columns</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:01:20 Using Annoy for neighbor search, n_neighbors = 30</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:01:20 Building Annoy index with metric = cosine, n_trees = 50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-11-24 23:53:15]   Found clusters (with resolution 0.8):</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-11-24 23:53:15]    | c1(44), c2(36)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-11-24 23:53:15] Running RunUMAP ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> INFO    [2026-11-24 23:53:15]   reduction=pca, dims=1:19, umap.method=uwot, n.neighbors=30</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:53:15 UMAP embedding parameters a = 0.9922 b = 1.112</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:53:15 Read 80 rows and found 19 numeric columns</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:53:15 Using Annoy for neighbor search, n_neighbors = 30</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:53:15 Building Annoy index with metric = cosine, n_trees = 50</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> 0%   10   20   30   40   50   60   70   80   90   100%</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> [----|----|----|----|----|----|----|----|----|----|</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> *</span>
@@ -194,16 +200,16 @@ based on the <code>order</code> field.</p></li>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> *</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> *</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> |</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:01:20 Writing NN index file to temp file /tmp/RtmpdafUoh/file28c4411d4a17</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:01:20 Searching Annoy index using 1 thread, search_k = 3000</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:01:20 Annoy recall = 100%</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:01:21 Commencing smooth kNN distance calibration using 1 thread</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:53:15 Writing NN index file to temp file /tmp/Rtmp5R0wbT/file291b62bde960</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:53:15 Searching Annoy index using 1 thread, search_k = 3000</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:53:15 Annoy recall = 100%</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:53:16 Commencing smooth kNN distance calibration using 1 thread</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>  with target n_neighbors = 30</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:01:21 7 smooth knn distance failures</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:01:23 Initializing from normalized Laplacian + noise (using RSpectra)</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:01:23 Commencing optimization for 500 epochs, with 2664 positive edges</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:01:23 Using rng type: pcg</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 06:01:24 Optimization finished</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:53:16 7 smooth knn distance failures</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:53:18 Initializing from normalized Laplacian + noise (using RSpectra)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:53:18 Commencing optimization for 500 epochs, with 2664 positive edges</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:53:18 Using rng type: pcg</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 23:53:18 Optimization finished</span>
 <span class="r-in"><span><span class="fu"><a href="GetIdentityColumn.html">GetIdentityColumn</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>[GetIdentityColumn] Using 'seurat_clusters' as the identity column, other candidates: seurat_clusters.0.8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "seurat_clusters"</span>

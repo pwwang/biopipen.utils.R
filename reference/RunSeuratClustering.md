@@ -9,6 +9,7 @@ RunSeuratClustering(
   object,
   RunPCAArgs = list(),
   RunUMAPArgs = list(),
+  RunTSNEArgs = NULL,
   FindNeighborsArgs = list(),
   FindClustersArgs = list(),
   log = NULL,
@@ -43,6 +44,14 @@ RunSeuratClustering(
     to get the markers for each group, and then select the top
     `n`/`ngroups` features for each group based on the `order` field.
 
+- RunTSNEArgs:
+
+  Arguments to pass to
+  [`RunSeuratTSNE()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratTSNE.md).
+  If `NULL` (default), t-SNE is skipped; if a list, runs t-SNE after
+  UMAP using
+  [`RunSeuratTSNE()`](https://pwwang.github.io/biopipen.utils.R/reference/RunSeuratTSNE.md).
+
 - FindNeighborsArgs:
 
   Arguments to pass to
@@ -70,7 +79,7 @@ The Seurat object with clustering results
 ``` r
 # \donttest{
 obj <- RunSeuratClustering(SeuratObject::pbmc_small)
-#> INFO    [2026-11-23 06:01:15] Running RunPCA (npcs=50, dims=1:30) ...
+#> INFO    [2026-11-24 23:53:11] Running RunPCA (npcs=50, dims=1:30) ...
 #> Warning: You're computing too large a percentage of total singular values, use a standard svd instead.
 #> Warning: Requested number is larger than the number of available items (20). Setting to 20.
 #> Warning: Requested number is larger than the number of available items (20). Setting to 20.
@@ -84,19 +93,19 @@ obj <- RunSeuratClustering(SeuratObject::pbmc_small)
 #> Positive:  HLA-DPB1, HLA-DQA1, S100A8, S100A9, CD1C, RP11-290F20.3, PARVB, IGLL5, MYL9, SDPR 
 #> Negative:  GNLY, AKR1C3, VDAC3, PGRMC1, TUBB1, PF4, TREML1, RUFY1, CA2, PPBP 
 #> PC_ 3 
-#> Positive:  S100A9, S100A8, RP11-290F20.3, AKR1C3, PARVB, GNLY, PPBP, PGRMC1, MYL9, TUBB1 
-#> Negative:  HLA-DQA1, CD1C, IGLL5, HLA-DPB1, RUFY1, PF4, VDAC3, SDPR, TREML1, CA2 
+#> Positive:  HLA-DQA1, CD1C, IGLL5, HLA-DPB1, RUFY1, PF4, VDAC3, SDPR, TREML1, CA2 
+#> Negative:  S100A9, S100A8, RP11-290F20.3, AKR1C3, PARVB, GNLY, PPBP, PGRMC1, MYL9, TUBB1 
 #> PC_ 4 
-#> Positive:  IGLL5, RP11-290F20.3, VDAC3, PPBP, TUBB1, TREML1, PF4, CA2, PARVB, MYL9 
-#> Negative:  CD1C, AKR1C3, S100A8, GNLY, HLA-DPB1, HLA-DQA1, S100A9, PGRMC1, RUFY1, SDPR 
+#> Positive:  CD1C, AKR1C3, S100A8, GNLY, HLA-DPB1, HLA-DQA1, S100A9, PGRMC1, RUFY1, SDPR 
+#> Negative:  IGLL5, RP11-290F20.3, VDAC3, PPBP, TUBB1, TREML1, PF4, CA2, PARVB, MYL9 
 #> PC_ 5 
-#> Positive:  VDAC3, RP11-290F20.3, RUFY1, CD1C, HLA-DQA1, CA2, S100A8, PPBP, GNLY, SDPR 
-#> Negative:  MYL9, PARVB, IGLL5, TREML1, AKR1C3, PGRMC1, HLA-DPB1, S100A9, TUBB1, PF4 
-#> INFO    [2026-11-23 06:01:18] Running FindNeighbors (reduction=pca) ...
+#> Positive:  MYL9, PARVB, IGLL5, TREML1, AKR1C3, PGRMC1, HLA-DPB1, S100A9, TUBB1, PF4 
+#> Negative:  VDAC3, RP11-290F20.3, RUFY1, CD1C, HLA-DQA1, CA2, S100A8, PPBP, GNLY, SDPR 
+#> INFO    [2026-11-24 23:53:13] Running FindNeighbors (reduction=pca) ...
 #> Computing nearest neighbor graph
 #> Computing SNN
-#> INFO    [2026-11-23 06:01:19] Running FindClusters ...
-#> INFO    [2026-11-23 06:01:19]   applying resolution: 0.8
+#> INFO    [2026-11-24 23:53:14] Running FindClusters ...
+#> INFO    [2026-11-24 23:53:14]   applying resolution: 0.8
 #> Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
 #> 
 #> Number of nodes: 80
@@ -106,14 +115,14 @@ obj <- RunSeuratClustering(SeuratObject::pbmc_small)
 #> Maximum modularity in 10 random starts: 0.4014
 #> Number of communities: 2
 #> Elapsed time: 0 seconds
-#> INFO    [2026-11-23 06:01:20]   Found clusters (with resolution 0.8):
-#> INFO    [2026-11-23 06:01:20]    | c1(44), c2(36)
-#> INFO    [2026-11-23 06:01:20] Running RunUMAP ...
-#> INFO    [2026-11-23 06:01:20]   reduction=pca, dims=1:19, umap.method=uwot, n.neighbors=30
-#> 06:01:20 UMAP embedding parameters a = 0.9922 b = 1.112
-#> 06:01:20 Read 80 rows and found 19 numeric columns
-#> 06:01:20 Using Annoy for neighbor search, n_neighbors = 30
-#> 06:01:20 Building Annoy index with metric = cosine, n_trees = 50
+#> INFO    [2026-11-24 23:53:15]   Found clusters (with resolution 0.8):
+#> INFO    [2026-11-24 23:53:15]    | c1(44), c2(36)
+#> INFO    [2026-11-24 23:53:15] Running RunUMAP ...
+#> INFO    [2026-11-24 23:53:15]   reduction=pca, dims=1:19, umap.method=uwot, n.neighbors=30
+#> 23:53:15 UMAP embedding parameters a = 0.9922 b = 1.112
+#> 23:53:15 Read 80 rows and found 19 numeric columns
+#> 23:53:15 Using Annoy for neighbor search, n_neighbors = 30
+#> 23:53:15 Building Annoy index with metric = cosine, n_trees = 50
 #> 0%   10   20   30   40   50   60   70   80   90   100%
 #> [----|----|----|----|----|----|----|----|----|----|
 #> *
@@ -167,16 +176,16 @@ obj <- RunSeuratClustering(SeuratObject::pbmc_small)
 #> *
 #> *
 #> |
-#> 06:01:20 Writing NN index file to temp file /tmp/RtmpdafUoh/file28c4411d4a17
-#> 06:01:20 Searching Annoy index using 1 thread, search_k = 3000
-#> 06:01:20 Annoy recall = 100%
-#> 06:01:21 Commencing smooth kNN distance calibration using 1 thread
+#> 23:53:15 Writing NN index file to temp file /tmp/Rtmp5R0wbT/file291b62bde960
+#> 23:53:15 Searching Annoy index using 1 thread, search_k = 3000
+#> 23:53:15 Annoy recall = 100%
+#> 23:53:16 Commencing smooth kNN distance calibration using 1 thread
 #>  with target n_neighbors = 30
-#> 06:01:21 7 smooth knn distance failures
-#> 06:01:23 Initializing from normalized Laplacian + noise (using RSpectra)
-#> 06:01:23 Commencing optimization for 500 epochs, with 2664 positive edges
-#> 06:01:23 Using rng type: pcg
-#> 06:01:24 Optimization finished
+#> 23:53:16 7 smooth knn distance failures
+#> 23:53:18 Initializing from normalized Laplacian + noise (using RSpectra)
+#> 23:53:18 Commencing optimization for 500 epochs, with 2664 positive edges
+#> 23:53:18 Using rng type: pcg
+#> 23:53:18 Optimization finished
 GetIdentityColumn(obj)
 #> Warning: [GetIdentityColumn] Using 'seurat_clusters' as the identity column, other candidates: seurat_clusters.0.8
 #> [1] "seurat_clusters"
