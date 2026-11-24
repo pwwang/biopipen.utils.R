@@ -258,3 +258,95 @@ test_that("14. RunSeuratTSNE handles cells subset perplexity and features+dims w
     )
     expect_null(res_fd@commands[["RunSeuratTSNE"]]@params$RunTSNEArgs$dims)
 })
+
+test_that("15. RunSeuratTSNE deduplicates identical coordinates and keeps all cells", {
+    expect_output(
+        res <- RunSeuratTSNE(SeuratObject::pbmc_small, list(dims = 10)),
+        "WARN.*5 of 80 cells have identical coordinates.*running t-SNE on the 75 unique cells"
+    )
+
+    expect_true("tsne" %in% Seurat::Reductions(res))
+    expect_equal(dim(Seurat::Embeddings(res, "tsne")), c(80L, 2L))
+})
+
+test_that("16. RunSeuratTSNE succeeds and deduplicates even with check_duplicates = TRUE", {
+    expect_output(
+        res <- RunSeuratTSNE(
+            SeuratObject::pbmc_small,
+            list(dims = 10, check_duplicates = TRUE)
+        ),
+        "running t-SNE on the 75 unique cells"
+    )
+
+    expect_true("tsne" %in% Seurat::Reductions(res))
+    expect_equal(dim(Seurat::Embeddings(res, "tsne")), c(80L, 2L))
+    params <- res@commands[["RunSeuratTSNE"]]@params
+    expect_true(params$RunTSNEArgs$check_duplicates)
+    expect_equal(length(params$RunTSNEArgs$cells), 75L)
+})
+
+test_that("17. RunSeuratTSNE maps each duplicate onto its representative's coordinates", {
+    expect_output(
+        res <- RunSeuratTSNE(SeuratObject::pbmc_small, list(dims = 10)),
+        "identical coordinates"
+    )
+
+    tsne <- Seurat::Embeddings(res, "tsne")
+    expect_equal(nrow(unique(round(tsne, 10))), 75L)
+
+    emb <- Seurat::Embeddings(SeuratObject::pbmc_small, "pca")[
+        , 1:10, drop = FALSE
+    ]
+    key <- do.call(paste, c(as.data.frame(emb), sep = "\r"))
+    dup_groups <- split(seq_along(key), key)
+    dup_groups <- dup_groups[lengths(dup_groups) > 1L]
+    expect_true(length(dup_groups) > 0L)
+    for (idx in dup_groups) {
+        for (dup in idx[-1L]) {
+            expect_equal(tsne[dup, ], tsne[idx[1L], ], tolerance = 0)
+        }
+    }
+
+    params <- res@commands[["RunSeuratTSNE"]]@params
+    expect_equal(params$dedup$n_duplicates, 5L)
+    expect_equal(params$dedup$n_unique, 75L)
+    expect_equal(params$dedup$cells, 80L)
+    expect_equal(length(params$RunTSNEArgs$cells), 75L)
+})
+
+test_that("18. RunSeuratTSNE leaves cells and dedup unset with no warning when duplicate-free", {
+    obj <- make_tsne_fixture()
+    res <- NULL
+    out <- capture.output(
+        expect_no_warning(
+            res <- RunSeuratTSNE(
+                obj,
+                list(dims = 10, perplexity = 10),
+                cache = FALSE
+            )
+        )
+    )
+
+    expect_true("tsne" %in% Seurat::Reductions(res))
+    expect_null(
+        res@commands[["RunSeuratTSNE"]]@params$RunTSNEArgs$check_duplicates
+    )
+    expect_null(res@commands[["RunSeuratTSNE"]]@params$RunTSNEArgs$cells)
+    expect_null(res@commands[["RunSeuratTSNE"]]@params$dedup)
+    expect_equal(nrow(Seurat::Embeddings(res, "tsne")), ncol(obj))
+    expect_false(any(grepl("WARN|identical coordinates", out)))
+})
+
+test_that("19. RunSeuratTSNE warns and retries with check_duplicates = FALSE on features path", {
+    obj <- make_tsne_fixture()
+    expect_output(
+        res <- RunSeuratTSNE(
+            obj,
+            list(features = rownames(obj)[1:15], perplexity = 10),
+            cache = FALSE
+        ),
+        "retrying with check_duplicates = FALSE"
+    )
+
+    expect_equal(dim(Seurat::Embeddings(res, "tsne")), c(80L, 2L))
+})

@@ -46,6 +46,19 @@ where \code{ncells} is the number of cells in the object (or \code{length(RunTSN
 and \code{reduction} is \code{RunTSNEArgs$reduction} (default: \code{object@misc$integrated_new_reduction} or \code{"pca"}).
 When \code{RunTSNEArgs$perplexity} is not provided, it defaults to
 \code{max(1, min(30, floor((ncells - 1) / 3)))} so small objects stay within Rtsne's perplexity bound.
+
+On the \code{dims} path with \code{tsne.method = "Rtsne"}, cells with identical
+coordinates in the selected embedding dimensions are deduplicated before the
+run: a warning reports how many cells are affected, t-SNE runs on the unique
+coordinates only, and each duplicate is then mapped onto its representative's
+coordinates, so the resulting reduction still covers every cell.
+\code{RunTSNEArgs$cells} (default: all cells) is narrowed to the representatives;
+the recorded command parameters then carry a \code{dedup} entry with the counts.
+If duplicate rows are only detected once Rtsne runs on the \code{features} path,
+its duplicate error is caught, a warning is emitted, and the run is retried
+once with \code{check_duplicates = FALSE} (duplicate cells may then overlap in the
+embedding). Duplicate cells never raise an error, even when
+\code{RunTSNEArgs$check_duplicates = TRUE} is supplied.
 }
 \examples{
 \donttest{

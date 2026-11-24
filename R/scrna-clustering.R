@@ -865,12 +865,25 @@ RunSeuratUMAP <- function(
 #' and `reduction` is `RunTSNEArgs$reduction` (default: `object@misc$integrated_new_reduction` or `"pca"`).
 #' When `RunTSNEArgs$perplexity` is not provided, it defaults to
 #' `max(1, min(30, floor((ncells - 1) / 3)))` so small objects stay within Rtsne's perplexity bound.
+#'
+#' On the `dims` path with `tsne.method = "Rtsne"`, cells with identical
+#' coordinates in the selected embedding dimensions are deduplicated before the
+#' run: a warning reports how many cells are affected, t-SNE runs on the unique
+#' coordinates only, and each duplicate is then mapped onto its representative's
+#' coordinates, so the resulting reduction still covers every cell.
+#' `RunTSNEArgs$cells` (default: all cells) is narrowed to the representatives;
+#' the recorded command parameters then carry a `dedup` entry with the counts.
+#' If duplicate rows are only detected once Rtsne runs on the `features` path,
+#' its duplicate error is caught, a warning is emitted, and the run is retried
+#' once with `check_duplicates = FALSE` (duplicate cells may then overlap in the
+#' embedding). Duplicate cells never raise an error, even when
+#' `RunTSNEArgs$check_duplicates = TRUE` is supplied.
 #' @export
 #' @param cache Directory to cache the all markers, which can be reused later if
 #' DE analysis is desired.
 #' @param log The logger to use. If NULL, a default logger will be used.
 #' @return The Seurat object with t-SNE results
-#' @importFrom Seurat RunTSNE
+#' @importFrom Seurat RunTSNE Embeddings
 #' @importFrom SeuratObject Idents
 #' @importFrom rlang %||% parse_expr
 #' @importFrom dplyr arrange group_by slice_head pull
@@ -943,6 +956,53 @@ RunSeuratTSNE <- function(
     }
     RunTSNEArgs$tsne.method <- RunTSNEArgs$tsne.method %||% "Rtsne"
     log_piece <- c(log_piece, paste0("tsne.method=", RunTSNEArgs$tsne.method))
+    dedup <- NULL
+    if (
+        is.null(RunTSNEArgs$features) &&
+            is.null(RunTSNEArgs$distance.matrix) &&
+            identical(RunTSNEArgs$tsne.method, "Rtsne")
+    ) {
+        cells_used <- RunTSNEArgs$cells %||% colnames(object)
+        emb <- Embeddings(object[[reduction]])[
+            cells_used,
+            RunTSNEArgs$dims,
+            drop = FALSE
+        ]
+        key <- do.call(paste, c(as.data.frame(emb), sep = "\r"))
+        rowid <- match(key, key)
+        rep_flag <- !duplicated(key)
+        if (sum(rep_flag) < length(key)) {
+            dims_str <- if (
+                length(RunTSNEArgs$dims) > 1L &&
+                    all(diff(RunTSNEArgs$dims) == 1)
+            ) {
+                paste0(
+                    RunTSNEArgs$dims[1L],
+                    ":",
+                    RunTSNEArgs$dims[length(RunTSNEArgs$dims)]
+                )
+            } else {
+                paste(RunTSNEArgs$dims, collapse = ",")
+            }
+            n_dup <- sum(!rep_flag)
+            n_unique <- sum(rep_flag)
+            log$warn(sprintf(
+                "  %d of %d cells have identical coordinates in reduction '%s' (dims %s); running t-SNE on the %d unique cells and mapping each duplicate onto its representative's coordinates",
+                n_dup,
+                length(key),
+                reduction,
+                dims_str,
+                n_unique
+            ))
+            dedup <- list(
+                n_duplicates = n_dup,
+                n_unique = n_unique,
+                cells = length(key)
+            )
+            RunTSNEArgs$cells <- rownames(emb)[rep_flag]
+            ncells <- n_unique
+        }
+    }
     max_perplexity <- floor((ncells - 1) / 3)
     RunTSNEArgs$perplexity <- RunTSNEArgs$perplexity %||%
         max(1, min(30, max_perplexity))
@@ -963,15 +1023,43 @@ RunSeuratTSNE <- function(
     log$info("  {paste(log_piece, collapse=', ')}")
     log$debug("  Arguments: {format_args(RunTSNEArgs)}")
     RunTSNEArgs$object <- object
-    object <- do_call(RunTSNE, RunTSNEArgs)
+    object <- tryCatch(
+        do_call(RunTSNE, RunTSNEArgs),
+        error = function(e) {
+            if (!grepl("Remove duplicates", conditionMessage(e), fixed = TRUE)) {
+                stop(e)
+            }
+            RunTSNEArgs$check_duplicates <- FALSE
+            log$warn(
+                "  Cells have identical coordinates in the t-SNE input; retrying with check_duplicates = FALSE, so duplicate cells may overlap in the t-SNE embedding"
+            )
+            do_call(RunTSNE, RunTSNEArgs)
+        }
+    )
     RunTSNEArgs$object <- NULL
     gc()
 
+    if (!is.null(dedup)) {
+        red_name <- RunTSNEArgs$reduction.name %||% "tsne"
+        rowid_to_sub <- match(rowid, which(rep_flag))
+        full <- Embeddings(object[[red_name]])[rowid_to_sub, , drop = FALSE]
+        rownames(full) <- rownames(emb)
+        object[[red_name]] <- CreateDimReducObject(
+            embeddings = full,
+            key = Key(object[[red_name]]),
+            assay = DefaultAssay(object)
+        )
+    }
+
+    params <- list(RunTSNEArgs = RunTSNEArgs)
+    if (!is.null(dedup)) {
+        params$dedup <- dedup
+    }
     object <- AddSeuratCommand(
         object,
         name = "RunSeuratTSNE",
         call.string = "RunSeuratTSNE(object, RunTSNEArgs)",
-        params = list(RunTSNEArgs = RunTSNEArgs)
+        params = params
     )
     object
 }
