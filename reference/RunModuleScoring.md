@@ -201,8 +201,8 @@ obj <- RunModuleScoring(
     # small object needs small `nbin`/`ctrl` (see the hint on error)
     nbin = 10, ctrl = 5
 )
-#> INFO    [2026-11-24 23:53:03] Calculating module 'Exhaustion' with method 'seurat' ...
-#> INFO    [2026-11-24 23:53:03] Calculating module 'Prolif' with method 'seurat' ...
+#> INFO    [2026-11-25 00:17:48] Calculating module 'Exhaustion' with method 'seurat' ...
+#> INFO    [2026-11-25 00:17:48] Calculating module 'Prolif' with method 'seurat' ...
 head(obj@meta.data[, c("Exhaustion", "Prolif")])
 #>                Exhaustion     Prolif
 #> ATGCCAGAACGACT -1.0627307 -1.4906462
@@ -221,7 +221,7 @@ if (requireNamespace("UCell", quietly = TRUE)) {
     )
     head(obj@meta.data[, c("CellCycle_S.Score", "CellCycle_G2M.Score", "CellCycle_Phase")])
 }
-#> INFO    [2026-11-24 23:53:03] Calculating module 'CellCycle' with method 'ucell' ...
+#> INFO    [2026-11-25 00:17:48] Calculating module 'CellCycle' with method 'ucell' ...
 #>                CellCycle_S.Score CellCycle_G2M.Score CellCycle_Phase
 #> ATGCCAGAACGACT                 0                   0              G1
 #> CATGGCCTGTGCAT                 0                   0              G1

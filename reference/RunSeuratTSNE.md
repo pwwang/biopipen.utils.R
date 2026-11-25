@@ -85,8 +85,8 @@ supplied.
 ``` r
 # \donttest{
 obj <- RunSeuratTSNE(SeuratObject::pbmc_small, list(dims = 10))
-#> WARN    [2026-11-24 23:53:45]   5 of 80 cells have identical coordinates in reduction 'pca' (dims 1:10); running t-SNE on the 75 unique cells and mapping each duplicate onto its representative's coordinates
-#> INFO    [2026-11-24 23:53:45]   reduction=pca, dims=1:10, tsne.method=Rtsne, perplexity=24, reduction.name=tsne
+#> WARN    [2026-11-25 00:18:38]   5 of 80 cells have identical coordinates in reduction 'pca' (dims 1:10); running t-SNE on the 75 unique cells and mapping each duplicate onto its representative's coordinates
+#> INFO    [2026-11-25 00:18:38]   reduction=pca, dims=1:10, tsne.method=Rtsne, perplexity=24, reduction.name=tsne
 #> Warning: Number of cells changing from 80 to 75
 #> Warning: Number of cells changing from 75 to 80
 # }

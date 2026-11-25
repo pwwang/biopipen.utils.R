@@ -121,8 +121,8 @@ obj <- RunSeuratCellTypeAnnotation(
     args = list(cell_types = list(g1 = "T", g2 = "B")),
     ident = "groups"
 )
-#> INFO    [2026-11-24 23:53:11] Running cell type annotation tool 'direct' ...
-#> INFO    [2026-11-24 23:53:11] Adding annotation as new column: CellType
+#> INFO    [2026-11-25 00:17:56] Running cell type annotation tool 'direct' ...
+#> INFO    [2026-11-25 00:17:56] Adding annotation as new column: CellType
 table(obj$CellType)
 #> 
 #>  T  B 

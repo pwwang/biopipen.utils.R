@@ -79,7 +79,7 @@ The Seurat object with clustering results
 ``` r
 # \donttest{
 obj <- RunSeuratClustering(SeuratObject::pbmc_small)
-#> INFO    [2026-11-24 23:53:11] Running RunPCA (npcs=50, dims=1:30) ...
+#> INFO    [2026-11-25 00:17:57] Running RunPCA (npcs=50, dims=1:30) ...
 #> Warning: You're computing too large a percentage of total singular values, use a standard svd instead.
 #> Warning: Requested number is larger than the number of available items (20). Setting to 20.
 #> Warning: Requested number is larger than the number of available items (20). Setting to 20.
@@ -101,11 +101,11 @@ obj <- RunSeuratClustering(SeuratObject::pbmc_small)
 #> PC_ 5 
 #> Positive:  MYL9, PARVB, IGLL5, TREML1, AKR1C3, PGRMC1, HLA-DPB1, S100A9, TUBB1, PF4 
 #> Negative:  VDAC3, RP11-290F20.3, RUFY1, CD1C, HLA-DQA1, CA2, S100A8, PPBP, GNLY, SDPR 
-#> INFO    [2026-11-24 23:53:13] Running FindNeighbors (reduction=pca) ...
+#> INFO    [2026-11-25 00:17:59] Running FindNeighbors (reduction=pca) ...
 #> Computing nearest neighbor graph
 #> Computing SNN
-#> INFO    [2026-11-24 23:53:14] Running FindClusters ...
-#> INFO    [2026-11-24 23:53:14]   applying resolution: 0.8
+#> INFO    [2026-11-25 00:18:00] Running FindClusters ...
+#> INFO    [2026-11-25 00:18:00]   applying resolution: 0.8
 #> Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
 #> 
 #> Number of nodes: 80
@@ -115,14 +115,14 @@ obj <- RunSeuratClustering(SeuratObject::pbmc_small)
 #> Maximum modularity in 10 random starts: 0.4014
 #> Number of communities: 2
 #> Elapsed time: 0 seconds
-#> INFO    [2026-11-24 23:53:15]   Found clusters (with resolution 0.8):
-#> INFO    [2026-11-24 23:53:15]    | c1(44), c2(36)
-#> INFO    [2026-11-24 23:53:15] Running RunUMAP ...
-#> INFO    [2026-11-24 23:53:15]   reduction=pca, dims=1:19, umap.method=uwot, n.neighbors=30
-#> 23:53:15 UMAP embedding parameters a = 0.9922 b = 1.112
-#> 23:53:15 Read 80 rows and found 19 numeric columns
-#> 23:53:15 Using Annoy for neighbor search, n_neighbors = 30
-#> 23:53:15 Building Annoy index with metric = cosine, n_trees = 50
+#> INFO    [2026-11-25 00:18:02]   Found clusters (with resolution 0.8):
+#> INFO    [2026-11-25 00:18:02]    | c1(44), c2(36)
+#> INFO    [2026-11-25 00:18:02] Running RunUMAP ...
+#> INFO    [2026-11-25 00:18:02]   reduction=pca, dims=1:19, umap.method=uwot, n.neighbors=30
+#> 00:18:02 UMAP embedding parameters a = 0.9922 b = 1.112
+#> 00:18:02 Read 80 rows and found 19 numeric columns
+#> 00:18:02 Using Annoy for neighbor search, n_neighbors = 30
+#> 00:18:02 Building Annoy index with metric = cosine, n_trees = 50
 #> 0%   10   20   30   40   50   60   70   80   90   100%
 #> [----|----|----|----|----|----|----|----|----|----|
 #> *
@@ -176,16 +176,16 @@ obj <- RunSeuratClustering(SeuratObject::pbmc_small)
 #> *
 #> *
 #> |
-#> 23:53:15 Writing NN index file to temp file /tmp/Rtmp5R0wbT/file291b62bde960
-#> 23:53:15 Searching Annoy index using 1 thread, search_k = 3000
-#> 23:53:15 Annoy recall = 100%
-#> 23:53:16 Commencing smooth kNN distance calibration using 1 thread
+#> 00:18:02 Writing NN index file to temp file /tmp/Rtmpgi0kvN/file2bff5a0d8b6e
+#> 00:18:02 Searching Annoy index using 1 thread, search_k = 3000
+#> 00:18:02 Annoy recall = 100%
+#> 00:18:03 Commencing smooth kNN distance calibration using 1 thread
 #>  with target n_neighbors = 30
-#> 23:53:16 7 smooth knn distance failures
-#> 23:53:18 Initializing from normalized Laplacian + noise (using RSpectra)
-#> 23:53:18 Commencing optimization for 500 epochs, with 2664 positive edges
-#> 23:53:18 Using rng type: pcg
-#> 23:53:18 Optimization finished
+#> 00:18:03 7 smooth knn distance failures
+#> 00:18:05 Initializing from normalized Laplacian + noise (using RSpectra)
+#> 00:18:05 Commencing optimization for 500 epochs, with 2664 positive edges
+#> 00:18:05 Using rng type: pcg
+#> 00:18:06 Optimization finished
 GetIdentityColumn(obj)
 #> Warning: [GetIdentityColumn] Using 'seurat_clusters' as the identity column, other candidates: seurat_clusters.0.8
 #> [1] "seurat_clusters"
